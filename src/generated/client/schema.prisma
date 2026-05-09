@@ -1,0 +1,33 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider   = "prisma-client-js"
+  output     = "../src/generated/client"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model StoreSetting {
+  key   String @id
+  value String
+}
+
+model MarginTier {
+  id  Int    @id @default(autoincrement())
+  min Float
+  max Float?
+  pct Float
+}
+
+model Order {
+  id            String   @id // The CJ orderId
+  orderNum      String?
+  customerEmail String?
+  customerName  String?
+  createdAt     DateTime @default(now())
+  status        String?
+}

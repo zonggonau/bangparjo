@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CJ Dropshipping Catalog - Professional E-Commerce
 
-## Getting Started
+A high-performance, modern e-commerce platform built with Next.js, integrated directly with the CJ Dropshipping API. Designed for the Indonesian market with seamless global shipping support and automated fulfillment.
 
-First, run the development server:
+## 🚀 Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Dynamic Product Catalog**: Real-time product search and import from CJ Dropshipping.
+- **Admin Dashboard**: Manage inventory, profit margins, and store settings with a clean, professional UI.
+- **Hero Section Management**: Curate specific products to be featured on the homepage.
+- **Tiered Pricing Engine**: Automatically calculate selling prices based on customizable profit margin rules.
+- **Global Shipping**: Real-time shipping cost calculation for 200+ countries.
+- **Hybrid Payment System**: 
+  - **Midtrans**: For Indonesian local payments (VA, QRIS, GoPay).
+  - **PayPal**: For global customers.
+- **Automated Fulfillment**: Webhook-driven synchronization with CJ Dropshipping to process orders automatically upon payment.
+- **Advanced SEO**: Pre-configured metadata, OpenGraph tags, and sitemap readiness.
+- **Analytics Ready**: Built-in support for Google Analytics and Facebook Pixel.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠 Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Framework**: [Next.js 14+](https://nextjs.org/) (App Router)
+- **Database**: [PostgreSQL](https://www.postgresql.org/)
+- **ORM**: [Prisma](https://www.prisma.io/)
+- **Authentication**: [NextAuth.js](https://next-auth.js.org/)
+- **API Integration**: CJ Dropshipping REST API V2
+- **Styling**: Vanilla CSS (Zinc/Shadcn inspired design)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📦 Getting Started
 
-## Learn More
+### Prerequisites
 
-To learn more about Next.js, take a look at the following resources:
+- Node.js 18.x or later
+- PostgreSQL database
+- CJ Dropshipping API Key
+- Midtrans & PayPal Developer Accounts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Installation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd cjropshiper
+   ```
 
-## Deploy on Vercel
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. **Configure Environment Variables:**
+   Create a `.env` file in the root directory and add the following:
+   ```env
+   # Database
+   DATABASE_URL="postgresql://user:password@localhost:5432/cj_dropshipping"
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   # Authentication
+   NEXTAUTH_SECRET="your-secret-key"
+   NEXTAUTH_URL="http://localhost:3000"
+
+   # CJ Dropshipping
+   CJ_API_KEY="your_cj_api_key"
+   CJ_API_BASE_URL="https://api.cjdropshipping.com"
+
+   # Midtrans
+   MIDTRANS_SERVER_KEY="your_midtrans_server_key"
+   NEXT_PUBLIC_MIDTRANS_CLIENT_KEY="your_midtrans_client_key"
+   MIDTRANS_IS_PRODUCTION=false
+
+   # PayPal
+   NEXT_PUBLIC_PAYPAL_CLIENT_ID="your_paypal_client_id"
+   ```
+
+4. **Initialize Database:**
+   ```bash
+   npx prisma db push
+   npx prisma generate
+   ```
+
+5. **Run the development server:**
+   ```bash
+   npm run dev
+   ```
+
+## 🔐 Webhook Configuration
+
+For automated fulfillment, you must configure your payment gateway webhooks to point to the following endpoints:
+
+- **Midtrans**: `https://yourdomain.com/api/midtrans/webhook`
+- **PayPal**: `https://yourdomain.com/api/paypal/webhook`
+
+## 📁 Project Structure
+
+- `src/app`: Next.js App Router (Pages and API Routes)
+- `src/components`: Reusable UI components
+- `src/context`: React Context providers (Cart, Settings)
+- `src/lib`: Core logic (CJ API, Pricing, Fulfillment)
+- `prisma`: Database schema and migrations
+- `public`: Static assets
+
+## ⚖️ License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+Built with ❤️ for the Dropshipping Community.

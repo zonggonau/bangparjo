@@ -1,0 +1,67 @@
+.page {
+  padding: 4rem 0;
+  min-height: 80vh;
+  background-color: var(--gray-50);
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: var(--gray-500);
+  font-size: 1.1rem;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 4rem 1rem;
+  background: var(--white);
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.emptyIcon {
+  font-size: 4rem;
+  opacity: 0.5;
+  margin-bottom: 1rem;
+}
+
+.emptyTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.emptyDesc {
+  color: var(--gray-500);
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+.browseBtn {
+  margin-top: 1.5rem;
+  display: inline-flex;
+  padding: 0.75rem 2rem;
+  background: var(--primary);
+  color: var(--white);
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.browseBtn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}

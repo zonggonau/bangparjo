@@ -1,0 +1,443 @@
+// ── Throttle (Server-side Only) ──────────────────────────────────────────
+let lastRequestAt = 0;
+const MIN_INTERVAL_MS = 1100; // 1.1s for safety
+
+async function waitForSlot(): Promise<void> {
+  const now = Date.now();
+  const wait = Math.max(0, lastRequestAt + MIN_INTERVAL_MS - now);
+  lastRequestAt = now + wait;
+  if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait));
+}
+
+// ── Simple Cache (In-Memory) ────────────────────────────────────────────────
+const CACHE_TTL = 1000 * 60 * 30; // 30 minutes for products/lists
+const apiCache = new Map<string, { data: any, expiry: number }>();
+
+function getCache(key: string) {
+  const cached = apiCache.get(key);
+  if (cached && Date.now() < cached.expiry) return cached.data;
+  apiCache.delete(key);
+  return null;
+}
+
+function setCache(key: string, data: any) {
+  apiCache.set(key, { data, expiry: Date.now() + CACHE_TTL });
+}
+
+
+// ── Currency helpers ───────────────────────────────────────────────────────
+const USD_TO_IDR = 16000; 
+
+export function formatIDR(usdPrice: number | string): string {
+  const price = typeof usdPrice === 'string' ? parseFloat(usdPrice) : usdPrice;
+  if (isNaN(price)) return 'Rp 0';
+  const idr = price * USD_TO_IDR;
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(idr);
+}
+
+// ── String helpers ─────────────────────────────────────────────────────────
+export function parseProductName(name: string): string {
+  if (!name) return 'Unknown Product';
+  try {
+    if (name.startsWith('[') && name.endsWith(']')) {
+      const parsed = JSON.parse(name);
+      if (Array.isArray(parsed)) return parsed.filter(Boolean).join(' ');
+    }
+  } catch { /* not JSON array, use as-is */ }
+  return name;
+}
+
+export function parseProductImage(image: any): string {
+  if (!image) return '/placeholder.png';
+  if (Array.isArray(image) && image.length > 0) return image[0];
+  if (typeof image === 'string' && image.startsWith('http')) return image;
+  try {
+    if (typeof image === 'string') {
+      const t = image.trim();
+      if (t.startsWith('[') && t.endsWith(']')) {
+        const parsed = JSON.parse(t);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
+      }
+    }
+  } catch { /* ignore */ }
+  return '/placeholder.png';
+}
+
+// ── Config ────────────────────────────────────────────────────────────────
+export const BASE_URL = process.env.CJ_API_BASE_URL || 'https://api.cjdropshipping.com';
+const API_KEY = process.env.CJ_API_KEY;
+
+// ── Token cache ───────────────────────────────────────────────────────────
+let cachedToken: string | null = null;
+let tokenExpiry: number | null = null;
+
+export interface CJResponse<T> {
+  success: boolean;
+  result: boolean;
+  message: string;
+  code: number;
+  data: T;
+  requestId: string;
+}
+
+export async function getAccessTokenServer(): Promise<string> {
+  if (cachedToken && tokenExpiry && Date.now() < tokenExpiry) return cachedToken;
+
+  try {
+    const { prisma } = await import('@/lib/db');
+    const dbToken = await prisma.storeSetting.findUnique({ where: { key: 'CJ_ACCESS_TOKEN' } });
+    const dbExpiry = await prisma.storeSetting.findUnique({ where: { key: 'CJ_TOKEN_EXPIRY' } });
+    
+    if (dbToken && dbExpiry && Date.now() < parseInt(dbExpiry.value)) {
+      cachedToken = dbToken.value;
+      tokenExpiry = parseInt(dbExpiry.value);
+      return cachedToken;
+    }
+  } catch (e) {
+    console.error('[Token DB Load Error]:', e);
+  }
+
+  await waitForSlot();
+  if (cachedToken && tokenExpiry && Date.now() < tokenExpiry) return cachedToken;
+
+  const url = `${BASE_URL}/v1/authentication/getAccessToken`;
+  let retryCount = 0;
+  const maxRetries = 3;
+  
+  while (retryCount < maxRetries) {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: API_KEY }),
+      });
+      const data: CJResponse<{ accessToken: string }> = await response.json();
+      
+      if (!data.success && !data.result) {
+        if (data.message?.includes('QPS limit') || data.code === 1600100) {
+          retryCount++;
+          await new Promise(resolve => setTimeout(resolve, 2000 * retryCount));
+          continue;
+        }
+        throw new Error(data.message || 'Auth failed');
+      }
+
+      cachedToken = data.data.accessToken;
+      tokenExpiry = Date.now() + 14 * 24 * 60 * 60 * 1000;
+
+      try {
+        const { prisma } = await import('@/lib/db');
+        await prisma.storeSetting.upsert({
+          where: { key: 'CJ_ACCESS_TOKEN' },
+          update: { value: cachedToken },
+          create: { key: 'CJ_ACCESS_TOKEN', value: cachedToken }
+        });
+        await prisma.storeSetting.upsert({
+          where: { key: 'CJ_TOKEN_EXPIRY' },
+          update: { value: tokenExpiry.toString() },
+          create: { key: 'CJ_TOKEN_EXPIRY', value: tokenExpiry.toString() }
+        });
+      } catch (e) {
+        console.error('[Token DB Save Error]:', e);
+      }
+      return cachedToken!;
+    } catch (err: any) {
+      if (retryCount >= maxRetries) throw err;
+      retryCount++;
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    }
+  }
+  throw new Error('Failed to get CJ access token after retries');
+}
+
+// ── Generic fetcher ───────────────────────────────────────────────────────
+export async function cjFetch<T>(
+  endpoint: string,
+  options: RequestInit & { next?: { revalidate?: number | false; tags?: string[] } } = {}
+): Promise<CJResponse<T>> {
+  if (typeof window !== 'undefined') {
+    const isGet = !options.method || options.method.toUpperCase() === 'GET';
+    if (isGet) {
+      const url = `/api/cj-proxy?endpoint=${encodeURIComponent(endpoint)}`;
+      const response = await fetch(url);
+      return response.json();
+    }
+    const response = await fetch('/api/cj-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        endpoint,
+        method: options.method,
+        data: options.body ? JSON.parse(options.body as string) : undefined,
+        headers: options.headers,
+      }),
+    });
+    return response.json();
+  }
+
+  const isGet = !options.method || options.method.toUpperCase() === 'GET';
+  const cacheKey = `cj_${endpoint}_${JSON.stringify(options.body || '')}`;
+  if (isGet) {
+    const cached = getCache(cacheKey);
+    if (cached) return cached;
+  }
+
+  let retryCount = 0;
+  const maxRetries = 3;
+
+  while (retryCount < maxRetries) {
+    try {
+      const token = await getAccessTokenServer();
+      await waitForSlot();
+
+      const fetchOptions: any = {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          'CJ-Access-Token': token,
+          ...(options.headers as Record<string, string>),
+        },
+      };
+
+      if (isGet && !fetchOptions.next && !fetchOptions.cache) {
+        fetchOptions.next = { revalidate: 3600 };
+      }
+
+      const response = await fetch(`${BASE_URL}${endpoint}`, fetchOptions);
+      const data = await response.json();
+
+      // Handle Invalid/Expired Token (Retry once with fresh token)
+      if (!data.success && !data.result && (data.code === 1600101 || data.code === 1600102 || data.message?.toLowerCase().includes('access token'))) {
+        if (retryCount === 0) {
+          console.warn(`[CJ API] Token invalid or expired. Clearing cache and retrying...`);
+          cachedToken = null;
+          tokenExpiry = null;
+          try {
+            const { prisma } = await import('@/lib/db');
+            await prisma.storeSetting.deleteMany({
+              where: { key: { in: ['CJ_ACCESS_TOKEN', 'CJ_TOKEN_EXPIRY'] } }
+            });
+          } catch (e) {
+            console.error('[Token Clear Error]:', e);
+          }
+          retryCount++;
+          continue;
+        }
+      }
+
+      if (!data.success && !data.result && (data.code === 1600100 || data.message?.includes('QPS limit'))) {
+        retryCount++;
+        const wait = 1500 * retryCount;
+        console.warn(`[CJ API] QPS Limit on ${endpoint}. Retrying in ${wait}ms...`);
+        await new Promise(resolve => setTimeout(resolve, wait));
+        continue;
+      }
+
+      if (isGet && (data.success || data.result)) {
+        setCache(cacheKey, data);
+      }
+      return data;
+    } catch (err: any) {
+      if (retryCount >= maxRetries) throw err;
+      retryCount++;
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    }
+  }
+  throw new Error(`Failed to fetch from CJ after ${maxRetries} retries`);
+}
+
+// ── Types ─────────────────────────────────────────────────────────────────
+export interface CJProduct {
+  pid: string;
+  productName: string;
+  productNameEn: string;
+  productSku: string;
+  productImage: string;
+  bigImage?: string;
+  sellPrice: number;
+  categoryId?: string;
+  categoryName: string;
+  isFreeShipping?: boolean;
+  listedNum?: number;
+  productWeight?: number; // g
+  productUnit?: string;
+  productType?: string;
+  isActive?: boolean;
+}
+
+export interface CJVariant {
+  vid: string;
+  pid?: string;
+  variantNameEn?: string;
+  variantName?: string;
+  variantImage?: string;
+  variantSellPrice: number;
+  variantSku: string;
+  variantKey: string;
+  variantWeight?: number; // g
+  variantUnit?: string;
+  variantLength?: number; // mm
+  variantWidth?: number; // mm
+  variantHeight?: number; // mm
+  variantVolume?: number; // mm3
+}
+
+export interface CJProductDetail extends CJProduct {
+  description?: string;
+  variants: CJVariant[];
+  productImageSet?: string[];
+  suggestSellPrice?: string;
+  listedNum?: number;
+  productKey?: string;
+  productKeyEn?: string;
+}
+
+// ── Products ──────────────────────────────────────────────────────────────
+export async function getProducts(
+  params: {
+    pageNum?: number;
+    pageSize?: number;
+    keyWord?: string;
+    categoryId?: string;
+    countryCode?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    searchType?: number; // 0=all, 2=trending
+    productSku?: string;
+  } = {}
+): Promise<CJResponse<{ list: CJProduct[]; total: number }>> {
+  const query = new URLSearchParams({
+    pageNum: (params.pageNum || 1).toString(),
+    pageSize: (params.pageSize || 20).toString(),
+  });
+  if (params.keyWord) query.set('productNameEn', params.keyWord);
+  if (params.productSku) query.set('productSku', params.productSku);
+  if (params.categoryId) query.set('categoryId', params.categoryId);
+  if (params.countryCode) query.set('countryCode', params.countryCode);
+  if (params.minPrice != null) query.set('minPrice', params.minPrice.toString());
+  if (params.maxPrice != null) query.set('maxPrice', params.maxPrice.toString());
+  if (params.searchType != null) query.set('searchType', params.searchType.toString());
+
+  return cjFetch(`/v1/product/list?${query.toString()}`);
+}
+
+export async function getProductDetails(id: string): Promise<CJResponse<CJProductDetail>> {
+  const res = await cjFetch<CJProductDetail>(`/v1/product/query?pid=${id}`);
+  if (!res.success && id.length > 5) {
+    const resSku = await cjFetch<CJProductDetail>(`/v1/product/query?productSku=${id}`);
+    if (resSku.success) return resSku;
+  }
+  return res;
+}
+
+// ── Shipping ──────────────────────────────────────────────────────────────
+export interface CJShippingMethod {
+  logisticName: string;
+  logisticPrice: number;
+  logisticPriceCn?: number;
+  logisticAging: string;
+  taxesFee?: number;
+  totalPostageFee?: number;
+}
+
+export async function getShippingFee(params: {
+  products: Array<{ vid: string; quantity: number }>;
+  endCountryCode: string;
+  startCountryCode?: string;
+}): Promise<CJResponse<CJShippingMethod[]>> {
+  return cjFetch('/v1/logistic/freightCalculate', {
+    method: 'POST',
+    body: JSON.stringify({
+      startCountryCode: params.startCountryCode || 'CN',
+      endCountryCode: params.endCountryCode,
+      products: params.products,
+    }),
+  });
+}
+
+// ── Orders ────────────────────────────────────────────────────────────────
+export async function createOrder(orderData: {
+  orderNumber: string;
+  shippingZip?: string;
+  shippingCountry: string;
+  shippingCountryCode: string;
+  shippingProvince: string;
+  shippingCity: string;
+  shippingPhone?: string;
+  shippingCustomerName: string;
+  shippingAddress: string;
+  shippingAddress2?: string;
+  logisticName?: string;
+  fromCountryCode?: string;
+  payType?: number; 
+  products: Array<{ vid?: string; sku?: string; quantity: number; storeLineItemId?: string }>;
+}) {
+  return cjFetch<any>('/v1/shopping/order/createOrderV2', {
+    method: 'POST',
+    body: JSON.stringify({
+      fromCountryCode: orderData.fromCountryCode || 'CN',
+      logisticName: orderData.logisticName || 'CJPacket Ordinary',
+      payType: orderData.payType || 3,
+      platform: 'Api',
+      ...orderData,
+    }),
+  });
+}
+
+export async function getDetailedTracking(cjOrderId: string) {
+  return cjFetch<any>(`/v1/logistic/getLogisticsTrack?orderId=${cjOrderId}`);
+}
+
+export async function getTrackingInfo(orderId: string) {
+  return cjFetch<any>(`/v1/shopping/order/getOrderDetail?orderId=${orderId}`);
+}
+
+export async function getOrderList(params: {
+  pageNum?: number;
+  pageSize?: number;
+  status?: string;
+} = {}) {
+  const query = new URLSearchParams({
+    pageNum: (params.pageNum || 1).toString(),
+    pageSize: (params.pageSize || 10).toString(),
+    ...(params.status && { status: params.status }),
+  });
+  return cjFetch(`/v1/shopping/order/list?${query.toString()}`);
+}
+
+export async function getCategories() {
+  return cjFetch<any>('/v1/product/getCategory');
+}
+
+export async function createDispute(params: {
+  orderId: string;
+  businessDisputeId: string;
+  disputeReasonId: number;
+  expectType: number; 
+  refundType: number; 
+  messageText: string;
+  imageUrl?: string[];
+  productInfoList: Array<{ lineItemId: string; quantity: number }>;
+}) {
+  return cjFetch<any>('/v1/disputes/create', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
+export async function getDisputeList(params: {
+  orderId?: string;
+  pageNum?: number;
+  pageSize?: number;
+}) {
+  const query = new URLSearchParams();
+  if (params.orderId) query.set('orderId', params.orderId);
+  query.set('pageNum', (params.pageNum || 1).toString());
+  query.set('pageSize', (params.pageSize || 10).toString());
+  return cjFetch<any>(`/v1/disputes/getDisputeList?${query.toString()}`);
+}

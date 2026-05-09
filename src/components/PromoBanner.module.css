@@ -1,0 +1,149 @@
+.section {
+  padding: 2rem 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+/* Main Promo */
+.mainPromo {
+  border-radius: var(--radius-xl);
+  padding: 2.5rem;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.promoBadge {
+  display: inline-block;
+  background: rgba(255,255,255,0.2);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  width: fit-content;
+}
+
+.promoTitle {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.promoSubtitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.promoDesc {
+  font-size: 0.9rem;
+  opacity: 0.75;
+  max-width: 240px;
+}
+
+.promoBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  color: var(--primary);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.9rem;
+  width: fit-content;
+  margin-top: 0.5rem;
+  transition: var(--transition);
+}
+
+.promoBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+}
+
+.promoDeco {
+  position: absolute;
+  right: -10px;
+  bottom: -10px;
+  font-size: 8rem;
+  opacity: 0.12;
+  line-height: 1;
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Sub Promos */
+.subPromos {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.subPromo {
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  transition: var(--transition);
+}
+
+.subPromo:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md);
+}
+
+.subTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  flex: 1;
+}
+
+.subDesc {
+  font-size: 0.8rem;
+  opacity: 0.75;
+  flex: 1;
+}
+
+.subBtn {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.subBtn:hover {
+  background: rgba(255,255,255,0.35);
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .mainPromo {
+    min-height: 200px;
+    padding: 2rem;
+  }
+  .promoTitle {
+    font-size: 2rem;
+  }
+}
