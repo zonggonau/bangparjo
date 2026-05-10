@@ -138,6 +138,17 @@ export default function SettingsPage() {
               <h3 style={sectionTitle}>Profit Margins (Tiered Markup)</h3>
               <p style={sectionSub}>Automatic markup based on product base cost from global suppliers.</p>
             </div>
+            
+            <div style={{ ...cardStyle, marginBottom: '1.5rem' }}>
+               <div style={formRow}>
+                <div>
+                  <label style={labelStyle}>Default Flat Margin (%)</label>
+                  <span style={{ fontSize: '0.7rem', color: '#71717a' }}>Fallback margin if no tiers match</span>
+                </div>
+                <input type="number" value={draft.markupPct} onChange={e => setDraft({...draft, markupPct: Number(e.target.value)})} style={inputStyle} />
+              </div>
+            </div>
+
             <div style={{ ...cardStyle, gap: '1rem' }}>
               {draft.marginTiers?.map((tier, idx) => (
                 <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#fafafa', padding: '1rem', borderRadius: '8px', border: '1px solid #f4f4f5' }}>

@@ -190,7 +190,7 @@ export default function CartPage() {
             <div className={styles.summaryItems}>
               {items.map((item) => {
                 const rawCjPrice = Number(item.sellPrice);
-                const price = isNaN(rawCjPrice) ? 0 : calculateFinalPrice(rawCjPrice);
+                const price = isNaN(rawCjPrice) ? 0 : calculateFinalPrice(rawCjPrice, settings);
                 return (
                   <div key={`${item.pid}-${item.selectedVid || 'no-vid'}`} className={styles.summaryItem}>
                     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>

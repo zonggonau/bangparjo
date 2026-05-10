@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     // For simplicity, we'll update existing and create missing ones
     const variantOperations = cjProduct.variants.map(v => {
       const baseCost = Number(v.variantSellPrice);
-      const sellingPrice = calculateFinalPrice(baseCost, settings);
+      const sellingPrice = baseCost; // Use base cost, frontend will apply dynamic margin
 
       return prisma.variant.upsert({
         where: { cjId: v.vid },

@@ -53,17 +53,20 @@ export const metadata: Metadata = {
 
 import { Providers } from "@/components/Providers";
 import Analytics from "@/components/Analytics";
+import { getDBStoreSettings } from "@/lib/pricing";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialSettings = await getDBStoreSettings();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <Analytics />
-        <Providers>
+        <Providers initialSettings={initialSettings}>
           {children}
         </Providers>
       </body>

@@ -83,7 +83,7 @@ export async function POST(req: Request) {
             size: '', 
             weight: v.variantWeight || 0,
             baseCost: v.variantSellPrice,
-            sellingPrice: calculateFinalPrice(v.variantSellPrice, settings),
+            sellingPrice: v.variantSellPrice, // Store original cost, frontend will calculate margin dynamically
             inventory: 100, 
             image: v.variantImage || cjProduct.productImage
           }))

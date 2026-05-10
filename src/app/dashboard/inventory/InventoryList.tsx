@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, CSSProperties } from 'react';
 import Image from 'next/image';
+import { calculateFinalPrice } from '@/lib/pricing';
+import { useSettings } from '@/context/SettingsContext';
 
 interface Variant {
   id: string;
@@ -28,6 +30,7 @@ export default function InventoryList({ initialProducts }: { initialProducts: an
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
+  const { settings } = useSettings();
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -305,7 +308,9 @@ export default function InventoryList({ initialProducts }: { initialProducts: an
                                 </td>
                                 <td style={innerTd}>${v.baseCost.toFixed(2)}</td>
                                 <td style={innerTd}>
-                                  <span style={{ color: '#16a34a', fontWeight: 600 }}>${v.sellingPrice.toFixed(2)}</span>
+                                  <span style={{ color: '#16a34a', fontWeight: 600 }}>
+                                    ${calculateFinalPrice(v.sellingPrice, settings).toFixed(2)}
+                                  </span>
                                 </td>
                                 <td style={innerTd}>
                                   <span style={{ 

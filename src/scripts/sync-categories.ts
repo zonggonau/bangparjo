@@ -6,27 +6,27 @@ import slugify from 'slugify';
 const prisma = new PrismaClient();
 
 async function syncCategories() {
-  console.log('🚀 Memulai sinkronisasi kategori dari CJ Dropshipping...');
+  console.log('🚀 Starting category synchronization from global supplier...');
 
   try {
     const response = await getCategories();
 
     if (!response.success) {
-      throw new Error(`Gagal mengambil kategori: ${response.message}`);
+      throw new Error(`Failed to fetch categories: ${response.message}`);
     }
 
     const categories = response.data as any[];
-    console.log(`📦 Ditemukan ${categories.length} kategori utama.`);
+    console.log(`📦 Found ${categories.length} main categories.`);
 
     let count = 0;
 
     for (const cat of categories) {
       const catId = cat.categoryFirstId;
       if (!catId) {
-        console.warn('⚠️ Melewati kategori tanpa ID:', cat.categoryFirstName);
+        console.warn('⚠️ Skipping category without ID:', cat.categoryFirstName);
         continue;
       }
-      // 1. Upsert Kategori Utama (Level 1)
+      // 1. Upsert Main Category (Level 1)
       const catName = cat.categoryFirstName || 'Unknown Category';
       const level1 = await prisma.category.upsert({
         where: { cjId: catId },
@@ -39,7 +39,7 @@ async function syncCategories() {
       });
       count++;
 
-      // 2. Cek Sub-Kategori (Level 2)
+      // 2. Check Sub-Categories (Level 2)
       const level2List = cat.categoryFirstList || [];
       if (Array.isArray(level2List)) {
         for (const sub of level2List) {
@@ -59,7 +59,7 @@ async function syncCategories() {
           });
           count++;
 
-          // 3. Cek Sub-Sub-Kategori (Level 3)
+          // 3. Check Sub-Sub-Categories (Level 3)
           const level3List = sub.categorySecondList || [];
           if (Array.isArray(level3List)) {
             for (const subSub of level3List) {
@@ -84,9 +84,9 @@ async function syncCategories() {
       }
     }
 
-    console.log(`✅ Sinkronisasi selesai! Total ${count} kategori berhasil disimpan/diperbarui.`);
+    console.log(`✅ Synchronization complete! Total ${count} categories saved/updated.`);
   } catch (error) {
-    console.error('❌ Error saat sinkronisasi:', error);
+    console.error('❌ Error during synchronization:', error);
   } finally {
     await prisma.$disconnect();
   }
