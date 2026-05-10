@@ -23,15 +23,20 @@ export default async function HomeBestSellers() {
   }));
 
   // 2. Supplement with API if DB is empty or has few items
-  if (mainProducts.length < 4) {
-    const mainRes = await getProducts({ pageSize: 10, keyWord: 'popular product' });
-    const apiProducts = mainRes.success && mainRes.data ? mainRes.data.list : [];
-    
-    // Merge without duplicates
-    const pids = new Set(mainProducts.map(p => p.pid));
-    apiProducts.forEach((p: any) => {
-      if (!pids.has(p.pid)) mainProducts.push(p);
-    });
+  // 2. Supplement with API ONLY if DB is empty and ignore errors
+  if (mainProducts.length < 1) {
+    try {
+      const mainRes = await getProducts({ pageSize: 10, keyWord: 'popular product' });
+      if (mainRes.success && mainRes.data) {
+        const apiProducts = mainRes.data.list;
+        const pids = new Set(mainProducts.map(p => p.pid));
+        apiProducts.forEach((p: any) => {
+          if (!pids.has(p.pid)) mainProducts.push(p);
+        });
+      }
+    } catch (e) {
+      console.warn('[HomeBestSellers] CJ API Fallback failed, showing empty or DB only.');
+    }
   }
 
   if (mainProducts.length === 0) return null;

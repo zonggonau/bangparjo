@@ -14,10 +14,21 @@ import HomeFashion from '@/components/home-sections/HomeFashion';
 import HomeBeauty from '@/components/home-sections/HomeBeauty';
 import styles from './page.module.css';
 import Link from 'next/link';
+import { prisma } from '@/lib/db';
+import JsonLd from '@/components/JsonLd';
 
 export const metadata = {
-  title: 'bangparjo.shop — Global Shopping, Best Prices',
-  description: 'Find thousands of curated global products at the best prices. Fashion, Electronics, Beauty, and much more. Worldwide shipping.',
+  title: 'bangparjo.shop — Pusat Belanja Global Terpercaya',
+  description: 'Temukan ribuan produk global terbaik dengan harga termurah di Indonesia. Fashion, Elektronik, Kecantikan, dan lainnya. Pengiriman ke seluruh dunia.',
+  openGraph: {
+    title: 'bangparjo.shop — Pusat Belanja Global Terpercaya',
+    description: 'Beli produk global favorit Anda langsung ke Indonesia dengan harga terbaik.',
+    images: ['/logo-banner.png'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/logo-banner.png'],
+  }
 };
 
 async function getCategoryProducts(categoryName: string, keywords: string[], cjCategoryId: string) {
@@ -39,11 +50,18 @@ async function getCategoryProducts(categoryName: string, keywords: string[], cjC
     categoryName: categoryName,
   }));
 
+  // Supplement with API only if strictly necessary and ignore errors
   if (products.length < 5) {
-    const res = await getProducts({ categoryId: cjCategoryId, pageSize: 10 });
-    const apiProducts = res.success && res.data ? res.data.list : [];
-    const pids = new Set(products.map(p => p.pid));
-    apiProducts.forEach((p: any) => { if (!pids.has(p.pid)) products.push(p); });
+    try {
+      const res = await getProducts({ categoryId: cjCategoryId, pageSize: 10 });
+      if (res.success && res.data) {
+        const apiProducts = res.data.list;
+        const pids = new Set(products.map(p => p.pid));
+        apiProducts.forEach((p: any) => { if (!pids.has(p.pid)) products.push(p); });
+      }
+    } catch (e) {
+      console.warn(`[Homepage] CJ API Fallback failed for ${categoryName}, using DB only.`);
+    }
   }
 
   return products.slice(0, 10);
@@ -57,8 +75,37 @@ export default async function Home({
   const { q } = await searchParams;
 
   if (q) {
-    const mainRes = await getProducts({ pageSize: 40, keyWord: q });
-    const mainProducts = mainRes.success && mainRes.data ? mainRes.data.list : [];
+    let mainProducts: any[] = [];
+    try {
+      const mainRes = await getProducts({ pageSize: 40, keyWord: q });
+      if (mainRes.success && mainRes.data) {
+        mainProducts = mainRes.data.list;
+      }
+    } catch (e) {
+      console.warn(`[Search] CJ API failed for query "${q}", falling back to DB.`);
+    }
+
+    if (mainProducts.length === 0) {
+      const dbProducts = await prisma.product.findMany({
+        where: {
+          OR: [
+            { name: { contains: q, mode: 'insensitive' } },
+            { description: { contains: q, mode: 'insensitive' } },
+          ]
+        },
+        include: { variants: true },
+        take: 40
+      });
+      mainProducts = dbProducts.map(p => ({
+        pid: p.cjId,
+        productName: p.name,
+        productNameEn: p.name,
+        productImage: p.images[0],
+        bigImage: p.images[0],
+        sellPrice: p.variants[0]?.sellingPrice || 0,
+        categoryName: 'Search Result',
+      }));
+    }
 
     return (
       <div className={styles.page}>
@@ -89,6 +136,7 @@ export default async function Home({
   // ===== HOMEPAGE WITH SKELETONS =====
   return (
     <div className={styles.page}>
+      <JsonLd />
       <Suspense fallback={<div className="skeleton" style={{ height: '600px', width: '100%' }} />}>
         <HomeHero />
       </Suspense>

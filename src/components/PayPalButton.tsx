@@ -25,7 +25,7 @@ export default function PayPalButton({ amount, orderId, onSuccess }: PayPalButto
 
   return (
     <div style={{ width: '100%', marginTop: '1rem' }}>
-      <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "USD" }}>
+      <PayPalScriptProvider options={{ clientId: PAYPAL_CLIENT_ID, currency: "USD" }}>
         <PayPalButtons
           style={{ layout: "vertical", shape: "rect", label: "pay" }}
           createOrder={(data, actions) => {

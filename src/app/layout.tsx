@@ -20,10 +20,10 @@ export const metadata: Metadata = {
     siteName: 'bangparjo.shop',
     images: [
       {
-        url: '/next.svg', // Replace with actual logo/banner later
+        url: '/logo-banner.png',
         width: 1200,
         height: 630,
-        alt: 'bangparjo.shop Banner',
+        alt: 'bangparjo.shop — Pusat Belanja Global Terpercaya',
       },
     ],
     locale: 'id_ID',
@@ -32,8 +32,8 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'bangparjo.shop — Global Shopping, Best Prices',
-    description: 'Your trusted global dropshipping marketplace with worldwide shipping.',
-    images: ['/next.svg'],
+    description: 'Beli produk global favorit Anda langsung ke Indonesia dengan harga terbaik.',
+    images: ['/logo-banner.png'],
   },
   robots: {
     index: true,

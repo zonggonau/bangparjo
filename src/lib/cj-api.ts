@@ -1,12 +1,14 @@
 // ── Throttle (Server-side Only) ──────────────────────────────────────────
 let lastRequestAt = 0;
-const MIN_INTERVAL_MS = 1100; // 1.1s for safety
+const MIN_INTERVAL_MS = 1500; // Increased to 1.5s for stability
 
 async function waitForSlot(): Promise<void> {
   const now = Date.now();
   const wait = Math.max(0, lastRequestAt + MIN_INTERVAL_MS - now);
   lastRequestAt = now + wait;
-  if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait));
+  if (wait > 0) {
+    await new Promise(resolve => setTimeout(resolve, wait));
+  }
 }
 
 // ── Simple Cache (In-Memory) ────────────────────────────────────────────────
@@ -22,6 +24,18 @@ function getCache(key: string) {
 
 function setCache(key: string, data: any) {
   apiCache.set(key, { data, expiry: Date.now() + CACHE_TTL });
+}
+
+export function slugify(text: string) {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')     // Replace spaces with -
+    .replace(/[^\w-]+/g, '')  // Remove all non-word chars
+    .replace(/--+/g, '-')     // Replace multiple - with single -
+    .replace(/^-+/, '')       // Trim - from start of text
+    .replace(/-+$/, '');      // Trim - from end of text
 }
 
 
@@ -188,7 +202,7 @@ export async function cjFetch<T>(
   }
 
   let retryCount = 0;
-  const maxRetries = 3;
+  const maxRetries = 5; // Increased to 5 retries
 
   while (retryCount < maxRetries) {
     try {
@@ -230,10 +244,15 @@ export async function cjFetch<T>(
         }
       }
 
+      // Handle QPS Limit
       if (!data.success && !data.result && (data.code === 1600100 || data.message?.includes('QPS limit'))) {
         retryCount++;
-        const wait = 1500 * retryCount;
-        console.warn(`[CJ API] QPS Limit on ${endpoint}. Retrying in ${wait}ms...`);
+        // Exponential backoff with jitter: 2s, 4s, 8s, 16s...
+        const baseWait = Math.pow(2, retryCount) * 1000;
+        const jitter = Math.random() * 1000;
+        const wait = baseWait + jitter;
+        
+        console.warn(`[CJ API] QPS Limit on ${endpoint}. Retrying in ${Math.round(wait)}ms (Attempt ${retryCount}/${maxRetries})...`);
         await new Promise(resolve => setTimeout(resolve, wait));
         continue;
       }
@@ -245,10 +264,11 @@ export async function cjFetch<T>(
     } catch (err: any) {
       if (retryCount >= maxRetries) throw err;
       retryCount++;
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const wait = 2000 * retryCount;
+      await new Promise(resolve => setTimeout(resolve, wait));
     }
   }
-  throw new Error(`Failed to fetch from CJ after ${maxRetries} retries`);
+  throw new Error(`Failed to fetch from CJ after ${maxRetries} retries due to QPS limits or network errors`);
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -256,7 +276,7 @@ export interface CJProduct {
   pid: string;
   productName: string;
   productNameEn: string;
-  productSku: string;
+  productSku?: string;
   productImage: string;
   bigImage?: string;
   sellPrice: number;
@@ -285,6 +305,7 @@ export interface CJVariant {
   variantWidth?: number; // mm
   variantHeight?: number; // mm
   variantVolume?: number; // mm3
+  inventory?: number;
 }
 
 export interface CJProductDetail extends CJProduct {
@@ -350,14 +371,62 @@ export async function getShippingFee(params: {
   endCountryCode: string;
   startCountryCode?: string;
 }): Promise<CJResponse<CJShippingMethod[]>> {
-  return cjFetch('/v1/logistic/freightCalculate', {
-    method: 'POST',
-    body: JSON.stringify({
-      startCountryCode: params.startCountryCode || 'CN',
-      endCountryCode: params.endCountryCode,
-      products: params.products,
-    }),
-  });
+  // ── Cache Hack ──────────────────────────────────────────────────────────
+  // Shipping rates don't change that often. Cache for 10 minutes.
+  const cacheKey = `shipping_${JSON.stringify(params.products)}_${params.endCountryCode}`;
+  const cached = getCache(cacheKey);
+  if (cached) return { success: true, result: true, data: cached, code: 200, message: 'Cached', requestId: 'cached' };
+
+  try {
+    const res = await cjFetch<CJShippingMethod[]>('/v1/logistic/freightCalculate', {
+      method: 'POST',
+      body: JSON.stringify({
+        startCountryCode: params.startCountryCode || 'CN',
+        endCountryCode: params.endCountryCode,
+        products: params.products,
+      }),
+    });
+
+    if (res.success && res.data) {
+      // Cache for 10 mins (shorter than products)
+      apiCache.set(cacheKey, { data: res.data, expiry: Date.now() + (1000 * 60 * 10) });
+    }
+    
+    // Fallback logic if API fails due to QPS or other issues
+    if (!res.success) {
+       console.warn(`[Shipping API] Failed for ${cacheKey}: ${res.message}. Returning fallback.`);
+       // Minimal fallback to avoid blocking checkout
+       return {
+         success: true,
+         result: true,
+         data: [{
+           logisticName: 'Standard Shipping (Fallback)',
+           logisticPrice: 5.00,
+           logisticAging: '15-25',
+           logisticId: 'fallback'
+         }] as any,
+         code: 200,
+         message: 'Fallback',
+         requestId: 'fallback'
+       };
+    }
+
+    return res;
+  } catch (err) {
+    return {
+      success: true,
+      result: true,
+      data: [{
+        logisticName: 'Economy Shipping',
+        logisticPrice: 4.50,
+        logisticAging: '20-30',
+        logisticId: 'fallback-err'
+      }] as any,
+      code: 200,
+      message: 'Network Fallback',
+      requestId: 'error-fallback'
+    };
+  }
 }
 
 // ── Orders ────────────────────────────────────────────────────────────────
@@ -382,9 +451,9 @@ export async function createOrder(orderData: {
     body: JSON.stringify({
       fromCountryCode: orderData.fromCountryCode || 'CN',
       logisticName: orderData.logisticName || 'CJPacket Ordinary',
-      payType: orderData.payType || 3,
       platform: 'Api',
       ...orderData,
+      payType: orderData.payType || 3, // Default to 3 if not provided
     }),
   });
 }

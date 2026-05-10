@@ -20,7 +20,7 @@ export default async function StoreLayout({
           <Navbar />
           <main>{children}</main>
           <Footer />
-          <AIChat />
+          {/* <AIChat /> */}
           <LiveSales />
         </div>
       </CartProvider>

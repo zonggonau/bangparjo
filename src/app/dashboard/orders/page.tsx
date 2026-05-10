@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, CSSProperties } from 'react';
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -186,9 +186,9 @@ export default function OrdersPage() {
   );
 }
 
-const tabBtn = { padding: '0.4rem 1rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem', transition: '0.1s' };
-const thStyle = { padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#71717a' };
-const tdStyle = { padding: '1rem', color: '#09090b' };
+const tabBtn: CSSProperties = { padding: '0.4rem 1rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem', transition: '0.1s' };
+const thStyle: CSSProperties = { padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#71717a' };
+const tdStyle: CSSProperties = { padding: '1rem', color: '#09090b' };
 
 function getStatusColor(status: string) {
   switch (status) {

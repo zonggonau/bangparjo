@@ -38,9 +38,26 @@ export async function processFulfillment(orderNum: string) {
     throw new Error('Order data (CJ payload) is missing or invalid');
   }
 
-  // 3. Call CJ API to create and pay (payType 2)
-  console.log(`[Fulfillment] Auto-processing order ${orderNum} to CJ...`);
-  const res = await createOrder(cjPayload);
+  // 3. Get payType from settings (2: Auto Balance, 3: Manual Pay on CJ)
+  const payTypeSetting = await prisma.storeSetting.findUnique({
+    where: { key: 'cjPayType' }
+  });
+  
+  let payType = 3; // Default to manual
+  if (payTypeSetting?.value) {
+    try {
+      payType = JSON.parse(payTypeSetting.value);
+    } catch {
+      payType = parseInt(payTypeSetting.value) || 3;
+    }
+  }
+
+  // 4. Call CJ API to create (and pay if payType 2)
+  console.log(`[Fulfillment] Processing order ${orderNum} to CJ with payType ${payType}...`);
+  const res = await createOrder({
+    ...(cjPayload as any),
+    payType: payType
+  });
 
   if (res.success) {
     const cjOrderId = (res.data as any)?.cjOrderId || (res.data as any)?.orderId;

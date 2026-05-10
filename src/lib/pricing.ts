@@ -15,6 +15,7 @@ export interface StoreSettings {
   storeName: string;
   adminEmail: string;
   taxPct: number;
+  cjPayType?: number; // 2: Balance, 3: Manual
 }
 
 export const DEFAULT_SETTINGS: StoreSettings = {
@@ -41,6 +42,7 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   storeName: 'BangParjo Shop',
   adminEmail: '',
   taxPct: 0,
+  cjPayType: 3,
 };
 
 /**
@@ -67,7 +69,7 @@ export async function getDBStoreSettings(): Promise<StoreSettings> {
     });
 
     if (dbTiers.length > 0) {
-      settings.marginTiers = dbTiers.map(t => ({
+      settings.marginTiers = dbTiers.map((t: any) => ({
         min: t.minPrice,
         max: t.maxPrice,
         pct: t.marginPercent

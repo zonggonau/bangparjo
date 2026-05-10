@@ -29,12 +29,18 @@ export default async function HomeElectronics() {
     categoryName: 'Electronics',
   }));
 
-  // 2. API Fallback
-  if (mainProducts.length < 5) {
-    const res = await getProducts({ categoryId: 'D9E66BF8-4E81-4CAB-A425-AEDEC5FBFBF2', pageSize: 10 });
-    const apiProducts = res.success && res.data ? res.data.list : [];
-    const pids = new Set(mainProducts.map(p => p.pid));
-    apiProducts.forEach((p: any) => { if (!pids.has(p.pid)) mainProducts.push(p); });
+  // 2. API Fallback (Only if DB is empty and ignore errors)
+  if (mainProducts.length < 1) {
+    try {
+      const res = await getProducts({ categoryId: 'D9E66BF8-4E81-4CAB-A425-AEDEC5FBFBF2', pageSize: 10 });
+      if (res.success && res.data) {
+        const apiProducts = res.data.list;
+        const pids = new Set(mainProducts.map(p => p.pid));
+        apiProducts.forEach((p: any) => { if (!pids.has(p.pid)) mainProducts.push(p); });
+      }
+    } catch (e) {
+      console.warn('[HomeElectronics] CJ API Fallback failed, using DB only.');
+    }
   }
 
   if (mainProducts.length === 0) return null;

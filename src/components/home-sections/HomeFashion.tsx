@@ -29,12 +29,18 @@ export default async function HomeFashion() {
     categoryName: 'Fashion',
   }));
 
-  // 2. API Fallback
-  if (mainProducts.length < 5) {
-    const res = await getProducts({ categoryId: 'A8B2857F-622E-4464-98F1-4F23F976D1F6', pageSize: 10 });
-    const apiProducts = res.success && res.data ? res.data.list : [];
-    const pids = new Set(mainProducts.map(p => p.pid));
-    apiProducts.forEach((p: any) => { if (!pids.has(p.pid)) mainProducts.push(p); });
+  // 2. API Fallback (Only if DB is empty and ignore errors)
+  if (mainProducts.length < 1) {
+    try {
+      const res = await getProducts({ categoryId: 'A8B2857F-622E-4464-98F1-4F23F976D1F6', pageSize: 10 });
+      if (res.success && res.data) {
+        const apiProducts = res.data.list;
+        const pids = new Set(mainProducts.map(p => p.pid));
+        apiProducts.forEach((p: any) => { if (!pids.has(p.pid)) mainProducts.push(p); });
+      }
+    } catch (e) {
+      console.warn('[HomeFashion] CJ API Fallback failed, using DB only.');
+    }
   }
 
   if (mainProducts.length === 0) return null;

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, CSSProperties } from 'react';
 import Image from 'next/image';
 
 interface Variant {
@@ -12,6 +12,7 @@ interface Variant {
   inventory: number;
   sellingPrice: number;
   baseCost: number;
+  image: string | null;
 }
 
 interface Product {
@@ -341,12 +342,12 @@ export default function InventoryList({ initialProducts }: { initialProducts: an
   );
 }
 
-const thStyle = { padding: '1rem', fontWeight: 600, color: '#71717a', borderBottom: '1px solid #e4e4e7' };
-const tdStyle = { padding: '1rem', borderBottom: '1px solid #e4e4e7' };
-const innerTh = { padding: '0.75rem', color: '#71717a', fontWeight: 600, fontSize: '0.75rem' };
-const innerTd = { padding: '0.75rem' };
+const thStyle: CSSProperties = { padding: '1rem', fontWeight: 600, color: '#71717a', borderBottom: '1px solid #e4e4e7' };
+const tdStyle: CSSProperties = { padding: '1rem', borderBottom: '1px solid #e4e4e7' };
+const innerTh: CSSProperties = { padding: '0.75rem', color: '#71717a', fontWeight: 600, fontSize: '0.75rem' };
+const innerTd: CSSProperties = { padding: '0.75rem' };
 
-const btnSecondary = {
+const btnSecondary: CSSProperties = {
   background: 'white',
   border: '1px solid #e4e4e7',
   padding: '6px 12px',
@@ -357,11 +358,11 @@ const btnSecondary = {
   display: 'flex',
   alignItems: 'center',
   gap: '4px',
-  position: 'relative' as const,
+  position: 'relative',
   zIndex: 99
 };
 
-const btnDanger = {
+const btnDanger: CSSProperties = {
   background: '#fef2f2',
   border: '1px solid #fee2e2',
   color: '#dc2626',
@@ -369,6 +370,6 @@ const btnDanger = {
   borderRadius: '6px',
   fontSize: '0.75rem',
   cursor: 'pointer',
-  position: 'relative' as const,
+  position: 'relative',
   zIndex: 99
 };

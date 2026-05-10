@@ -15,8 +15,7 @@ export async function POST(req: Request) {
     // 1. Log the webhook event
     await prisma.webhookLog.create({
       data: {
-        type: type || 'UNKNOWN',
-        event: messageType || 'UNKNOWN',
+        eventType: type || messageType || 'UNKNOWN',
         payload: payload,
       },
     });

@@ -3,8 +3,9 @@ import ProductView from './ProductView';
 import { Metadata } from 'next';
 import { prisma } from '@/lib/db';
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
+export async function generateMetadata({ params }: { params: Promise<{ id: string, slug?: string[] }> }): Promise<Metadata> {
+  const resolvedParams = await params;
+  const id = resolvedParams.slug?.[0] || resolvedParams.id;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
   
   // Try local DB first
@@ -90,8 +91,9 @@ function ProductSchema({ product }: { product: any }) {
   );
 }
 
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function Page({ params }: { params: Promise<{ id: string, slug?: string[] }> }) {
+  const resolvedParams = await params;
+  const id = resolvedParams.slug?.[0] || resolvedParams.id;
   
   // 1. Try fetching from Local DB first
   const localProduct = await prisma.product.findUnique({
@@ -137,16 +139,26 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   }
 
   // 2. Fallback to CJ API if not imported
-  const productRes = await getProductDetails(id);
+  try {
+    const productRes = await getProductDetails(id);
 
-  return (
-    <>
-      {productRes.success && <ProductSchema product={productRes.data} />}
+    return (
+      <>
+        {productRes.success && <ProductSchema product={productRes.data} />}
+        <ProductView 
+          id={id} 
+          initialData={productRes.success ? productRes.data : null}
+          initialError={!productRes.success ? productRes.message : null}
+        />
+      </>
+    );
+  } catch (error: any) {
+    return (
       <ProductView 
         id={id} 
-        initialData={productRes.success ? productRes.data : null}
-        initialError={!productRes.success ? productRes.message : null}
+        initialData={null}
+        initialError="Product not found or connection to CJ failed."
       />
-    </>
-  );
+    );
+  }
 }

@@ -66,10 +66,10 @@ export async function POST(req: Request) {
             ${v.vid},
             ${v.variantSku},
             ${v.variantKey || ''},
-            ${v.variantStandardValue || ''},
+            ${v.variantNameEn || ''},
             ${v.variantWeight || 0},
-            ${v.variantPrice || 0},
-            ${(v.variantPrice || 0) * 1.3}, 
+            ${v.variantSellPrice || 0},
+            ${(v.variantSellPrice || 0) * 1.3}, 
             ${v.inventory || 0},
             ${v.variantImage || p.productImage}
           )

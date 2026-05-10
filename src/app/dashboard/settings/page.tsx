@@ -117,6 +117,16 @@ export default function SettingsPage() {
                 <label style={labelStyle}>Default Tax Rate (%)</label>
                 <input type="number" value={draft.taxPct} onChange={e => setDraft({...draft, taxPct: Number(e.target.value)})} style={inputStyle} />
               </div>
+              <div style={formRow}>
+                <div>
+                  <label style={labelStyle}>CJ Payment Method</label>
+                  <span style={{ fontSize: '0.7rem', color: '#71717a' }}>Metode pembayaran ke pihak CJ</span>
+                </div>
+                <select value={draft.cjPayType} onChange={e => setDraft({...draft, cjPayType: Number(e.target.value)})} style={inputStyle}>
+                  <option value={2}>Otomatis (Potong Saldo CJ)</option>
+                  <option value={3}>Manual (Bayar di Dashboard CJ)</option>
+                </select>
+              </div>
             </div>
           </section>
         )}

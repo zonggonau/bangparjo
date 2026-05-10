@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { CJProduct, parseProductName, parseProductImage } from '@/lib/cj-api';
+import { CJProduct, parseProductName, parseProductImage, slugify } from '@/lib/cj-api';
 import { calculateFinalPrice } from '@/lib/pricing';
 import { useSettings } from '@/context/SettingsContext';
 import styles from './ProductCard.module.css';
@@ -55,6 +55,9 @@ export default function ProductCard({ product, priority = false }: { product: CJ
   };
 
   const displayName = parseProductName(product.productNameEn || product.productName);
+  const prettySlug = slugify(displayName);
+  const productUrl = `/product/${product.pid}/${prettySlug}`;
+
   const productImage = parseProductImage(product.bigImage || product.productImage);
   const originalCjPrice = typeof product.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product.sellPrice));
   const finalPrice = calculateFinalPrice(originalCjPrice, settings);
@@ -78,7 +81,7 @@ export default function ProductCard({ product, priority = false }: { product: CJ
       </div>
 
       {/* Image */}
-      <Link href={`/product/${product.pid}`} className={styles.imageContainer}>
+      <Link href={productUrl} className={styles.imageContainer}>
         <Image
           src={productImage}
           alt={displayName}
@@ -102,7 +105,7 @@ export default function ProductCard({ product, priority = false }: { product: CJ
         >
           {product.categoryName}
         </Link>
-        <Link href={`/product/${product.pid}`}>
+        <Link href={productUrl}>
           <h3 className={styles.productName}>{displayName}</h3>
         </Link>
 

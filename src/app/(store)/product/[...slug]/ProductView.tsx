@@ -1,6 +1,6 @@
 'use client';
 
-import { getProductDetails, getProducts, parseProductName, parseProductImage } from '@/lib/cj-api';
+import { getProductDetails, getProducts, parseProductName, parseProductImage, slugify } from '@/lib/cj-api';
 import { calculateFinalPrice } from '@/lib/pricing';
 
 function formatUSD(price: number | string) {
@@ -56,6 +56,7 @@ export default function ProductView({ id, initialData, initialError }: { id: str
   });
   const [isFavorite, setIsFavorite] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const displayName = product ? parseProductName(product.productNameEn || product.productName) : '';
 
   // Initialize selected image and variant from initialData
   useEffect(() => {
@@ -192,7 +193,17 @@ export default function ProductView({ id, initialData, initialError }: { id: str
         setSelectedImage(variantImg);
       }
     }
-  }, [selectedVariant]);
+
+    // Update URL dynamically to include title and selected options for SEO
+    if (product && selectedVariant) {
+      const titleSlug = slugify(displayName);
+      const variantName = selectedVariant.variantNameEn || selectedVariant.variantKey || '';
+      const variantSlug = slugify(variantName);
+      
+      const newUrl = `/product/${id}/${titleSlug}/${variantSlug}`;
+      window.history.replaceState(null, '', newUrl);
+    }
+  }, [selectedVariant, id, product, displayName]);
 
   const [shippingRates, setShippingRates] = useState<any[]>([]);
   const [shippingLoading, setShippingLoading] = useState(false);
@@ -206,10 +217,9 @@ export default function ProductView({ id, initialData, initialError }: { id: str
 
   useEffect(() => {
     if (selectedVariant?.vid) {
-      const fetchShipping = async () => {
+      const timer = setTimeout(async () => {
         setShippingLoading(true);
         try {
-          // Use the calculated originalPrice for subtotal to check against free shipping threshold
           const res = await fetch(`/api/shipping-rates?vid=${selectedVariant.vid}&quantity=1&country=ID&subtotal=${originalPrice}`);
           const data = await res.json();
           if (data.success) {
@@ -220,10 +230,11 @@ export default function ProductView({ id, initialData, initialError }: { id: str
         } finally {
           setShippingLoading(false);
         }
-      };
-      fetchShipping();
+      }, 500); // 500ms debounce
+
+      return () => clearTimeout(timer);
     }
-  }, [selectedVariant, originalPrice]); // Added originalPrice to dependency array
+  }, [selectedVariant?.vid, originalPrice]);
 
   const handleAddToCart = () => {
     // Pass the selected variant so checkout can send a valid vid to CJ API
@@ -299,8 +310,6 @@ export default function ProductView({ id, initialData, initialError }: { id: str
     </div>
   );
 
-  const displayName = parseProductName(product.productNameEn || product.productName);
-  
   // Build deduplicated image list — bigImage always first (cover)
   const allImages = (() => {
     const raw = [
