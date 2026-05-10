@@ -21,7 +21,7 @@ export default function PrivacyPage() {
           </section>
           <section>
             <h2>3. Information Sharing</h2>
-            <p>We share your shipping information with our suppliers (CJ Dropshipping) and shipping carriers to fulfill your orders. We do not sell your personal data to third parties.</p>
+            <p>We share your shipping information with our global suppliers and shipping carriers to fulfill your orders. We do not sell your personal data to third parties.</p>
           </section>
           <section>
             <h2>4. Data Security</h2>

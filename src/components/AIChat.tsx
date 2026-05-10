@@ -64,13 +64,13 @@ export default function AIChat() {
   return (
     <>
       <button className={styles.chatButton} onClick={() => setIsOpen(!isOpen)}>
-        {isOpen ? '✕' : '🤖 Parjo Asisten'}
+        {isOpen ? '✕' : '🤖 Parjo Assistant'}
       </button>
 
       {isOpen && (
         <div className={styles.chatWindow}>
           <div className={styles.chatHeader}>
-            <h4>Parjo Asisten</h4>
+            <h4>Parjo Assistant</h4>
             <span>Online 24/7</span>
           </div>
           <div className={styles.chatMessages} ref={scrollRef}>

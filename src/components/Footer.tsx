@@ -16,7 +16,7 @@ export default function Footer() {
             <span className="logoText">{settings.storeName}</span>
           </div>
           <p className="footerDesc">
-            Your trusted global dropshipping marketplace.
+            Your trusted global e-commerce marketplace.
             Thousands of curated products from around the world, delivered straight to your door — wherever you are.
           </p>
           <div className="footerSocials">

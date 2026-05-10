@@ -18,11 +18,11 @@ import { prisma } from '@/lib/db';
 import JsonLd from '@/components/JsonLd';
 
 export const metadata = {
-  title: 'bangparjo.shop — Pusat Belanja Global Terpercaya',
-  description: 'Temukan ribuan produk global terbaik dengan harga termurah di Indonesia. Fashion, Elektronik, Kecantikan, dan lainnya. Pengiriman ke seluruh dunia.',
+  title: 'bangparjo.shop — Trusted Global E-commerce Platform',
+  description: 'Find thousands of the best global products at the lowest prices. Fashion, Electronics, Beauty, and more. Worldwide shipping available.',
   openGraph: {
-    title: 'bangparjo.shop — Pusat Belanja Global Terpercaya',
-    description: 'Beli produk global favorit Anda langsung ke Indonesia dengan harga terbaik.',
+    title: 'bangparjo.shop — Trusted Global E-commerce Platform',
+    description: 'Shop your favorite global products directly with the best prices and worldwide shipping.',
     images: ['/logo-banner.png'],
   },
   twitter: {
@@ -202,7 +202,7 @@ export default async function Home({
           <div className={styles.featureGrid}>
             {[
               { icon: '🌍', title: 'Worldwide Shipping', desc: 'We ship to 200+ countries. Your package, delivered anywhere on the globe.' },
-              { icon: '💯', title: 'Genuine Products', desc: 'All products sourced from verified CJ Dropshipping suppliers.' },
+              { icon: '💯', title: 'Genuine Products', desc: 'All products sourced from verified global suppliers.' },
               { icon: '🔒', title: 'Secure Payments', desc: 'Encrypted transactions with multiple payment methods accepted.' },
               { icon: '📞', title: '24/7 Support', desc: 'Our customer service team is always here to help you.' },
             ].map((feature) => (

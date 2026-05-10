@@ -17,7 +17,7 @@ export default function TermsPage() {
           </section>
           <section>
             <h2>2. Description of Service</h2>
-            <p>bangparjo.shop is an e-commerce platform that provides curated global products through a dropshipping model. We facilitate orders and shipping directly from our global suppliers to your doorstep.</p>
+            <p>bangparjo.shop is an e-commerce platform that provides curated global products. We facilitate orders and shipping directly from our global suppliers to your doorstep.</p>
           </section>
           <section>
             <h2>3. Pricing and Payments</h2>

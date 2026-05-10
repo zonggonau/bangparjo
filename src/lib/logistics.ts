@@ -6,7 +6,7 @@ export interface ShippingRate extends CJShippingMethod {
 }
 
 /**
- * Mengambil opsi pengiriman terbaik untuk satu item ke Indonesia.
+ * Fetches the best shipping options for a specific item to a target country.
  */
 export async function getBestShippingRates(
   vid: string,
@@ -36,7 +36,7 @@ export async function getBestShippingRates(
 }
 
 /**
- * Helper untuk mendapatkan metode pengiriman termurah.
+ * Helper to retrieve the cheapest available shipping method.
  */
 export async function getCheapestShipping(vid: string, quantity: number = 1) {
   const rates = await getBestShippingRates(vid, quantity);

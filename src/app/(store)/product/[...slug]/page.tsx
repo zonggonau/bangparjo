@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
   if (!p) return { title: 'Product Not Found' };
 
-  const cleanDesc = p.desc?.substring(0, 160).replace(/<[^>]*>?/gm, '') || 'Beli produk terbaik di bangparjo.shop';
+  const cleanDesc = p.desc?.substring(0, 160).replace(/<[^>]*>?/gm, '') || 'Shop the best products at bangparjo.shop';
 
   return {
     title: `${p.name} | BangParjo Shop`,

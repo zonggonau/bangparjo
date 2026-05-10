@@ -467,7 +467,7 @@ export default function ProductView({ id, initialData, initialError }: { id: str
               <div className={styles.shippingHeader}>
                 <span className={styles.shippingIcon}>🚚</span>
                 <div>
-                  <strong>Shipping to Indonesia</strong>
+                  <strong>Worldwide Shipping</strong>
                   {shippingLoading ? (
                     <p className={styles.loadingText}>Calculating rates...</p>
                   ) : shippingRates.length > 0 ? (

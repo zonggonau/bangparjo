@@ -23,7 +23,7 @@ export default async function SupportPage() {
     <div>
       <header style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '1.875rem', fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>Support Center</h1>
-        <p style={{ color: '#71717a', marginTop: '0.25rem', fontSize: '0.9rem' }}>Track customer inquiries and CJ Dropshipping disputes.</p>
+        <p style={{ color: '#71717a', marginTop: '0.25rem', fontSize: '0.9rem' }}>Track customer inquiries and supplier disputes.</p>
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
@@ -93,9 +93,9 @@ export default async function SupportPage() {
             )}
           </div>
           <div style={{ marginTop: '1.5rem', background: '#eff6ff', padding: '1rem', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
-            <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: '#1e40af' }}>💡 Tips Dispute</h4>
+            <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: '#1e40af' }}>💡 Dispute Tips</h4>
             <p style={{ fontSize: '0.75rem', color: '#1e40af', lineHeight: 1.4, margin: 0 }}>
-              Selalu sertakan foto label pengiriman dan kondisi produk yang rusak saat membuka dispute di CJ untuk mempercepat proses refund.
+              Always include photos of the shipping label and damaged product when opening a dispute to speed up the refund process.
             </p>
           </div>
         </section>

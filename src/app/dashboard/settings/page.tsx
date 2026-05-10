@@ -27,14 +27,14 @@ export default function SettingsPage() {
       });
       if (res.ok) {
         await refreshSettings();
-        setMessage('✅ Konfigurasi berhasil disimpan');
+        setMessage('✅ Settings saved successfully');
         setTimeout(() => setMessage(''), 3000);
       } else {
-        setMessage('❌ Gagal menyimpan pengaturan');
+        setMessage('❌ Failed to save settings');
       }
     } catch (err) {
       console.error(err);
-      setMessage('❌ Terjadi kesalahan sistem');
+      setMessage('❌ System error occurred');
     } finally {
       setSaving(false);
     }
@@ -44,7 +44,7 @@ export default function SettingsPage() {
     <div>
       <div style={{ marginBottom: '2.5rem' }}>
         <h1 style={{ fontSize: '1.875rem', fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>Settings</h1>
-        <p style={{ color: '#71717a', marginTop: '0.25rem', fontSize: '0.9rem' }}>Kelola konfigurasi toko dan kebijakan profit Anda.</p>
+        <p style={{ color: '#71717a', marginTop: '0.25rem', fontSize: '0.9rem' }}>Manage your store configuration and profit policies.</p>
       </div>
 
       {/* Shadcn Style Tabs Switcher */}
@@ -70,7 +70,7 @@ export default function SettingsPage() {
           <section style={sectionStyle}>
             <div style={{ marginBottom: '1.5rem' }}>
               <h3 style={sectionTitle}>Store Information</h3>
-              <p style={sectionSub}>Nama toko dan pengaturan mata uang global.</p>
+              <p style={sectionSub}>Store name and global currency settings.</p>
             </div>
             <div style={cardStyle}>
               <div style={formRow}>
@@ -96,20 +96,20 @@ export default function SettingsPage() {
           <section style={sectionStyle}>
             <div style={{ marginBottom: '1.5rem' }}>
               <h3 style={sectionTitle}>Logistics & Tax</h3>
-              <p style={sectionSub}>Konfigurasi biaya pengiriman tambahan dan pajak toko.</p>
+              <p style={sectionSub}>Configure additional shipping fees and store taxes.</p>
             </div>
             <div style={cardStyle}>
               <div style={formRow}>
                 <div>
                   <label style={labelStyle}>Shipping Markup ({draft.currencySymbol})</label>
-                  <span style={{ fontSize: '0.7rem', color: '#71717a' }}>Biaya tambahan pada tarif CJ</span>
+                  <span style={{ fontSize: '0.7rem', color: '#71717a' }}>Extra fee on top of carrier rates</span>
                 </div>
                 <input type="number" value={draft.shippingMarkup} onChange={e => setDraft({...draft, shippingMarkup: Number(e.target.value)})} style={inputStyle} />
               </div>
               <div style={formRow}>
                 <div>
                   <label style={labelStyle}>Free Shipping Over ({draft.currencySymbol})</label>
-                  <span style={{ fontSize: '0.7rem', color: '#71717a' }}>Ambang batas gratis ongkir</span>
+                  <span style={{ fontSize: '0.7rem', color: '#71717a' }}>Threshold for free shipping</span>
                 </div>
                 <input type="number" value={draft.freeShippingThreshold} onChange={e => setDraft({...draft, freeShippingThreshold: Number(e.target.value)})} style={inputStyle} />
               </div>
@@ -120,11 +120,11 @@ export default function SettingsPage() {
               <div style={formRow}>
                 <div>
                   <label style={labelStyle}>CJ Payment Method</label>
-                  <span style={{ fontSize: '0.7rem', color: '#71717a' }}>Metode pembayaran ke pihak CJ</span>
+                  <span style={{ fontSize: '0.7rem', color: '#71717a' }}>How to pay the global supplier (CJ)</span>
                 </div>
                 <select value={draft.cjPayType} onChange={e => setDraft({...draft, cjPayType: Number(e.target.value)})} style={inputStyle}>
-                  <option value={2}>Otomatis (Potong Saldo CJ)</option>
-                  <option value={3}>Manual (Bayar di Dashboard CJ)</option>
+                  <option value={2}>Automatic (Deduct from CJ Balance)</option>
+                  <option value={3}>Manual (Pay in CJ Dashboard)</option>
                 </select>
               </div>
             </div>
@@ -136,7 +136,7 @@ export default function SettingsPage() {
           <section style={sectionStyle}>
             <div style={{ marginBottom: '1.5rem' }}>
               <h3 style={sectionTitle}>Profit Margins (Tiered Markup)</h3>
-              <p style={sectionSub}>Markup otomatis berdasarkan harga modal produk dari CJ Dropshipping.</p>
+              <p style={sectionSub}>Automatic markup based on product base cost from global suppliers.</p>
             </div>
             <div style={{ ...cardStyle, gap: '1rem' }}>
               {draft.marginTiers?.map((tier, idx) => (

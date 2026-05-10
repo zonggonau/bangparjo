@@ -60,7 +60,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!category) return { title: 'Category Not Found' };
 
   const title = `${category.name} — Shop Global Best Sellers`;
-  const description = `Temukan koleksi ${category.name} terbaik dengan pengiriman ke seluruh Indonesia. Harga bersaing dan kualitas terjamin di BangParjo Shop.`;
+  const description = `Find the best collection of ${category.name} with worldwide shipping. Competitive prices and guaranteed quality at BangParjo Shop.`;
 
   return {
     title,

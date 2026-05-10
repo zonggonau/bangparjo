@@ -14,12 +14,12 @@ export default function FeaturedSection() {
               <span className={styles.highlight}>Easy & Trusted</span>
             </h2>
             <p className={styles.desc}>
-              bangparjo.shop is your global dropshipping marketplace, bringing you the best products
+              bangparjo.shop is your global e-commerce marketplace, bringing you the best products
               from around the world — delivered straight to your door, no matter where you are.
             </p>
             <div className={styles.highlights}>
               {[
-                { icon: '✅', text: 'Verified suppliers via CJ Dropshipping' },
+                { icon: '✅', text: 'Verified global suppliers' },
                 { icon: '✅', text: 'Worldwide shipping to 200+ countries' },
                 { icon: '✅', text: 'Competitive prices, guaranteed quality' },
                 { icon: '✅', text: 'Responsive 24/7 customer support' },

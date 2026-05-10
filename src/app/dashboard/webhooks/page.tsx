@@ -14,7 +14,7 @@ export default async function WebhookLogsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700, margin: 0 }}>Webhook Logs</h1>
-          <p style={{ color: '#71717a', marginTop: '0.25rem' }}>Monitor real-time events from CJ Dropshipping.</p>
+          <p style={{ color: '#71717a', marginTop: '0.25rem' }}>Monitor real-time events from global suppliers.</p>
         </div>
         <Link href="/dashboard" style={{ color: '#09090b', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 500 }}>
           ← Back to Dashboard

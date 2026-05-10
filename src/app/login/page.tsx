@@ -15,7 +15,7 @@ export default function AdminLoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Cek apakah sudah ada admin di sistem
+    // Check if an admin already exists in the system
     fetch('/api/admin/setup/check')
       .then(res => res.json())
       .then(data => setIsFirstSetup(!data.isSetup))
@@ -35,13 +35,13 @@ export default function AdminLoginPage() {
       });
 
       if (result?.error) {
-        setError('Email atau password salah');
+        setError('Invalid email or password');
       } else {
         router.push('/dashboard');
         router.refresh();
       }
     } catch (err) {
-      setError('Terjadi kesalahan. Silakan coba lagi.');
+      setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -61,14 +61,14 @@ export default function AdminLoginPage() {
 
       const data = await res.json();
       if (res.ok) {
-        setSuccess('Super Admin berhasil dibuat! Silakan login.');
+        setSuccess('Super Admin created successfully! Please login.');
         setIsFirstSetup(false);
-        // Biarkan email tetap terisi untuk memudahkan login
+        // Keep email filled for easy login
       } else {
-        setError(data.error || 'Gagal melakukan setup');
+        setError(data.error || 'Setup failed');
       }
     } catch (err) {
-      setError('Terjadi kesalahan sistem');
+      setError('System error occurred');
     } finally {
       setLoading(false);
     }
@@ -102,8 +102,8 @@ export default function AdminLoginPage() {
           </h1>
           <p style={{ color: '#6b7280', fontSize: '0.9rem', margin: '0.5rem 0 0' }}>
             {isFirstSetup 
-              ? 'Buat akun Super Admin pertama Anda' 
-              : 'Masuk ke Dashboard BangParjo'}
+              ? 'Create your first Super Admin account' 
+              : 'Sign in to BangParjo Dashboard'}
           </p>
         </div>
 
@@ -130,7 +130,7 @@ export default function AdminLoginPage() {
         <form onSubmit={isFirstSetup ? handleSetup : handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {isFirstSetup && (
             <div>
-              <label style={labelStyle}>NAMA LENGKAP</label>
+              <label style={labelStyle}>FULL NAME</label>
               <input 
                 type="text" required value={name} onChange={(e) => setName(e.target.value)}
                 placeholder="Super Admin"
@@ -139,7 +139,7 @@ export default function AdminLoginPage() {
             </div>
           )}
           <div>
-            <label style={labelStyle}>ALAMAT EMAIL</label>
+            <label style={labelStyle}>EMAIL ADDRESS</label>
             <input 
               type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@bangparjo.shop"
@@ -164,13 +164,13 @@ export default function AdminLoginPage() {
               boxShadow: `0 4px 12px ${isFirstSetup ? 'rgba(16, 185, 129, 0.2)' : 'rgba(249, 115, 22, 0.2)'}`
             }}
           >
-            {loading ? 'Memproses...' : (isFirstSetup ? 'Selesaikan Setup' : 'Masuk Dashboard')}
+            {loading ? 'Processing...' : (isFirstSetup ? 'Complete Setup' : 'Login to Dashboard')}
           </button>
         </form>
 
         {!isFirstSetup && (
           <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: '0.75rem', marginTop: '2rem' }}>
-            Lupa password? Hubungi tim IT BangParjo
+            Forgot password? Contact BangParjo IT Team
           </p>
         )}
       </div>

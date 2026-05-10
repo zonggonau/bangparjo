@@ -14,8 +14,8 @@ export default function JsonLd() {
       "@type": "ContactPoint",
       "telephone": "+62-812-3456-7890",
       "contactType": "customer service",
-      "areaServed": "ID",
-      "availableLanguage": "Indonesian"
+      "areaServed": "Global",
+      "availableLanguage": "English"
     }
   };
 

@@ -311,7 +311,7 @@ function CheckoutContent() {
                   {/* Midtrans - Only for Indonesia */}
                   {formData.country === 'ID' && (
                     <div className={styles.methodGroup} style={{ maxWidth: '480px', width: '100%' }}>
-                      <span className={styles.methodLabel}>🇮🇩 Pembayaran Lokal (VA, QRIS, Kartu)</span>
+                      <span className={styles.methodLabel}>🇮🇩 Local Payment (VA, QRIS, Card)</span>
                       <MidtransPayment 
                         orderId={orderId!} 
                         amount={finalAmount} 

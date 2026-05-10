@@ -6,8 +6,8 @@ export const metadata: Metadata = {
     template: '%s | bangparjo.shop',
     default: 'bangparjo.shop — Global Shopping, Best Prices',
   },
-  description: "Your trusted global dropshipping marketplace. Cari produk global terbaik dengan harga termurah di Indonesia. Fashion, electronics, beauty, and more.",
-  keywords: "dropshipping, online shopping Indonesia, global products, fashion, electronics, beauty, worldwide shipping, belanja online, impor produk",
+  description: "Your trusted global e-commerce marketplace. Find the best global products at the lowest prices. Fashion, electronics, beauty, and more.",
+  keywords: "e-commerce, online shopping, global products, fashion, electronics, beauty, worldwide shipping, online store, imported products",
   authors: [{ name: 'bangparjo' }],
   metadataBase: new URL('https://bangparjo.shop'),
   alternates: {
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "bangparjo.shop — Global Shopping, Best Prices",
-    description: "Your trusted global dropshipping marketplace with worldwide shipping. Belanja produk global jadi lebih mudah.",
+    description: "Your trusted global e-commerce marketplace with worldwide shipping. Global shopping made easy.",
     url: 'https://bangparjo.shop',
     siteName: 'bangparjo.shop',
     images: [
@@ -23,16 +23,16 @@ export const metadata: Metadata = {
         url: '/logo-banner.png',
         width: 1200,
         height: 630,
-        alt: 'bangparjo.shop — Pusat Belanja Global Terpercaya',
+        alt: 'bangparjo.shop — Trusted Global Shopping Hub',
       },
     ],
-    locale: 'id_ID',
+    locale: 'en_US',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'bangparjo.shop — Global Shopping, Best Prices',
-    description: 'Beli produk global favorit Anda langsung ke Indonesia dengan harga terbaik.',
+    description: 'Buy your favorite global products with worldwide shipping at the best prices.',
     images: ['/logo-banner.png'],
   },
   robots: {

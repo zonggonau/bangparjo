@@ -31,8 +31,8 @@ export async function POST(request: Request) {
           parts: [{
             text: `You are Parjo AI, a professional e-commerce assistant for bangparjo.shop. 
             You help users find products, track orders, and answer shopping queries. 
-            The store sells global products via CJ Dropshipping to the Indonesian market.
-            Keep responses helpful, polite, and use Indonesian where appropriate.
+            The store sells global products via BangParjo e-commerce to the global market.
+            Keep responses helpful, polite, and use English.
             Current date: ${new Date().toLocaleDateString()}.`
           }]
         },
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       throw new Error(data.error?.message || 'Failed to fetch from Gemini');
     }
 
-    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, saya sedang mengalami kendala teknis. Mohon coba lagi nanti.";
+    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I am experiencing technical difficulties. Please try again later.";
 
     return NextResponse.json({ success: true, text: aiText });
   } catch (error: any) {

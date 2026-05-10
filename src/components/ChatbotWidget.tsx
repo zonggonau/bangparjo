@@ -30,11 +30,11 @@ export default function ChatbotWidget() {
     setTimeout(() => {
       let botResponse = "Sorry, our assistants are currently busy. Please leave a message on the Contact Us page so our team can get back to you.";
       
-      if (userMsg.toLowerCase().includes('bayar') || userMsg.toLowerCase().includes('payment')) {
+      if (userMsg.toLowerCase().includes('payment')) {
         botResponse = "We accept payments via Midtrans (QRIS, VA Bank) for Indonesia and PayPal for international customers.";
-      } else if (userMsg.toLowerCase().includes('kirim') || userMsg.toLowerCase().includes('shipping') || userMsg.toLowerCase().includes('ongkir')) {
+      } else if (userMsg.toLowerCase().includes('shipping')) {
         botResponse = "We ship worldwide! Shipping costs will be automatically calculated when you enter your address on the Checkout page.";
-      } else if (userMsg.toLowerCase().includes('track') || userMsg.toLowerCase().includes('resi')) {
+      } else if (userMsg.toLowerCase().includes('track') || userMsg.toLowerCase().includes('order')) {
         botResponse = "You can track your order on the 'Track My Order' page using your order number.";
       }
 
