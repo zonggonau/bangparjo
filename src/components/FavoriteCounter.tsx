@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import styles from './CartCounter.module.css';
 
 export default function FavoriteCounter() {
   const [totalFavorites, setTotalFavorites] = useState(0);
@@ -12,7 +11,6 @@ export default function FavoriteCounter() {
       const validFavs = favs.filter((f: any) => typeof f === 'object' && f !== null && f.pid);
       setTotalFavorites(validFavs.length);
       
-      // Auto cleanup corrupted/string favorites
       if (validFavs.length !== favs.length) {
         localStorage.setItem('favorites', JSON.stringify(validFavs));
       }
@@ -21,7 +19,6 @@ export default function FavoriteCounter() {
     updateCount();
 
     window.addEventListener('favoritesUpdated', updateCount);
-    // Also listen to storage events across tabs
     window.addEventListener('storage', (e) => {
       if (e.key === 'favorites') updateCount();
     });
@@ -34,5 +31,10 @@ export default function FavoriteCounter() {
 
   if (totalFavorites === 0) return null;
 
-  return <span className={styles.counter}>{totalFavorites}</span>;
+  return (
+    <span className="absolute -top-2 -right-2 w-5 h-5 bg-primary text-black text-[10px] font-black flex items-center justify-center rounded-full shadow-lg shadow-primary/20 animate-in zoom-in duration-300">
+      {totalFavorites}
+    </span>
+  );
 }
+

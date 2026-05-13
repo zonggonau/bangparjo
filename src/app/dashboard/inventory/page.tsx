@@ -15,15 +15,16 @@ export default async function InventoryPage() {
   });
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-      <header style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+    <div className="space-y-12 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 style={{ fontSize: '1.875rem', fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>Inventory Manager</h1>
-          <p style={{ color: '#71717a', marginTop: '0.25rem', fontSize: '0.9rem' }}>Manage imported products and their variants.</p>
+          <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-tight">Inventory Manager</h2>
+          <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em] mt-1">Manage imported products, variants, and real-time stock levels.</p>
         </div>
-      </header>
+      </div>
 
       <InventoryList initialProducts={products} />
     </div>
   );
 }
+

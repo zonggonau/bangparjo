@@ -2,10 +2,9 @@ import { getProducts } from '@/lib/cj-api';
 import { prisma } from '@/lib/db';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
-import styles from '@/app/(store)/page.module.css';
+import { Smartphone, ArrowRight } from 'lucide-react';
 
 export default async function HomeElectronics() {
-  // 1. Try local DB
   const dbProducts = await prisma.product.findMany({
     take: 10,
     where: { 
@@ -29,7 +28,6 @@ export default async function HomeElectronics() {
     categoryName: 'Electronics',
   }));
 
-  // 2. API Fallback (Only if DB is empty and ignore errors)
   if (mainProducts.length < 1) {
     try {
       const res = await getProducts({ categoryId: 'D9E66BF8-4E81-4CAB-A425-AEDEC5FBFBF2', pageSize: 10 });
@@ -46,16 +44,27 @@ export default async function HomeElectronics() {
   if (mainProducts.length === 0) return null;
 
   return (
-    <section className={styles.section}>
-      <div className="container">
-        <div className="sectionHeader">
-          <div>
-            <h2 className="sectionTitle">📱 Electronics & Gadgets</h2>
-            <p className="sectionSubtitle">The latest tech at your fingertips</p>
+    <section className="py-20 relative overflow-hidden bg-white/2">
+      <div className="container px-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div className="max-w-xl">
+            <div className="flex items-center gap-2 mb-4">
+              <Smartphone size={16} className="text-accent-light" />
+              <span className="text-[10px] font-black text-accent-light uppercase tracking-[0.2em]">Next-Gen Tech</span>
+            </div>
+            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase italic leading-[0.9]">
+              SMART <span className="text-accent-light text-glow">GADGETS</span>
+            </h2>
           </div>
-          <Link href="/category/consumer-electronics-D9E66BF8-4E81-4CAB-A425-AEDEC5FBFBF2" className="viewAllLink">View All →</Link>
+          <Link 
+            href="/category/consumer-electronics-D9E66BF8-4E81-4CAB-A425-AEDEC5FBFBF2" 
+            className="group flex items-center gap-2 text-[10px] font-black text-white/40 uppercase tracking-[0.2em] hover:text-white transition-colors"
+          >
+            Shop All Tech <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+          </Link>
         </div>
-        <div className="productGrid">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-8">
           {mainProducts.map((product) => (
             <ProductCard key={product.pid} product={product} />
           ))}
@@ -64,3 +73,4 @@ export default async function HomeElectronics() {
     </section>
   );
 }
+

@@ -2,6 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import { useSettings } from '@/context/SettingsContext';
+import { 
+  Store, 
+  Truck, 
+  TrendingUp, 
+  Save, 
+  Loader2, 
+  CheckCircle2, 
+  AlertCircle,
+  Plus,
+  Trash2,
+  DollarSign,
+  Info,
+  ShieldCheck,
+  Mail,
+  Coins,
+  Percent,
+  ChevronRight,
+  Package
+} from 'lucide-react';
 
 type TabType = 'profile' | 'logistics' | 'margins';
 
@@ -27,181 +46,327 @@ export default function SettingsPage() {
       });
       if (res.ok) {
         await refreshSettings();
-        setMessage('✅ Settings saved successfully');
+        setMessage('SUCCESS: System configuration updated.');
         setTimeout(() => setMessage(''), 3000);
       } else {
-        setMessage('❌ Failed to save settings');
+        setMessage('FAILURE: Storage operation rejected.');
       }
     } catch (err) {
       console.error(err);
-      setMessage('❌ System error occurred');
+      setMessage('ERROR: Critical system fault.');
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div>
-      <div style={{ marginBottom: '2.5rem' }}>
-        <h1 style={{ fontSize: '1.875rem', fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>Settings</h1>
-        <p style={{ color: '#71717a', marginTop: '0.25rem', fontSize: '0.9rem' }}>Manage your store configuration and profit policies.</p>
+    <div className="space-y-12 animate-in fade-in duration-700">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-tight">Configuration Hub</h2>
+          <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em] mt-1">Fine-tuning local and global store parameters.</p>
+        </div>
       </div>
 
-      {/* Shadcn Style Tabs Switcher */}
-      <div style={{ display: 'inline-flex', background: '#f4f4f5', padding: '0.25rem', borderRadius: '8px', marginBottom: '2rem' }}>
+      {/* Tabs */}
+      <div className="bg-white/5 border border-white/5 p-1.5 rounded-2xl flex flex-wrap items-center gap-1 w-fit">
         <button 
           onClick={() => setActiveTab('profile')}
-          style={{ ...tabBtn, background: activeTab === 'profile' ? 'white' : 'transparent', color: activeTab === 'profile' ? '#09090b' : '#71717a', boxShadow: activeTab === 'profile' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
-        >Store Profile</button>
+          className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'profile' ? 'bg-primary text-black shadow-lg shadow-primary/10' : 'text-white/20 hover:text-white hover:bg-white/5'}`}
+        >
+          <Store size={14} /> Store Profile
+        </button>
         <button 
           onClick={() => setActiveTab('logistics')}
-          style={{ ...tabBtn, background: activeTab === 'logistics' ? 'white' : 'transparent', color: activeTab === 'logistics' ? '#09090b' : '#71717a', boxShadow: activeTab === 'logistics' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
-        >Logistics & Tax</button>
+          className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'logistics' ? 'bg-primary text-black shadow-lg shadow-primary/10' : 'text-white/20 hover:text-white hover:bg-white/5'}`}
+        >
+          <Truck size={14} /> Logistics & Tax
+        </button>
         <button 
           onClick={() => setActiveTab('margins')}
-          style={{ ...tabBtn, background: activeTab === 'margins' ? 'white' : 'transparent', color: activeTab === 'margins' ? '#09090b' : '#71717a', boxShadow: activeTab === 'margins' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
-        >Profit Margin</button>
+          className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'margins' ? 'bg-primary text-black shadow-lg shadow-primary/10' : 'text-white/20 hover:text-white hover:bg-white/5'}`}
+        >
+          <TrendingUp size={14} /> Profit Margin
+        </button>
       </div>
 
-      <div style={{ maxWidth: '1000px', minHeight: '400px' }}>
+      <div className="max-w-4xl space-y-12 pb-32">
         
         {/* TAB 1: Store Profile */}
         {activeTab === 'profile' && (
-          <section style={sectionStyle}>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h3 style={sectionTitle}>Store Information</h3>
-              <p style={sectionSub}>Store name and global currency settings.</p>
+          <div className="bg-white/5 border border-white/5 rounded-[3rem] overflow-hidden backdrop-blur-xl">
+            <div className="px-12 py-10 border-b border-white/5 bg-white/[0.02]">
+              <h3 className="text-xl font-black text-white uppercase italic tracking-tighter flex items-center gap-3">
+                <ShieldCheck size={20} className="text-primary" /> Store Credentials
+              </h3>
             </div>
-            <div style={cardStyle}>
-              <div style={formRow}>
-                <label style={labelStyle}>Store Name</label>
-                <input type="text" value={draft.storeName} onChange={e => setDraft({...draft, storeName: e.target.value})} style={inputStyle} />
+            <div className="p-12 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-4 flex items-center gap-2">
+                    <Package size={10} /> Brand Identity
+                  </label>
+                  <input 
+                    type="text" 
+                    value={draft.storeName || ''} 
+                    onChange={e => setDraft({...draft, storeName: e.target.value})} 
+                    placeholder="Enter Store Name"
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold text-white focus:outline-none focus:border-primary/50 transition-all"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-4 flex items-center gap-2">
+                    <Mail size={10} /> Administrative Email
+                  </label>
+                  <input 
+                    type="email" 
+                    value={draft.adminEmail || ''} 
+                    onChange={e => setDraft({...draft, adminEmail: e.target.value})} 
+                    placeholder="admin@store.com"
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold text-white focus:outline-none focus:border-primary/50 transition-all"
+                  />
+                </div>
               </div>
-              <div style={formRow}>
-                <label style={labelStyle}>Contact Email</label>
-                <input type="email" value={draft.adminEmail} onChange={e => setDraft({...draft, adminEmail: e.target.value})} style={inputStyle} />
-              </div>
-              <div style={formRow}>
-                <label style={labelStyle}>Display Currency</label>
-                <select value={draft.currencySymbol} onChange={e => setDraft({...draft, currencySymbol: e.target.value})} style={inputStyle}>
-                  {['USD', 'IDR', 'EUR'].map(c => <option key={c} value={c}>{c}</option>)}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-4 flex items-center gap-2">
+                  <Coins size={10} /> Currency Nexus
+                </label>
+                <select 
+                  value={draft.currencySymbol || 'USD'} 
+                  onChange={e => setDraft({...draft, currencySymbol: e.target.value})} 
+                  className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold text-white appearance-none focus:outline-none focus:border-primary/50 transition-all cursor-pointer"
+                >
+                  {['USD', 'IDR', 'EUR', 'GBP'].map(c => <option key={c} value={c} className="bg-[#07070e]">{c}</option>)}
                 </select>
               </div>
             </div>
-          </section>
+          </div>
         )}
 
         {/* TAB 2: Logistics & Tax */}
         {activeTab === 'logistics' && (
-          <section style={sectionStyle}>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h3 style={sectionTitle}>Logistics & Tax</h3>
-              <p style={sectionSub}>Configure additional shipping fees and store taxes.</p>
+          <div className="bg-white/5 border border-white/5 rounded-[3rem] overflow-hidden backdrop-blur-xl">
+             <div className="px-12 py-10 border-b border-white/5 bg-white/[0.02]">
+              <h3 className="text-xl font-black text-white uppercase italic tracking-tighter flex items-center gap-3">
+                <Truck size={20} className="text-primary" /> Supply Chain Logic
+              </h3>
             </div>
-            <div style={cardStyle}>
-              <div style={formRow}>
-                <div>
-                  <label style={labelStyle}>Shipping Markup ({draft.currencySymbol})</label>
-                  <span style={{ fontSize: '0.7rem', color: '#71717a' }}>Extra fee on top of carrier rates</span>
+            <div className="p-12 space-y-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
+                      Shipping Markup ({draft.currencySymbol})
+                    </label>
+                    <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest italic">Added on top of CJ freight rates.</p>
+                  </div>
+                  <input 
+                    type="number" 
+                    value={draft.shippingMarkup ?? 0} 
+                    onChange={e => setDraft({...draft, shippingMarkup: Number(e.target.value)})} 
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-sm font-black text-white focus:outline-none focus:border-primary/50 transition-all"
+                  />
                 </div>
-                <input type="number" value={draft.shippingMarkup} onChange={e => setDraft({...draft, shippingMarkup: Number(e.target.value)})} style={inputStyle} />
-              </div>
-              <div style={formRow}>
-                <div>
-                  <label style={labelStyle}>Free Shipping Over ({draft.currencySymbol})</label>
-                  <span style={{ fontSize: '0.7rem', color: '#71717a' }}>Threshold for free shipping</span>
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
+                      Free Ship Threshold ({draft.currencySymbol})
+                    </label>
+                    <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest italic">0 to disable free logistics.</p>
+                  </div>
+                  <input 
+                    type="number" 
+                    value={draft.freeShippingThreshold ?? 0} 
+                    onChange={e => setDraft({...draft, freeShippingThreshold: Number(e.target.value)})} 
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-sm font-black text-white focus:outline-none focus:border-primary/50 transition-all"
+                  />
                 </div>
-                <input type="number" value={draft.freeShippingThreshold} onChange={e => setDraft({...draft, freeShippingThreshold: Number(e.target.value)})} style={inputStyle} />
               </div>
-              <div style={formRow}>
-                <label style={labelStyle}>Default Tax Rate (%)</label>
-                <input type="number" value={draft.taxPct} onChange={e => setDraft({...draft, taxPct: Number(e.target.value)})} style={inputStyle} />
-              </div>
-              <div style={formRow}>
-                <div>
-                  <label style={labelStyle}>CJ Payment Method</label>
-                  <span style={{ fontSize: '0.7rem', color: '#71717a' }}>How to pay the global supplier (CJ)</span>
+
+              <div className="h-px bg-white/5" />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
+                      Global Tax Rate (%)
+                    </label>
+                    <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest italic">Applied during terminal checkout.</p>
+                  </div>
+                  <input 
+                    type="number" 
+                    value={draft.taxPct ?? 0} 
+                    onChange={e => setDraft({...draft, taxPct: Number(e.target.value)})} 
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-sm font-black text-white focus:outline-none focus:border-primary/50 transition-all"
+                  />
                 </div>
-                <select value={draft.cjPayType} onChange={e => setDraft({...draft, cjPayType: Number(e.target.value)})} style={inputStyle}>
-                  <option value={2}>Automatic (Deduct from CJ Balance)</option>
-                  <option value={3}>Manual (Pay in CJ Dashboard)</option>
-                </select>
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
+                      CJ Settlement Mode
+                    </label>
+                    <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest italic">Fulfillment payment protocol.</p>
+                  </div>
+                  <select 
+                    value={draft.cjPayType ?? 2} 
+                    onChange={e => setDraft({...draft, cjPayType: Number(e.target.value)})} 
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold text-white appearance-none focus:outline-none focus:border-primary/50 transition-all cursor-pointer"
+                  >
+                    <option value={2} className="bg-[#07070e]">AUTOMATIC: CJ BALANCE</option>
+                    <option value={3} className="bg-[#07070e]">MANUAL: EXTERNAL SETTLEMENT</option>
+                  </select>
+                </div>
               </div>
             </div>
-          </section>
+          </div>
         )}
 
         {/* TAB 3: Profit Margins */}
         {activeTab === 'margins' && (
-          <section style={sectionStyle}>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h3 style={sectionTitle}>Profit Margins (Tiered Markup)</h3>
-              <p style={sectionSub}>Automatic markup based on product base cost from global suppliers.</p>
-            </div>
-            
-            <div style={{ ...cardStyle, marginBottom: '1.5rem' }}>
-               <div style={formRow}>
-                <div>
-                  <label style={labelStyle}>Default Flat Margin (%)</label>
-                  <span style={{ fontSize: '0.7rem', color: '#71717a' }}>Fallback margin if no tiers match</span>
-                </div>
-                <input type="number" value={draft.markupPct} onChange={e => setDraft({...draft, markupPct: Number(e.target.value)})} style={inputStyle} />
+          <div className="space-y-12">
+            <div className="bg-white/5 border border-white/5 rounded-[3rem] overflow-hidden backdrop-blur-xl">
+              <div className="px-12 py-10 border-b border-white/5 bg-white/[0.02]">
+                <h3 className="text-xl font-black text-white uppercase italic tracking-tighter flex items-center gap-3">
+                  <Percent size={20} className="text-primary" /> Base Margin Strategy
+                </h3>
+              </div>
+              <div className="p-12">
+                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-8 bg-black/20 rounded-[2rem] border border-white/5">
+                   <div className="space-y-1">
+                     <label className="text-sm font-black text-white uppercase italic tracking-tight">Global Markup (%)</label>
+                     <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] italic">Fallback profit margin for all assets.</p>
+                   </div>
+                   <div className="flex items-center gap-4">
+                     <input 
+                       type="number" 
+                       value={draft.markupPct ?? 0} 
+                       onChange={e => setDraft({...draft, markupPct: Number(e.target.value)})} 
+                       className="w-32 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-lg font-black text-primary text-center focus:outline-none focus:border-primary transition-all" 
+                     />
+                     <span className="text-xl font-black text-white/10">%</span>
+                   </div>
+                 </div>
               </div>
             </div>
 
-            <div style={{ ...cardStyle, gap: '1rem' }}>
-              {draft.marginTiers?.map((tier, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#fafafa', padding: '1rem', borderRadius: '8px', border: '1px solid #f4f4f5' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
-                    <span style={{ color: '#71717a', fontSize: '0.85rem' }}>$</span>
-                    <input type="number" value={tier.min} onChange={e => {
-                        const nt = [...(draft.marginTiers || [])];
-                        nt[idx].min = Number(e.target.value);
-                        setDraft({...draft, marginTiers: nt});
-                      }} style={{ ...inputStyle, width: '100px' }} 
-                    />
-                    <span style={{ color: '#a1a1aa', fontSize: '0.85rem' }}>to</span>
-                    <span style={{ color: '#71717a', fontSize: '0.85rem' }}>$</span>
-                    <input type="number" value={tier.max === null ? '' : tier.max} placeholder="Max" onChange={e => {
-                        const nt = [...(draft.marginTiers || [])];
-                        nt[idx].max = e.target.value === '' ? null : Number(e.target.value);
-                        setDraft({...draft, marginTiers: nt});
-                      }} style={{ ...inputStyle, width: '100px' }} 
-                    />
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Markup</span>
-                      <input type="number" value={tier.pct} onChange={e => {
-                          const nt = [...(draft.marginTiers || [])];
-                          nt[idx].pct = Number(e.target.value);
-                          setDraft({...draft, marginTiers: nt});
-                        }} style={{ ...inputStyle, width: '70px', color: '#16a34a', fontWeight: 700, textAlign: 'center' }} 
-                      />
-                      <span style={{ fontSize: '0.85rem', color: '#16a34a', fontWeight: 700 }}>%</span>
-                    </div>
-                    <button onClick={() => setDraft({...draft, marginTiers: draft.marginTiers?.filter((_, i) => i !== idx)})} style={{ background: '#fef2f2', border: 'none', color: '#ef4444', width: '28px', height: '28px', borderRadius: '6px', cursor: 'pointer', fontWeight: 700 }}>×</button>
-                  </div>
+            <div className="bg-white/5 border border-white/5 rounded-[3rem] overflow-hidden backdrop-blur-xl">
+              <div className="px-12 py-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+                <h3 className="text-xl font-black text-white uppercase italic tracking-tighter flex items-center gap-3">
+                  <TrendingUp size={20} className="text-primary" /> Dynamic Tier Matrix
+                </h3>
+                <button 
+                  onClick={() => setDraft({...draft, marginTiers: [...(draft.marginTiers || []), { min: 0, max: null, pct: 30 }]})} 
+                  className="px-6 py-3 bg-white/5 border border-white/5 hover:border-primary/20 text-white hover:text-primary rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+                >
+                  <Plus size={14} /> Add Rule
+                </button>
+              </div>
+              <div className="p-12 space-y-6">
+                <div className="p-6 bg-primary/5 border border-primary/10 rounded-2xl flex items-start gap-4 mb-8">
+                  <Info size={18} className="text-primary shrink-0 mt-0.5" />
+                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest leading-relaxed italic">
+                    Tiered rules are evaluated sequentially. The first matching cost-range will dictate the asset&apos;s retail markup.
+                  </p>
                 </div>
-              ))}
-              <button onClick={() => setDraft({...draft, marginTiers: [...(draft.marginTiers || []), { min: 0, max: null, pct: 30 }]})} style={{ padding: '0.75rem', background: 'transparent', border: '1px dashed #d1d5db', color: '#71717a', borderRadius: '8px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}>+ Add New Tier Rule</button>
+                
+                <div className="space-y-4">
+                  {draft.marginTiers?.map((tier, idx) => (
+                    <div key={idx} className="group flex flex-col md:flex-row md:items-center gap-6 p-8 bg-black/40 border border-white/5 rounded-[2rem] hover:border-primary/20 transition-all relative overflow-hidden">
+                      <div className="absolute top-0 left-0 w-1 h-full bg-primary/20 group-hover:bg-primary transition-colors" />
+                      
+                      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div className="flex items-center gap-4">
+                          <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Base Cost:</span>
+                          <div className="flex items-center gap-3 flex-1">
+                            <div className="relative flex-1">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/20">$</span>
+                              <input 
+                                type="number" 
+                                value={tier.min ?? 0} 
+                                onChange={e => {
+                                  const nt = [...(draft.marginTiers || [])];
+                                  nt[idx].min = Number(e.target.value);
+                                  setDraft({...draft, marginTiers: nt});
+                                }} 
+                                className="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-4 py-3 text-xs font-black text-white focus:outline-none focus:border-primary transition-all" 
+                              />
+                            </div>
+                            <ChevronRight size={14} className="text-white/10" />
+                            <div className="relative flex-1">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/20">$</span>
+                              <input 
+                                type="number" 
+                                value={tier.max === null ? '' : tier.max} 
+                                placeholder="∞" 
+                                onChange={e => {
+                                  const nt = [...(draft.marginTiers || [])];
+                                  nt[idx].max = e.target.value === '' ? null : Number(e.target.value);
+                                  setDraft({...draft, marginTiers: nt});
+                                }} 
+                                className="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-4 py-3 text-xs font-black text-white placeholder:text-white/10 focus:outline-none focus:border-primary transition-all" 
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-8">
+                          <div className="flex items-center gap-4 flex-1">
+                            <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Markup:</span>
+                            <div className="flex items-center gap-3 flex-1">
+                              <input 
+                                type="number" 
+                                value={tier.pct ?? 0} 
+                                onChange={e => {
+                                  const nt = [...(draft.marginTiers || [])];
+                                  nt[idx].pct = Number(e.target.value);
+                                  setDraft({...draft, marginTiers: nt});
+                                }} 
+                                className="flex-1 bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 text-sm font-black text-primary text-center focus:outline-none focus:border-primary transition-all" 
+                              />
+                              <span className="text-xs font-black text-primary">%</span>
+                            </div>
+                          </div>
+                          
+                          <button 
+                            onClick={() => setDraft({...draft, marginTiers: draft.marginTiers?.filter((_, i) => i !== idx)})} 
+                            className="w-10 h-10 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-500 hover:text-black transition-all active:scale-95"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </section>
+          </div>
         )}
 
-        {/* Global Save Button - Sticky at bottom */}
-        <div style={{ 
-          marginTop: '2rem', padding: '1.5rem', background: '#fafafa', border: '1px solid #e4e4e7', borderRadius: '8px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', bottom: '2rem', boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-        }}>
-          <div>
-            {message && <span style={{ fontSize: '0.9rem', fontWeight: 600, color: message.includes('✅') ? '#16a34a' : '#ef4444' }}>{message}</span>}
-            {!message && <span style={{ fontSize: '0.85rem', color: '#71717a' }}>Klik simpan untuk menerapkan semua perubahan di seluruh tab.</span>}
+        {/* Global Sticky Save Bar */}
+        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 w-[calc(100%-4rem)] max-w-4xl z-50 animate-in slide-in-from-bottom-8 duration-700 delay-300">
+          <div className="bg-white/5 border border-white/10 rounded-[2.5rem] p-6 backdrop-blur-2xl shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 ring-1 ring-white/5">
+            <div className="flex items-center gap-5 ml-4">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${message ? (message.includes('SUCCESS') ? 'bg-primary/20 text-primary' : 'bg-red-500/20 text-red-500') : 'bg-white/5 text-white/20'}`}>
+                {message ? (message.includes('SUCCESS') ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />) : <Save size={20} />}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-1">System State</span>
+                <p className={`text-[11px] font-black uppercase italic tracking-widest ${message ? (message.includes('SUCCESS') ? 'text-primary' : 'text-red-500') : 'text-white'}`}>
+                  {message || 'Pending environmental updates'}
+                </p>
+              </div>
+            </div>
+            <button 
+              onClick={handleSave} 
+              disabled={saving} 
+              className="w-full md:w-auto px-12 py-5 bg-primary text-black rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+            >
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              {saving ? 'Synchronizing...' : 'Commit Changes'}
+            </button>
           </div>
-          <button onClick={handleSave} disabled={saving} style={{
-              padding: '0.6rem 1.5rem', background: '#18181b', color: 'white', border: 'none', borderRadius: '6px',
-              fontWeight: 500, fontSize: '0.875rem', cursor: saving ? 'not-allowed' : 'pointer'
-            }}>{saving ? 'Menyimpan...' : 'Save All Changes'}</button>
         </div>
 
       </div>
@@ -209,11 +374,3 @@ export default function SettingsPage() {
   );
 }
 
-const tabBtn = { padding: '0.5rem 1.25rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s' };
-const sectionStyle = { animation: 'fadeIn 0.2s ease-in-out' };
-const sectionTitle = { fontSize: '1.1rem', fontWeight: 600, margin: 0 };
-const sectionSub = { fontSize: '0.85rem', color: '#71717a', marginTop: '0.25rem' };
-const cardStyle = { display: 'grid', gap: '1.25rem', padding: '1.5rem', border: '1px solid #e4e4e7', borderRadius: '8px', background: 'white' };
-const formRow = { display: 'grid', gridTemplateColumns: '1fr 1.5fr', alignItems: 'center', gap: '1rem' };
-const labelStyle = { fontSize: '0.875rem', fontWeight: 600, color: '#09090b' };
-const inputStyle = { width: '100%', padding: '0.5rem 0.75rem', background: '#ffffff', border: '1px solid #e4e4e7', borderRadius: '6px', fontSize: '0.875rem', outline: 'none', height: '38px' };

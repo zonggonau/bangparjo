@@ -2,43 +2,50 @@
 
 import { getProductDetails, getProducts, parseProductName, parseProductImage, slugify } from '@/lib/cj-api';
 import { calculateFinalPrice } from '@/lib/pricing';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useCart } from '@/context/CartContext';
+import { useSettings } from '@/context/SettingsContext';
+import { useState, useEffect } from 'react';
+import ProductCard from '@/components/ProductCard';
+import { ProductDetailSkeleton } from '@/components/ProductSkeleton';
+import { 
+  Star, 
+  Check, 
+  Heart, 
+  ShoppingCart, 
+  Zap, 
+  Truck, 
+  Shield, 
+  Headphones, 
+  Globe, 
+  ChevronRight, 
+  Home, 
+  ArrowRight,
+  Info,
+  Clock,
+  Loader2,
+  AlertCircle
+} from 'lucide-react';
 
 function formatUSD(price: number | string) {
   const p = typeof price === 'string' ? parseFloat(price) : price;
   return isNaN(p) ? '$0.00' : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(p);
 }
 
-/**
- * Find the longest common prefix across all variant names,
- * stopping at a word boundary (space). Used to strip the
- * repeated product name so only the unique part is shown.
- */
 function stripCommonPrefix(names: string[]): string[] {
   if (names.length === 0) return [];
   if (names.length === 1) return names;
-
-  // Find common character-level prefix
   let prefix = names[0];
   for (const name of names.slice(1)) {
     let i = 0;
     while (i < prefix.length && i < name.length && prefix[i] === name[i]) i++;
     prefix = prefix.slice(0, i);
   }
-
-  // Trim to the last word boundary so we don't cut mid-word
   const lastSpace = prefix.lastIndexOf(' ');
   const safeLen = lastSpace > 0 ? lastSpace : prefix.length;
-
   return names.map(n => n.slice(safeLen).trim() || n);
 }
-import Image from 'next/image';
-import Link from 'next/link';
-import { useCart } from '@/context/CartContext';
-import { useSettings } from '@/context/SettingsContext';
-import { useState, useEffect, use } from 'react';
-import ProductCard from '@/components/ProductCard';
-import { ProductDetailSkeleton } from '@/components/ProductSkeleton';
-import styles from './product.module.css';
 
 export default function ProductView({ id, initialData, initialError }: { id: string, initialData: any, initialError: string | null }) {
   const { addToCart } = useCart();
@@ -58,10 +65,8 @@ export default function ProductView({ id, initialData, initialError }: { id: str
   const [showToast, setShowToast] = useState(false);
   const displayName = product ? parseProductName(product.productNameEn || product.productName) : '';
 
-  // Initialize selected image and variant from initialData
   useEffect(() => {
     if (initialData) {
-      // Fetch related products in background
       const keyword = initialData.categoryName || 'popular product';
       getProducts({ pageSize: 4, keyWord: keyword })
         .then(r => {
@@ -74,7 +79,6 @@ export default function ProductView({ id, initialData, initialError }: { id: str
   }, [initialData, id]);
 
   useEffect(() => {
-    // Load favorite status from localStorage
     if (id) {
       const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
       setIsFavorite(favs.some((f: any) => (typeof f === 'string' ? f === id : f.pid === id)));
@@ -85,7 +89,6 @@ export default function ProductView({ id, initialData, initialError }: { id: str
     const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
     let nextFavs;
     const isCurrentlyFav = favs.some((f: any) => (typeof f === 'string' ? f === id : f.pid === id));
-
     if (!isCurrentlyFav) {
       const favProduct = {
         pid: product.pid,
@@ -100,54 +103,36 @@ export default function ProductView({ id, initialData, initialError }: { id: str
     } else {
       nextFavs = favs.filter((f: any) => (typeof f === 'string' ? f !== id : f.pid !== id));
     }
-
     localStorage.setItem('favorites', JSON.stringify(nextFavs));
     setIsFavorite(!isCurrentlyFav);
     window.dispatchEvent(new Event('favoritesUpdated'));
   };
 
   useEffect(() => {
-    if (!id || initialData) return; // Skip if already loaded on server
-
+    if (!id || initialData) return;
     const fetchProduct = async (attempt = 0) => {
       setLoading(true);
       setError(null);
-
       try {
         const res = await getProductDetails(id);
-
         if (res.success) {
           setProduct(res.data);
-
-          // Build ordered image list: bigImage first (cover), then gallery, no duplicates
           const rawImages = [
             res.data.bigImage,
             ...(res.data.productImageSet || []),
-            ...(typeof res.data.productImage === 'string' &&
-                res.data.productImage.startsWith('[') ?
-                  JSON.parse(res.data.productImage) : [res.data.productImage]),
-          ]
-            .map((img: any) => parseProductImage(img))
-            .filter((img: string) => img && img !== '/placeholder.png');
-
-          // Deduplicate while preserving order
+            ...(typeof res.data.productImage === 'string' && res.data.productImage.startsWith('[') ? JSON.parse(res.data.productImage) : [res.data.productImage]),
+          ].map((img: any) => parseProductImage(img)).filter((img: string) => img && img !== '/placeholder.png');
           const seen = new Set<string>();
           const uniqueImages = rawImages.filter((img: string) => {
             if (seen.has(img)) return false;
             seen.add(img);
             return true;
           });
-
-          // Always set cover to bigImage (first unique image) — only on first load
           const cover = uniqueImages[0] || parseProductImage(res.data.bigImage);
           setSelectedImage(prev => prev || cover);
-
-          // Pre-select first variant
           if (res.data.variants?.length > 0) {
             setSelectedVariant(res.data.variants[0]);
           }
-
-          // Delay related-products fetch by 1.2s to respect 1 req/sec QPS limit
           const keyword = res.data.categoryName || 'popular product';
           setTimeout(() => {
             getProducts({ pageSize: 4, keyWord: keyword })
@@ -156,24 +141,16 @@ export default function ProductView({ id, initialData, initialError }: { id: str
                   setRelated(r.data.list.filter((p: any) => p.pid !== id));
                 }
               })
-              .catch(() => {/* silently ignore related-products errors */});
+              .catch(() => {});
           }, 1200);
-
         } else {
           const msg = res.message || '';
           const isQps = msg.toLowerCase().includes('too many') || msg.toLowerCase().includes('qps');
-
-          // Auto-retry once on QPS error
           if (isQps && attempt === 0) {
             await new Promise(r => setTimeout(r, 1500));
             return fetchProduct(1);
           }
-
-          setError(
-            isQps
-              ? 'Terlalu banyak permintaan. Silakan tunggu sebentar lalu refresh halaman.'
-              : msg || 'Produk tidak ditemukan'
-          );
+          setError(isQps ? 'Terlalu banyak permintaan. Silakan tunggu sebentar lalu refresh halaman.' : msg || 'Produk tidak ditemukan');
         }
       } catch {
         setError('Gagal terhubung ke toko. Periksa koneksi internet Anda.');
@@ -181,9 +158,8 @@ export default function ProductView({ id, initialData, initialError }: { id: str
         setLoading(false);
       }
     };
-
     fetchProduct();
-  }, [id]);
+  }, [id, initialData]);
 
   useEffect(() => {
     const vImg = selectedVariant?.image || selectedVariant?.variantImage;
@@ -193,13 +169,10 @@ export default function ProductView({ id, initialData, initialError }: { id: str
         setSelectedImage(variantImg);
       }
     }
-
-    // Update URL dynamically to include title and selected options for SEO
     if (product && selectedVariant) {
       const titleSlug = slugify(displayName);
       const variantName = selectedVariant.variantNameEn || selectedVariant.variantKey || '';
       const variantSlug = slugify(variantName);
-      
       const newUrl = `/product/${id}/${titleSlug}/${variantSlug}`;
       window.history.replaceState(null, '', newUrl);
     }
@@ -207,12 +180,7 @@ export default function ProductView({ id, initialData, initialError }: { id: str
 
   const [shippingRates, setShippingRates] = useState<any[]>([]);
   const [shippingLoading, setShippingLoading] = useState(false);
-
-  // Dynamic price calculation based on selected variant
-  const currentCjPrice = selectedVariant?.variantSellPrice 
-    ? Number(selectedVariant.variantSellPrice)
-    : (typeof product?.sellPrice === 'number' ? product?.sellPrice : parseFloat(String(product?.sellPrice)));
-    
+  const currentCjPrice = selectedVariant?.variantSellPrice ? Number(selectedVariant.variantSellPrice) : (typeof product?.sellPrice === 'number' ? product?.sellPrice : parseFloat(String(product?.sellPrice)));
   const originalPrice = calculateFinalPrice(currentCjPrice, settings);
 
   useEffect(() => {
@@ -230,29 +198,15 @@ export default function ProductView({ id, initialData, initialError }: { id: str
         } finally {
           setShippingLoading(false);
         }
-      }, 500); // 500ms debounce
-
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [selectedVariant?.vid, originalPrice]);
 
   const handleAddToCart = () => {
-    // Pass the selected variant so checkout can send a valid vid to CJ API
-    const variantInfo = selectedVariant
-      ? { 
-          vid: selectedVariant.vid, 
-          sku: selectedVariant.variantSku,
-          name: selectedVariant.variantNameEn || selectedVariant.variantKey 
-        }
-      : undefined;
-
-    // Fix NaN issue by overriding product sellPrice with normalized value
-    const normalizedPrice = selectedVariant?.variantSellPrice 
-      ? selectedVariant.variantSellPrice 
-      : (typeof product.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product.sellPrice)));
-
+    const variantInfo = selectedVariant ? { vid: selectedVariant.vid, sku: selectedVariant.variantSku, name: selectedVariant.variantNameEn || selectedVariant.variantKey } : undefined;
+    const normalizedPrice = selectedVariant?.variantSellPrice ? selectedVariant.variantSellPrice : (typeof product.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product.sellPrice)));
     const cartProduct = { ...product, sellPrice: normalizedPrice };
-
     addToCart(cartProduct, variantInfo);
     setAdded(true);
     setShowToast(true);
@@ -263,306 +217,272 @@ export default function ProductView({ id, initialData, initialError }: { id: str
   };
 
   if (loading) return (
-    <div style={{ minHeight: '100vh' }}>
-      {/* Breadcrumb Skeleton */}
-      <div style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', padding: '0.875rem 0' }}>
-        <div className="container">
-          <div className="skeleton" style={{ width: '200px', height: '14px' }}></div>
-        </div>
+    <div className="min-h-screen bg-[#07070e] pt-32 pb-20">
+      <div className="max-w-[1400px] mx-auto px-6 md:px-12">
+        <div className="h-4 w-48 bg-white/5 rounded animate-pulse mb-10" />
+        <ProductDetailSkeleton />
       </div>
-      <ProductDetailSkeleton />
     </div>
   );
-
 
   if (error) {
     const isRateLimit = error.toLowerCase().includes('too many') || error.toLowerCase().includes('qps') || error.toLowerCase().includes('terlalu');
     return (
-      <div className={styles.errorPage}>
-        <div className={styles.errorIcon}>{isRateLimit ? '⏳' : '😕'}</div>
-        <h1>{isRateLimit ? 'Too Many Requests' : 'Produk Tidak Ditemukan'}</h1>
-        <p>{isRateLimit ? 'The server is busy. Please wait a moment and try again.' : `Maaf, produk dengan ID ${id} tidak ditemukan atau tidak tersedia untuk wilayah Anda.`}</p>
-        <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>{error}</p>
-        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-          {isRateLimit && (
-            <button
-              className={styles.backBtn}
-              onClick={() => window.location.reload()}
-              style={{ border: 'none', cursor: 'pointer' }}
-            >
-              🔄 Try Again
-            </button>
-          )}
-          <Link href="/" className={styles.backBtn} style={{ background: 'var(--gray-600)' }}>
-            ← Back to Home
-          </Link>
+      <div className="min-h-screen bg-[#07070e] flex items-center justify-center pt-32 pb-20 px-6">
+        <div className="max-w-md w-full text-center space-y-8 p-10 bg-white/5 border border-white/10 rounded-[2.5rem]">
+          <div className="w-20 h-20 bg-red-500/10 rounded-3xl flex items-center justify-center text-red-500 mx-auto">
+            {isRateLimit ? <Clock size={40} /> : <AlertCircle size={40} />}
+          </div>
+          <div className="space-y-4">
+            <h1 className="text-2xl font-black text-white tracking-tight uppercase tracking-widest">{isRateLimit ? 'Rate Limit Reached' : 'Product Not Found'}</h1>
+            <p className="text-gray-400 text-sm leading-relaxed">{error}</p>
+          </div>
+          <div className="flex flex-col gap-3">
+             {isRateLimit && (
+               <button onClick={() => window.location.reload()} className="bg-primary hover:bg-primary-dark text-black font-black py-4 rounded-2xl transition-all">
+                 Try Again
+               </button>
+             )}
+             <Link href="/" className="bg-white/5 border border-white/10 text-white font-black py-4 rounded-2xl hover:bg-white/10 transition-all">
+               Return Home
+             </Link>
+          </div>
         </div>
       </div>
     );
   }
 
+  if (!product) return null;
 
-  if (!product) return (
-    <div className={styles.errorPage}>
-      <div className={styles.errorIcon}>📭</div>
-      <h1>Product Unavailable</h1>
-      <Link href="/" className={styles.backBtn}>← Back to Home</Link>
-    </div>
-  );
-
-  // Build deduplicated image list — bigImage always first (cover)
   const allImages = (() => {
-    const raw = [
-      product.bigImage,
-      ...(product.productImageSet || []),
-      ...(typeof product.productImage === 'string' && product.productImage.startsWith('[') ?
-          (() => { try { return JSON.parse(product.productImage); } catch { return []; } })() :
-          [product.productImage]),
-    ]
-      .map((img: any) => parseProductImage(img))
-      .filter((img: string) => img && img !== '/placeholder.png');
-
+    const raw = [product.bigImage, ...(product.productImageSet || []), ...(typeof product.productImage === 'string' && product.productImage.startsWith('[') ? (() => { try { return JSON.parse(product.productImage); } catch { return []; } })() : [product.productImage])].map((img: any) => parseProductImage(img)).filter((img: string) => img && img !== '/placeholder.png');
     const seen = new Set<string>();
-    return raw.filter((img: string) => {
-      if (seen.has(img)) return false;
-      seen.add(img);
-      return true;
-    }).slice(0, 6);
+    return raw.filter((img: string) => { if (seen.has(img)) return false; seen.add(img); return true; }).slice(0, 6);
   })();
 
   const discountPct = 15;
-  
   const originalPriceHigher = originalPrice * (1 + discountPct / 100);
 
-
   return (
-    <div className={styles.page}>
-      {/* Breadcrumb */}
-      <div className={styles.breadcrumbBar}>
-        <div className="container">
-          <div className={styles.breadcrumb}>
-            <Link href="/">Home</Link>
-            <span>›</span>
-            <Link href={`/category/${product.categoryName?.toLowerCase().replace(/\s+/g, '-') || 'all'}`}>
-              {product.categoryName}
-            </Link>
-            <span>›</span>
-            <span className={styles.breadcrumbActive}>{displayName.substring(0, 40)}...</span>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#07070e] pt-32 pb-20">
+      <div className="max-w-[1400px] mx-auto px-6 md:px-12">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-600 mb-10 overflow-x-auto whitespace-nowrap pb-2">
+          <Link href="/" className="hover:text-primary transition-colors flex items-center gap-1.5 shrink-0">
+            <Home size={12} /> Home
+          </Link>
+          <ChevronRight size={10} className="text-white/10 shrink-0" />
+          <Link href={`/category/${product.categoryName?.toLowerCase().replace(/\s+/g, '-') || 'all'}`} className="hover:text-primary transition-colors shrink-0">
+            {product.categoryName}
+          </Link>
+          <ChevronRight size={10} className="text-white/10 shrink-0" />
+          <span className="text-white truncate max-w-[200px]">{displayName}</span>
+        </nav>
 
-      {/* Product Layout */}
-      <div className="container">
-        <div className={styles.productLayout}>
-          {/* Image Gallery */}
-          <div className={styles.gallery}>
-            {/* Main Image — wrapped for consistent square sizing */}
-            <div className={styles.mainImageWrapper}>
-              <div className={styles.mainImage}>
-                {selectedImage && (
-                  <Image
-                    src={selectedImage}
-                    alt={displayName}
-                    fill
-                    className={styles.image}
-                    priority
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    unoptimized
-                  />
-                )}
-                {/* Badge wrapper excluded from .mainImage > * inset rule */}
-                <div className={styles.badgeWrapper}>
-                  <div className={styles.discountTag}>-{discountPct}%</div>
+        <div className="flex flex-col lg:flex-row gap-16 lg:items-start">
+          {/* Left: Image Gallery */}
+          <div className="w-full lg:w-[55%] space-y-6">
+            <div className="relative aspect-square rounded-[3rem] overflow-hidden bg-white/5 border border-white/10 group">
+              {selectedImage && (
+                <Image
+                  src={selectedImage}
+                  alt={displayName}
+                  fill
+                  className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  priority
+                  unoptimized
+                />
+              )}
+              <div className="absolute top-8 left-8">
+                <div className="px-4 py-2 bg-primary text-black text-[10px] font-black uppercase tracking-widest rounded-full shadow-2xl shadow-primary/20">
+                  Save {discountPct}%
                 </div>
               </div>
             </div>
 
-            {/* Thumbnails */}
             {allImages.length > 1 && (
-              <div className={styles.thumbnails}>
+              <div className="grid grid-cols-6 gap-4">
                 {allImages.map((img: string, i: number) => (
                   <button
                     key={img}
-                    className={`${styles.thumbnail} ${selectedImage === img ? styles.thumbnailActive : ''}`}
+                    className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all ${selectedImage === img ? 'border-primary scale-95' : 'border-white/5 hover:border-white/20'}`}
                     onClick={() => setSelectedImage(img)}
                   >
-                    <Image src={img} alt={`${displayName} ${i + 1}`} fill sizes="80px" unoptimized />
+                    <Image src={img} alt={`${displayName} ${i + 1}`} fill className="object-cover" unoptimized />
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Product Details */}
-          <div className={styles.details}>
-            <span className={styles.categoryTag}>{product.categoryName}</span>
-            <h1 className={styles.title}>{displayName}</h1>
-
-            {/* Rating */}
-            <div className={styles.ratingRow}>
-              <span className={styles.stars}>★★★★☆</span>
-              <span className={styles.ratingCount}>4.5 (128 reviews)</span>
-              <span className={styles.sold}>| 1.2K+ sold</span>
-            </div>
-
-            {/* Price */}
-            <div className={styles.priceSection}>
-              <div className={styles.price}>{formatUSD(originalPrice)}</div>
-              <div className={styles.priceRow}>
-                <span className={styles.originalPrice}>{formatUSD(originalPriceHigher)}</span>
-                <span className={styles.discountBadge}>Save {discountPct}%</span>
+          {/* Right: Product Details */}
+          <div className="flex-1 space-y-10 lg:sticky lg:top-32">
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-widest">
+                <Zap size={10} /> Popular Choice
               </div>
-              <p className={styles.usdPrice}>Price in USD · Worldwide shipping available</p>
+              <h1 className="font-outfit text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+                {displayName}
+              </h1>
+              <div className="flex flex-wrap items-center gap-6">
+                <div className="flex items-center gap-1.5 text-yellow-500">
+                  <Star size={16} fill="currentColor" />
+                  <Star size={16} fill="currentColor" />
+                  <Star size={16} fill="currentColor" />
+                  <Star size={16} fill="currentColor" />
+                  <Star size={16} className="text-white/10" />
+                  <span className="text-white text-xs font-bold ml-1">4.5</span>
+                  <span className="text-gray-600 text-xs">(128 reviews)</span>
+                </div>
+                <div className="w-px h-4 bg-white/10" />
+                <div className="flex items-center gap-2 text-gray-500 text-xs font-bold uppercase tracking-widest">
+                  <Check size={14} className="text-green-500" /> 1.2K+ Sold
+                </div>
+              </div>
             </div>
 
-            {/* Variants */}
-            {product.variants && product.variants.length > 0 && (() => {
-              const allVariants = product.variants;
-              const rawNames: string[] = allVariants.map((v: any) => v.variantNameEn || v.variantKey || '');
-              const shortLabels = stripCommonPrefix(rawNames);
+            <div className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem] space-y-8">
+              <div className="space-y-2">
+                <div className="flex items-baseline gap-4">
+                  <span className="text-4xl font-black text-white tracking-tighter">{formatUSD(originalPrice)}</span>
+                  <span className="text-xl text-gray-600 line-through decoration-primary/50">{formatUSD(originalPriceHigher)}</span>
+                </div>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                  <Globe size={12} className="text-primary" /> Price in USD · Worldwide delivery
+                </p>
+              </div>
 
-              return (
-                <div className={styles.variantSection}>
-                  <h3 className={styles.variantLabel}>
-                    Options
-                    {selectedVariant && (
-                      <span className={styles.selectedVariantLabel}>
-                        — {shortLabels[allVariants.findIndex((v: any) => v.vid === selectedVariant.vid)] || ''}
-                      </span>
-                    )}
-                  </h3>
-                  <div className={styles.variantList}>
-                    {allVariants.map((variant: any, idx: number) => {
-                      const isActive = selectedVariant?.vid === variant.vid;
-                      const label = shortLabels[idx] || variant.variantNameEn || variant.variantKey;
-                      return (
-                        <button
-                          key={variant.vid}
-                          className={`${styles.variantItem} ${isActive ? styles.variantItemActive : ''}`}
-                          onClick={() => setSelectedVariant(variant)}
-                          title={rawNames[idx]}
-                          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem' }}
-                        >
-                          {(variant.image || variant.variantImage) && (
-                            <div style={{ width: '24px', height: '24px', position: 'relative', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-                              <img 
-                                src={parseProductImage(variant.image || variant.variantImage)} 
-                                alt={label} 
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                              />
-                            </div>
-                          )}
-                          <span>{label}</span>
-                        </button>
-                      );
-                    })}
+              {product.variants && product.variants.length > 0 && (() => {
+                const allVariants = product.variants;
+                const rawNames: string[] = allVariants.map((v: any) => v.variantNameEn || v.variantKey || '');
+                const shortLabels = stripCommonPrefix(rawNames);
+                return (
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                      <LayoutGrid size={14} className="text-primary" /> Select Option
+                    </h3>
+                    <div className="flex flex-wrap gap-3">
+                      {allVariants.map((variant: any, idx: number) => {
+                        const isActive = selectedVariant?.vid === variant.vid;
+                        const label = shortLabels[idx] || variant.variantNameEn || variant.variantKey;
+                        const vImg = variant.image || variant.variantImage;
+                        return (
+                          <button
+                            key={variant.vid}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition-all border ${isActive ? 'bg-primary text-black border-primary scale-95 shadow-lg shadow-primary/20' : 'bg-white/5 text-gray-400 border-white/10 hover:border-white/30'}`}
+                            onClick={() => setSelectedVariant(variant)}
+                          >
+                            {vImg && (
+                              <div className="w-6 h-6 relative rounded-md overflow-hidden border border-black/10">
+                                <Image src={parseProductImage(vImg)} alt={label} fill className="object-cover" unoptimized />
+                              </div>
+                            )}
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              );
-            })()}
+                );
+              })()}
 
-            {/* Shipping Info */}
-            <div className={styles.shippingInfo}>
-              <div className={styles.shippingHeader}>
-                <span className={styles.shippingIcon}>🚚</span>
-                <div>
-                  <strong>Worldwide Shipping</strong>
-                  {shippingLoading ? (
-                    <p className={styles.loadingText}>Calculating rates...</p>
-                  ) : shippingRates.length > 0 ? (
-                    <p className={styles.shippingSummary}>
-                      Starting from <strong>{shippingRates[0].formattedPrice}</strong> ({shippingRates[0].estimatedDays})
-                    </p>
-                  ) : (
-                    <p className={styles.errorText}>No shipping methods available</p>
-                  )}
+              <div className="space-y-4 pt-4 border-t border-white/5">
+                <div className="flex gap-3">
+                  <button 
+                    onClick={handleAddToCart}
+                    className={`flex-1 h-16 flex items-center justify-center gap-3 rounded-[1.25rem] font-black uppercase tracking-widest transition-all ${added ? 'bg-green-500 text-white' : 'bg-white text-black hover:bg-gray-200 active:scale-95'}`}
+                  >
+                    {added ? <Check size={20} /> : <ShoppingCart size={20} />}
+                    {added ? 'Added' : 'Add to Cart'}
+                  </button>
+                  <button 
+                    onClick={toggleFavorite}
+                    className={`w-16 h-16 flex items-center justify-center rounded-[1.25rem] border transition-all ${isFavorite ? 'bg-red-500/10 border-red-500/50 text-red-500' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}
+                  >
+                    <Heart size={24} fill={isFavorite ? "currentColor" : "none"} />
+                  </button>
                 </div>
-              </div>
-              
-              {!shippingLoading && shippingRates.length > 0 && (
-                <div className={styles.shippingMethodsList}>
-                   {shippingRates.slice(0, 2).map((rate) => (
-                     <div key={rate.logisticName} className={styles.shippingMethodItem}>
-                        <span>{rate.logisticName}</span>
-                        <span>{rate.formattedPrice}</span>
-                     </div>
-                   ))}
-                </div>
-              )}
-
-              <div className={styles.shippingItem}>
-                <span>🔒</span>
-                <span>Secure &amp; encrypted payment</span>
+                <Link 
+                  href={`/checkout?pid=${id}${selectedVariant ? `&vid=${selectedVariant.vid}` : ''}`} 
+                  className="w-full h-16 bg-primary hover:bg-primary-dark text-black flex items-center justify-center gap-3 rounded-[1.25rem] font-black uppercase tracking-widest transition-all active:scale-95 shadow-xl shadow-primary/10"
+                >
+                  <Zap size={20} /> Buy Now
+                </Link>
               </div>
             </div>
 
-            {/* Actions */}
-            <div className={styles.actions} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-              <button 
-                className={`${styles.cartButton} ${added ? styles.cartButtonAdded : ''}`}
-                onClick={handleAddToCart}
-                style={{ flex: 1 }}
-              >
-                {added ? '✅ Added!' : '🛒 Add to Cart'}
-              </button>
-              <Link 
-                href={`/checkout?pid=${id}${selectedVariant ? `&vid=${selectedVariant.vid}` : ''}`} 
-                className={styles.buyButton} 
-                style={{ 
-                  flex: 1, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  textDecoration: 'none' 
-                }}
-              >
-                ⚡ Buy Now
-              </Link>
-              <button 
-                onClick={toggleFavorite}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  width: '48px', height: '48px', borderRadius: '12px', border: '1px solid var(--border)',
-                  background: 'var(--white)', cursor: 'pointer', fontSize: '1.5rem',
-                  color: isFavorite ? '#ef4444' : '#9ca3af', transition: 'all 0.2s'
-                }}
-                title={isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
-              >
-                {isFavorite ? '♥' : '♡'}
-              </button>
-            </div>
-
-            {/* Trust Badges */}
-            <div className={styles.trustBadges}>
-              {['✅ Genuine Product', '🔒 Secure Payment', '📞 24/7 Support', '🌍 Worldwide Shipping'].map(b => (
-                <span key={b} className={styles.trustBadge}>{b}</span>
-              ))}
+            {/* Features */}
+            <div className="grid grid-cols-2 gap-4">
+               <div className="p-6 bg-white/5 border border-white/10 rounded-[2rem] space-y-3">
+                  <Truck size={24} className="text-primary" />
+                  <div className="space-y-1">
+                    <p className="text-xs font-black text-white uppercase tracking-widest">Worldwide</p>
+                    <p className="text-[10px] text-gray-500">Fast global shipping options</p>
+                  </div>
+               </div>
+               <div className="p-6 bg-white/5 border border-white/10 rounded-[2rem] space-y-3">
+                  <Shield size={24} className="text-primary" />
+                  <div className="space-y-1">
+                    <p className="text-xs font-black text-white uppercase tracking-widest">Secure</p>
+                    <p className="text-[10px] text-gray-500">100% encrypted checkout</p>
+                  </div>
+               </div>
             </div>
           </div>
         </div>
 
-        {/* Description */}
-        {product.description && (
-          <div className={styles.description}>
-            <h2 className={styles.descTitle}>Product Description</h2>
-            <div 
-              className={styles.descContent}
-              dangerouslySetInnerHTML={{ __html: product.description }} 
-            />
+        {/* Description & Specs */}
+        <div className="mt-32 space-y-16">
+          <div className="flex items-center gap-6">
+            <h2 className="font-outfit text-3xl font-black text-white uppercase tracking-tighter">Product Intelligence</h2>
+            <div className="flex-1 h-px bg-white/10" />
           </div>
-        )}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
+            <div className="lg:col-span-2 prose prose-invert prose-p:text-gray-400 prose-headings:text-white max-w-none">
+               <div dangerouslySetInnerHTML={{ __html: product.description }} />
+            </div>
+            <div className="space-y-8">
+               <div className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem] space-y-6">
+                  <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                    <Info size={14} className="text-primary" /> Trust Signals
+                  </h3>
+                  <ul className="space-y-4">
+                    {[
+                      { icon: <Shield size={14} />, text: 'Warranty Guaranteed' },
+                      { icon: <Globe size={14} />, text: 'Global Authenticity' },
+                      { icon: <Headphones size={14} />, text: 'VIP Support Access' },
+                      { icon: <Check size={14} />, text: 'Quality Inspected' }
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-center gap-3 text-sm text-gray-400">
+                        <span className="text-primary">{item.icon}</span>
+                        {item.text}
+                      </li>
+                    ))}
+                  </ul>
+               </div>
+               
+               <div className="p-8 bg-gradient-to-br from-primary to-primary-dark rounded-[2.5rem] space-y-4 group cursor-pointer overflow-hidden relative">
+                  <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                    <Zap size={120} fill="black" />
+                  </div>
+                  <h3 className="text-xs font-black text-black uppercase tracking-widest">Limited Edition</h3>
+                  <p className="text-black font-bold text-lg leading-snug">This item is part of our curated global elite collection.</p>
+                  <div className="flex items-center gap-2 text-black/60 font-black text-[10px] uppercase tracking-widest pt-4">
+                    Explore Series <ArrowRight size={14} />
+                  </div>
+               </div>
+            </div>
+          </div>
+        </div>
 
         {/* Related Products */}
         {related.length > 0 && (
-          <section className={styles.related}>
-            <div className="sectionHeader">
-              <div>
-                <h2 className="sectionTitle">🔗 Related Products</h2>
-                <p className="sectionSubtitle">Similar products you might also like</p>
-              </div>
+          <section className="mt-32 space-y-12">
+            <div className="flex items-center justify-between">
+              <h2 className="font-outfit text-3xl font-black text-white uppercase tracking-tighter">You May Also Like</h2>
+              <Link href="/category/all" className="text-xs font-black text-primary uppercase tracking-widest hover:underline">View All →</Link>
             </div>
-            <div className="productGrid">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {related.slice(0, 4).map((p: any) => (
                 <ProductCard key={p.pid} product={p} />
               ))}
@@ -573,26 +493,41 @@ export default function ProductView({ id, initialData, initialError }: { id: str
 
       {/* Toast Notification */}
       {showToast && (
-        <div style={{
-          position: 'fixed',
-          bottom: '2rem',
-          right: '2rem',
-          background: '#10b981',
-          color: 'white',
-          padding: '1rem 1.5rem',
-          borderRadius: '8px',
-          boxShadow: '0 10px 25px rgba(16, 185, 129, 0.4)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          fontWeight: 600,
-          zIndex: 9999,
-          animation: 'fadeInUp 0.3s ease-out forwards',
-        }}>
-          <span style={{ fontSize: '1.25rem' }}>✅</span>
-          Product added to cart!
+        <div className="fixed bottom-10 right-10 z-[100] animate-in fade-in slide-in-from-bottom-10 duration-500">
+           <div className="bg-white text-black p-6 rounded-[2rem] shadow-2xl flex items-center gap-4 border border-white/20 backdrop-blur-2xl">
+              <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white">
+                <Check size={20} />
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest">Item Added</p>
+                <p className="text-xs font-bold text-gray-500">Ready for checkout</p>
+              </div>
+              <Link href="/cart" className="ml-4 px-6 py-2 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-gray-800 transition-all">
+                View Cart
+              </Link>
+           </div>
         </div>
       )}
     </div>
   );
 }
+
+const LayoutGrid = ({ size, className }: { size: number, className?: string }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <rect x="3" y="3" width="7" height="7" />
+    <rect x="14" y="3" width="7" height="7" />
+    <rect x="14" y="14" width="7" height="7" />
+    <rect x="3" y="14" width="7" height="7" />
+  </svg>
+);
+

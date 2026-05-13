@@ -2,6 +2,8 @@ import { getProductDetails } from '@/lib/cj-api';
 import ProductView from './ProductView';
 import { Metadata } from 'next';
 import { prisma } from '@/lib/db';
+import { Package, ArrowLeft, Loader2 } from 'lucide-react';
+import Link from 'next/link';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string, slug?: string[] }> }): Promise<Metadata> {
   const resolvedParams = await params;
@@ -138,27 +140,37 @@ export default async function Page({ params }: { params: Promise<{ id: string, s
     );
   }
 
-  // 2. Fallback to CJ API if not imported
-  try {
-    const productRes = await getProductDetails(id);
 
-    return (
-      <>
-        {productRes.success && <ProductSchema product={productRes.data} />}
-        <ProductView 
-          id={id} 
-          initialData={productRes.success ? productRes.data : null}
-          initialError={!productRes.success ? productRes.message : null}
-        />
-      </>
-    );
-  } catch (error: any) {
-    return (
-      <ProductView 
-        id={id} 
-        initialData={null}
-        initialError="Product not found or connection to CJ failed."
-      />
-    );
-  }
+
+  // 2. Jika tidak ada di DB, tampilkan pesan 'Segera Hadir'
+  return (
+    <div className="min-h-screen bg-[#07070e] flex items-center justify-center pt-32 pb-20 px-6">
+      <div className="max-w-md w-full text-center space-y-8 p-10 bg-white/5 border border-white/10 rounded-[2.5rem] backdrop-blur-xl">
+        <div className="relative mx-auto w-24 h-24">
+          <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full animate-pulse" />
+          <div className="relative w-full h-full bg-primary/10 rounded-3xl flex items-center justify-center text-primary border border-primary/20">
+            <Package size={40} strokeWidth={1.5} />
+          </div>
+          <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-black rounded-full border border-white/10 flex items-center justify-center">
+            <Loader2 size={20} className="text-primary animate-spin" />
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          <h1 className="text-2xl font-black text-white tracking-tight uppercase tracking-widest">Product Preparing</h1>
+          <p className="text-gray-400 text-sm leading-relaxed">
+            Maaf, produk ini baru saja kami pilih dan sedang dalam proses sinkronisasi ke katalog lokal kami. Silakan cek kembali beberapa saat lagi.
+          </p>
+        </div>
+
+        <Link 
+          href="/" 
+          className="inline-flex items-center justify-center gap-2 w-full bg-primary hover:bg-primary-dark text-black font-black py-4 rounded-2xl transition-all active:scale-95"
+        >
+          <ArrowLeft size={18} /> Kembali Belanja
+        </Link>
+      </div>
+    </div>
+  );
 }
+

@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import { CJProduct } from '@/lib/cj-api';
+import { CJProduct } from '@/lib/cj-helpers';
 
 export interface CartItem extends CJProduct {
   quantity: number;
