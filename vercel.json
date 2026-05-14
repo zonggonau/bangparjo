@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/social-post",
+      "schedule": "0 7,12,19,22 * * *"
+    },
+    {
+      "path": "/api/cron/inventory",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

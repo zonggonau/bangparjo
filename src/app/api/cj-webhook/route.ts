@@ -1,29 +1,30 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { sendWhatsAppOrderNotification } from '@/lib/social-poster';
 
 /**
- * CJ Dropshipping Webhook Receiver
+ * CJ Dropshipping Webhook Receiver (Enhanced)
  * Handles:
- * - ORDER: Status changes (CREATED -> SHIPPED -> etc)
- * - LOGISTIC: Tracking number updates
- * - STOCK: Inventory changes
+ * - ORDER: Status changes → WhatsApp notification to customer
+ * - LOGISTIC: Tracking number → WhatsApp tracking notification
+ * - STOCK: Inventory sync
+ *
+ * Register this URL in CJ dashboard:
+ *   https://yourstore.com/api/cj-webhook
  */
 export async function POST(req: Request) {
   const body = await req.json();
   const { type, params, messageId } = body;
 
   try {
-    // 1. Log the webhook request for auditing
+    // 1. Log webhook
     await prisma.webhookLog.create({
-      data: {
-        eventType: type,
-        payload: body,
-      },
+      data: { eventType: type, payload: body },
     });
 
-    console.log(`🔔 [CJ WEBHOOK]: Received ${type} message`, params);
+    console.log(`🔔 [CJ WEBHOOK]: ${type}`, params);
 
-    // 2. Handle specific message types
+    // 2. Dispatch
     switch (type) {
       case 'ORDER':
         await handleOrderUpdate(params);
@@ -35,85 +36,85 @@ export async function POST(req: Request) {
         await handleStockUpdate(params);
         break;
       default:
-        console.warn(`[CJ WEBHOOK]: Unhandled event type: ${type}`);
+        console.warn(`[CJ WEBHOOK]: Unhandled type: ${type}`);
     }
 
     return NextResponse.json({ success: true, messageId });
   } catch (error: any) {
     console.error('❌ [CJ WEBHOOK ERROR]:', error);
-    
-    // Log the error in the WebhookLog table if possible
     try {
       await prisma.webhookLog.create({
-        data: {
-          eventType: type,
-          payload: body,
-          error: error.message,
-          processed: false
-        }
+        data: { eventType: type, payload: body, error: error.message, processed: false },
       });
-    } catch (e) {
-      console.error('Could not log webhook error to DB', e);
-    }
-
+    } catch {}
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 
-/**
- * Handle Order Status Changes
- */
 async function handleOrderUpdate(params: any) {
   const { orderNumber, cjOrderId, orderStatus } = params;
   if (!orderNumber) return;
 
-  // Map CJ status to our internal status
-  // CJ Statuses: CREATED, PROCESSING, SHIPPED, COMPLETED, CANCELLED
-  let internalStatus = 'PROCESSING';
-  if (orderStatus === 'SHIPPED') internalStatus = 'SHIPPED';
-  if (orderStatus === 'CANCELLED') internalStatus = 'CANCELLED';
+  const internalStatus =
+    orderStatus === 'SHIPPED' ? 'SHIPPED' :
+    orderStatus === 'CANCELLED' ? 'CANCELLED' :
+    orderStatus === 'COMPLETED' ? 'DELIVERED' : 'PROCESSING';
 
-  await prisma.order.update({
+  const updatedOrder = await prisma.order.update({
     where: { orderNum: orderNumber },
-    data: {
-      cjOrderId: cjOrderId,
-      status: internalStatus,
-      cjResponse: params // Store latest payload
-    }
+    data: { cjOrderId, status: internalStatus, cjResponse: params },
   });
+
+  // WhatsApp notification for key status changes
+  if ((internalStatus === 'SHIPPED' || internalStatus === 'PROCESSING') && updatedOrder.customerPhone) {
+    const phone = updatedOrder.customerPhone.startsWith('+') 
+      ? updatedOrder.customerPhone 
+      : `+${updatedOrder.customerPhone}`;
+    
+    await sendWhatsAppOrderNotification({
+      to: phone,
+      customerName: updatedOrder.customerName || 'Customer',
+      orderId: orderNumber,
+      totalAmount: Number(updatedOrder.totalAmount) || 0,
+      type: internalStatus === 'SHIPPED' ? 'order_shipped' : 'order_placed',
+    }).catch(e => console.warn('[WA Notify Error]:', e.message));
+  }
 }
 
-/**
- * Handle Logistics/Tracking Updates
- */
 async function handleLogisticUpdate(params: any) {
   const { orderId, trackingNumber, logisticName } = params;
   if (!orderId) return;
 
-  await prisma.order.update({
+  const updatedOrder = await prisma.order.update({
     where: { cjOrderId: orderId },
-    data: {
-      trackingNumber,
-      status: 'SHIPPED',
-      cjResponse: params
-    }
+    data: { trackingNumber, status: 'SHIPPED', cjResponse: params },
   });
+
+  // Send tracking WhatsApp if customer has phone
+  if (updatedOrder.customerPhone && trackingNumber) {
+    const phone = updatedOrder.customerPhone.startsWith('+')
+      ? updatedOrder.customerPhone
+      : `+${updatedOrder.customerPhone}`;
+
+    await sendWhatsAppOrderNotification({
+      to: phone,
+      customerName: updatedOrder.customerName || 'Customer',
+      orderId: updatedOrder.orderNum,
+      totalAmount: Number(updatedOrder.totalAmount) || 0,
+      trackingNumber,
+      type: 'order_shipped',
+    }).catch(e => console.warn('[WA Tracking Error]:', e.message));
+  }
 }
 
-/**
- * Handle Inventory/Stock Updates
- */
 async function handleStockUpdate(params: any) {
-  // Params is a map of VID -> WarehouseInfo[]
   for (const vid in params) {
     const warehouseInfo = params[vid];
     if (Array.isArray(warehouseInfo) && warehouseInfo.length > 0) {
-      // Sum up stock across all warehouses or pick the main one
       const totalStock = warehouseInfo.reduce((sum: number, w: any) => sum + (w.storageNum || 0), 0);
-      
       await prisma.variant.updateMany({
         where: { cjId: vid },
-        data: { inventory: totalStock }
+        data: { inventory: totalStock },
       });
     }
   }
