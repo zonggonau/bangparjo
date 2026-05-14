@@ -3,74 +3,135 @@
 import Link from 'next/link';
 import { useSettings } from '@/context/SettingsContext';
 import NewsletterForm from './NewsletterForm';
+import { 
+  Facebook, 
+  Instagram, 
+  MessageCircle, 
+  ShieldCheck, 
+  Truck, 
+  RotateCcw, 
+  Globe,
+  ShoppingCart
+} from 'lucide-react';
 
 export default function Footer() {
   const { settings } = useSettings();
+  
   return (
-    <footer className="footer">
-      <div className="footerGrid">
-        {/* Brand Column */}
-        <div className="footerBrand">
-          <div className="logo" style={{ marginBottom: '0.75rem' }}>
-            <div className="logoIcon">🛍️</div>
-            <span className="logoText">{settings.storeName}</span>
+    <footer className="bg-[#0f0f1a] border-t border-white/5 pt-20 pb-10">
+      <div className="max-w-[1400px] mx-auto px-6 md:px-12">
+        {/* Top Section: Trust Badges */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pb-16 border-b border-white/5 mb-16">
+          <div className="flex flex-col items-center text-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+              <Truck size={24} />
+            </div>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Free Shipping</h4>
+            <p className="text-xs text-gray-500">On all orders over ${settings.freeShippingThreshold}</p>
           </div>
-          <p className="footerDesc">
-            Your social shopping destination. Discover trending finds, viral products, and community-curated picks 
-            that everyone is talking about. Shop the hype with BangParjo!
-          </p>
-          <div className="footerSocials">
-            {(settings.socialLinks || []).map((link, idx) => (
-              <a key={idx} href={link.url} target="_blank" rel="noopener noreferrer" className="footerSocialBtn" aria-label={link.label} title={link.label}>
-                {link.icon}
+          <div className="flex flex-col items-center text-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+              <ShieldCheck size={24} />
+            </div>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Secure Payment</h4>
+            <p className="text-xs text-gray-500">100% secure payment processing</p>
+          </div>
+          <div className="flex flex-col items-center text-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+              <RotateCcw size={24} />
+            </div>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider">30-Day Returns</h4>
+            <p className="text-xs text-gray-500">Easy returns if not satisfied</p>
+          </div>
+          <div className="flex flex-col items-center text-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+              <Globe size={24} />
+            </div>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Global Sourcing</h4>
+            <p className="text-xs text-gray-500">From verified global suppliers</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
+          {/* Brand Column */}
+          <div className="space-y-6">
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent-light rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                <ShoppingCart size={20} className="text-white" strokeWidth={2.5} />
+              </div>
+              <span className="font-outfit text-xl font-bold text-white">{settings.storeName}</span>
+            </Link>
+            <p className="text-sm text-gray-400 leading-relaxed max-w-xs">
+              Your trusted global e-commerce destination. Discover thousands of curated products from around the world, delivered straight to your door.
+            </p>
+            <div className="flex items-center gap-4">
+              <a href="#" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-black transition-all duration-300">
+                <Facebook size={18} />
               </a>
-            ))}
+              <a href="#" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-black transition-all duration-300">
+                <Instagram size={18} />
+              </a>
+              <a href="#" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-black transition-all duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l11.733 16h4.267l-11.733 -16z"/><path d="M4 20l6.768 -6.768m2.46 -2.46L20 4"/></svg>
+              </a>
+              <a href="#" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-black transition-all duration-300">
+                <MessageCircle size={18} />
+              </a>
+            </div>
+          </div>
+
+          {/* Shop Column */}
+          <div className="space-y-6">
+            <h4 className="text-xs font-black text-white uppercase tracking-[0.2em]">Shop Collection</h4>
+            <ul className="space-y-4">
+              <li><Link href="/category/womens-clothing" className="text-sm text-gray-400 hover:text-primary transition-colors">Women&apos;s Fashion</Link></li>
+              <li><Link href="/category/mens-clothing" className="text-sm text-gray-400 hover:text-primary transition-colors">Men&apos;s Fashion</Link></li>
+              <li><Link href="/category/electronics" className="text-sm text-gray-400 hover:text-primary transition-colors">Electronics</Link></li>
+              <li><Link href="/category/beauty" className="text-sm text-gray-400 hover:text-primary transition-colors">Beauty & Care</Link></li>
+              <li><Link href="/category/home-kitchen" className="text-sm text-gray-400 hover:text-primary transition-colors">Home & Kitchen</Link></li>
+            </ul>
+          </div>
+
+          {/* Support Column */}
+          <div className="space-y-6">
+            <h4 className="text-xs font-black text-white uppercase tracking-[0.2em]">Customer Care</h4>
+            <ul className="space-y-4">
+              <li><Link href="/track" className="text-sm text-gray-400 hover:text-primary transition-colors">Track My Order</Link></li>
+              <li><Link href="/contact" className="text-sm text-gray-400 hover:text-primary transition-colors">Contact Us</Link></li>
+              <li><Link href="/refund" className="text-sm text-gray-400 hover:text-primary transition-colors">Return Policy</Link></li>
+              <li><Link href="/help-center" className="text-sm text-gray-400 hover:text-primary transition-colors">Help Center</Link></li>
+              <li><Link href="/terms" className="text-sm text-gray-400 hover:text-primary transition-colors">Terms of Service</Link></li>
+            </ul>
+          </div>
+
+          {/* Newsletter Column */}
+          <div className="space-y-6">
+            <h4 className="text-xs font-black text-white uppercase tracking-[0.2em]">Newsletter</h4>
+            <p className="text-sm text-gray-400 leading-relaxed">
+              Join our community and get 10% off your first order plus exclusive deals.
+            </p>
+            <NewsletterForm />
           </div>
         </div>
 
-        {/* Shop Links */}
-        <div className="footerColumn">
-          <h4>Shop</h4>
-          <ul>
-            <li><Link href="/category/womens-clothing">Women&apos;s Fashion</Link></li>
-            <li><Link href="/category/mens-clothing">Men&apos;s Fashion</Link></li>
-            <li><Link href="/category/electronics">Electronics</Link></li>
-            <li><Link href="/category/beauty">Beauty & Care</Link></li>
-            <li><Link href="/category/home-kitchen">Home & Kitchen</Link></li>
-          </ul>
-        </div>
-
-        {/* Customer Service */}
-        <div className="footerColumn">
-          <h4>Customer Service</h4>
-          <ul>
-            <li><Link href="/track">Track My Order</Link></li>
-            <li><Link href="/contact">Contact Us</Link></li>
-            <li><Link href="/refund">Return Policy</Link></li>
-            <li><Link href="/help-center#shipping">Shipping Info</Link></li>
-            <li><Link href="/help-center#faqs">FAQ</Link></li>
-          </ul>
-        </div>
-
-        {/* Newsletter Section */}
-        <div className="footerColumn" style={{ minWidth: '260px' }}>
-          <h4>Join the Community 💫</h4>
-          <p style={{ fontSize: '0.85rem', color: '#71717a', marginBottom: '1rem', lineHeight: '1.5' }}>
-            Be the first to know about trending products, viral finds, and exclusive community deals.
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+          <p className="text-xs font-medium text-gray-500">
+            © {new Date().getFullYear()} {settings.storeName}. All rights reserved. 
+            <span className="mx-2 text-white/10">|</span>
+            Powered by global fulfillment.
           </p>
-          <NewsletterForm />
-        </div>
-      </div>
-
-      <div className="footerBottom">
-        <p>© {new Date().getFullYear()} {settings.storeName}. Shop the hype, share the love. 🔥</p>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span>Payment Methods:</span>
-          <span style={{ fontSize: '1.2rem' }}>💳</span>
-          <span style={{ fontSize: '1.2rem' }}>🏦</span>
-          <span style={{ fontSize: '1.2rem' }}>📱</span>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all duration-300">
+               <div className="w-8 h-5 bg-white/10 rounded-sm" />
+               <div className="w-8 h-5 bg-white/10 rounded-sm" />
+               <div className="w-8 h-5 bg-white/10 rounded-sm" />
+            </div>
+            <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Ships Globally 🌍</p>
+          </div>
         </div>
       </div>
     </footer>
   );
 }
+

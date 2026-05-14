@@ -369,6 +369,7 @@ export async function getProducts(
     maxPrice?: number;
     searchType?: number; // 0=all, 2=trending
     productSku?: string;
+    productFlag?: number; // 0=all products
   } = {}
 ): Promise<CJResponse<{ list: CJProduct[]; total: number }>> {
   const query = new URLSearchParams({
@@ -382,6 +383,7 @@ export async function getProducts(
   if (params.minPrice != null) query.set('minPrice', params.minPrice.toString());
   if (params.maxPrice != null) query.set('maxPrice', params.maxPrice.toString());
   if (params.searchType != null) query.set('searchType', params.searchType.toString());
+  if (params.productFlag != null) query.set('productFlag', params.productFlag.toString());
 
   return cjFetch(`/v1/product/list?${query.toString()}`);
 }

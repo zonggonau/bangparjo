@@ -1,10 +1,10 @@
+import { getProducts } from '@/lib/cj-api';
 import { prisma } from '@/lib/db';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
-import styles from '@/app/(store)/page.module.css';
+import { Sparkles, ArrowRight } from 'lucide-react';
 
 export default async function HomeBeauty() {
-  // 1. Try local DB
   const dbProducts = await prisma.product.findMany({
     take: 10,
     where: { 
@@ -25,22 +25,50 @@ export default async function HomeBeauty() {
     productImage: p.images[0],
     bigImage: p.images[0],
     sellPrice: p.variants[0]?.sellingPrice || 0,
-    categoryName: 'Beauty',
+    categoryName: "Beauty",
+    productSku: "",
+    productWeight: 0,
+    productUnit: "piece",
+    categoryId: "",
   }));
+
+  if (mainProducts.length < 1) {
+    try {
+      const res = await getProducts({ categoryId: '2C7D4A0B-1AB2-41EC-8F9E-13DC31B1C902', pageSize: 10 });
+      if (res.success && res.data) {
+        const apiProducts = res.data.list;
+        const pids = new Set(mainProducts.map(p => p.pid));
+        apiProducts.forEach((p: any) => { if (!pids.has(p.pid)) mainProducts.push(p); });
+      }
+    } catch (e) {
+      console.warn('[HomeBeauty] CJ API Fallback failed, using DB only.');
+    }
+  }
 
   if (mainProducts.length === 0) return null;
 
   return (
-    <section className={styles.section}>
-      <div className="container">
-        <div className="sectionHeader">
-          <div>
-            <h2 className="sectionTitle">💄 Glow Up Picks</h2>
-            <p className="sectionSubtitle">Beauty products trending in the community</p>
+    <section className="py-20 relative overflow-hidden">
+      <div className="container px-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div className="max-w-xl">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles size={16} className="text-pink-400" />
+              <span className="text-[10px] font-black text-pink-400 uppercase tracking-[0.2em]">Premium Glow</span>
+            </div>
+            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase italic leading-[0.9]">
+              HEALTH & <span className="text-pink-400 text-glow">BEAUTY</span>
+            </h2>
           </div>
-          <Link href="/category/health-beauty-and-hair-2C7D4A0B-1AB2-41EC-8F9E-13DC31B1C902" className="viewAllLink">View All →</Link>
+          <Link 
+            href="/category/health-beauty-and-hair-2C7D4A0B-1AB2-41EC-8F9E-13DC31B1C902" 
+            className="group flex items-center gap-2 text-[10px] font-black text-white/40 uppercase tracking-[0.2em] hover:text-white transition-colors"
+          >
+            Shop All Beauty <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+          </Link>
         </div>
-        <div className="productGrid">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-8">
           {mainProducts.map((product) => (
             <ProductCard key={product.pid} product={product} />
           ))}
@@ -49,3 +77,4 @@ export default async function HomeBeauty() {
     </section>
   );
 }
+

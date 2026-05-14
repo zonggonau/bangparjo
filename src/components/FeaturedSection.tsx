@@ -1,52 +1,72 @@
 import Link from 'next/link';
-import styles from './FeaturedSection.module.css';
+import { Star, Users, Package, Heart, CheckCircle2, ArrowRight } from 'lucide-react';
 
 export default function FeaturedSection() {
+  const stats = [
+    { value: '50,000+', label: 'Products Available', icon: Package, color: 'text-primary' },
+    { value: '10,000+', label: 'Happy Customers', icon: Users, color: 'text-blue-500' },
+    { value: '4.8/5', label: 'Average Rating', icon: Star, color: 'text-yellow-500' },
+    { value: '99%', label: 'Satisfaction Rate', icon: Heart, color: 'text-red-500' },
+  ];
+
   return (
-    <section className={styles.section}>
-      <div className="container">
-        <div className={styles.grid}>
+    <section className="py-24 relative overflow-hidden bg-[#07070e]">
+      {/* Decorative Glow */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/5 blur-[120px] rounded-full -z-10 translate-x-1/2 -translate-y-1/2" />
+      
+      <div className="container px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
           {/* Left: Brand story */}
-          <div className={styles.brandStory}>
-            <span className={styles.badge}>🌟 Join the Movement</span>
-            <h2 className={styles.title}>
-              Shop the Hype,<br />
-              <span className={styles.highlight}>Love the Vibe</span>
+          <div className="lg:col-span-7">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-8">
+              <Star size={12} className="fill-primary" /> Why Choose Us
+            </span>
+            
+            <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter mb-8 uppercase italic leading-[0.9]">
+              SHOP GLOBAL,<br />
+              <span className="text-primary text-glow">EASY & TRUSTED</span>
             </h2>
-            <p className={styles.desc}>
-              BangParjo is your social shopping hub. Discover what&apos;s trending, share with friends,
-              and shop community-curated finds that match your vibe.
+            
+            <p className="text-gray-400 text-lg leading-relaxed mb-10 max-w-2xl font-medium">
+              bangparjo.shop is your premium gateway to the global marketplace. We curate the world&apos;s most innovative products and deliver them with localized trust and efficiency.
             </p>
-            <div className={styles.highlights}>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
               {[
-                { icon: '🔥', text: 'Trending products updated daily' },
-                { icon: '👥', text: 'Shop with your community, share with friends' },
-                { icon: '✨', text: 'Curated picks just for you' },
-                { icon: '💬', text: 'Real reviews from real people' },
+                'Verified global suppliers only',
+                'Worldwide shipping to 200+ countries',
+                'Aggressive competitive pricing',
+                'Hyper-responsive 24/7 support',
               ].map((item) => (
-                <div key={item.text} className={styles.highlightItem}>
-                  <span>{item.icon}</span>
-                  <span>{item.text}</span>
+                <div key={item} className="flex items-center gap-3 group">
+                  <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center border border-white/5 group-hover:border-primary/50 transition-colors">
+                    <CheckCircle2 size={14} className="text-primary" />
+                  </div>
+                  <span className="text-xs font-black text-white/50 uppercase tracking-widest group-hover:text-white transition-colors">{item}</span>
                 </div>
               ))}
             </div>
-            <Link href="/?q=trending" className={styles.cta}>
-              Explore Trending →
+
+            <Link 
+              href="/?q=best seller" 
+              className="group inline-flex items-center gap-4 bg-white text-black px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-primary transition-all active:scale-95 shadow-2xl shadow-white/5"
+            >
+              Start Shopping <ArrowRight size={20} className="transition-transform group-hover:translate-x-2" />
             </Link>
           </div>
 
           {/* Right: Stats cards */}
-          <div className={styles.statsGrid}>
-            {[
-              { value: '10K+', label: 'Community Members', icon: '👥', color: '#FF6B35' },
-              { value: '50K+', label: 'Trending Finds', icon: '🔥', color: '#7C3AED' },
-              { value: '4.8★', label: 'Community Rating', icon: '⭐', color: '#F59E0B' },
-              { value: '99%', label: 'Would Share with Friends', icon: '💯', color: '#10B981' },
-            ].map((stat) => (
-              <div key={stat.label} className={styles.statCard} style={{ '--stat-color': stat.color } as React.CSSProperties}>
-                <div className={styles.statIcon}>{stat.icon}</div>
-                <div className={styles.statValue} style={{ color: stat.color }}>{stat.value}</div>
-                <div className={styles.statLabel}>{stat.label}</div>
+          <div className="lg:col-span-5 grid grid-cols-2 gap-4">
+            {stats.map((stat, i) => (
+              <div 
+                key={stat.label} 
+                className={`group p-8 rounded-[2.5rem] bg-white/5 border border-white/5 hover:border-primary/20 transition-all duration-500 hover:-translate-y-2 ${i % 2 !== 0 ? 'mt-8' : ''}`}
+              >
+                <div className={`w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform ${stat.color} border border-white/5 shadow-inner`}>
+                  <stat.icon size={24} />
+                </div>
+                <div className={`text-2xl md:text-3xl font-black mb-1 tracking-tighter ${stat.color}`}>{stat.value}</div>
+                <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -55,3 +75,4 @@ export default function FeaturedSection() {
     </section>
   );
 }
+

@@ -39,9 +39,12 @@ export default async function HomeHero() {
     sellPrice: p.variants?.[0]?.baseCost || 0,
   }));
 
-  // 3. Jika belum ada produk, tampilkan section kosong (tidak fallback ke CJ)
+  // 3. Jika belum ada produk Hero yang ditandai, gunakan fallback dari CJ
   if (heroProducts.length === 0) {
-    return <HeroSection products={[]} />;
+    const { getProducts } = await import('@/lib/cj-api');
+    const heroRes = await getProducts({ pageSize: 10, keyWord: 'trending', searchType: 2 });
+    const fallback = heroRes?.success && heroRes.data ? heroRes.data.list : [];
+    return <HeroSection products={fallback} />;
   }
 
   return <HeroSection products={heroProducts} />;
