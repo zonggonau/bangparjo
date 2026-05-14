@@ -10,40 +10,40 @@ import styles from './HeroSection.module.css';
 const SLIDES = [
   {
     id: 1,
-    badge: '🏠 Home Essentials',
-    title: 'Modern &',
-    highlight: 'KITCHENWARE',
-    subtitle: 'Upgrade your home with our curated collection of kitchen tools and home essentials. Quality guaranteed.',
-    cta: 'Shop Collection',
-    ctaLink: '/category/home-kitchen',
-    secondaryCta: 'View All',
-    secondaryLink: '/category/all',
+    badge: '🔥 Trending Now',
+    title: 'Viral Finds',
+    highlight: 'YOU\'LL LOVE',
+    subtitle: 'Discover what the BangParjo community is obsessing over right now. Curated picks, real hype, zero fluff.',
+    cta: 'Shop Trending',
+    ctaLink: '/?q=trending',
+    secondaryCta: 'Community Picks',
+    secondaryLink: '/?q=popular',
     bg: 'linear-gradient(135deg, #1A1A2E 0%, #16213E 50%, #0F3460 100%)',
     accent: '#FF6B35',
   },
   {
     id: 2,
-    badge: '✨ Trending Now',
-    title: 'Smart Home',
-    highlight: 'SOLUTIONS',
-    subtitle: 'Discover the latest innovations for a more comfortable and efficient living space.',
-    cta: 'Explore More',
-    ctaLink: '/category/home-kitchen',
-    secondaryCta: "Bestsellers",
-    secondaryLink: '/?q=trending',
+    badge: '👥 Community Faves',
+    title: 'Shop What',
+    highlight: 'EVERYONE LOVES',
+    subtitle: 'From must-have gadgets to style steals — see what your community is adding to cart.',
+    cta: 'Explore Faves',
+    ctaLink: '/?q=trending',
+    secondaryCta: "New Arrivals",
+    secondaryLink: '/?q=new',
     bg: 'linear-gradient(135deg, #6B46C1 0%, #553C9A 50%, #E94560 100%)',
     accent: '#F6E05E',
   },
   {
     id: 3,
-    badge: '🍲 Cook like a Pro',
-    title: 'Premium',
-    highlight: 'COOKWARE',
-    subtitle: 'Professional grade tools for your everyday culinary adventures. Sourced from top makers.',
+    badge: '✨ Curated for You',
+    title: 'Your Vibe,',
+    highlight: 'YOUR STYLE',
+    subtitle: 'Personalized picks that match your taste. Because you deserve better than the algorithm.',
     cta: 'Shop Now',
-    ctaLink: '/category/home-kitchen',
-    secondaryCta: 'Cooking Deals',
-    secondaryLink: '/?q=kitchen deals',
+    ctaLink: '/?q=trending',
+    secondaryCta: 'Share with Friends',
+    secondaryLink: '/?q=viral',
     bg: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0369A1 100%)',
     accent: '#38BDF8',
   },
@@ -117,7 +117,7 @@ export default function HeroSection({ products = [] }: HeroSectionProps) {
               ${calculateFinalPrice(prod.sellPrice, settings).toFixed(2)}
             </span>
           </div>
-          <span className={styles.floatDiscount} style={{ background: slide.accent }}>SALE</span>
+          <span className={styles.floatDiscount} style={{ background: slide.accent }}>HOT 🔥</span>
         </div>
       </Link>
     );
@@ -150,9 +150,9 @@ export default function HeroSection({ products = [] }: HeroSectionProps) {
 
         <div className={styles.stats}>
           {[
-            { value: '50K+', label: 'Products' },
-            { value: '10K+', label: 'Customers' },
-            { value: '4.8★', label: 'Rating' },
+            { value: '50K+', label: 'Finds' },
+            { value: '10K+', label: 'Community' },
+            { value: '4.8★', label: 'Vibes' },
           ].map((stat) => (
             <div key={stat.label} className={styles.stat}>
               <span className={styles.statValue} style={{ color: slide.accent }}>{stat.value}</span>

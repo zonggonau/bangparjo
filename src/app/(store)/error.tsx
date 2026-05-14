@@ -25,9 +25,9 @@ export default function Error({
       padding: '2rem'
     }}>
       <div style={{ fontSize: '5rem', marginBottom: '1rem' }}>⚠️</div>
-      <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '1rem' }}>Something went wrong!</h1>
+      <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '1rem' }}>Oops! Something went wrong 😅</h1>
       <p style={{ color: 'var(--text-secondary)', maxWidth: '450px', marginBottom: '2rem', lineHeight: '1.6' }}>
-        We apologize for the inconvenience. Our global systems might be experiencing a temporary hiccup.
+        Our social shopping vibes hit a little snag. Give it another try — the community&apos;s waiting!
       </p>
       <div style={{ display: 'flex', gap: '1rem' }}>
         <button

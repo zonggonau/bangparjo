@@ -57,7 +57,7 @@ export default function Navbar() {
     <header className="header">
       {/* Top Bar */}
       <div className="navTop">
-        <span>🌍 Worldwide Shipping Available | Free shipping on orders over ${settings.freeShippingThreshold}</span>
+        <span>🔥 Trending Now | Join 10K+ shoppers in the community</span>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <Link href="/track">Track Order</Link>
           <span>|</span>

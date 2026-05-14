@@ -1,4 +1,3 @@
-import { getProductDetails } from '@/lib/cj-api';
 import ProductView from './ProductView';
 import { Metadata } from 'next';
 import { prisma } from '@/lib/db';
@@ -17,14 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     name: localProduct.name,
     desc: localProduct.description,
     image: localProduct.images[0]
-  } : await (async () => {
-    const res = await getProductDetails(id);
-    return res.success ? {
-      name: res.data.productNameEn || res.data.productName,
-      desc: res.data.description,
-      image: res.data.productImage || res.data.bigImage
-    } : null;
-  })();
+  } : null;
 
   if (!p) return { title: 'Product Not Found' };
 
@@ -115,6 +107,7 @@ export default async function Page({ params }: { params: Promise<{ id: string, s
       bigImage: localProduct.images[0],
       productImageSet: localProduct.images,
       categoryName: localProduct.category?.name || 'Uncategorized',
+      categoryId: localProduct.category?.id || null,
       variants: localProduct.variants.map(v => ({
         vid: v.cjId,
         variantNameEn: v.color && v.size ? `${v.color} / ${v.size}` : v.color || v.size || 'Default',
@@ -138,27 +131,12 @@ export default async function Page({ params }: { params: Promise<{ id: string, s
     );
   }
 
-  // 2. Fallback to CJ API if not imported
-  try {
-    const productRes = await getProductDetails(id);
-
-    return (
-      <>
-        {productRes.success && <ProductSchema product={productRes.data} />}
-        <ProductView 
-          id={id} 
-          initialData={productRes.success ? productRes.data : null}
-          initialError={!productRes.success ? productRes.message : null}
-        />
-      </>
-    );
-  } catch (error: any) {
-    return (
-      <ProductView 
-        id={id} 
-        initialData={null}
-        initialError="Product not found or connection to CJ failed."
-      />
-    );
-  }
+  // 2. No fallback to CJ API — only serve imported products
+  return (
+    <ProductView 
+      id={id} 
+      initialData={null}
+      initialError="Produk belum diimpor ke database. Hubungi admin untuk informasi lebih lanjut."
+    />
+  );
 }

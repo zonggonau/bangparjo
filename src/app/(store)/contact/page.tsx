@@ -29,7 +29,7 @@ export default function ContactPage() {
         setStatus({ type: 'success', msg: 'Pesan Anda telah terkirim! Kami akan menghubungi Anda segera.' });
         setFormData({ name: '', email: '', subject: 'Order Issue', message: '' });
       } else {
-        setStatus({ type: 'error', msg: 'Gagal mengirim pesan. Silakan coba lagi.' });
+        setStatus({ type: 'error', msg: 'Failed to send message. Please try again.' });
       }
     } catch (err) {
       setStatus({ type: 'error', msg: 'Terjadi kesalahan sistem.' });

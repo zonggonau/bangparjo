@@ -24,7 +24,7 @@ export default function NewsletterForm() {
         setStatus({ type: 'success', msg: 'Terima kasih telah berlangganan!' });
         setEmail('');
       } else {
-        setStatus({ type: 'error', msg: data.error || 'Gagal berlangganan' });
+        setStatus({ type: 'error', msg: data.error || 'Failed to subscribe' });
       }
     } catch (err) {
       setStatus({ type: 'error', msg: 'Terjadi kesalahan sistem' });

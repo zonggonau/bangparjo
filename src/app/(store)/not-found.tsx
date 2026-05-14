@@ -12,9 +12,10 @@ export default function NotFound() {
       padding: '2rem'
     }}>
       <div style={{ fontSize: '6rem', marginBottom: '1rem' }}>🔍</div>
-      <h1 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '1rem' }}>Page Not Found</h1>
+      <h1 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '1rem' }}>Page Not Found 🔍</h1>
       <p style={{ color: 'var(--text-secondary)', maxWidth: '400px', marginBottom: '2.5rem', lineHeight: '1.6' }}>
-        Sorry, the page you are looking for doesn&apos;t exist or has been moved to a new global location.
+        Looks like this trend went cold — the page you&apos;re looking for doesn&apos;t exist.
+        Let&apos;s get you back to what&apos;s hot!
       </p>
       <Link
         href="/"
@@ -28,7 +29,7 @@ export default function NotFound() {
           transition: 'transform 0.2s'
         }}
       >
-        Back to Global Shop
+        🔥 Back to Trending
       </Link>
     </div>
   );

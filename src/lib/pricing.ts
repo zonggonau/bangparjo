@@ -6,6 +6,13 @@ export interface MarginTier {
   pct: number;
 }
 
+export interface SocialLink {
+  platform: string;  // e.g. 'facebook', 'instagram', 'tiktok', 'whatsapp', 'youtube'
+  label: string;     // display label
+  url: string;       // full URL
+  icon: string;      // emoji icon
+}
+
 export interface StoreSettings {
   markupPct: number;          // legacy fallback
   marginTiers?: MarginTier[]; // tiered markup
@@ -16,6 +23,7 @@ export interface StoreSettings {
   adminEmail: string;
   taxPct: number;
   cjPayType?: number; // 2: Balance, 3: Manual
+  socialLinks?: SocialLink[];
 }
 
 export const DEFAULT_SETTINGS: StoreSettings = {
@@ -28,6 +36,12 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   adminEmail: '',
   taxPct: 0,
   cjPayType: 3,
+  socialLinks: [
+    { platform: 'facebook', label: 'Facebook', url: 'https://facebook.com/bangparjo', icon: '📘' },
+    { platform: 'instagram', label: 'Instagram', url: 'https://instagram.com/bangparjo', icon: '📸' },
+    { platform: 'tiktok', label: 'TikTok', url: 'https://tiktok.com/@bangparjo', icon: '🎵' },
+    { platform: 'whatsapp', label: 'WhatsApp', url: 'https://wa.me/6281355315427', icon: '💬' },
+  ],
 };
 
 /**

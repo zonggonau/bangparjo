@@ -1,6 +1,6 @@
 // ── Throttle (Server-side Only) ──────────────────────────────────────────
 let lastRequestAt = 0;
-const MIN_INTERVAL_MS = 1500; // Increased to 1.5s for stability
+const MIN_INTERVAL_MS = 5000; // Increased to 5s to reduce QPS limit hits
 
 async function waitForSlot(): Promise<void> {
   const now = Date.now();
@@ -68,17 +68,56 @@ export function parseProductName(name: string): string {
 
 export function parseProductImage(image: any): string {
   if (!image) return '/placeholder.png';
-  if (Array.isArray(image) && image.length > 0) return image[0];
-  if (typeof image === 'string' && image.startsWith('http')) return image;
-  try {
-    if (typeof image === 'string') {
-      const t = image.trim();
-      if (t.startsWith('[') && t.endsWith(']')) {
-        const parsed = JSON.parse(t);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
+
+  // Raw array — take first element
+  if (Array.isArray(image) && image.length > 0) {
+    return parseProductImage(image[0]);
+  }
+
+  if (typeof image !== 'string') {
+    // Try converting to string (rare CJ edge case)
+    try {
+      const s = String(image);
+      return parseProductImage(s);
+    } catch { /* fall through */ }
+    return '/placeholder.png';
+  }
+
+  const trimmed = image.trim();
+  if (!trimmed) return '/placeholder.png';
+
+  // JSON array string — parse and take first
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parseProductImage(parsed[0]);
       }
-    }
-  } catch { /* ignore */ }
+    } catch { /* fall through */ }
+    return '/placeholder.png';
+  }
+
+  // Already absolute HTTP(S) URL
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+
+  // Protocol-relative URL — prepend https:
+  if (trimmed.startsWith('//')) {
+    return `https:${trimmed}`;
+  }
+
+  // Data URI
+  if (trimmed.startsWith('data:')) {
+    return trimmed;
+  }
+
+  // Relative path — unlikely from CJ but handle gracefully
+  if (trimmed.startsWith('/')) {
+    const base = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
+    return `${base}${trimmed}`;
+  }
+
   return '/placeholder.png';
 }
 
@@ -364,6 +403,66 @@ export interface CJShippingMethod {
   logisticAging: string;
   taxesFee?: number;
   totalPostageFee?: number;
+}
+
+/**
+ * Get shipping fees using SKU (more reliable than VID)
+ * Uses CJ's freightCalculateTip API which accepts SKU lookup
+ */
+export async function getShippingFeeBySku(params: {
+  products: Array<{ sku: string; quantity: number; weight?: number; price?: number }>;
+  endCountryCode: string;
+  startCountryCode?: string;
+}): Promise<CJResponse<CJShippingMethod[]>> {
+  const cacheKey = `shipping_sku_${JSON.stringify(params.products)}_${params.endCountryCode}`;
+  const cached = getCache(cacheKey);
+  if (cached) return { success: true, result: true, data: cached, code: 200, message: 'Cached', requestId: 'cached' };
+
+  const reqDTOS = [{
+    srcAreaCode: params.startCountryCode || 'CN',
+    destAreaCode: params.endCountryCode,
+    weight: params.products.reduce((sum, p) => sum + (p.weight || 200) * p.quantity, 0),
+    volume: 0.001,
+    totalGoodsAmount: params.products.reduce((sum, p) => sum + (p.price || 10) * p.quantity, 0),
+    productProp: ['COMMON'],
+    freightTrialSkuList: params.products.map(p => ({
+      sku: p.sku,
+      skuQuantity: p.quantity,
+      skuWeight: p.weight || 200,
+    })),
+    skuList: params.products.map(p => p.sku),
+    platforms: ['API'],
+  }];
+
+  try {
+    const res = await cjFetch<any>('/v1/logistic/freightCalculateTip', {
+      method: 'POST',
+      body: JSON.stringify({ reqDTOS }),
+    });
+
+    if (res.success && res.data && res.data.length > 0) {
+      // Map the detailed response back to simple CJShippingMethod format
+      const methods: CJShippingMethod[] = res.data.map((item: any) => ({
+        logisticName: item.option?.enName || item.channel?.enName || 'Unknown',
+        logisticPrice: item.postage || item.discountFee || 0,
+        logisticPriceCn: item.postageCNY || item.discountFeeCNY || 0,
+        logisticAging: item.arrivalTime || 'Unknown',
+        taxesFee: item.taxesFee,
+        totalPostageFee: item.postage || item.discountFee || 0,
+      }));
+      apiCache.set(cacheKey, { data: methods, expiry: Date.now() + (1000 * 60 * 10) });
+      return { success: true, result: true, data: methods, code: 200, message: 'Success', requestId: 'sku' };
+    }
+    
+    // Fallback jika gagal
+    if (!res.success) {
+      console.warn(`[Shipping SKU API] Failed: ${res.message}.`);
+    }
+    return res;
+  } catch (err) {
+    console.warn('[Shipping SKU API] Error:', err);
+    return { success: false, result: false, message: 'Error', data: null as any, code: 500, requestId: '' };
+  }
 }
 
 export async function getShippingFee(params: {

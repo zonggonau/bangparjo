@@ -57,25 +57,6 @@
 }
 .backBtn:hover { background: var(--primary-dark); }
 
-/* ── Breadcrumb ──────────────────────────────────────────────────────────── */
-.breadcrumbBar {
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
-  padding: 0.875rem 0;
-}
-
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-.breadcrumb a { color: var(--text-muted); transition: color 0.2s; }
-.breadcrumb a:hover { color: var(--primary); }
-.breadcrumbActive { color: var(--text-primary); font-weight: 500; }
-
 /* ── Product Layout ──────────────────────────────────────────────────────── */
 /*
   KEY FIX: align-items: start prevents the taller gallery column from
@@ -509,12 +490,17 @@
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
-  .productLayout { gap: 2rem; }
+  .productLayout { gap: 1.5rem; }
 }
 
 @media (max-width: 768px) {
+  .page {
+    padding-bottom: 2rem;
+  }
   .productLayout {
     grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0.25rem 0;
   }
   /* On mobile: gallery comes first, details below */
   .gallery {
@@ -526,14 +512,31 @@
     overflow-x: auto;
     max-height: none;
   }
-  .thumbnail { flex-shrink: 0; }
+  .thumbnail { flex-shrink: 0; width: 56px; height: 56px; }
   /* Details no longer sticky on mobile */
   .details {
     position: static;
     max-height: none;
     overflow-y: visible;
   }
-  .title  { font-size: 1.2rem; }
-  .price  { font-size: 1.5rem; }
-  .actions { flex-direction: column; }
+  .title  { font-size: 1rem; }
+  .price  { font-size: 1.25rem; }
+  .priceSection { padding: 0.875rem; }
+  .originalPrice { font-size: 0.78rem; }
+  .actions { flex-direction: column; gap: 0.5rem; }
+  .cartButton { font-size: 0.82rem; padding: 0.8rem; }
+  .buyButton  { font-size: 0.82rem; padding: 0.8rem; }
+  .variantItem { font-size: 0.75rem; padding: 4px 10px; }
+  .shippingInfo { padding: 0.875rem; }
+  .shippingHeader strong { font-size: 0.82rem; }
+  .shippingItem { font-size: 0.78rem; }
+  .trustBadges { gap: 0.35rem; }
+  .trustBadge { font-size: 0.7rem; padding: 3px 8px; }
+  .categoryTag { font-size: 0.68rem; padding: 3px 10px; }
+  .description { padding: 1.25rem 0; }
+  .descTitle { font-size: 1rem; }
+  .descContent { font-size: 0.82rem; }
+  .variantLabel { font-size: 0.8rem; }
+  .ratingRow { font-size: 0.78rem; }
+  .stars   { font-size: 0.78rem; }
 }

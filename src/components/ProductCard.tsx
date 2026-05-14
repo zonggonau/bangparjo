@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { CJProduct, parseProductName, parseProductImage, slugify } from '@/lib/cj-api';
+import { CJProduct, parseProductName, slugify } from '@/lib/cj-api';
+import ProductImage from '@/components/ProductImage';
 import { calculateFinalPrice } from '@/lib/pricing';
 import { useSettings } from '@/context/SettingsContext';
 import styles from './ProductCard.module.css';
@@ -58,7 +59,6 @@ export default function ProductCard({ product, priority = false }: { product: CJ
   const prettySlug = slugify(displayName);
   const productUrl = `/product/${product.pid}/${prettySlug}`;
 
-  const productImage = parseProductImage(product.bigImage || product.productImage);
   const originalCjPrice = typeof product.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product.sellPrice));
   const finalPrice = calculateFinalPrice(originalCjPrice, settings);
   
@@ -82,13 +82,13 @@ export default function ProductCard({ product, priority = false }: { product: CJ
 
       {/* Image */}
       <Link href={productUrl} className={styles.imageContainer}>
-        <Image
-          src={productImage}
+        <ProductImage
+          src={product.bigImage || product.productImage}
           alt={displayName}
           fill
           sizes="(max-width: 480px) 50vw, (max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           className={styles.productImage}
-          unoptimized
+          unoptimized={true}
           priority={priority}
         />
         <div className={styles.imageOverlay}>
@@ -98,13 +98,6 @@ export default function ProductCard({ product, priority = false }: { product: CJ
 
       {/* Info */}
       <div className={styles.productInfo}>
-        <Link 
-          href={`/?q=${encodeURIComponent(product.categoryName)}`} 
-          className={styles.categoryTag}
-          style={{ textDecoration: 'none' }}
-        >
-          {product.categoryName}
-        </Link>
         <Link href={productUrl}>
           <h3 className={styles.productName}>{displayName}</h3>
         </Link>

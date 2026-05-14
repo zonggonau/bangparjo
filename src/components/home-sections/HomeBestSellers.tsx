@@ -1,4 +1,3 @@
-import { getProducts } from '@/lib/cj-api';
 import { prisma } from '@/lib/db';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
@@ -22,23 +21,6 @@ export default async function HomeBestSellers() {
     categoryName: 'Imported',
   }));
 
-  // 2. Supplement with API if DB is empty or has few items
-  // 2. Supplement with API ONLY if DB is empty and ignore errors
-  if (mainProducts.length < 1) {
-    try {
-      const mainRes = await getProducts({ pageSize: 10, keyWord: 'popular product' });
-      if (mainRes.success && mainRes.data) {
-        const apiProducts = mainRes.data.list;
-        const pids = new Set(mainProducts.map(p => p.pid));
-        apiProducts.forEach((p: any) => {
-          if (!pids.has(p.pid)) mainProducts.push(p);
-        });
-      }
-    } catch (e) {
-      console.warn('[HomeBestSellers] CJ API Fallback failed, showing empty or DB only.');
-    }
-  }
-
   if (mainProducts.length === 0) return null;
 
   return (
@@ -46,8 +28,8 @@ export default async function HomeBestSellers() {
       <div className="container">
         <div className="sectionHeader">
           <div>
-            <h2 className="sectionTitle">🔥 Best Sellers</h2>
-            <p className="sectionSubtitle">Top trending products this week</p>
+            <h2 className="sectionTitle">🔥 Social Buzz — Trending Now</h2>
+            <p className="sectionSubtitle">What everyone is shopping this week</p>
           </div>
           <Link href="/?q=trending" className="viewAllLink">View All →</Link>
         </div>

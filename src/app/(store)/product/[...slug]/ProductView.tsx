@@ -1,6 +1,6 @@
 'use client';
 
-import { getProductDetails, getProducts, parseProductName, parseProductImage, slugify } from '@/lib/cj-api';
+import { parseProductName, parseProductImage, slugify } from '@/lib/cj-api';
 import { calculateFinalPrice } from '@/lib/pricing';
 
 function formatUSD(price: number | string) {
@@ -33,10 +33,10 @@ function stripCommonPrefix(names: string[]): string[] {
 }
 import Image from 'next/image';
 import Link from 'next/link';
+import ProductImage from '@/components/ProductImage';
 import { useCart } from '@/context/CartContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useState, useEffect, use } from 'react';
-import ProductCard from '@/components/ProductCard';
 import { ProductDetailSkeleton } from '@/components/ProductSkeleton';
 import styles from './product.module.css';
 
@@ -44,7 +44,6 @@ export default function ProductView({ id, initialData, initialError }: { id: str
   const { addToCart } = useCart();
   const { settings } = useSettings();
   const [product, setProduct] = useState<any>(initialData);
-  const [related, setRelated] = useState<any[]>([]);
   const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(initialError);
   const [selectedImage, setSelectedImage] = useState<string>(() => {
@@ -54,135 +53,40 @@ export default function ProductView({ id, initialData, initialError }: { id: str
   const [selectedVariant, setSelectedVariant] = useState<any>(() => {
     return (initialData?.variants?.length > 0) ? initialData.variants[0] : null;
   });
-  const [isFavorite, setIsFavorite] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const displayName = product ? parseProductName(product.productNameEn || product.productName) : '';
 
-  // Initialize selected image and variant from initialData
+    // Initialize selected image and variant from initialData
+  // Related products section removed
+
+
+
+  // Fetch product from local DB (client-side fallback when no initialData)
   useEffect(() => {
-    if (initialData) {
-      // Fetch related products in background
-      const keyword = initialData.categoryName || 'popular product';
-      getProducts({ pageSize: 4, keyWord: keyword })
-        .then(r => {
-          if (r.success && r.data?.list) {
-            setRelated(r.data.list.filter((p: any) => p.pid !== id));
-          }
-        })
-        .catch(() => {});
-    }
-  }, [initialData, id]);
+    if (!id || initialData) return;
 
-  useEffect(() => {
-    // Load favorite status from localStorage
-    if (id) {
-      const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-      setIsFavorite(favs.some((f: any) => (typeof f === 'string' ? f === id : f.pid === id)));
-    }
-  }, [id]);
+    setLoading(true);
+    setError(null);
 
-  const toggleFavorite = () => {
-    const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-    let nextFavs;
-    const isCurrentlyFav = favs.some((f: any) => (typeof f === 'string' ? f === id : f.pid === id));
-
-    if (!isCurrentlyFav) {
-      const favProduct = {
-        pid: product.pid,
-        productName: product.productName,
-        productNameEn: product.productNameEn,
-        bigImage: product.bigImage,
-        productImage: product.productImage,
-        sellPrice: product.sellPrice,
-        categoryName: product.categoryName
-      };
-      nextFavs = [...favs, favProduct];
-    } else {
-      nextFavs = favs.filter((f: any) => (typeof f === 'string' ? f !== id : f.pid !== id));
-    }
-
-    localStorage.setItem('favorites', JSON.stringify(nextFavs));
-    setIsFavorite(!isCurrentlyFav);
-    window.dispatchEvent(new Event('favoritesUpdated'));
-  };
-
-  useEffect(() => {
-    if (!id || initialData) return; // Skip if already loaded on server
-
-    const fetchProduct = async (attempt = 0) => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const res = await getProductDetails(id);
-
-        if (res.success) {
+    fetch(`/api/pproduct?cjId=${encodeURIComponent(id)}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success && res.data) {
           setProduct(res.data);
-
-          // Build ordered image list: bigImage first (cover), then gallery, no duplicates
-          const rawImages = [
-            res.data.bigImage,
-            ...(res.data.productImageSet || []),
-            ...(typeof res.data.productImage === 'string' &&
-                res.data.productImage.startsWith('[') ?
-                  JSON.parse(res.data.productImage) : [res.data.productImage]),
-          ]
-            .map((img: any) => parseProductImage(img))
-            .filter((img: string) => img && img !== '/placeholder.png');
-
-          // Deduplicate while preserving order
-          const seen = new Set<string>();
-          const uniqueImages = rawImages.filter((img: string) => {
-            if (seen.has(img)) return false;
-            seen.add(img);
-            return true;
-          });
-
-          // Always set cover to bigImage (first unique image) — only on first load
-          const cover = uniqueImages[0] || parseProductImage(res.data.bigImage);
-          setSelectedImage(prev => prev || cover);
-
-          // Pre-select first variant
+          setSelectedImage(parseProductImage(res.data.bigImage || res.data.productImage));
           if (res.data.variants?.length > 0) {
             setSelectedVariant(res.data.variants[0]);
           }
-
-          // Delay related-products fetch by 1.2s to respect 1 req/sec QPS limit
-          const keyword = res.data.categoryName || 'popular product';
-          setTimeout(() => {
-            getProducts({ pageSize: 4, keyWord: keyword })
-              .then(r => {
-                if (r.success && r.data?.list) {
-                  setRelated(r.data.list.filter((p: any) => p.pid !== id));
-                }
-              })
-              .catch(() => {/* silently ignore related-products errors */});
-          }, 1200);
-
         } else {
-          const msg = res.message || '';
-          const isQps = msg.toLowerCase().includes('too many') || msg.toLowerCase().includes('qps');
-
-          // Auto-retry once on QPS error
-          if (isQps && attempt === 0) {
-            await new Promise(r => setTimeout(r, 1500));
-            return fetchProduct(1);
-          }
-
-          setError(
-            isQps
-              ? 'Terlalu banyak permintaan. Silakan tunggu sebentar lalu refresh halaman.'
-              : msg || 'Produk tidak ditemukan'
-          );
+          setError('Produk tidak ditemukan. Mungkin belum diimpor ke database.');
         }
-      } catch {
-        setError('Gagal terhubung ke toko. Periksa koneksi internet Anda.');
-      } finally {
         setLoading(false);
-      }
-    };
-
-    fetchProduct();
+      })
+      .catch(err => {
+        console.error('[ProductView] Error:', err);
+        setError('Gagal memuat produk.');
+        setLoading(false);
+      });
   }, [id]);
 
   useEffect(() => {
@@ -220,7 +124,8 @@ export default function ProductView({ id, initialData, initialError }: { id: str
       const timer = setTimeout(async () => {
         setShippingLoading(true);
         try {
-          const res = await fetch(`/api/shipping-rates?vid=${selectedVariant.vid}&quantity=1&country=ID&subtotal=${originalPrice}`);
+          const sku = selectedVariant.variantSku || selectedVariant.vid;
+          const res = await fetch(`/api/shipping-rates?sku=${sku}&quantity=1&country=ID&subtotal=${originalPrice}`);
           const data = await res.json();
           if (data.success) {
             setShippingRates(data.data);
@@ -264,12 +169,6 @@ export default function ProductView({ id, initialData, initialError }: { id: str
 
   if (loading) return (
     <div style={{ minHeight: '100vh' }}>
-      {/* Breadcrumb Skeleton */}
-      <div style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', padding: '0.875rem 0' }}>
-        <div className="container">
-          <div className="skeleton" style={{ width: '200px', height: '14px' }}></div>
-        </div>
-      </div>
       <ProductDetailSkeleton />
     </div>
   );
@@ -280,8 +179,8 @@ export default function ProductView({ id, initialData, initialError }: { id: str
     return (
       <div className={styles.errorPage}>
         <div className={styles.errorIcon}>{isRateLimit ? '⏳' : '😕'}</div>
-        <h1>{isRateLimit ? 'Too Many Requests' : 'Produk Tidak Ditemukan'}</h1>
-        <p>{isRateLimit ? 'The server is busy. Please wait a moment and try again.' : `Maaf, produk dengan ID ${id} tidak ditemukan atau tidak tersedia untuk wilayah Anda.`}</p>
+        <h1>{isRateLimit ? 'Too Many Requests' : 'Product Not Found'}</h1>
+        <p>{isRateLimit ? 'The server is busy. Please wait a moment and try again.' : `Sorry, product with ID ${id} was not found or is not available for your region.`}</p>
         <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>{error}</p>
         <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
           {isRateLimit && (
@@ -337,20 +236,6 @@ export default function ProductView({ id, initialData, initialError }: { id: str
 
   return (
     <div className={styles.page}>
-      {/* Breadcrumb */}
-      <div className={styles.breadcrumbBar}>
-        <div className="container">
-          <div className={styles.breadcrumb}>
-            <Link href="/">Home</Link>
-            <span>›</span>
-            <Link href={`/category/${product.categoryName?.toLowerCase().replace(/\s+/g, '-') || 'all'}`}>
-              {product.categoryName}
-            </Link>
-            <span>›</span>
-            <span className={styles.breadcrumbActive}>{displayName.substring(0, 40)}...</span>
-          </div>
-        </div>
-      </div>
 
       {/* Product Layout */}
       <div className="container">
@@ -361,14 +246,14 @@ export default function ProductView({ id, initialData, initialError }: { id: str
             <div className={styles.mainImageWrapper}>
               <div className={styles.mainImage}>
                 {selectedImage && (
-                  <Image
+                  <ProductImage
                     src={selectedImage}
                     alt={displayName}
                     fill
-                    className={styles.image}
                     priority
                     sizes="(max-width: 768px) 100vw, 50vw"
-                    unoptimized
+                    unoptimized={true}
+                    style={{ objectFit: 'contain' }}
                   />
                 )}
                 {/* Badge wrapper excluded from .mainImage > * inset rule */}
@@ -387,7 +272,7 @@ export default function ProductView({ id, initialData, initialError }: { id: str
                     className={`${styles.thumbnail} ${selectedImage === img ? styles.thumbnailActive : ''}`}
                     onClick={() => setSelectedImage(img)}
                   >
-                    <Image src={img} alt={`${displayName} ${i + 1}`} fill sizes="80px" unoptimized />
+                    <ProductImage src={img} alt={`${displayName} ${i + 1}`} fill sizes="80px" unoptimized={true} />
                   </button>
                 ))}
               </div>
@@ -396,7 +281,6 @@ export default function ProductView({ id, initialData, initialError }: { id: str
 
           {/* Product Details */}
           <div className={styles.details}>
-            <span className={styles.categoryTag}>{product.categoryName}</span>
             <h1 className={styles.title}>{displayName}</h1>
 
             {/* Rating */}
@@ -498,39 +382,19 @@ export default function ProductView({ id, initialData, initialError }: { id: str
             </div>
 
             {/* Actions */}
-            <div className={styles.actions} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <div className={styles.actions}>
               <button 
                 className={`${styles.cartButton} ${added ? styles.cartButtonAdded : ''}`}
                 onClick={handleAddToCart}
-                style={{ flex: 1 }}
               >
                 {added ? '✅ Added!' : '🛒 Add to Cart'}
               </button>
               <Link 
                 href={`/checkout?pid=${id}${selectedVariant ? `&vid=${selectedVariant.vid}` : ''}`} 
-                className={styles.buyButton} 
-                style={{ 
-                  flex: 1, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  textDecoration: 'none' 
-                }}
+                className={styles.buyButton}
               >
                 ⚡ Buy Now
               </Link>
-              <button 
-                onClick={toggleFavorite}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  width: '48px', height: '48px', borderRadius: '12px', border: '1px solid var(--border)',
-                  background: 'var(--white)', cursor: 'pointer', fontSize: '1.5rem',
-                  color: isFavorite ? '#ef4444' : '#9ca3af', transition: 'all 0.2s'
-                }}
-                title={isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
-              >
-                {isFavorite ? '♥' : '♡'}
-              </button>
             </div>
 
             {/* Trust Badges */}
@@ -551,23 +415,6 @@ export default function ProductView({ id, initialData, initialError }: { id: str
               dangerouslySetInnerHTML={{ __html: product.description }} 
             />
           </div>
-        )}
-
-        {/* Related Products */}
-        {related.length > 0 && (
-          <section className={styles.related}>
-            <div className="sectionHeader">
-              <div>
-                <h2 className="sectionTitle">🔗 Related Products</h2>
-                <p className="sectionSubtitle">Similar products you might also like</p>
-              </div>
-            </div>
-            <div className="productGrid">
-              {related.slice(0, 4).map((p: any) => (
-                <ProductCard key={p.pid} product={p} />
-              ))}
-            </div>
-          </section>
         )}
       </div>
 

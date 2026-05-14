@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getProductDetails, getShippingFee, CJShippingMethod, parseProductName, parseProductImage } from '@/lib/cj-api';
+import { CJShippingMethod, parseProductName, parseProductImage } from '@/lib/cj-api';
 import { calculateFinalPrice, calculateShippingFee } from '@/lib/pricing';
 import { useCart } from '@/context/CartContext';
 import { useSettings } from '@/context/SettingsContext';
@@ -10,6 +10,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import PayPalButton from '@/components/PayPalButton';
 import MidtransPayment from '@/components/MidtransPayment';
+import ProductImage from '@/components/ProductImage';
 import styles from './checkout.module.css';
 
 function formatUSD(price: number) {
@@ -19,6 +20,22 @@ function formatUSD(price: number) {
 import { countries as COUNTRIES } from '@/lib/countries';
 
 function CheckoutContent() {
+  // ── SEO: Checkout pages must never be indexed ────────────────────────────
+  useEffect(() => {
+    let meta = document.querySelector('meta[name="robots"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'robots');
+      document.head.appendChild(meta);
+    }
+    const prev = meta.getAttribute('content');
+    meta.setAttribute('content', 'noindex, nofollow');
+    return () => {
+      if (meta && meta.getAttribute('content') === 'noindex, nofollow') {
+        meta.setAttribute('content', prev || 'index, follow');
+      }
+    };
+  }, []);
   const searchParams = useSearchParams();
   const pidParam = searchParams.get('pid');
   const vidParam = searchParams.get('vid');
@@ -49,27 +66,65 @@ function CheckoutContent() {
   const [shippingError, setShippingError] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [countryTouched, setCountryTouched] = useState(false);
+  const [productError, setProductError] = useState<string | null>(null);
 
   // If coming from cart (no pid param and items in cart)
   const isCartCheckout = !pidParam && cartItems.length > 0;
 
-  // Load anchor product details (either from param or first item in cart for shipping reference)
+  // Load anchor product details from local DB (not CJ API)
   useEffect(() => {
     const targetId = pidParam || (cartItems.length > 0 ? cartItems[0].pid : null);
-    if (targetId) {
-      getProductDetails(targetId).then(res => {
-        if (res.success) {
-          setProduct(res.data);
-          if (vidParam) {
-            const found = res.data.variants.find((v: any) => v.vid === vidParam);
-            if (found) setSelectedVariant(found);
-          } else if (res.data.variants?.length > 0) {
-            setSelectedVariant(res.data.variants[0]);
-          }
-        }
+    setProductError(null);
+    
+    // Cart checkout: data already in cart items, no API call needed
+    if (!pidParam && cartItems.length > 0) {
+      const firstItem = cartItems[0];
+      setProduct({
+        pid: firstItem.pid,
+        productNameEn: firstItem.productNameEn || firstItem.productName,
+        productName: firstItem.productName,
+        bigImage: firstItem.bigImage || firstItem.productImage,
+        productImage: firstItem.productImage,
+        sellPrice: firstItem.sellPrice,
       });
+      if (firstItem.selectedVid) {
+        setSelectedVariant({
+          vid: firstItem.selectedVid,
+          variantSellPrice: firstItem.sellPrice,
+          variantSku: firstItem.selectedSku,
+          variantNameEn: firstItem.selectedVariantName,
+          variantKey: firstItem.selectedVariantName || 'default',
+        });
+      }
+      setSubmitError('');
+      return;
     }
-  }, [pidParam, vidParam, cartItems.length]); // Added cartItems.length to handle refresh correctly
+
+    // Direct buy: fetch from local DB
+    if (targetId) {
+      fetch(`/api/pproduct?cjId=${encodeURIComponent(targetId)}`)
+        .then(res => res.json())
+        .then(res => {
+          if (res.success && res.data) {
+            setProduct(res.data);
+            if (vidParam) {
+              const found = res.data.variants.find((v: any) => v.vid === vidParam);
+              if (found) setSelectedVariant(found);
+            } else if (res.data.variants?.length > 0) {
+              setSelectedVariant(res.data.variants[0]);
+            }
+            setSubmitError('');
+          } else {
+            console.error('[Checkout] Product not found in DB:', targetId, res.message);
+            setProductError('⚠️ Produk tidak ditemukan di database. Silakan impor produk dulu.');
+          }
+        })
+        .catch(err => {
+          console.error('[Checkout] Error fetching product:', err);
+          setProductError('❌ Gagal memuat data produk. Silakan refresh halaman.');
+        });
+    }
+  }, [pidParam, vidParam]); // Only depend on params, not cartItems.length
 
   // Fetch shipping ONLY after user has touched the country dropdown
   useEffect(() => {
@@ -87,26 +142,36 @@ function CheckoutContent() {
       setShippingMethods([]);
       setSelectedShipping(null);
 
-      getShippingFee({
-        products: isCartCheckout 
-          ? cartItems.map(item => ({ vid: item.selectedVid, quantity: item.quantity }))
-          : [{ vid: selectedVariant?.vid, quantity: qty }],
-        endCountryCode: formData.country,
-      }).then(res => {
-        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-          setShippingMethods(res.data);
-          setSelectedShipping(res.data[0]);
-        } else {
-          // If the API returns success:true but an empty list, it usually means 
-          // they don't ship this specific product to that country.
-          const msg = (res.message && res.message !== 'Success') 
-            ? res.message 
-            : 'This product is unfortunately not available for shipping to the selected country. Please try a different destination or another product.';
-          setShippingError(msg);
+      // Build SKU-based query for better shipping rates
+      const buildSkuQuery = () => {
+        if (isCartCheckout) {
+          const params = new URLSearchParams();
+          cartItems.forEach((item, i) => {
+            const sku = item.selectedSku || item.selectedVid || item.pid;
+            params.set('sku', sku);
+            params.set('quantity', String(item.quantity));
+          });
+          params.set('country', formData.country);
+          params.set('subtotal', String(cartItems.reduce((acc, item) => acc + Number(item.sellPrice) * item.quantity, 0)));
+          return params.toString();
         }
-      }).catch(() => {
-        setShippingError('Failed to fetch shipping rates. Please check your connection or try again later.');
-      }).finally(() => setFetchingShipping(false));
+        const sku = selectedVariant?.variantSku || selectedVariant?.vid;
+        return `sku=${encodeURIComponent(sku)}&quantity=${qty}&country=${encodeURIComponent(formData.country)}&subtotal=${subtotal}`;
+      };
+
+      fetch(`/api/shipping-rates?${buildSkuQuery()}`)
+        .then(res => res.json())
+        .then(res => {
+          if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+            setShippingMethods(res.data);
+            setSelectedShipping(res.data[0]);
+          } else {
+            setShippingError('Tidak ada metode pengiriman tersedia untuk tujuan ini.');
+          }
+        })
+        .catch(() => {
+          setShippingError('Gagal menghitung ongkos kirim.');
+        }).finally(() => setFetchingShipping(false));
     }, 800);
 
     return () => clearTimeout(timer);
@@ -213,11 +278,37 @@ function CheckoutContent() {
     }
   };
 
-  if (!isLoaded || ((pidParam || cartItems.length > 0) && !product && !orderId)) return (
+  if (!isLoaded) return (
     <div className={styles.container} style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
         <p>Loading checkout...</p>
+      </div>
+    </div>
+  );
+
+  // Error loading product from DB
+  if ((pidParam || cartItems.length > 0) && productError) {
+    return (
+      <div className={styles.container} style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', maxWidth: '480px', padding: '2rem' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>😕</div>
+          <h2 style={{ marginBottom: '0.75rem' }}>Produk Tidak Ditemukan</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>{productError}</p>
+          <Link href="/" className={styles.submitButton} style={{ textDecoration: 'none', padding: '0.75rem 2rem', display: 'inline-block' }}>
+            ← Kembali ke Beranda
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Still loading product (show briefly before error or success)
+  if ((pidParam || cartItems.length > 0) && !product && !orderId) return (
+    <div className={styles.container} style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
+        <p>Memuat data checkout...</p>
       </div>
     </div>
   );
@@ -287,7 +378,7 @@ function CheckoutContent() {
                   {finalItems.map((item, idx) => (
                     <div key={`${item.pid}-${idx}`} className={styles.successOrderItem}>
                       <div className={styles.successOrderImg}>
-                        <Image src={item.img} alt={item.name} fill sizes="40px" unoptimized style={{ objectFit: 'contain' }} />
+                        <ProductImage src={item.img} alt={item.name} fill sizes="40px" unoptimized={true} style={{ objectFit: 'contain' }} />
                       </div>
                       <div className={styles.successOrderInfo}>
                         <p className={styles.successOrderName}>{item.name}</p>
@@ -431,7 +522,7 @@ function CheckoutContent() {
               {cartItems.map(item => (
                 <div key={`${item.pid}-${item.selectedVid || 'no-vid'}`} className={styles.summaryProduct}>
                   <div className={styles.summaryImg}>
-                    <Image src={parseProductImage(item.bigImage || item.productImage)} alt={parseProductName(item.productNameEn || item.productName)} fill sizes="64px" unoptimized style={{ objectFit: 'contain' }} />
+                    <ProductImage src={item.bigImage || item.productImage} alt={parseProductName(item.productNameEn || item.productName)} fill sizes="64px" unoptimized={true} style={{ objectFit: 'contain' }} />
                   </div>
                   <div className={styles.summaryInfo}>
                     <p className={styles.summaryName}>{parseProductName(item.productNameEn || item.productName)}</p>
@@ -444,7 +535,7 @@ function CheckoutContent() {
           ) : product ? (
             <div className={styles.summaryProduct}>
               <div className={styles.summaryImg}>
-                <Image src={productImage} alt={parseProductName(product.productNameEn || product.productName)} fill sizes="80px" unoptimized style={{ objectFit: 'contain' }} />
+                <ProductImage src={product.bigImage || product.productImage} alt={parseProductName(product.productNameEn || product.productName)} fill sizes="80px" unoptimized={true} style={{ objectFit: 'contain' }} />
               </div>
               <div className={styles.summaryInfo}>
                 <p className={styles.summaryName}>{parseProductName(product.productNameEn || product.productName)}</p>

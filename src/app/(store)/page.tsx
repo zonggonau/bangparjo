@@ -1,5 +1,4 @@
 import { Suspense } from 'react';
-import { getProducts } from '@/lib/cj-api';
 import ProductCard from '@/components/ProductCard';
 import CategoryBanner from '@/components/CategoryBanner';
 import FeaturedSection from '@/components/FeaturedSection';
@@ -18,11 +17,11 @@ import { prisma } from '@/lib/db';
 import JsonLd from '@/components/JsonLd';
 
 export const metadata = {
-  title: 'bangparjo.shop — Trusted Global E-commerce Platform',
-  description: 'Find thousands of the best global products at the lowest prices. Fashion, Electronics, Beauty, and more. Worldwide shipping available.',
+  title: 'BangParjo — Social Shopping Destination | Trending Finds & Community Picks',
+  description: 'Discover viral finds, trending products, and community-curated picks at BangParjo. Shop the hype with your social shopping crew. 🔥 ✨',
   openGraph: {
-    title: 'bangparjo.shop — Trusted Global E-commerce Platform',
-    description: 'Shop your favorite global products directly with the best prices and worldwide shipping.',
+    title: 'BangParjo — Social Shopping Destination',
+    description: 'Shop trending finds and community picks. Join the social shopping revolution at BangParjo! 🔥',
     images: ['/logo-banner.png'],
   },
   twitter: {
@@ -30,42 +29,6 @@ export const metadata = {
     images: ['/logo-banner.png'],
   }
 };
-
-async function getCategoryProducts(categoryName: string, keywords: string[], cjCategoryId: string) {
-  const dbProducts = await prisma.product.findMany({
-    take: 10,
-    where: { 
-      OR: keywords.map(keyword => ({ name: { contains: keyword, mode: 'insensitive' } }))
-    },
-    include: { variants: true }
-  });
-
-  let products = dbProducts.map(p => ({
-    pid: p.cjId,
-    productName: p.name,
-    productNameEn: p.name,
-    productImage: p.images[0],
-    bigImage: p.images[0],
-    sellPrice: p.variants[0]?.sellingPrice || 0,
-    categoryName: categoryName,
-  }));
-
-  // Supplement with API only if strictly necessary and ignore errors
-  if (products.length < 5) {
-    try {
-      const res = await getProducts({ categoryId: cjCategoryId, pageSize: 10 });
-      if (res.success && res.data) {
-        const apiProducts = res.data.list;
-        const pids = new Set(products.map(p => p.pid));
-        apiProducts.forEach((p: any) => { if (!pids.has(p.pid)) products.push(p); });
-      }
-    } catch (e) {
-      console.warn(`[Homepage] CJ API Fallback failed for ${categoryName}, using DB only.`);
-    }
-  }
-
-  return products.slice(0, 10);
-}
 
 export default async function Home({
   searchParams,
@@ -75,37 +38,25 @@ export default async function Home({
   const { q } = await searchParams;
 
   if (q) {
-    let mainProducts: any[] = [];
-    try {
-      const mainRes = await getProducts({ pageSize: 40, keyWord: q });
-      if (mainRes.success && mainRes.data) {
-        mainProducts = mainRes.data.list;
-      }
-    } catch (e) {
-      console.warn(`[Search] CJ API failed for query "${q}", falling back to DB.`);
-    }
-
-    if (mainProducts.length === 0) {
-      const dbProducts = await prisma.product.findMany({
-        where: {
-          OR: [
-            { name: { contains: q, mode: 'insensitive' } },
-            { description: { contains: q, mode: 'insensitive' } },
-          ]
-        },
-        include: { variants: true },
-        take: 40
-      });
-      mainProducts = dbProducts.map(p => ({
-        pid: p.cjId,
-        productName: p.name,
-        productNameEn: p.name,
-        productImage: p.images[0],
-        bigImage: p.images[0],
-        sellPrice: p.variants[0]?.sellingPrice || 0,
-        categoryName: 'Search Result',
-      }));
-    }
+    const dbProducts = await prisma.product.findMany({
+      where: {
+        OR: [
+          { name: { contains: q, mode: 'insensitive' } },
+          { description: { contains: q, mode: 'insensitive' } },
+        ]
+      },
+      include: { variants: true },
+      take: 40
+    });
+    const mainProducts = dbProducts.map(p => ({
+      pid: p.cjId,
+      productName: p.name,
+      productNameEn: p.name,
+      productImage: p.images[0],
+      bigImage: p.images[0],
+      sellPrice: p.variants[0]?.sellingPrice || 0,
+      categoryName: 'Search Result',
+    }));
 
     return (
       <div className={styles.page}>
@@ -193,18 +144,18 @@ export default async function Home({
       <Newsletter />
       <TrustBadges />
 
-      {/* Why Choose Us */}
+      {/* Why BangParjo */}
       <section className={styles.whySection}>
         <div className="container">
           <h2 className="sectionTitle" style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            Why Shop at bangparjo.shop?
+            Why Shop at BangParjo? 🔥
           </h2>
           <div className={styles.featureGrid}>
             {[
-              { icon: '🌍', title: 'Worldwide Shipping', desc: 'We ship to 200+ countries. Your package, delivered anywhere on the globe.' },
-              { icon: '💯', title: 'Genuine Products', desc: 'All products sourced from verified global suppliers.' },
+              { icon: '👥', title: 'Community Driven', desc: 'Real people, real reviews. Shop what the community loves and trusts.' },
+              { icon: '⚡', title: 'Trending Finds', desc: 'Always stay ahead with viral products curated just for you.' },
               { icon: '🔒', title: 'Secure Payments', desc: 'Encrypted transactions with multiple payment methods accepted.' },
-              { icon: '📞', title: '24/7 Support', desc: 'Our customer service team is always here to help you.' },
+              { icon: '🔄', title: 'Easy 30-Day Returns', desc: 'Not loving it? No worries — hassle-free returns within 30 days.' },
             ].map((feature) => (
               <div key={feature.title} className={styles.featureCard}>
                 <div className={styles.featureIcon}>{feature.icon}</div>

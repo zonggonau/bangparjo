@@ -14,7 +14,7 @@ export default function SubscriberList({ initialSubscribers }: { initialSubscrib
   const [deleting, setDeleting] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Hapus subscriber ini?')) return;
+    if (!confirm('Delete this subscriber?')) return;
     
     setDeleting(id);
     try {
@@ -23,7 +23,7 @@ export default function SubscriberList({ initialSubscribers }: { initialSubscrib
         setSubscribers(subscribers.filter(s => s.id !== id));
       }
     } catch (err) {
-      alert('Gagal menghapus');
+      alert('Failed to delete');
     } finally {
       setDeleting(null);
     }

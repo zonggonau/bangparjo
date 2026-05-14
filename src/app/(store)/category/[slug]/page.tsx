@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import { prisma } from '@/lib/db';
-import { getProducts } from '@/lib/cj-api';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
 import styles from './category.module.css';
@@ -10,7 +9,10 @@ async function getCategoryBySlug(slug: string) {
   let category = await prisma.category.findUnique({
     where: { slug },
     include: {
-      children: { take: 20 },
+      children: {
+        include: { children: true },
+        take: 50,
+      },
       parent: { include: { parent: true } }
     }
   });
@@ -30,7 +32,7 @@ async function getCategoryBySlug(slug: string) {
     if (slug === 'all') {
       category = await prisma.category.findFirst({
         where: { parentId: null },
-        include: { children: { take: 20 }, parent: true }
+        include: { children: { include: { children: true }, take: 50 }, parent: true }
       }) as any;
     } else if (commonMappings[slug]) {
       const targetSlugPart = commonMappings[slug];
@@ -42,7 +44,7 @@ async function getCategoryBySlug(slug: string) {
         category = await prisma.category.findUnique({
           where: { id: fallbackCat.id },
           include: {
-            children: { take: 20 },
+            children: { include: { children: true }, take: 50 },
             parent: { include: { parent: true } }
           }
         }) as any;
@@ -118,57 +120,67 @@ export default async function CategoryPage({
     );
   }
 
-  // 2. Fetch produk dari CJ API menggunakan cjId kategori + Filter
+  // 2. Fetch products from local DB
   let products: any[] = [];
   let total = 0;
 
   try {
-    const productRes = await getProducts({
-      categoryId: category.cjId || undefined,
-      pageSize: 42,
-      pageNum: pageNum,
-      minPrice,
-      maxPrice,
-      searchType: sort,
-    });
-    
-    if (productRes.success && productRes.data) {
-      products = productRes.data.list;
-      total = productRes.data.total;
-    }
-  } catch (error) {
-    console.warn(`[CategoryPage] CJ API failed for ${slug}, falling back to DB products.`);
-  }
-
-  // 3. Fallback ke DB jika API gagal atau kosong
-  if (products.length === 0) {
-    const dbProducts = await prisma.product.findMany({
-      where: {
-        categoryId: category.id,
-        variants: {
-          some: {
-            sellingPrice: {
-              gte: minPrice,
-              lte: maxPrice
-            }
+    // Collect all descendant category IDs (self + children + grandchildren)
+    const childIds: string[] = [category.id];
+    if (category.children?.length > 0) {
+      for (const child of category.children) {
+        childIds.push(child.id);
+        // Add grandchild IDs (children of children)
+        if ((child as any).children?.length > 0) {
+          for (const grandchild of (child as any).children) {
+            childIds.push(grandchild.id);
           }
         }
-      },
+      }
+    }
+
+    const whereClause: any = {
+      categoryId: { in: childIds },
+      status: 'ACTIVE',
+    };
+
+    // Price filter
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      whereClause.variants = {
+        some: {
+          ...(minPrice !== undefined ? { sellingPrice: { gte: minPrice } } : {}),
+          ...(maxPrice !== undefined ? { sellingPrice: { lte: maxPrice } } : {}),
+        }
+      };
+    }
+
+    // Sorting
+    let orderBy: any = { createdAt: 'desc' };
+    if (sort === 1) orderBy = { totalStock: 'desc' };
+    else if (sort === 2) orderBy = { name: 'asc' };
+
+    total = await prisma.product.count({ where: whereClause });
+
+    const dbProducts = await prisma.product.findMany({
+      where: whereClause,
       include: { variants: true },
       take: 42,
       skip: (pageNum - 1) * 42,
+      orderBy,
     });
 
     products = dbProducts.map(p => ({
       pid: p.cjId,
       productName: p.name,
       productNameEn: p.name,
-      productImage: p.images[0],
-      bigImage: p.images[0],
+      productImage: p.images[0] || '/placeholder.png',
+      bigImage: p.images[0] || '/placeholder.png',
+      productImageSet: p.images,
       sellPrice: p.variants[0]?.sellingPrice || 0,
-      categoryName: category?.name || 'Product',
+      categoryName: category.name,
     }));
-    total = await prisma.product.count({ where: { categoryId: category.id } });
+  } catch (error) {
+    console.warn(`[CategoryPage] DB query failed for ${slug}:`, error);
   }
 
   const totalPages = Math.ceil(total / 42);

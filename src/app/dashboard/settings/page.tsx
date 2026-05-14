@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSettings } from '@/context/SettingsContext';
 
-type TabType = 'profile' | 'logistics' | 'margins';
+type TabType = 'profile' | 'logistics' | 'margins' | 'social';
 
 export default function SettingsPage() {
   const { settings: currentSettings, refreshSettings } = useSettings();
@@ -131,6 +131,81 @@ export default function SettingsPage() {
           </section>
         )}
 
+        {/* TAB 4: Follow Us / Social Media */}
+        {activeTab === 'social' && (
+          <section style={sectionStyle}>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h3 style={sectionTitle}>Follow Us — Social Media Links</h3>
+              <p style={sectionSub}>These links appear in the footer of your store. Add or edit your social media profiles below.</p>
+            </div>
+            <div style={{ ...cardStyle, gap: '0.875rem' }}>
+              {(draft.socialLinks || []).map((link, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#fafafa', padding: '0.875rem 1rem', borderRadius: '8px', border: '1px solid #f4f4f5' }}>
+                  <span style={{ fontSize: '1.5rem' }}>{link.icon}</span>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <input 
+                      type="text" value={link.platform} placeholder="Platform" 
+                      onChange={e => {
+                        const arr = [...(draft.socialLinks || [])];
+                        arr[idx] = { ...arr[idx], platform: e.target.value };
+                        setDraft({...draft, socialLinks: arr});
+                      }}
+                      style={{ ...inputStyle, height: '32px', fontSize: '0.8rem', width: '140px' }}
+                    />
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input 
+                        type="text" value={link.label} placeholder="Label (e.g. Instagram)" 
+                        onChange={e => {
+                          const arr = [...(draft.socialLinks || [])];
+                          arr[idx] = { ...arr[idx], label: e.target.value };
+                          setDraft({...draft, socialLinks: arr});
+                        }}
+                        style={{ ...inputStyle, height: '32px', fontSize: '0.8rem', flex: 1 }}
+                      />
+                      <select 
+                        value={link.icon} 
+                        onChange={e => {
+                          const arr = [...(draft.socialLinks || [])];
+                          arr[idx] = { ...arr[idx], icon: e.target.value };
+                          setDraft({...draft, socialLinks: arr});
+                        }}
+                        style={{ ...inputStyle, height: '32px', fontSize: '0.8rem', width: '70px' }}
+                      >
+                        <option value="📘">📘 FB</option>
+                        <option value="📸">📸 IG</option>
+                        <option value="🎵">🎵 TT</option>
+                        <option value="💬">💬 WA</option>
+                        <option value="▶️">▶️ YT</option>
+                        <option value="🐦">🐦 X</option>
+                        <option value="💼">💼 LI</option>
+                        <option value="📌">📌 Pin</option>
+                        <option value="🌐">🌐 Web</option>
+                      </select>
+                    </div>
+                    <input 
+                      type="url" value={link.url} placeholder="https://..." 
+                      onChange={e => {
+                        const arr = [...(draft.socialLinks || [])];
+                        arr[idx] = { ...arr[idx], url: e.target.value };
+                        setDraft({...draft, socialLinks: arr});
+                      }}
+                      style={{ ...inputStyle, height: '32px', fontSize: '0.8rem' }}
+                    />
+                  </div>
+                  <button 
+                    onClick={() => setDraft({...draft, socialLinks: draft.socialLinks?.filter((_, i) => i !== idx)})}
+                    style={{ background: '#fef2f2', border: 'none', color: '#ef4444', width: '28px', height: '28px', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, flexShrink: 0 }}
+                  >×</button>
+                </div>
+              ))}
+              <button 
+                onClick={() => setDraft({...draft, socialLinks: [...(draft.socialLinks || []), { platform: '', label: '', url: '', icon: '🌐' }]})}
+                style={{ padding: '0.75rem', background: 'transparent', border: '1px dashed #d1d5db', color: '#71717a', borderRadius: '8px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}
+              >+ Add Social Link</button>
+            </div>
+          </section>
+        )}
+
         {/* TAB 3: Profit Margins */}
         {activeTab === 'margins' && (
           <section style={sectionStyle}>
@@ -196,12 +271,12 @@ export default function SettingsPage() {
         }}>
           <div>
             {message && <span style={{ fontSize: '0.9rem', fontWeight: 600, color: message.includes('✅') ? '#16a34a' : '#ef4444' }}>{message}</span>}
-            {!message && <span style={{ fontSize: '0.85rem', color: '#71717a' }}>Klik simpan untuk menerapkan semua perubahan di seluruh tab.</span>}
+            {!message && <span style={{ fontSize: '0.85rem', color: '#71717a' }}>Click save to apply all changes across all tabs.</span>}
           </div>
           <button onClick={handleSave} disabled={saving} style={{
               padding: '0.6rem 1.5rem', background: '#18181b', color: 'white', border: 'none', borderRadius: '6px',
               fontWeight: 500, fontSize: '0.875rem', cursor: saving ? 'not-allowed' : 'pointer'
-            }}>{saving ? 'Menyimpan...' : 'Save All Changes'}</button>
+            }}>{saving ? 'Saving...' : 'Save All Changes'}</button>
         </div>
 
       </div>

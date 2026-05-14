@@ -4,10 +4,10 @@ import styles from './TrustBadges.module.css';
 
 export default function TrustBadges() {
   const badges = [
-    { icon: '🛡️', title: 'Buyer Protection', desc: 'Secure transactions & data privacy' },
-    { icon: '🚚', title: 'Global Shipping', desc: 'Tracked delivery to 200+ countries' },
-    { icon: '🔄', title: 'Easy Returns', desc: '30-day money back guarantee' },
-    { icon: '💳', title: 'Secure Payment', desc: 'Encrypted payment processing' },
+    { icon: '👥', title: 'Community Love', desc: 'Shop alongside thousands of happy community members' },
+    { icon: '🔥', title: 'Trending Daily', desc: 'Fresh viral finds updated every day — never boring' },
+    { icon: '🔄', title: 'Easy Returns', desc: '30-day money back guarantee, no questions asked' },
+    { icon: '💳', title: 'Secure & Safe', desc: 'Encrypted payments so you can shop with peace of mind' },
   ];
 
   return (

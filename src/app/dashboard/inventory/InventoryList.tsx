@@ -4,6 +4,7 @@ import React, { useState, useEffect, CSSProperties } from 'react';
 import Image from 'next/image';
 import { calculateFinalPrice } from '@/lib/pricing';
 import { useSettings } from '@/context/SettingsContext';
+import { slugify, parseProductName } from '@/lib/cj-api';
 
 interface Variant {
   id: string;
@@ -232,6 +233,42 @@ export default function InventoryList({ initialProducts }: { initialProducts: an
                   </td>
                   <td style={tdStyle}>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const displayName = parseProductName(p.name);
+                          const slug = slugify(displayName);
+                          const url = `${window.location.origin}/product/${p.cjId}/${slug}`;
+                          navigator.clipboard.writeText(url).then(() => {
+                            const btn = e.currentTarget;
+                            const original = btn.innerHTML;
+                            btn.innerHTML = '✅ Copied!';
+                            btn.style.background = '#dcfce7';
+                            btn.style.borderColor = '#86efac';
+                            btn.style.color = '#166534';
+                            setTimeout(() => {
+                              btn.innerHTML = original;
+                              btn.style.background = 'white';
+                              btn.style.borderColor = '#e4e4e7';
+                              btn.style.color = '#09090b';
+                            }, 2000);
+                          }).catch(() => {
+                            // Fallback for older browsers
+                            const textArea = document.createElement('textarea');
+                            textArea.value = url;
+                            document.body.appendChild(textArea);
+                            textArea.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(textArea);
+                            alert('Link copied!');
+                          });
+                        }}
+                        style={{ ...btnSecondary, color: '#09090b' }}
+                        title="Copy product detail link"
+                      >
+                        🔗 Copy Link
+                      </button>
                       <button 
                         type="button"
                         onClick={(e) => {

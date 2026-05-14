@@ -46,8 +46,8 @@ export default function Newsletter() {
         <div className="container">
           <div className={styles.content}>
             <div className={styles.successIcon}>🎉</div>
-            <h2 className={styles.title}>You&apos;re on the list!</h2>
-            <p className={styles.subtitle}>Thank you for subscribing. Check your inbox for your 10% discount code.</p>
+            <h2 className={styles.title}>You&apos;re in the squad! 🎉</h2>
+            <p className={styles.subtitle}>Welcome to the BangParjo community. Check your inbox for your 10% discount code.</p>
           </div>
         </div>
       </section>
@@ -59,9 +59,9 @@ export default function Newsletter() {
       <div className="container">
         <div className={styles.content}>
           <div className={styles.textSide}>
-            <span className={styles.badge}>Join the Club</span>
+            <span className={styles.badge}>Join the Community 💫</span>
             <h2 className={styles.title}>Subscribe for <span className={styles.highlight}>10% OFF</span> Your First Order</h2>
-            <p className={styles.subtitle}>Get exclusive access to new arrivals, sales, and trending global products delivered to your inbox.</p>
+            <p className={styles.subtitle}>Be first to know about viral finds, community favorites, and exclusive drops delivered to your inbox.</p>
           </div>
           <div className={styles.formSide}>
             <form className={styles.form} onSubmit={handleSubmit}>

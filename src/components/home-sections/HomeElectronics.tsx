@@ -1,4 +1,3 @@
-import { getProducts } from '@/lib/cj-api';
 import { prisma } from '@/lib/db';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
@@ -29,20 +28,6 @@ export default async function HomeElectronics() {
     categoryName: 'Electronics',
   }));
 
-  // 2. API Fallback (Only if DB is empty and ignore errors)
-  if (mainProducts.length < 1) {
-    try {
-      const res = await getProducts({ categoryId: 'D9E66BF8-4E81-4CAB-A425-AEDEC5FBFBF2', pageSize: 10 });
-      if (res.success && res.data) {
-        const apiProducts = res.data.list;
-        const pids = new Set(mainProducts.map(p => p.pid));
-        apiProducts.forEach((p: any) => { if (!pids.has(p.pid)) mainProducts.push(p); });
-      }
-    } catch (e) {
-      console.warn('[HomeElectronics] CJ API Fallback failed, using DB only.');
-    }
-  }
-
   if (mainProducts.length === 0) return null;
 
   return (
@@ -50,8 +35,8 @@ export default async function HomeElectronics() {
       <div className="container">
         <div className="sectionHeader">
           <div>
-            <h2 className="sectionTitle">📱 Electronics & Gadgets</h2>
-            <p className="sectionSubtitle">The latest tech at your fingertips</p>
+            <h2 className="sectionTitle">📱 Tech That&apos;s Trending</h2>
+            <p className="sectionSubtitle">Gadgets the community can&apos;t stop talking about</p>
           </div>
           <Link href="/category/consumer-electronics-D9E66BF8-4E81-4CAB-A425-AEDEC5FBFBF2" className="viewAllLink">View All →</Link>
         </div>

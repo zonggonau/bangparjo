@@ -16,14 +16,15 @@ export default function Footer() {
             <span className="logoText">{settings.storeName}</span>
           </div>
           <p className="footerDesc">
-            Your trusted global e-commerce marketplace.
-            Thousands of curated products from around the world, delivered straight to your door — wherever you are.
+            Your social shopping destination. Discover trending finds, viral products, and community-curated picks 
+            that everyone is talking about. Shop the hype with BangParjo!
           </p>
           <div className="footerSocials">
-            <a href="#" className="footerSocialBtn" aria-label="Facebook">📘</a>
-            <a href="#" className="footerSocialBtn" aria-label="Instagram">📸</a>
-            <a href="#" className="footerSocialBtn" aria-label="TikTok">🎵</a>
-            <a href="#" className="footerSocialBtn" aria-label="WhatsApp">💬</a>
+            {(settings.socialLinks || []).map((link, idx) => (
+              <a key={idx} href={link.url} target="_blank" rel="noopener noreferrer" className="footerSocialBtn" aria-label={link.label} title={link.label}>
+                {link.icon}
+              </a>
+            ))}
           </div>
         </div>
 
@@ -53,16 +54,16 @@ export default function Footer() {
 
         {/* Newsletter Section */}
         <div className="footerColumn" style={{ minWidth: '260px' }}>
-          <h4>Stay Updated</h4>
+          <h4>Join the Community 💫</h4>
           <p style={{ fontSize: '0.85rem', color: '#71717a', marginBottom: '1rem', lineHeight: '1.5' }}>
-            Get exclusive offers, new product alerts, and shopping tips directly in your inbox.
+            Be the first to know about trending products, viral finds, and exclusive community deals.
           </p>
           <NewsletterForm />
         </div>
       </div>
 
       <div className="footerBottom">
-        <p>© {new Date().getFullYear()} {settings.storeName}. All rights reserved. 🌍 Shipping worldwide.</p>
+        <p>© {new Date().getFullYear()} {settings.storeName}. Shop the hype, share the love. 🔥</p>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <span>Payment Methods:</span>
           <span style={{ fontSize: '1.2rem' }}>💳</span>

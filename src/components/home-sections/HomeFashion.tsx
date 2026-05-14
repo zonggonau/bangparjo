@@ -1,4 +1,3 @@
-import { getProducts } from '@/lib/cj-api';
 import { prisma } from '@/lib/db';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
@@ -29,20 +28,6 @@ export default async function HomeFashion() {
     categoryName: 'Fashion',
   }));
 
-  // 2. API Fallback (Only if DB is empty and ignore errors)
-  if (mainProducts.length < 1) {
-    try {
-      const res = await getProducts({ categoryId: 'A8B2857F-622E-4464-98F1-4F23F976D1F6', pageSize: 10 });
-      if (res.success && res.data) {
-        const apiProducts = res.data.list;
-        const pids = new Set(mainProducts.map(p => p.pid));
-        apiProducts.forEach((p: any) => { if (!pids.has(p.pid)) mainProducts.push(p); });
-      }
-    } catch (e) {
-      console.warn('[HomeFashion] CJ API Fallback failed, using DB only.');
-    }
-  }
-
   if (mainProducts.length === 0) return null;
 
   return (
@@ -50,8 +35,8 @@ export default async function HomeFashion() {
       <div className="container">
         <div className="sectionHeader">
           <div>
-            <h2 className="sectionTitle">👗 Trending Fashion</h2>
-            <p className="sectionSubtitle">Stay stylish with the latest collections</p>
+            <h2 className="sectionTitle">👗 Style That Slays</h2>
+            <p className="sectionSubtitle">Viral fits and community faves</p>
           </div>
           <Link href="/category/fashion-jewelry-123ACC01-7A11-4FB9-A532-338C0E7C04C5" className="viewAllLink">View All →</Link>
         </div>
