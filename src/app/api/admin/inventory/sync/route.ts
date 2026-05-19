@@ -1,21 +1,19 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getProductDetails } from '@/lib/cj-api';
-import { getDBStoreSettings, calculateFinalPrice } from '@/lib/pricing';
 
 export async function POST(req: Request) {
   try {
     const { pid } = await req.json();
-    if (!pid) return NextResponse.json({ error: 'PID is required' }, { status: 400 });
+    if (!pid) return NextResponse.json({ success: false, error: 'PID is required' }, { status: 400 });
 
     // 1. Get latest from CJ
     const res = await getProductDetails(pid);
     if (!res.success || !res.data) {
-      return NextResponse.json({ error: 'Failed to fetch from CJ' }, { status: 500 });
+      return NextResponse.json({ success: false, error: res.message || 'Failed to fetch from CJ' }, { status: 500 });
     }
 
     const cjProduct = res.data;
-    const settings = await getDBStoreSettings();
 
     // 2. Update Product & Variants in DB
     const updatedProduct = await prisma.product.update({
@@ -23,24 +21,25 @@ export async function POST(req: Request) {
       data: {
         name: cjProduct.productNameEn || cjProduct.productName,
         description: cjProduct.description,
-        images: cjProduct.productImageSet || [cjProduct.productImage],
+        images: cjProduct.productImageSet && cjProduct.productImageSet.length > 0 ? cjProduct.productImageSet : [cjProduct.productImage],
+        cjCategoryId: cjProduct.categoryId || undefined,
+        updatedAt: new Date()
       }
     });
 
-    // Update variants (Upsert or replace)
-    // For simplicity, we'll update existing and create missing ones
+    // Update variants
     const variantOperations = cjProduct.variants.map(v => {
       const baseCost = Number(v.variantSellPrice);
-      const sellingPrice = baseCost; // Use base cost, frontend will apply dynamic margin
-
+      
       return prisma.variant.upsert({
         where: { cjId: v.vid },
         update: {
-          inventory: 100, // CJ API v1 often doesn't give real-time stock in query, but we assume 100 for now
+          inventory: 100, // CJ API often doesn't give real-time stock here
           baseCost,
-          sellingPrice,
+          sellingPrice: baseCost,
           sku: v.variantSku,
-          weight: v.variantWeight || 0
+          weight: v.variantWeight || 0,
+          image: v.variantImage || cjProduct.productImage
         },
         create: {
           cjId: v.vid,
@@ -50,8 +49,9 @@ export async function POST(req: Request) {
           size: '',
           inventory: 100,
           baseCost,
-          sellingPrice,
-          weight: v.variantWeight || 0
+          sellingPrice: baseCost,
+          weight: v.variantWeight || 0,
+          image: v.variantImage || cjProduct.productImage
         }
       });
     });
@@ -63,10 +63,10 @@ export async function POST(req: Request) {
       orderBy: { inventory: 'asc' }
     });
 
-    return NextResponse.json({ success: true, variants: latestVariants });
+    return NextResponse.json({ success: true, data: { variants: latestVariants } });
 
   } catch (error: any) {
     console.error('[Sync Error]:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

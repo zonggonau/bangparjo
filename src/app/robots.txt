@@ -1,0 +1,11 @@
+# bangparjo.shop — Robots
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /_next/
+Disallow: /checkout/
+Disallow: /account/
+
+# Sitemap
+Sitemap: https://bangparjo.shop/sitemap.xml

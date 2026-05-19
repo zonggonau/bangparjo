@@ -6,43 +6,57 @@ import { useCart } from '@/context/CartContext';
 export default function CartFloating() {
   const { totalItems } = useCart();
 
+  if (totalItems === 0) return null;
+
   return (
     <Link
       href="/cart"
       style={{
         position: 'fixed',
-        bottom: 24,
-        right: 24,
-        width: 54,
-        height: 54,
+        bottom: '32px',
+        right: '32px',
+        width: '60px',
+        height: '60px',
         borderRadius: '50%',
-        background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+        background: 'var(--primary)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '1.4rem',
-        boxShadow: '0 4px 20px rgba(59,130,246,0.4)',
-        textDecoration: 'none',
+        fontSize: '22px',
+        color: 'var(--white)',
+        boxShadow: 'var(--shadow-lg)',
         zIndex: 999,
-        transition: 'transform 0.15s',
+        transition: 'var(--transition)',
       }}
       className="cart-float-btn"
     >
-      <span style={{ filter: 'brightness(10)' }}>🛒</span>
+      <i className="fas fa-shopping-bag"></i>
       {totalItems > 0 && (
         <span style={{
-          position: 'absolute', top: -4, right: -4,
-          background: '#ef4444', color: 'white',
-          borderRadius: '50%', width: 22, height: 22,
-          fontSize: '0.7rem', fontWeight: 700,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          border: '2px solid white',
+          position: 'absolute', 
+          top: '-2px', 
+          right: '-2px',
+          background: 'var(--black)', 
+          color: 'white',
+          borderRadius: '50%', 
+          width: '24px', 
+          height: '24px',
+          fontSize: '11px', 
+          fontWeight: 700,
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          border: '2px solid var(--white)',
         }}>
           {totalItems}
         </span>
       )}
       <style>{`
-        .cart-float-btn:hover { transform: scale(1.1) !important; }
+        .cart-float-btn:hover { 
+          transform: translateY(-5px); 
+          box-shadow: 0 10px 25px rgba(255, 107, 0, 0.4);
+          background: var(--primary-dark);
+        }
       `}</style>
     </Link>
   );

@@ -16,17 +16,19 @@ enum Role {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?        @unique
   emailVerified DateTime?
   image         String?
-  password      String?   // Untuk Credentials login
-  role          Role      @default(USER)
+  password      String?        // Untuk Credentials login
+  role          Role           @default(USER)
   accounts      Account[]
   sessions      Session[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  cartItems     CartItem[]
+  wishlistItems WishlistItem[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Account {
@@ -95,7 +97,8 @@ model Product {
   name         String
   description  String?   @db.Text
   images       String[]
-  categoryId   String?
+  categoryId   String?   // Relation to Category table (optional/legacy)
+  cjCategoryId String?   // Direct CJ Category ID string
   category     Category? @relation(fields: [categoryId], references: [id])
   variantCount Int       @default(0)
   totalStock   Int       @default(0)
@@ -135,6 +138,7 @@ model ShippingMethod {
 model Order {
   id              String      @id @default(uuid())
   orderNum        String      @unique // Format: ORD-2024-XXXX
+  checkoutToken   String?     @unique // 64-char unique token for secure access
   cjOrderId       String?     @unique
   userId          String?
   customerName    String?
@@ -147,6 +151,8 @@ model Order {
   costAmount      Float?      // Harga modal dari CJ
   status          String      @default("UNPAID") // UNPAID, PAID, FULFILLING, PROCESSING, SHIPPED, DELIVERED, CANCELLED
   paymentStatus   String?
+  emailSent       Boolean     @default(false)
+  waSent          Boolean     @default(false)
   trackingNumber  String?
   orderData       Json?       // Data mentah payload
   cjResponse      Json?       // Respons mentah dari CJ
@@ -182,6 +188,42 @@ model PricingTier {
   updatedAt     DateTime @updatedAt
 }
 
+model CartItem {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pid            String
+  vid            String?
+  sku            String?
+  variantName    String?
+  productName    String
+  productNameEn  String?
+  productImage   String?
+  bigImage       String?
+  sellPrice      Float
+  quantity       Int      @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, pid, vid])
+}
+
+model WishlistItem {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pid            String
+  productName    String?
+  productNameEn  String?
+  productImage   String?
+  bigImage       String?
+  sellPrice      Float?
+  categoryName   String?
+  createdAt      DateTime @default(now())
+
+  @@unique([userId, pid])
+}
+
 model Subscriber {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -195,6 +237,31 @@ model SupportTicket {
   subject   String
   message   String
   status    String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BlogPost {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  excerpt   String?  @db.Text
+  content   String   @db.Text
+  image     String?
+  author    String   @default("Admin")
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AboutPage {
+  id        String   @id @default(cuid())
+  title     String   @default("About Us")
+  content   String   @db.Text
+  image     String?
+  mission   String?  @db.Text
+  vision    String?  @db.Text
+  published Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

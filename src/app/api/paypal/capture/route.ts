@@ -12,9 +12,15 @@ export async function POST(req: Request) {
 
     // In a real production app, you should verify the payment with PayPal API here
     // using the paypalData.orderID.
-    console.log(`[PayPal] Payment captured for ${orderId}. Triggering fulfillment...`);
+    console.log(`[PayPal] Payment captured for ${orderId}. Updating status to PAID...`);
 
-    // Auto-fulfill to CJ Dropshipping
+    // 1. Update status ke PAID dulu
+    await prisma.order.update({
+      where: { orderNum: orderId },
+      data: { status: 'PAID' }
+    });
+
+    // 2. Auto-fulfill to CJ Dropshipping
     const result = await processFulfillment(orderId);
     
     return NextResponse.json(result);

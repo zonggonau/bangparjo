@@ -32,8 +32,8 @@ export default function FavoriteCounter() {
   if (totalFavorites === 0) return null;
 
   return (
-    <span className="absolute -top-2 -right-2 w-5 h-5 bg-primary text-black text-[10px] font-black flex items-center justify-center rounded-full shadow-lg shadow-primary/20 animate-in zoom-in duration-300">
-      {totalFavorites}
+    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold leading-none px-1 shadow-sm">
+      {totalFavorites > 99 ? '99+' : totalFavorites}
     </span>
   );
 }

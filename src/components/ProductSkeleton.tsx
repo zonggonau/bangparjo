@@ -2,27 +2,18 @@
 
 export default function ProductSkeleton() {
   return (
-    <div className="bg-white/5 border border-white/10 rounded-[2rem] overflow-hidden animate-pulse">
-      <div className="aspect-square bg-white/10" />
-      <div className="p-6">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="h-3 w-16 bg-white/10 rounded-full" />
-          <div className="h-3 w-3 bg-white/10 rounded-full" />
-          <div className="h-3 w-12 bg-white/10 rounded-full" />
+    <div className="product-card animate-pulse">
+      <div className="product-image skeleton aspect-square" />
+      <div style={{ padding: '20px' }}>
+        <div className="flex items-center gap-8" style={{ marginBottom: '12px' }}>
+          <div className="skeleton rounded-full" style={{ height: '12px', width: '60px' }} />
+          <div className="skeleton rounded-full" style={{ height: '12px', width: '40px' }} />
         </div>
-        <div className="h-5 w-full bg-white/10 rounded-lg mb-2" />
-        <div className="h-5 w-2/3 bg-white/10 rounded-lg mb-4" />
-        <div className="flex items-end gap-3 mb-4">
-          <div className="h-7 w-20 bg-white/10 rounded-lg" />
-          <div className="h-4 w-12 bg-white/10 rounded-lg" />
-        </div>
-        <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-          <div className="flex gap-1">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-3 w-3 bg-white/10 rounded-full" />
-            ))}
-          </div>
-          <div className="h-3 w-16 bg-white/10 rounded-full" />
+        <div className="skeleton rounded-lg" style={{ height: '20px', width: '100%', marginBottom: '8px' }} />
+        <div className="skeleton rounded-lg" style={{ height: '20px', width: '70%', marginBottom: '16px' }} />
+        <div className="flex items-center gap-12" style={{ marginBottom: '16px' }}>
+          <div className="skeleton rounded-lg" style={{ height: '28px', width: '80px' }} />
+          <div className="skeleton rounded-lg" style={{ height: '16px', width: '50px' }} />
         </div>
       </div>
     </div>
@@ -31,7 +22,7 @@ export default function ProductSkeleton() {
 
 export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+    <div className="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
       {Array.from({ length: count }).map((_, i) => (
         <ProductSkeleton key={i} />
       ))}
@@ -41,45 +32,45 @@ export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
 
 export function ProductDetailSkeleton() {
   return (
-    <div className="container px-4 py-32">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+    <div className="container" style={{ padding: '80px 20px' }}>
+      <div className="product-detail-wrapper">
         {/* Gallery Skeleton */}
-        <div className="space-y-6">
-          <div className="aspect-square bg-white/5 border border-white/10 rounded-[3rem] animate-pulse" />
-          <div className="grid grid-cols-4 gap-4">
+        <div className="product-gallery">
+          <div className="main-image skeleton aspect-square animate-pulse" />
+          <div className="thumbnail-list">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="aspect-square bg-white/5 border border-white/10 rounded-2xl animate-pulse" />
+              <div key={i} className="thumbnail-item skeleton aspect-square animate-pulse" />
             ))}
           </div>
         </div>
 
         {/* Details Skeleton */}
-        <div className="flex flex-col gap-8 py-4">
-          <div className="space-y-4">
-            <div className="h-6 w-32 bg-white/5 rounded-full animate-pulse" />
-            <div className="h-12 w-full bg-white/5 rounded-2xl animate-pulse" />
-            <div className="h-12 w-3/4 bg-white/5 rounded-2xl animate-pulse" />
+        <div className="flex flex-col gap-24" style={{ padding: '16px 0' }}>
+          <div className="space-y-16">
+            <div className="skeleton rounded-full" style={{ height: '24px', width: '120px' }} />
+            <div className="skeleton rounded-lg" style={{ height: '40px', width: '100%' }} />
+            <div className="skeleton rounded-lg" style={{ height: '40px', width: '75%' }} />
           </div>
 
-          <div className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10 space-y-4 animate-pulse">
-            <div className="h-10 w-40 bg-white/10 rounded-xl" />
-            <div className="h-4 w-32 bg-white/10 rounded-lg" />
+          <div className="card-body bg-light" style={{ padding: '32px', borderRadius: '24px' }}>
+            <div className="skeleton rounded-lg" style={{ height: '40px', width: '160px', marginBottom: '16px' }} />
+            <div className="skeleton rounded-lg" style={{ height: '16px', width: '120px' }} />
           </div>
 
-          <div className="space-y-4 border-t border-white/5 pt-8 animate-pulse">
-            <div className="h-4 w-24 bg-white/5 rounded-lg" />
-            <div className="flex gap-3">
+          <div className="product-options" style={{ borderTop: '1px solid #eee', paddingTop: '32px' }}>
+            <div className="skeleton rounded-lg" style={{ height: '16px', width: '100px', marginBottom: '16px' }} />
+            <div className="flex gap-12">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-10 w-16 bg-white/5 rounded-xl" />
+                <div key={i} className="skeleton rounded-lg" style={{ height: '40px', width: '60px' }} />
               ))}
             </div>
           </div>
 
-          <div className="h-32 w-full bg-white/5 border border-white/10 rounded-[2rem] animate-pulse" />
+          <div className="skeleton rounded-lg" style={{ height: '120px', width: '100%' }} />
 
-          <div className="flex gap-4 pt-4">
-            <div className="h-16 flex-1 bg-white/5 rounded-2xl animate-pulse" />
-            <div className="h-16 flex-1 bg-white/5 rounded-2xl animate-pulse" />
+          <div className="flex gap-16">
+            <div className="skeleton rounded-lg" style={{ height: '56px', flex: 1 }} />
+            <div className="skeleton rounded-lg" style={{ height: '56px', flex: 1 }} />
           </div>
         </div>
       </div>

@@ -2,136 +2,75 @@
 
 import Link from 'next/link';
 import { useSettings } from '@/context/SettingsContext';
-import NewsletterForm from './NewsletterForm';
-import { 
-  Facebook, 
-  Instagram, 
-  MessageCircle, 
-  ShieldCheck, 
-  Truck, 
-  RotateCcw, 
-  Globe,
-  ShoppingCart
-} from 'lucide-react';
 
 export default function Footer() {
   const { settings } = useSettings();
   
   return (
-    <footer className="bg-[#0f0f1a] border-t border-white/5 pt-20 pb-10">
-      <div className="max-w-[1400px] mx-auto px-6 md:px-12">
-        {/* Top Section: Trust Badges */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pb-16 border-b border-white/5 mb-16">
-          <div className="flex flex-col items-center text-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-              <Truck size={24} />
-            </div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Free Shipping</h4>
-            <p className="text-xs text-gray-500">On all orders over ${settings.freeShippingThreshold}</p>
-          </div>
-          <div className="flex flex-col items-center text-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-              <ShieldCheck size={24} />
-            </div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Secure Payment</h4>
-            <p className="text-xs text-gray-500">100% secure payment processing</p>
-          </div>
-          <div className="flex flex-col items-center text-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-              <RotateCcw size={24} />
-            </div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider">30-Day Returns</h4>
-            <p className="text-xs text-gray-500">Easy returns if not satisfied</p>
-          </div>
-          <div className="flex flex-col items-center text-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-              <Globe size={24} />
-            </div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Global Sourcing</h4>
-            <p className="text-xs text-gray-500">From verified global suppliers</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
-          {/* Brand Column */}
-          <div className="space-y-6">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent-light rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-                <ShoppingCart size={20} className="text-white" strokeWidth={2.5} />
-              </div>
-              <span className="font-outfit text-xl font-bold text-white">{settings.storeName}</span>
+    <footer className="bg-[#FAFAFA] border-t border-[#E5E5E5] pt-16 pb-0">
+      <div className="max-w-[1400px] mx-auto px-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-10 pb-12 border-b border-[#E5E5E5]">
+          <div>
+            <Link href="/" className="text-[22px] sm:text-[28px] font-extrabold text-[#1A1A1A] tracking-[-1px] shrink-0 inline-block mb-4">
+              {settings.storeName.split('.')[0]}<span className="text-[#FF6B00]">{settings.storeName.split('.').slice(1).join('.') || 'Shop'}</span>
             </Link>
-            <p className="text-sm text-gray-400 leading-relaxed max-w-xs">
-              Your trusted global e-commerce destination. Discover thousands of curated products from around the world, delivered straight to your door.
-            </p>
-            <div className="flex items-center gap-4">
-              <a href="#" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-black transition-all duration-300">
-                <Facebook size={18} />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-black transition-all duration-300">
-                <Instagram size={18} />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-black transition-all duration-300">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l11.733 16h4.267l-11.733 -16z"/><path d="M4 20l6.768 -6.768m2.46 -2.46L20 4"/></svg>
-              </a>
-              <a href="#" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-black transition-all duration-300">
-                <MessageCircle size={18} />
-              </a>
+            <p className="text-[14px] text-[#888888] leading-[1.7] max-w-[320px]">Global dropshipping marketplace connecting suppliers with entrepreneurs worldwide. Quality products, best prices, reliable shipping.</p>
+            <div className="flex gap-3 mt-5">
+              <a href="#" className="w-10 h-10 rounded-full bg-[#E5E5E5] flex items-center justify-center text-[#555555] text-lg transition-all duration-300 hover:bg-[#FF6B00] hover:text-white"><i className="fab fa-facebook-f"></i></a>
+              <a href="#" className="w-10 h-10 rounded-full bg-[#E5E5E5] flex items-center justify-center text-[#555555] text-lg transition-all duration-300 hover:bg-[#FF6B00] hover:text-white"><i className="fab fa-instagram"></i></a>
+              <a href="#" className="w-10 h-10 rounded-full bg-[#E5E5E5] flex items-center justify-center text-[#555555] text-lg transition-all duration-300 hover:bg-[#FF6B00] hover:text-white"><i className="fab fa-twitter"></i></a>
+              <a href="#" className="w-10 h-10 rounded-full bg-[#E5E5E5] flex items-center justify-center text-[#555555] text-lg transition-all duration-300 hover:bg-[#FF6B00] hover:text-white"><i className="fab fa-youtube"></i></a>
             </div>
           </div>
-
-          {/* Shop Column */}
-          <div className="space-y-6">
-            <h4 className="text-xs font-black text-white uppercase tracking-[0.2em]">Shop Collection</h4>
-            <ul className="space-y-4">
-              <li><Link href="/category/womens-clothing" className="text-sm text-gray-400 hover:text-primary transition-colors">Women&apos;s Fashion</Link></li>
-              <li><Link href="/category/mens-clothing" className="text-sm text-gray-400 hover:text-primary transition-colors">Men&apos;s Fashion</Link></li>
-              <li><Link href="/category/electronics" className="text-sm text-gray-400 hover:text-primary transition-colors">Electronics</Link></li>
-              <li><Link href="/category/beauty" className="text-sm text-gray-400 hover:text-primary transition-colors">Beauty & Care</Link></li>
-              <li><Link href="/category/home-kitchen" className="text-sm text-gray-400 hover:text-primary transition-colors">Home & Kitchen</Link></li>
+          <div>
+            <h4 className="text-base md:text-lg font-semibold mb-5 text-[#1A1A1A]">Menu</h4>
+            <ul className="space-y-3">
+              <li><Link href="/" className="text-[14px] text-[#888888] transition-all duration-300 hover:text-[#FF6B00]">Home</Link></li>
+              <li><Link href="/#products" className="text-[14px] text-[#888888] transition-all duration-300 hover:text-[#FF6B00]">Products</Link></li>
+              <li><Link href="/track" className="text-[14px] text-[#888888] transition-all duration-300 hover:text-[#FF6B00]">Track Order</Link></li>
+              <li><Link href="/contact" className="text-[14px] text-[#888888] transition-all duration-300 hover:text-[#FF6B00]">Contact</Link></li>
             </ul>
           </div>
-
-          {/* Support Column */}
-          <div className="space-y-6">
-            <h4 className="text-xs font-black text-white uppercase tracking-[0.2em]">Customer Care</h4>
-            <ul className="space-y-4">
-              <li><Link href="/track" className="text-sm text-gray-400 hover:text-primary transition-colors">Track My Order</Link></li>
-              <li><Link href="/contact" className="text-sm text-gray-400 hover:text-primary transition-colors">Contact Us</Link></li>
-              <li><Link href="/refund" className="text-sm text-gray-400 hover:text-primary transition-colors">Return Policy</Link></li>
-              <li><Link href="/help-center" className="text-sm text-gray-400 hover:text-primary transition-colors">Help Center</Link></li>
-              <li><Link href="/terms" className="text-sm text-gray-400 hover:text-primary transition-colors">Terms of Service</Link></li>
+          <div>
+            <h4 className="text-base md:text-lg font-semibold mb-5 text-[#1A1A1A]">Help</h4>
+            <ul className="space-y-3">
+              <li><Link href="/faq" className="text-[14px] text-[#888888] transition-all duration-300 hover:text-[#FF6B00]">FAQ</Link></li>
+              <li><Link href="/privacy" className="text-[14px] text-[#888888] transition-all duration-300 hover:text-[#FF6B00]">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="text-[14px] text-[#888888] transition-all duration-300 hover:text-[#FF6B00]">Terms & Conditions</Link></li>
+              <li><Link href="/returns" className="text-[14px] text-[#888888] transition-all duration-300 hover:text-[#FF6B00]">Returns & Refunds</Link></li>
             </ul>
           </div>
-
-          {/* Newsletter Column */}
-          <div className="space-y-6">
-            <h4 className="text-xs font-black text-white uppercase tracking-[0.2em]">Newsletter</h4>
-            <p className="text-sm text-gray-400 leading-relaxed">
-              Join our community and get 10% off your first order plus exclusive deals.
-            </p>
-            <NewsletterForm />
+          <div>
+            <h4 className="text-base md:text-lg font-semibold mb-5 text-[#1A1A1A]">Contact</h4>
+            <ul className="space-y-4">
+              <li className="flex gap-3 text-[14px] text-[#888888]">
+                <span className="text-[#FF6B00] shrink-0"><i className="fas fa-map-marker-alt"></i></span>
+                <span>123 Merdeka Street, Jakarta, Indonesia</span>
+              </li>
+              <li className="flex gap-3 text-[14px] text-[#888888]">
+                <span className="text-[#FF6B00] shrink-0"><i className="fas fa-phone"></i></span>
+                <span>+62 21 1234-5678</span>
+              </li>
+              <li className="flex gap-3 text-[14px] text-[#888888]">
+                <span className="text-[#FF6B00] shrink-0"><i className="fas fa-envelope"></i></span>
+                <span>hello@bangparjo.com</span>
+              </li>
+              <li className="flex gap-3 text-[14px] text-[#888888]">
+                <span className="text-[#FF6B00] shrink-0"><i className="fas fa-clock"></i></span>
+                <span>Mon - Sat: 08:00 - 20:00 (GMT+7)</span>
+              </li>
+            </ul>
           </div>
         </div>
-
-        {/* Bottom Bar */}
-        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-xs font-medium text-gray-500">
-            © {new Date().getFullYear()} {settings.storeName}. All rights reserved. 
-            <span className="mx-2 text-white/10">|</span>
-            Powered by global fulfillment.
-          </p>
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all duration-300">
-               <div className="w-8 h-5 bg-white/10 rounded-sm" />
-               <div className="w-8 h-5 bg-white/10 rounded-sm" />
-               <div className="w-8 h-5 bg-white/10 rounded-sm" />
-            </div>
-            <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Ships Globally 🌍</p>
+        <div className="py-6 flex flex-col md:flex-row justify-between items-center text-[14px] text-[#888888]">
+          <p>&copy; {new Date().getFullYear()} {settings.storeName}. All rights reserved. | Global Dropshipping Marketplace</p>
+          <div className="flex gap-2 text-2xl text-[#888888]">
+            <i className="fab fa-cc-visa"></i>
+            <i className="fab fa-cc-mastercard"></i>
+            <i className="fab fa-cc-paypal"></i>
           </div>
         </div>
       </div>
     </footer>
   );
 }
-

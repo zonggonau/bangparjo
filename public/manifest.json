@@ -1,0 +1,64 @@
+{
+  "name": "bangparjo.shop — Global Shopping, Best Prices",
+  "short_name": "BangParjo",
+  "description": "Your trusted global e-commerce marketplace. Find the best global products at the lowest prices worldwide.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FF6B00",
+  "orientation": "portrait-primary",
+  "categories": ["shopping", "e-commerce", "lifestyle"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "48x48 72x72 96x96 128x128 256x256",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo-banner.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/logo-banner.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "bangparjo.shop Homepage"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Track Order",
+      "short_name": "Track",
+      "description": "Track your order in real-time",
+      "url": "/track",
+      "icons": [{ "src": "/favicon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Favorites",
+      "short_name": "Favorites",
+      "description": "View your favorite products",
+      "url": "/favorites",
+      "icons": [{ "src": "/favicon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Cart",
+      "short_name": "Cart",
+      "description": "View your shopping cart",
+      "url": "/cart",
+      "icons": [{ "src": "/favicon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Contact Us",
+      "short_name": "Contact",
+      "description": "Get in touch with support",
+      "url": "/contact",
+      "icons": [{ "src": "/favicon.svg", "sizes": "96x96" }]
+    }
+  ]
+}

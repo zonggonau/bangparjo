@@ -1,65 +1,101 @@
-import { prisma } from '@/lib/db';
+import { getCategoryTree } from '@/lib/categories';
 import Link from 'next/link';
-import { ChevronRight, LayoutGrid } from 'lucide-react';
 
 export const metadata = {
   title: 'All Categories | bangparjo.shop',
   description: 'Browse all product categories on bangparjo.shop',
 };
 
+// Map kategori ke icon
+const categoryIcons: Record<string, string> = {
+  'Automobiles & Motorcycles': 'fa-car',
+  'Bags & Shoes': 'fa-shopping-bag',
+  'Computer & Office': 'fa-desktop',
+  'Consumer Electronics': 'fa-laptop',
+  'Health, Beauty & Hair': 'fa-sparkles',
+  'Home Improvement': 'fa-tools',
+  'Home, Garden & Furniture': 'fa-home',
+  'Jewelry & Watches': 'fa-gem',
+  "Men's Clothing": 'fa-mars',
+  'Pet Supplies': 'fa-paw',
+  'Phones & Accessories': 'fa-mobile-alt',
+  'Sports & Outdoors': 'fa-running',
+  'Toys, Kids & Babies': 'fa-gamepad',
+  "Women's Clothing": 'fa-venus',
+};
+
+function getIcon(name: string): string {
+  return categoryIcons[name] || 'fa-th-large';
+}
+
 export default async function AllCategoriesPage() {
-  const categories = await prisma.category.findMany({
-    where: { parentId: null },
-    include: {
-      children: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-        }
-      }
-    },
-    orderBy: { name: 'asc' }
-  });
+  const tree = await getCategoryTree();
 
   return (
-    <div className="min-h-screen bg-[#07070e] pt-32 pb-20">
-      <div className="max-w-[1400px] mx-auto px-6 md:px-12">
-        <header className="mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.2em] mb-6">
-            <LayoutGrid size={12} /> Explore Everything
+    <div className="py-16 sm:py-20">
+      <div className="max-w-[1400px] mx-auto px-5">
+        {/* Header */}
+        <header className="mb-12 sm:mb-16">
+          <div className="flex items-center gap-2 mb-4 sm:mb-6">
+            <i className="fas fa-th-large text-[#FF6B00] text-sm"></i>
+            <span className="text-[11px] sm:text-[12px] font-extrabold text-[#FF6B00] uppercase tracking-[0.1em]">Explore Everything</span>
           </div>
-          <h1 className="font-outfit text-4xl md:text-6xl font-black text-white tracking-tight leading-none mb-4">
+          <h1 className="text-[32px] sm:text-[40px] lg:text-[48px] font-black text-[#1A1A1A] leading-[1.1] mb-4">
             Browse All<br />
-            <span className="bg-gradient-to-r from-primary via-primary-light to-primary bg-clip-text text-transparent italic">Categories</span>
+            <span className="text-[#FF6B00] italic">Categories</span>
           </h1>
-          <p className="text-gray-400 max-w-xl">
-            From fashion to electronics, find exactly what you&apos;re looking for across our curated global catalog.
+          <p className="text-[#666666] max-w-[600px] text-[14px] sm:text-[16px] leading-relaxed">
+            From fashion to electronics, find exactly what you're looking for across our curated global catalog.
           </p>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {categories.map((cat) => (
-            <div key={cat.id} className="group p-8 bg-white/5 border border-white/10 rounded-[2rem] hover:bg-white/10 transition-all duration-500">
-              <h2 className="text-xl font-bold text-white mb-6 flex items-center justify-between group-hover:text-primary transition-colors">
-                <Link href={`/category/${cat.slug}`}>{cat.name}</Link>
-                <ChevronRight size={18} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-              </h2>
+        {/* Category Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 lg:gap-8">
+          {tree.map((cat) => (
+            <div 
+              key={cat.id} 
+              className="bg-white border border-[#E5E5E5] rounded-[16px] sm:rounded-[24px] p-6 sm:p-8 transition-all duration-300 hover:border-[#FF6B00] hover:shadow-[0_8px_25px_rgba(255,107,0,0.1)] hover:-translate-y-1"
+            >
+              {/* Category Header */}
+              <div className="flex items-center justify-between mb-5 sm:mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[10px] sm:rounded-[12px] bg-[#FFF3E8] flex items-center justify-center text-[#FF6B00] text-lg sm:text-xl">
+                    <i className={`fas ${getIcon(cat.name)}`}></i>
+                  </div>
+                  <h2 className="text-[17px] sm:text-[20px] font-extrabold text-[#1A1A1A] m-0">
+                    <Link href={`/category/${cat.slug}`} className="text-inherit no-underline hover:text-[#FF6B00] transition-colors duration-200">
+                      {cat.name}
+                    </Link>
+                  </h2>
+                </div>
+                <i className="fas fa-chevron-right text-[12px] text-[#CCCCCC] transition-all duration-200 group-hover:text-[#FF6B00]"></i>
+              </div>
+
+              {/* Subcategories */}
               {cat.children && cat.children.length > 0 && (
-                <ul className="space-y-3">
+                <div className="flex flex-col gap-2.5 sm:gap-3">
                   {cat.children.map((sub) => (
-                    <li key={sub.id}>
-                      <Link 
-                        href={`/category/${sub.slug}`}
-                        className="text-sm text-gray-500 hover:text-white flex items-center gap-2 transition-colors"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-white/10 group-hover:bg-primary/50 transition-colors" />
-                        {sub.name}
-                      </Link>
-                    </li>
+                    <Link 
+                      key={sub.id} 
+                      href={`/category/${sub.slug}`}
+                      className="flex items-center gap-3 text-[13px] sm:text-[14px] font-semibold text-[#666666] no-underline transition-all duration-200 hover:text-[#FF6B00] hover:pl-1"
+                    >
+                      <span className="w-[5px] h-[5px] rounded-full bg-[#FF6B00] opacity-40 shrink-0"></span>
+                      {sub.name}
+                    </Link>
                   ))}
-                </ul>
+                </div>
               )}
+
+              {/* View All Link */}
+              <div className="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-[#F0F0F0]">
+                <Link 
+                  href={`/category/${cat.slug}`}
+                  className="inline-flex items-center gap-2 text-[12px] sm:text-[13px] font-bold text-[#FF6B00] no-underline transition-all duration-200 hover:gap-3"
+                >
+                  View All <i className="fas fa-arrow-right text-[11px]"></i>
+                </Link>
+              </div>
             </div>
           ))}
         </div>

@@ -11,115 +11,36 @@ async function waitForSlot(): Promise<void> {
   }
 }
 
-// ── Simple Cache (In-Memory) ────────────────────────────────────────────────
-const CACHE_TTL = 1000 * 60 * 30; // 30 minutes for products/lists
-const apiCache = new Map<string, { data: any, expiry: number }>();
-
-function getCache(key: string) {
-  const cached = apiCache.get(key);
-  if (cached && Date.now() < cached.expiry) return cached.data;
-  apiCache.delete(key);
-  return null;
-}
-
-function setCache(key: string, data: any) {
-  apiCache.set(key, { data, expiry: Date.now() + CACHE_TTL });
-}
-
-export function slugify(text: string) {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')     // Replace spaces with -
-    .replace(/[^\w-]+/g, '')  // Remove all non-word chars
-    .replace(/--+/g, '-')     // Replace multiple - with single -
-    .replace(/^-+/, '')       // Trim - from start of text
-    .replace(/-+$/, '');      // Trim - from end of text
-}
 
 
-// ── Currency helpers ───────────────────────────────────────────────────────
-const USD_TO_IDR = 16000; 
-
-export function formatIDR(usdPrice: number | string): string {
-  const price = typeof usdPrice === 'string' ? parseFloat(usdPrice) : usdPrice;
-  if (isNaN(price)) return 'Rp 0';
-  const idr = price * USD_TO_IDR;
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(idr);
-}
-
-// ── String helpers ─────────────────────────────────────────────────────────
-export function parseProductName(name: string): string {
-  if (!name) return 'Unknown Product';
+export async function getCache(key: string) {
+  if (typeof window !== 'undefined') return null;
   try {
-    if (name.startsWith('[') && name.endsWith(']')) {
-      const parsed = JSON.parse(name);
-      if (Array.isArray(parsed)) return parsed.filter(Boolean).join(' ');
-    }
-  } catch { /* not JSON array, use as-is */ }
-  return name;
+    const { redis } = await import('@/lib/redis');
+    if (redis.status !== 'ready') return null;
+    const data = await redis.get(key);
+    return data ? JSON.parse(data) : null;
+  } catch (e) {
+    console.warn('[Redis Get Cache Error]:', e);
+    return null;
+  }
 }
 
-export function parseProductImage(image: any): string {
-  if (!image) return '/placeholder.png';
-
-  // Raw array — take first element
-  if (Array.isArray(image) && image.length > 0) {
-    return parseProductImage(image[0]);
+export async function setCache(key: string, data: any, ttl = 1800) {
+  if (typeof window !== 'undefined') return;
+  try {
+    const { redis } = await import('@/lib/redis');
+    if (redis.status !== 'ready') return;
+    await redis.set(key, JSON.stringify(data), 'EX', ttl);
+  } catch (e) {
+    console.warn('[Redis Set Cache Error]:', e);
   }
-
-  if (typeof image !== 'string') {
-    // Try converting to string (rare CJ edge case)
-    try {
-      const s = String(image);
-      return parseProductImage(s);
-    } catch { /* fall through */ }
-    return '/placeholder.png';
-  }
-
-  const trimmed = image.trim();
-  if (!trimmed) return '/placeholder.png';
-
-  // JSON array string — parse and take first
-  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-    try {
-      const parsed = JSON.parse(trimmed);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parseProductImage(parsed[0]);
-      }
-    } catch { /* fall through */ }
-    return '/placeholder.png';
-  }
-
-  // Already absolute HTTP(S) URL
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-    return trimmed;
-  }
-
-  // Protocol-relative URL — prepend https:
-  if (trimmed.startsWith('//')) {
-    return `https:${trimmed}`;
-  }
-
-  // Data URI
-  if (trimmed.startsWith('data:')) {
-    return trimmed;
-  }
-
-  // Relative path — unlikely from CJ but handle gracefully
-  if (trimmed.startsWith('/')) {
-    const base = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
-    return `${base}${trimmed}`;
-  }
-
-  return '/placeholder.png';
 }
+
+// ── String helpers (re-exported from utils.ts for backward compat) ─────────
+// These are now centralized in src/lib/utils.ts
+// Import from '@/lib/utils' for new code.
+export { slugify, parseProductName, parseProductImage } from '@/lib/utils';
 
 // ── Config ────────────────────────────────────────────────────────────────
 export const BASE_URL = process.env.CJ_API_BASE_URL || 'https://api.cjdropshipping.com';
@@ -234,9 +155,12 @@ export async function cjFetch<T>(
   }
 
   const isGet = !options.method || options.method.toUpperCase() === 'GET';
+  
+  // Only cache product-related endpoints
+  const isProductEndpoint = endpoint.includes('/product/list') || endpoint.includes('/product/query');
   const cacheKey = `cj_${endpoint}_${JSON.stringify(options.body || '')}`;
-  if (isGet) {
-    const cached = getCache(cacheKey);
+  if (isGet && isProductEndpoint) {
+    const cached = await getCache(cacheKey);
     if (cached) return cached;
   }
 
@@ -296,8 +220,9 @@ export async function cjFetch<T>(
         continue;
       }
 
-      if (isGet && (data.success || data.result)) {
-        setCache(cacheKey, data);
+      // Only cache product-related endpoints
+      if (isGet && isProductEndpoint && (data.success || data.result)) {
+        await setCache(cacheKey, data);
       }
       return data;
     } catch (err: any) {
@@ -376,7 +301,7 @@ export async function getProducts(
     pageNum: (params.pageNum || 1).toString(),
     pageSize: (params.pageSize || 20).toString(),
   });
-  if (params.keyWord) query.set('productNameEn', params.keyWord);
+  if (params.keyWord) query.set('keyWord', params.keyWord);
   if (params.productSku) query.set('productSku', params.productSku);
   if (params.categoryId) query.set('categoryId', params.categoryId);
   if (params.countryCode) query.set('countryCode', params.countryCode);
@@ -386,6 +311,136 @@ export async function getProducts(
   if (params.productFlag != null) query.set('productFlag', params.productFlag.toString());
 
   return cjFetch(`/v1/product/list?${query.toString()}`);
+}
+
+/**
+ * Product List V2 — uses Elasticsearch for higher performance product search.
+ * Supports keyword search, multiple filter conditions, sorting, and features.
+ * 
+ * Endpoint: GET /api2.0/v1/product/listV2
+ * 
+ * Response structure:
+ * {
+ *   data: {
+ *     pageSize: number,
+ *     pageNumber: number,
+ *     totalRecords: number,
+ *     totalPages: number,
+ *     content: [{
+ *       productList: CJProductV2[],
+ *       relatedCategoryList: [...],
+ *       keyWord: string
+ *     }]
+ *   }
+ * }
+ */
+export interface CJProductV2 {
+  id: string;           // Product ID (pid)
+  nameEn: string;       // English product name
+  sku: string;          // Product SKU
+  spu: string;          // Product SPU
+  bigImage: string;     // Main product image URL
+  sellPrice: string;    // Original sell price (string)
+  nowPrice: string;     // Current/discounted price (string)
+  listedNum: number;    // Number of listings
+  categoryId: string;   // Third-level category ID
+  threeCategoryName: string;
+  twoCategoryId: string;
+  twoCategoryName: string;
+  oneCategoryId: string;
+  oneCategoryName: string;
+  addMarkStatus: number; // 0=not free shipping, 1=free shipping
+  isVideo: number;
+  videoList: string[];
+  productType: string;
+  supplierName: string;
+  createAt: number;     // Timestamp (ms)
+  warehouseInventoryNum: number;
+  totalVerifiedInventory: number;
+  totalUnVerifiedInventory: number;
+  verifiedWarehouse: number;
+  customization: number;
+  hasCECertification: number;
+  isCollect: number;
+  myProduct: boolean;
+  discountPrice: string;
+  discountPriceRate: string;
+  description?: string; // Only returned if features includes 'enable_description'
+  deliveryCycle: string;
+  saleStatus: string;
+  authorityStatus: string;
+  isPersonalized: number;
+}
+
+export async function getProductsV2(
+  params: {
+    page?: number;
+    size?: number;
+    keyWord?: string;
+    categoryId?: string;
+    lv2categoryList?: string[];
+    lv3categoryList?: string[];
+    countryCode?: string;
+    startSellPrice?: number;
+    endSellPrice?: number;
+    addMarkStatus?: number;     // 0=not free shipping, 1=free shipping
+    productType?: number;       // 4=Supplier, 10=Video, 11=Non-video
+    productFlag?: number;       // 0=Trending, 1=New, 2=Video, 3=Slow-moving
+    startWarehouseInventory?: number;
+    endWarehouseInventory?: number;
+    verifiedWarehouse?: number; // 0=All, 1=Verified, 2=Unverified
+    timeStart?: number;         // Timestamp ms
+    timeEnd?: number;           // Timestamp ms
+    zonePlatform?: string;      // shopify, ebay, amazon, tiktok, etsy
+    isWarehouse?: boolean;
+    sort?: 'desc' | 'asc';
+    orderBy?: number;           // 0=best match, 1=listing count, 2=sell price, 3=create time, 4=inventory
+    features?: string[];        // enable_description, enable_category, enable_combine, enable_video
+    supplierId?: string;
+    hasCertification?: number;  // 0=No, 1=Yes
+    isSelfPickup?: number;      // 0=No, 1=Yes
+    customization?: number;     // 0=No, 1=Yes
+  } = {}
+): Promise<CJResponse<{
+  pageSize: number;
+  pageNumber: number;
+  totalRecords: number;
+  totalPages: number;
+  content: Array<{
+    productList: CJProductV2[];
+    relatedCategoryList: Array<{ categoryId: string; categoryName: string }>;
+    keyWord: string;
+  }>;
+}>> {
+  const query = new URLSearchParams();
+  if (params.page != null) query.set('page', params.page.toString());
+  if (params.size != null) query.set('size', params.size.toString());
+  if (params.keyWord) query.set('keyWord', params.keyWord);
+  if (params.categoryId) query.set('categoryId', params.categoryId);
+  if (params.lv2categoryList?.length) query.set('lv2categoryList', JSON.stringify(params.lv2categoryList));
+  if (params.lv3categoryList?.length) query.set('lv3categoryList', JSON.stringify(params.lv3categoryList));
+  if (params.countryCode) query.set('countryCode', params.countryCode);
+  if (params.startSellPrice != null) query.set('startSellPrice', params.startSellPrice.toString());
+  if (params.endSellPrice != null) query.set('endSellPrice', params.endSellPrice.toString());
+  if (params.addMarkStatus != null) query.set('addMarkStatus', params.addMarkStatus.toString());
+  if (params.productType != null) query.set('productType', params.productType.toString());
+  if (params.productFlag != null) query.set('productFlag', params.productFlag.toString());
+  if (params.startWarehouseInventory != null) query.set('startWarehouseInventory', params.startWarehouseInventory.toString());
+  if (params.endWarehouseInventory != null) query.set('endWarehouseInventory', params.endWarehouseInventory.toString());
+  if (params.verifiedWarehouse != null) query.set('verifiedWarehouse', params.verifiedWarehouse.toString());
+  if (params.timeStart != null) query.set('timeStart', params.timeStart.toString());
+  if (params.timeEnd != null) query.set('timeEnd', params.timeEnd.toString());
+  if (params.zonePlatform) query.set('zonePlatform', params.zonePlatform);
+  if (params.isWarehouse != null) query.set('isWarehouse', params.isWarehouse.toString());
+  if (params.sort) query.set('sort', params.sort);
+  if (params.orderBy != null) query.set('orderBy', params.orderBy.toString());
+  if (params.features?.length) query.set('features', JSON.stringify(params.features));
+  if (params.supplierId) query.set('supplierId', params.supplierId);
+  if (params.hasCertification != null) query.set('hasCertification', params.hasCertification.toString());
+  if (params.isSelfPickup != null) query.set('isSelfPickup', params.isSelfPickup.toString());
+  if (params.customization != null) query.set('customization', params.customization.toString());
+
+  return cjFetch(`/api2.0/v1/product/listV2?${query.toString()}`);
 }
 
 export async function getProductDetails(id: string): Promise<CJResponse<CJProductDetail>> {
@@ -416,10 +471,7 @@ export async function getShippingFeeBySku(params: {
   endCountryCode: string;
   startCountryCode?: string;
 }): Promise<CJResponse<CJShippingMethod[]>> {
-  const cacheKey = `shipping_sku_${JSON.stringify(params.products)}_${params.endCountryCode}`;
-  const cached = getCache(cacheKey);
-  if (cached) return { success: true, result: true, data: cached, code: 200, message: 'Cached', requestId: 'cached' };
-
+  // No Redis caching - langsung hit API
   const reqDTOS = [{
     srcAreaCode: params.startCountryCode || 'CN',
     destAreaCode: params.endCountryCode,
@@ -452,7 +504,6 @@ export async function getShippingFeeBySku(params: {
         taxesFee: item.taxesFee,
         totalPostageFee: item.postage || item.discountFee || 0,
       }));
-      apiCache.set(cacheKey, { data: methods, expiry: Date.now() + (1000 * 60 * 10) });
       return { success: true, result: true, data: methods, code: 200, message: 'Success', requestId: 'sku' };
     }
     
@@ -472,12 +523,7 @@ export async function getShippingFee(params: {
   endCountryCode: string;
   startCountryCode?: string;
 }): Promise<CJResponse<CJShippingMethod[]>> {
-  // ── Cache Hack ──────────────────────────────────────────────────────────
-  // Shipping rates don't change that often. Cache for 10 minutes.
-  const cacheKey = `shipping_${JSON.stringify(params.products)}_${params.endCountryCode}`;
-  const cached = getCache(cacheKey);
-  if (cached) return { success: true, result: true, data: cached, code: 200, message: 'Cached', requestId: 'cached' };
-
+  // No Redis caching - langsung hit API
   try {
     const res = await cjFetch<CJShippingMethod[]>('/v1/logistic/freightCalculate', {
       method: 'POST',
@@ -487,15 +533,10 @@ export async function getShippingFee(params: {
         products: params.products,
       }),
     });
-
-    if (res.success && res.data) {
-      // Cache for 10 mins (shorter than products)
-      apiCache.set(cacheKey, { data: res.data, expiry: Date.now() + (1000 * 60 * 10) });
-    }
     
     // Fallback logic if API fails due to QPS or other issues
     if (!res.success) {
-       console.warn(`[Shipping API] Failed for ${cacheKey}: ${res.message}. Returning fallback.`);
+       console.warn(`[Shipping API] Failed: ${res.message}. Returning fallback.`);
        // Minimal fallback to avoid blocking checkout
        return {
          success: true,
@@ -581,18 +622,21 @@ export async function getOrderList(params: {
 }
 
 export async function getCategories() {
-  return cjFetch<any>('/v1/product/getCategory');
+  // No Redis caching - langsung ambil dari CJ API
+  const res = await cjFetch<any>('/v1/product/getCategory');
+  return res;
 }
 
 export async function createDispute(params: {
   orderId: string;
   businessDisputeId: string;
   disputeReasonId: number;
-  expectType: number; 
-  refundType: number; 
+  expectType: number;
+  refundType: number;
   messageText: string;
   imageUrl?: string[];
-  productInfoList: Array<{ lineItemId: string; quantity: number }>;
+  videoUrl?: string[];
+  productInfoList: Array<{ lineItemId: string; quantity: number; price: number }>;
 }) {
   return cjFetch<any>('/v1/disputes/create', {
     method: 'POST',
@@ -602,12 +646,384 @@ export async function createDispute(params: {
 
 export async function getDisputeList(params: {
   orderId?: string;
+  disputeId?: string;
+  orderNumber?: string;
   pageNum?: number;
   pageSize?: number;
 }) {
   const query = new URLSearchParams();
   if (params.orderId) query.set('orderId', params.orderId);
+  if (params.disputeId) query.set('disputeId', params.disputeId);
+  if (params.orderNumber) query.set('orderNumber', params.orderNumber);
   query.set('pageNum', (params.pageNum || 1).toString());
   query.set('pageSize', (params.pageSize || 10).toString());
   return cjFetch<any>(`/v1/disputes/getDisputeList?${query.toString()}`);
+}
+
+export async function getDisputeProducts(orderId: string) {
+  return cjFetch<any>(`/v1/disputes/disputeProducts?orderId=${orderId}`);
+}
+
+export async function confirmDispute(params: {
+  orderId: string;
+  productInfoList: Array<{ lineItemId: string; quantity: number; price: number }>;
+}) {
+  return cjFetch<any>('/v1/disputes/disputeConfirmInfo', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
+export async function cancelDispute(params: {
+  orderId: string;
+  disputeId: string;
+}) {
+  return cjFetch<any>('/v1/disputes/cancel', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
+export async function getDisputeDetail(disputeId: string) {
+  return cjFetch<any>(`/v1/disputes/getDisputeDetail?disputeId=${disputeId}`);
+}
+
+// ── Webhook APIs ──────────────────────────────────────────────────────────
+
+/**
+ * Webhook Message Setting (POST)
+ * Endpoint: /api2.0/v1/webhook/set
+ * Configure webhook callback URLs for product, stock, order, and logistics events.
+ * 
+ * Each event type can be set to "ENABLE" or "CANCEL" with a callback URL array.
+ * Only one callback URL is supported per event type, and it must be a public HTTPS URL.
+ */
+export interface WebhookSetting {
+  type: 'ENABLE' | 'CANCEL';
+  callbackUrls: string[];
+}
+
+export async function setWebhook(params: {
+  product: WebhookSetting;
+  stock: WebhookSetting;
+  order: WebhookSetting;
+  logistics: WebhookSetting;
+}) {
+  return cjFetch<any>('/api2.0/v1/webhook/set', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
+// ── Variant APIs ──────────────────────────────────────────────────────────
+
+/**
+ * Inquiry Of All Variants (GET)
+ * Endpoint: /api2.0/v1/product/variant/query
+ * Get all variants for a product by PID.
+ */
+export interface CJVariantDetail {
+  vid: string;
+  pid: string;
+  variantName: string | null;
+  variantNameEn: string;
+  variantImage?: string;
+  variantSku: string;
+  variantUnit: string | null;
+  variantKey: string;
+  variantLength: number;
+  variantWidth: number;
+  variantHeight: number;
+  variantVolume: number;
+  variantWeight: number;
+  variantSellPrice: number;
+  createTime: string;
+  variantStandard: string;
+  variantSugSellPrice?: number;
+}
+
+export async function getProductVariants(pid: string): Promise<CJResponse<CJVariantDetail[]>> {
+  return cjFetch<CJVariantDetail[]>(`/api2.0/v1/product/variant/query?pid=${pid}`);
+}
+
+/**
+ * Variant Id Inquiry (GET)
+ * Endpoint: /api2.0/v1/product/variant/queryByVid
+ * Get variant details by VID, with optional inventory info.
+ */
+export interface CJVariantInventory {
+  countryCode: string;
+  totalInventory: number;
+  cjInventory: number;
+  factoryInventory: number;
+  verifiedWarehouse: number; // 1=verified, 2=unverified
+  stock: Array<{
+    stockId: string;
+    inventory: number;
+    factoryInventory: number;
+  }>;
+}
+
+export interface CJVariantWithInventory extends CJVariantDetail {
+  inventories: CJVariantInventory[];
+}
+
+export async function getVariantById(vid: string, includeInventory = false): Promise<CJResponse<CJVariantWithInventory>> {
+  let endpoint = `/api2.0/v1/product/variant/queryByVid?vid=${vid}`;
+  if (includeInventory) {
+    endpoint += '&features=enable_inventory';
+  }
+  return cjFetch<CJVariantWithInventory>(endpoint);
+}
+
+// ── Inventory APIs ────────────────────────────────────────────────────────
+
+/**
+ * Inventory Inquiry by VID (GET)
+ * Endpoint: /api2.0/v1/product/stock/queryByVid
+ */
+export interface CJWarehouseStock {
+  vid: string;
+  areaId: string;
+  areaEn: string;
+  countryCode: string;
+  storageNum: number;
+  totalInventoryNum: number;
+  cjInventoryNum: number;
+  factoryInventoryNum: number;
+  stock: Array<{
+    stockId: string;
+    inventory: number;
+    factoryInventory: number;
+  }> | null;
+}
+
+export async function getInventoryByVid(vid: string): Promise<CJResponse<CJWarehouseStock[]>> {
+  return cjFetch<CJWarehouseStock[]>(`/api2.0/v1/product/stock/queryByVid?vid=${vid}`);
+}
+
+/**
+ * Query Inventory by SKU (GET)
+ * Endpoint: /api2.0/v1/product/stock/queryBySku
+ */
+export interface CJStockBySku extends CJWarehouseStock {
+  countryNameEn: string;
+}
+
+export async function getInventoryBySku(sku: string): Promise<CJResponse<CJStockBySku[]>> {
+  return cjFetch<CJStockBySku[]>(`/api2.0/v1/product/stock/queryBySku?sku=${sku}`);
+}
+
+/**
+ * Query Inventory by Product ID (GET)
+ * Endpoint: /api2.0/v1/product/stock/getInventoryByPid
+ */
+export interface CJProductInventory {
+  inventories: Array<{
+    areaEn: string;
+    areaId: number;
+    countryCode: string;
+    totalInventoryNum: number;
+    cjInventoryNum: number;
+    factoryInventoryNum: number;
+    countryNameEn: string;
+    stock: Array<{
+      stockId: string;
+      inventory: number;
+      factoryInventory: number;
+    }> | null;
+  }>;
+  variantInventories: Array<{
+    vid: string;
+    inventory: CJVariantInventory[];
+  }>;
+}
+
+export async function getInventoryByPid(pid: string): Promise<CJResponse<CJProductInventory>> {
+  return cjFetch<CJProductInventory>(`/api2.0/v1/product/stock/getInventoryByPid?pid=${pid}`);
+}
+
+// ── Product Reviews APIs ──────────────────────────────────────────────────
+
+/**
+ * Inquiry Reviews (GET) — New API
+ * Endpoint: /api2.0/v1/product/productComments
+ */
+export interface CJProductReview {
+  commentId: number;
+  pid: string;
+  comment: string;
+  commentDate: string;
+  commentUser: string;
+  score: string;
+  commentUrls: string[];
+  countryCode: string;
+  flagIconUrl: string;
+}
+
+export interface CJProductReviewsResponse {
+  pageNum: string;
+  pageSize: string;
+  total: string;
+  list: CJProductReview[];
+}
+
+export async function getProductReviews(
+  pid: string,
+  params: {
+    score?: number;
+    pageNum?: number;
+    pageSize?: number;
+  } = {}
+): Promise<CJResponse<CJProductReviewsResponse>> {
+  const query = new URLSearchParams({ pid });
+  if (params.score != null) query.set('score', params.score.toString());
+  if (params.pageNum != null) query.set('pageNum', params.pageNum.toString());
+  if (params.pageSize != null) query.set('pageSize', params.pageSize.toString());
+  return cjFetch<CJProductReviewsResponse>(`/api2.0/v1/product/productComments?${query.toString()}`);
+}
+
+// ── Global Warehouse List API ─────────────────────────────────────────────
+
+/**
+ * Global Warehouse List (GET)
+ * Endpoint: /api2.0/v1/product/globalWarehouseList
+ */
+export interface CJGlobalWarehouse {
+  areaId: number;
+  areaEn: string;
+  areaCn: string;
+  countryCode: string;
+  countryNameEn: string;
+  countryNameCn: string;
+  isDefault: number;
+}
+
+export async function getGlobalWarehouseList(): Promise<CJResponse<CJGlobalWarehouse[]>> {
+  return cjFetch<CJGlobalWarehouse[]>('/api2.0/v1/product/globalWarehouseList');
+}
+
+// ── Warehouse / Storage Detail API ─────────────────────────────────────────
+
+/**
+ * Warehouse Detail (GET)
+ * Endpoint: /api2.0/v1/warehouse/detail
+ * Get detailed info about a specific warehouse/storage by its ID.
+ */
+export interface CJWarehouseDetail {
+  id: string;
+  name: string;
+  areaId: number;
+  areaCountryCode: string;
+  address1: string | null;
+  address2: string | null;
+  contacts: string | null;
+  phone: string | null;
+  city: string;
+  province: string;
+  logisticsBrandList: Array<{
+    id: string;
+    name: string;
+  }>;
+  isSelfPickup: number | null; // 1: support, 0: not supported
+  zipCode: string | null;
+}
+
+export async function getWarehouseDetail(id: string): Promise<CJResponse<CJWarehouseDetail>> {
+  return cjFetch<CJWarehouseDetail>(`/api2.0/v1/warehouse/detail?id=${encodeURIComponent(id)}`);
+}
+
+// ── My Product APIs ───────────────────────────────────────────────────────
+
+/**
+ * My Product List (GET)
+ * Endpoint: /api2.0/v1/product/myProduct/query
+ */
+export interface CJMyProduct {
+  pid: string;
+  productName: string;
+  productImage: string;
+  sellPrice: number;
+  isListed: number;
+  visiable: number;
+  createTime: string;
+}
+
+export async function getMyProducts(params: {
+  keyword?: string;
+  categoryId?: string;
+  isListed?: number;
+  visiable?: number;
+  pageNum?: number;
+  pageSize?: number;
+} = {}): Promise<CJResponse<{ list: CJMyProduct[]; total: number }>> {
+  const query = new URLSearchParams();
+  if (params.keyword) query.set('keyword', params.keyword);
+  if (params.categoryId) query.set('categoryId', params.categoryId);
+  if (params.isListed != null) query.set('isListed', params.isListed.toString());
+  if (params.visiable != null) query.set('visiable', params.visiable.toString());
+  if (params.pageNum != null) query.set('pageNum', params.pageNum.toString());
+  if (params.pageSize != null) query.set('pageSize', params.pageSize.toString());
+  return cjFetch(`/api2.0/v1/product/myProduct/query?${query.toString()}`);
+}
+
+/**
+ * Add to My Product (POST)
+ * Endpoint: /api2.0/v1/product/addToMyProduct
+ */
+export async function addToMyProduct(params: {
+  pid: string;
+  vid?: string;
+  sku?: string;
+}): Promise<CJResponse<any>> {
+  return cjFetch<any>('/api2.0/v1/product/addToMyProduct', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
+// ── Sourcing APIs ─────────────────────────────────────────────────────────
+
+/**
+ * Create Sourcing (POST)
+ * Endpoint: /api2.0/v1/product/sourcing/create
+ */
+export async function createSourcing(params: {
+  productName: string;
+  productImage: string;
+  thirdProductId?: string;
+  thirdVariantId?: string;
+  thirdProductSku?: string;
+  productUrl?: string;
+  remark?: string;
+  price?: number;
+}): Promise<CJResponse<{ cjSourcingId: string; result: string }>> {
+  return cjFetch<any>('/api2.0/v1/product/sourcing/create', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
+/**
+ * Query Sourcing (POST)
+ * Endpoint: /api2.0/v1/product/sourcing/query
+ */
+export interface CJSourcingResult {
+  sourceId: string;
+  sourceNumber: string;
+  productId: string;
+  variantId: string;
+  shopId: string;
+  shopName: string;
+  sourceStatus: string;
+  sourceStatusStr: string;
+  cjProductId: string;
+  cjVariantSku: string;
+}
+
+export async function querySourcing(sourceIds: string[]): Promise<CJResponse<CJSourcingResult[]>> {
+  return cjFetch<CJSourcingResult[]>('/api2.0/v1/product/sourcing/query', {
+    method: 'POST',
+    body: JSON.stringify({ sourceIds }),
+  });
 }

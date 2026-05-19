@@ -2,7 +2,6 @@ import { getProducts } from '@/lib/cj-api';
 import { prisma } from '@/lib/db';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
-import { Shirt, ArrowRight } from 'lucide-react';
 
 export default async function HomeFashion() {
   const dbProducts = await prisma.product.findMany({
@@ -13,6 +12,11 @@ export default async function HomeFashion() {
         { name: { contains: 'Shoes', mode: 'insensitive' } },
         { name: { contains: 'Clothing', mode: 'insensitive' } },
         { name: { contains: 'Watch', mode: 'insensitive' } },
+        { name: { contains: 'Fashion', mode: 'insensitive' } },
+        { name: { contains: 'Dress', mode: 'insensitive' } },
+        { name: { contains: 'Shirt', mode: 'insensitive' } },
+        { name: { contains: 'Top', mode: 'insensitive' } },
+        { name: { contains: 'Pant', mode: 'insensitive' } },
       ]
     },
     include: { variants: true }
@@ -38,7 +42,7 @@ export default async function HomeFashion() {
       if (res.success && res.data) {
         const apiProducts = res.data.list;
         const pids = new Set(mainProducts.map(p => p.pid));
-        apiProducts.forEach((p: any) => { if (!pids.has(p.pid)) mainProducts.push(p); });
+        apiProducts.forEach((p: any) => { if (!pids.has(p.pid)) mainProducts!.push(p); });
       }
     } catch (e) {
       console.warn('[HomeFashion] CJ API Fallback failed, using DB only.');
@@ -48,27 +52,25 @@ export default async function HomeFashion() {
   if (mainProducts.length === 0) return null;
 
   return (
-    <section className="py-20 relative overflow-hidden">
-      <div className="container px-4">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-          <div className="max-w-xl">
-            <div className="flex items-center gap-2 mb-4">
-              <Shirt size={16} className="text-primary" />
-              <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Curated Collection</span>
+    <section className="py-20">
+      <div className="max-w-[1400px] mx-auto px-5">
+        <div className="flex justify-between items-end mb-10 flex-wrap gap-5">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <i className="fas fa-tshirt text-[#FF6B00]"></i>
+              <span className="text-[12px] font-extrabold text-[#FF6B00] uppercase tracking-[0.1em]">Collection</span>
             </div>
-            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase italic leading-[0.9]">
-              TRENDING <span className="text-primary text-glow">FAHSION</span>
-            </h2>
+            <h2 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold text-[#1A1A1A] m-0">Trending <span className="text-[#FF6B00]">Fashion</span></h2>
           </div>
           <Link 
             href="/category/fashion-jewelry-123ACC01-7A11-4FB9-A532-338C0E7C04C5" 
-            className="group flex items-center gap-2 text-[10px] font-black text-white/40 uppercase tracking-[0.2em] hover:text-white transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-[18px] py-2 rounded-[6px] font-semibold text-[13px] cursor-pointer transition-all duration-300 border-2 border-[#FF6B00] bg-transparent text-[#FF6B00] hover:bg-[#FF6B00] hover:text-white hover:-translate-y-0.5"
           >
-            Explore Collection <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+            See All <i className="fas fa-arrow-right ml-2"></i>
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
           {mainProducts.map((product) => (
             <ProductCard key={product.pid} product={product} />
           ))}
@@ -77,4 +79,3 @@ export default async function HomeFashion() {
     </section>
   );
 }
-

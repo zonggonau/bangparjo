@@ -1,15 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ShoppingBag, X } from 'lucide-react';
 
 const RECENT_SALES = [
-  { name: 'Michael from New York', product: 'Wireless Earbuds', time: '2 minutes ago', icon: '🎧' },
-  { name: 'Sarah from London', product: 'Premium Skincare Set', time: '5 minutes ago', icon: '💄' },
-  { name: 'Ahmad from Dubai', product: 'Smart Watch Series 7', time: '1 minute ago', icon: '⌚' },
-  { name: 'Elena from Madrid', product: 'Boho Summer Dress', time: '8 minutes ago', icon: '👗' },
-  { name: 'Yuki from Tokyo', product: 'Mechanical Keyboard', time: '3 minutes ago', icon: '⌨️' },
-  { name: 'David from Sydney', product: 'Ergonomic Desk Chair', time: '12 minutes ago', icon: '🪑' },
+  { name: 'Michael from New York', product: 'Wireless Earbuds', time: '2 minutes ago', icon: 'fa-headphones' },
+  { name: 'Sarah from London', product: 'Premium Skincare Set', time: '5 minutes ago', icon: 'fa-spray-can' },
+  { name: 'Ahmad from Dubai', product: 'Smart Watch Series 7', time: '1 minute ago', icon: 'fa-stopwatch' },
+  { name: 'Elena from Madrid', product: 'Boho Summer Dress', time: '8 minutes ago', icon: 'fa-tshirt' },
+  { name: 'Yuki from Tokyo', product: 'Mechanical Keyboard', time: '3 minutes ago', icon: 'fa-keyboard' },
+  { name: 'David from Sydney', product: 'Ergonomic Desk Chair', time: '12 minutes ago', icon: 'fa-chair' },
 ];
 
 export default function LiveSales() {
@@ -42,39 +41,39 @@ export default function LiveSales() {
 
   return (
     <div 
-      className={`fixed bottom-6 left-6 z-[100] transition-all duration-700 ease-out ${
-        isVisible ? 'translate-x-0 opacity-100 scale-100' : '-translate-x-full opacity-0 scale-95'
-      }`}
+      className="fixed-sales-notification"
+      style={{ 
+        position: 'fixed', 
+        bottom: '24px', 
+        left: '24px', 
+        zIndex: 1000, 
+        transition: 'all 0.5s ease',
+        transform: isVisible ? 'translateX(0)' : 'translateX(-120%)',
+        opacity: isVisible ? 1 : 0
+      }}
     >
-      <div className="bg-black/60 backdrop-blur-2xl border border-white/10 p-5 rounded-[2rem] shadow-2xl flex items-center gap-5 min-w-[320px] group relative overflow-hidden">
-        {/* Animated Progress Bar */}
-        {isVisible && (
-          <div className="absolute bottom-0 left-0 h-1 bg-primary animate-progress" />
-        )}
-        
-        <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-inner">
-          {currentSale.icon}
-        </div>
-
-        <div className="flex-1">
-          <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">
-            <span className="text-primary">{currentSale.name}</span> purchased
-          </p>
-          <p className="text-sm font-black text-white leading-none mb-1.5 uppercase italic tracking-tighter">
-            {currentSale.product}
-          </p>
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest">{currentSale.time}</p>
+      <div className="card" style={{ padding: '16px', minWidth: '320px', borderRadius: '16px', boxShadow: 'var(--shadow-lg)', background: '#fff', border: '1px solid #eee' }}>
+        <div className="flex items-center gap-16">
+          <div className="flex-center bg-light" style={{ width: '48px', height: '48px', borderRadius: '12px', fontSize: '20px', color: 'var(--primary)' }}>
+            <i className={`fas ${currentSale.icon}`}></i>
           </div>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: '10px', fontWeight: '800', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 4px' }}>
+              <span className="text-primary">{currentSale.name}</span> purchased
+            </p>
+            <h4 style={{ fontSize: '14px', margin: '0 0 4px', fontWeight: '900' }}>{currentSale.product}</h4>
+            <div className="flex items-center gap-8">
+              <span className="dot dot-success"></span>
+              <p style={{ fontSize: '10px', color: '#aaa', fontWeight: '700', margin: 0 }}>{currentSale.time}</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setIsVisible(false)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.3, padding: '4px' }}
+          >
+            <i className="fas fa-times"></i>
+          </button>
         </div>
-
-        <button 
-          className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/20 hover:bg-white/10 hover:text-white transition-colors"
-          onClick={() => setIsVisible(false)}
-        >
-          <X size={14} />
-        </button>
       </div>
     </div>
   );

@@ -8,20 +8,18 @@ export async function DELETE(req: Request) {
     const variantId = searchParams.get('variantId');
 
     if (!id && !variantId) {
-      return NextResponse.json({ error: 'ID or VariantID is required' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'ID or VariantID is required' }, { status: 400 });
     }
 
     // --- CASE 1: DELETE SINGLE VARIANT ---
     if (variantId) {
-      console.log(`[Inventory Delete] Attempting to delete variant: ${variantId}`);
-      
       // Check if variant is in an order
       const usedInOrder = await prisma.orderItem.findFirst({
         where: { variantId }
       });
 
       if (usedInOrder) {
-        return NextResponse.json({ error: 'Cannot delete variant because it is linked to orders.' }, { status: 400 });
+        return NextResponse.json({ success: false, error: 'Cannot delete variant because it is linked to orders.' }, { status: 400 });
       }
 
       await prisma.variant.delete({
@@ -32,8 +30,6 @@ export async function DELETE(req: Request) {
     }
 
     // --- CASE 2: DELETE FULL PRODUCT ---
-    console.log(`[Inventory Delete] Attempting to delete product: ${id}`);
-    
     // Check if any variant of this product is in an order
     const usedInOrder = await prisma.orderItem.findFirst({
       where: {
@@ -43,6 +39,7 @@ export async function DELETE(req: Request) {
 
     if (usedInOrder) {
       return NextResponse.json({ 
+        success: false,
         error: 'Cannot delete product because it is linked to existing orders.' 
       }, { status: 400 });
     }
@@ -64,6 +61,7 @@ export async function DELETE(req: Request) {
   } catch (err: any) {
     console.error('[Inventory Delete Internal Error]:', err);
     return NextResponse.json({ 
+      success: false,
       error: `Database error: ${err.message}` 
     }, { status: 500 });
   }

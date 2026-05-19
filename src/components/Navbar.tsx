@@ -1,258 +1,241 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import CartCounter from './CartCounter';
 import FavoriteCounter from './FavoriteCounter';
-import { 
-  Search, 
-  ShoppingCart, 
-  Heart, 
-  Menu, 
-  X, 
-  ChevronDown, 
-  Globe, 
-  Truck, 
-  HelpCircle,
-  Package,
-  Home,
-  Smartphone,
-  Laptop,
-  Home as HomeIcon,
-  Car,
-  Gem,
-  Smile,
-  Palmtree,
-  ChefHat,
-  Gamepad2,
-  Trophy
-} from 'lucide-react';
 
-const ICON_MAP: Record<string, any> = {
-  'Consumer Electronics': Smartphone,
-  'Computer & Office': Laptop,
-  'Home Improvement': HomeIcon,
-  'Automobiles & Motorcycles': Car,
-  'Jewelry': Gem,
-  'Beauty': Smile,
-  'Home & Garden': Palmtree,
-  'Kitchen': ChefHat,
-  'Toys & Kids': Gamepad2,
-  'Sports': Trophy,
-};
+import { useSession } from 'next-auth/react';
 
 export default function Navbar() {
+  const { data: session } = useSession();
   const [isMobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [scrolled, setScrolled] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
+  const [activeL1, setActiveL1] = useState<string | null>(null);
   const router = useRouter();
   const { settings } = useSettings();
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    
     fetch('/api/categories/menu')
       .then(res => res.json())
       .then(data => {
-        if (data.success) setCategories(data.data);
+        if (data.success) {
+          setCategories(data.data);
+          if (data.data.length > 0) setActiveL1(data.data[0].id);
+        }
       })
       .catch(err => console.error('Menu fetch error:', err));
-
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/?q=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
       setMobileOpen(false);
     }
   };
 
+  const toggleNav = () => setMobileOpen(!isMobileOpen);
+
+  const getIcon = (name: string) => {
+    const n = name.toLowerCase();
+    if (n.includes('women')) return 'fa-venus';
+    if (n.includes('men')) return 'fa-mars';
+    if (n.includes('electronic')) return 'fa-laptop';
+    if (n.includes('home')) return 'fa-home';
+    if (n.includes('health') || n.includes('man')) return 'fa-sparkles';
+    if (n.includes('toy')) return 'fa-gamepad';
+    if (n.includes('sport')) return 'fa-running';
+    if (n.includes('automotive')) return 'fa-car';
+    if (n.includes('jewelry')) return 'fa-gem';
+    if (n.includes('computer')) return 'fa-desktop';
+    if (n.includes('phone')) return 'fa-mobile-alt';
+    if (n.includes('pet')) return 'fa-paw';
+    if (n.includes('bag')) return 'fa-shopping-bag';
+    return 'fa-th-large';
+  };
+
+  const activeCategory = categories.find(c => c.id === activeL1);
+
   return (
-    <header className={`fixed top-0 left-0 right-0 z-[1000] w-full transition-all duration-300 ${
-      scrolled ? 'bg-[#07070e]/80 backdrop-blur-lg border-b border-white/10 shadow-lg' : 'bg-transparent'
-    }`}>
-      {/* Top Bar */}
-      <div className="hidden md:flex bg-secondary py-1.5 px-6 justify-between items-center text-xs text-gray-400 border-b border-white/5">
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5"><Globe size={12} className="text-primary" /> Worldwide Shipping Available</span>
-          <span className="flex items-center gap-1.5 text-white/70 underline decoration-primary/50 underline-offset-2 font-medium">Free shipping on orders over ${settings.freeShippingThreshold}</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link href="/track" className="hover:text-white transition-colors flex items-center gap-1.5"><Truck size={12} /> Track Order</Link>
-          <span className="opacity-30">|</span>
-          <Link href="/help-center" className="hover:text-white transition-colors flex items-center gap-1.5"><HelpCircle size={12} /> Help Center</Link>
+    <header className="sticky top-0 z-[1000] bg-white border-b border-[#E5E5E5] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+      {/* Top announcement bar - responsive */}
+      <div className="bg-[#1A1A1A] text-white py-1.5 sm:py-2 text-[11px] sm:text-[13px] overflow-hidden">
+        <div className="max-w-[1400px] mx-auto px-3 sm:px-5 flex items-center justify-between">
+          {/* Left: Shipping info */}
+          <div className="hidden sm:flex items-center gap-1 whitespace-nowrap overflow-x-auto scrollbar-hide">
+            <span>🌍 Worldwide Delivery | ✈️ Fast International Shipping | </span>
+            <span className="text-[#FF6B00] font-semibold">Free shipping over ${settings.freeShippingThreshold}</span>
+          </div>
+          <div className="sm:hidden flex items-center gap-1 whitespace-nowrap overflow-x-auto scrollbar-hide">
+            <span>🌍 Worldwide | ✈️ Fast Shipping | </span>
+            <span className="text-[#FF6B00] font-semibold">Free shipping over ${settings.freeShippingThreshold}</span>
+          </div>
+          {/* Right: Track Order | Help | Contact */}
+          <div className="flex items-center gap-3 sm:gap-4 whitespace-nowrap">
+            <Link href="/track" className="text-white/80 hover:text-white transition-colors duration-200 no-underline">Track Order</Link>
+            <span className="text-white/30">|</span>
+            <Link href="/help-center" className="text-white/80 hover:text-white transition-colors duration-200 no-underline">Help</Link>
+            <span className="text-white/30">|</span>
+            <Link href="/contact" className="text-white/80 hover:text-white transition-colors duration-200 no-underline">Contact</Link>
+          </div>
         </div>
       </div>
 
-      {/* Main Navbar */}
-      <nav className="max-w-[1400px] mx-auto px-4 md:px-8 h-[72px] md:h-[88px] flex items-center gap-8">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-          <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-primary to-accent-light rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-105 group-active:scale-95">
-            <ShoppingCart size={22} className="text-white" strokeWidth={2.5} />
-          </div>
-          <span className="font-outfit text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
-            {settings.storeName}
-          </span>
-        </Link>
-
-        {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-1">
-          <Link href="/" className="px-4 py-2 text-sm font-medium text-white/70 hover:text-white transition-colors">Home</Link>
-          
-          {/* Categories Dropdown */}
-          <div className="relative group">
-            <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white/70 group-hover:text-white transition-colors">
-              Categories <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-300" />
-            </button>
-            
-            {/* Mega Menu */}
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 w-[900px] bg-[#0f0f1a] border border-white/10 rounded-2xl shadow-2xl p-8 opacity-0 invisible group-hover:opacity-100 group-hover:visible translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-              <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/5">
-                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Shop by Category</h3>
-                <Link href="/category" className="text-sm font-semibold text-primary hover:underline underline-offset-4">Browse All →</Link>
-              </div>
-              <div className="grid grid-cols-4 gap-x-8 gap-y-10">
-                {categories.map((cat) => {
-                  const Icon = ICON_MAP[cat.name] || Package;
-                  return (
-                    <div key={cat.id} className="space-y-4">
-                      <Link href={`/category/${cat.slug}`} className="flex items-center gap-3 font-bold text-white hover:text-primary transition-colors">
-                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
-                          <Icon size={16} />
-                        </div>
-                        {cat.name}
-                      </Link>
-                      {cat.children && cat.children.length > 0 && (
-                        <div className="flex flex-col gap-2.5 ml-11">
-                          {cat.children.slice(0, 5).map((sub: any) => (
-                            <Link key={sub.id} href={`/category/${sub.slug}`} className="text-xs text-gray-400 hover:text-white transition-colors">
-                              {sub.name}
-                            </Link>
-                          ))}
-                          {cat.children.length > 5 && (
-                             <Link href={`/category/${cat.slug}`} className="text-[10px] font-bold text-primary uppercase tracking-wider mt-1 hover:opacity-80">
-                               + {cat.children.length - 5} More
-                             </Link>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-          
-          <Link href="/category/consumer-electronics-D9E66BF8-4E81-4CAB-A425-AEDEC5FBFBF2" className="px-4 py-2 text-sm font-medium text-white/70 hover:text-white transition-colors">Electronics</Link>
-          <Link href="/category/health-beauty-and-hair-2C7D4A0B-1AB2-41EC-8F9E-13DC31B1C902" className="px-4 py-2 text-sm font-medium text-white/70 hover:text-white transition-colors">Beauty</Link>
-        </div>
-
-        {/* Search Bar */}
-        <div className="hidden md:block flex-1 max-w-[400px]">
-          <form onSubmit={handleSearch} className="relative group">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-primary transition-colors">
-              <Search size={18} />
-            </div>
-            <input
-              type="text"
-              placeholder="Search premium products..."
-              className="w-full bg-white/5 border border-white/10 rounded-full py-3 pl-12 pr-6 text-sm focus:bg-white/10 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-gray-500"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </form>
-        </div>
-
-        {/* Right Actions */}
-        <div className="flex items-center gap-2 md:gap-4 ml-auto">
-          <Link href="/favorites" className="relative p-2 text-white/70 hover:text-white transition-colors hover:bg-white/5 rounded-xl">
-            <Heart size={22} />
-            <FavoriteCounter />
-          </Link>
-          <Link href="/cart" className="relative p-2 text-white/70 hover:text-white transition-colors hover:bg-white/5 rounded-xl">
-            <ShoppingCart size={22} />
-            <CartCounter />
-          </Link>
-          
-          {/* Mobile Menu Toggle */}
-          <button
-            className="lg:hidden p-2 text-white/70 hover:text-white transition-colors bg-white/5 rounded-xl ml-2"
-            onClick={() => setMobileOpen(!isMobileOpen)}
-          >
-            {isMobileOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile Sidebar */}
-      <div className={`fixed inset-0 z-[1001] bg-black/60 backdrop-blur-sm lg:hidden transition-opacity duration-300 ${
-        isMobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-      }`} onClick={() => setMobileOpen(false)}>
-        <div className={`absolute top-0 right-0 bottom-0 w-[85%] max-w-[360px] bg-[#07070e] shadow-2xl p-6 transition-transform duration-500 ease-out ${
-          isMobileOpen ? 'translate-x-0' : 'translate-x-full'
-        }`} onClick={e => e.stopPropagation()}>
-          <div className="flex items-center justify-between mb-8">
-             <span className="font-outfit text-xl font-bold bg-gradient-to-r from-primary to-accent-light bg-clip-text text-transparent">Menu</span>
-             <button onClick={() => setMobileOpen(false)} className="p-2 bg-white/5 rounded-lg">
-               <X size={20} />
-             </button>
-          </div>
-
-          <form onSubmit={handleSearch} className="relative mb-8">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-500">
-              <Search size={16} />
-            </div>
-            <input
-              type="text"
-              placeholder="Search products..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-sm outline-none focus:border-primary/50"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </form>
-
-          <div className="flex flex-col gap-1 overflow-y-auto max-h-[calc(100vh-250px)] pr-2">
-            <Link href="/" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-sm font-medium" onClick={() => setMobileOpen(false)}>
-              <Home size={18} className="text-primary" /> Home
-            </Link>
-            <Link href="/category" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-sm font-medium" onClick={() => setMobileOpen(false)}>
-              <Package size={18} className="text-primary" /> All Categories
+      {/* Main navbar */}
+      <div className="py-2 sm:py-3">
+        <div className="max-w-[1400px] mx-auto px-3 sm:px-5">
+          <div className="flex items-center justify-between gap-2 sm:gap-4 lg:gap-6">
+            {/* Logo - paling kiri */}
+            <Link href="/" className="text-[18px] sm:text-[22px] lg:text-[26px] font-extrabold text-[#1A1A1A] tracking-[-1px] shrink-0 whitespace-nowrap">
+              {settings.storeName.split('.')[0]}<span className="text-[#FF6B00]">{settings.storeName.split('.').slice(1).join('.') || 'Parjo'}</span>
             </Link>
             
-            <div className="mt-4 pt-4 border-t border-white/5">
-              <p className="px-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Featured Categories</p>
-              {categories.slice(0, 8).map(cat => {
-                const Icon = ICON_MAP[cat.name] || Package;
-                return (
-                  <Link 
-                    key={cat.id} 
-                    href={`/category/${cat.slug}`} 
-                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-sm font-medium" 
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    <Icon size={18} className="text-gray-400" /> {cat.name}
+            {/* Desktop nav menu - setelah brand */}
+            <nav className="hidden lg:block shrink-0">
+              <ul className="flex items-center gap-6 xl:gap-8">
+                <li className="relative static group">
+                  <Link href="/category" className="text-[14px] xl:text-[15px] font-semibold text-[#555555] hover:text-[#FF6B00] transition-all duration-300 relative py-1 after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-[#FF6B00] after:transition-all after:duration-300 hover:after:w-full">
+                    <i className="fas fa-bars mr-1.5"></i>
+                    Categories
                   </Link>
-                );
-              })}
+                  
+                  {/* CJ Style Mega Menu */}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-full max-w-[1400px] bg-white shadow-[0_15px_30px_rgba(0,0,0,0.1)] rounded-b-[16px] opacity-0 invisible translate-y-2.5 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] z-[1000] overflow-hidden group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 hover:opacity-100 hover:visible hover:translate-y-0">
+                    <div className="flex h-auto max-h-[520px]">
+                      {/* Sidebar - scroll if more than 14 categories */}
+                      <div className="w-[280px] bg-[#fcfcfc] border-r border-[#f0f0f0] py-2.5 overflow-y-auto">
+                        {categories.map((cat) => (
+                          <div 
+                            key={cat.id} 
+                            className={`px-5 transition-all duration-200 ${activeL1 === cat.id ? 'bg-white relative before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-[#FF6B00]' : ''}`}
+                            onMouseEnter={() => setActiveL1(cat.id)}
+                          >
+                            <Link href={`/category/${cat.slug}`} className={`flex items-center justify-between py-3 text-[14px] font-semibold no-underline ${activeL1 === cat.id ? 'text-[#FF6B00]' : 'text-[#333]'}`}>
+                              <span>
+                                <i className={`fas ${getIcon(cat.name)}`} style={{ width: '20px', marginRight: '10px', opacity: 0.6 }}></i>
+                                {cat.name}
+                              </span>
+                              <i className="fas fa-chevron-right text-[10px] opacity-30"></i>
+                            </Link>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Content Panel */}
+                      <div className="flex-1 p-[30px_40px] overflow-y-auto bg-white">
+                        {activeCategory && (
+                          <div className="grid grid-cols-3 gap-10">
+                            {activeCategory.children?.map((l2: any) => (
+                              <div key={l2.id} className="mb-5">
+                                <h4 className="text-[15px] font-extrabold mb-[15px] pb-2 border-b-2 border-[#f0f0f0] relative after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-10 after:h-[2px] after:bg-[#FF6B00]">
+                                  <Link href={`/category/${l2.slug}`} className="text-[#333] no-underline hover:text-[#FF6B00]">{l2.name}</Link>
+                                </h4>
+                                <div className="flex flex-col gap-2">
+                                  {l2.children?.map((l3: any) => (
+                                    <Link key={l3.id} href={`/category/${l3.slug}`} className="text-[#666] no-underline text-[13px] font-medium transition-all duration-200 hover:text-[#FF6B00] hover:pl-[5px]">
+                                      {l3.name}
+                                    </Link>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </li>
+                <li><Link href="/blog" className="text-[14px] xl:text-[15px] font-semibold text-[#555555] hover:text-[#FF6B00] transition-all duration-300 relative py-1 after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-[#FF6B00] after:transition-all after:duration-300 hover:after:w-full">Blog</Link></li>
+                <li><Link href="/about" className="text-[14px] xl:text-[15px] font-semibold text-[#555555] hover:text-[#FF6B00] transition-all duration-300 relative py-1 after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-[#FF6B00] after:transition-all after:duration-300 hover:after:w-full">About</Link></li>
+              </ul>
+            </nav>
+
+            {/* Search bar - di tengah, lebih lebar */}
+            <form onSubmit={handleSearch} className="hidden sm:flex items-center bg-[#F5F5F5] rounded-[50px] px-4 flex-1 max-w-[320px] lg:max-w-[480px] xl:max-w-[560px] border-2 border-transparent transition-all duration-300 focus-within:border-[#FF6B00] focus-within:bg-white">
+              <input 
+                type="text" 
+                placeholder="Search products..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 py-2 sm:py-2.5 px-2 bg-transparent text-[13px] sm:text-[14px] text-[#1A1A1A] placeholder:text-[#888888] outline-none border-none"
+              />
+              <button type="submit" className="bg-none cursor-pointer text-[#888888] text-base sm:text-lg p-1.5 transition-all duration-300 hover:text-[#FF6B00] border-none">
+                <i className="fas fa-search"></i>
+              </button>
+            </form>
+
+            {/* Icons + Hamburger - paling kanan */}
+            <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-4 shrink-0">
+              {/* Search icon on mobile only */}
+              <button className="sm:hidden bg-none cursor-pointer text-[18px] text-[#555555] p-1.5 border-none" onClick={() => document.getElementById('mobile-search')?.focus()}>
+                <i className="fas fa-search"></i>
+              </button>
+              <Link href="/login" className="relative bg-none cursor-pointer text-[18px] sm:text-[20px] lg:text-[22px] text-[#555555] transition-all duration-300 hover:text-[#FF6B00] p-1.5" title="Login">
+                <i className="far fa-user"></i>
+              </Link>
+              <Link href="/favorites" className="relative bg-none cursor-pointer text-[18px] sm:text-[20px] lg:text-[22px] text-[#555555] transition-all duration-300 hover:text-[#FF6B00] p-1.5" title="Wishlist">
+                <i className="far fa-heart"></i>
+                <FavoriteCounter />
+              </Link>
+              <Link href="/cart" className="relative bg-none cursor-pointer text-[18px] sm:text-[20px] lg:text-[22px] text-[#555555] transition-all duration-300 hover:text-[#FF6B00] p-1.5" title="Cart">
+                <i className="fas fa-shopping-bag"></i>
+                <CartCounter />
+              </Link>
+              <button className="flex lg:hidden flex-col gap-[4px] sm:gap-[5px] cursor-pointer p-1.5 bg-none border-none ml-1" id="hamburger" onClick={toggleNav}>
+                <span className="w-5 sm:w-6 h-[2px] bg-[#1A1A1A] rounded-[2px] transition-all duration-300"></span>
+                <span className="w-5 sm:w-6 h-[2px] bg-[#1A1A1A] rounded-[2px] transition-all duration-300"></span>
+                <span className="w-5 sm:w-6 h-[2px] bg-[#1A1A1A] rounded-[2px] transition-all duration-300"></span>
+              </button>
             </div>
           </div>
 
-          <div className="absolute bottom-8 left-6 right-6 space-y-4">
-            <Link href="/track" className="flex items-center gap-3 p-3 rounded-xl bg-white/5 text-xs font-medium" onClick={() => setMobileOpen(false)}>
-              <Truck size={16} /> Track Order
-            </Link>
-          </div>
+          {/* Mobile search bar - shown below navbar on mobile */}
+          <form onSubmit={handleSearch} className="sm:hidden flex items-center bg-[#F5F5F5] rounded-[50px] px-3 mt-2 border-2 border-transparent transition-all duration-300 focus-within:border-[#FF6B00] focus-within:bg-white">
+            <input 
+              id="mobile-search"
+              type="text" 
+              placeholder="Search products..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 py-2 px-3 bg-transparent text-[13px] text-[#1A1A1A] placeholder:text-[#888888] outline-none border-none"
+            />
+            <button type="submit" className="bg-none cursor-pointer text-[#888888] text-base p-1.5 transition-all duration-300 hover:text-[#FF6B00] border-none">
+              <i className="fas fa-search"></i>
+            </button>
+          </form>
         </div>
       </div>
+
+      {/* Mobile Menu Drawer */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 z-[9999] lg:hidden">
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-black/50" onClick={toggleNav}></div>
+          {/* Drawer */}
+          <div className="absolute top-0 right-0 w-[300px] max-w-[85vw] h-full bg-white shadow-xl overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+              <span className="font-bold text-base text-[#1A1A1A]">Menu</span>
+              <button className="bg-none cursor-pointer text-xl text-[#555555] p-1 border-none" onClick={toggleNav}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="p-4">
+              <Link href="/" className="block py-3 text-[15px] font-medium text-[#555555] border-b border-gray-50 no-underline" onClick={toggleNav}>Home</Link>
+              <Link href="/category" className="block py-3 text-[15px] font-medium text-[#555555] border-b border-gray-50 no-underline" onClick={toggleNav}>All Categories</Link>
+              <Link href="/track" className="block py-3 text-[15px] font-medium text-[#555555] border-b border-gray-50 no-underline" onClick={toggleNav}>Track Order</Link>
+              <Link href="/help-center" className="block py-3 text-[15px] font-medium text-[#555555] border-b border-gray-50 no-underline" onClick={toggleNav}>Help Center</Link>
+              <Link href="/contact" className="block py-3 text-[15px] font-medium text-[#555555] border-b border-gray-50 no-underline" onClick={toggleNav}>Contact</Link>
+              <Link href="/favorites" className="block py-3 text-[15px] font-medium text-[#555555] border-b border-gray-50 no-underline" onClick={toggleNav}>Wishlist</Link>
+              <Link href="/login" className="block py-3 text-[15px] font-medium text-[#555555] no-underline" onClick={toggleNav}>Login</Link>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
-

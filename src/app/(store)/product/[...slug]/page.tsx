@@ -1,41 +1,79 @@
 import ProductView from './ProductView';
 import { Metadata } from 'next';
 import { prisma } from '@/lib/db';
+import { getProductDetails } from '@/lib/cj-api';
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string, slug?: string[] }> }): Promise<Metadata> {
+export async function generateMetadata({ 
+  params, 
+  searchParams 
+}: { 
+  params: Promise<{ id: string, slug?: string[] }>,
+  searchParams: Promise<{ v?: string, color?: string, variant?: string }>
+}): Promise<Metadata> {
   const resolvedParams = await params;
+  const sParams = await searchParams;
   const id = resolvedParams.slug?.[0] || resolvedParams.id;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
   
-  // Try local DB first
+  const targetVid = sParams.v || sParams.variant || sParams.color;
+
+  // 1. Try local DB first
   const localProduct = await prisma.product.findUnique({
-    where: { cjId: id }
+    where: { cjId: id },
+    include: { variants: true }
   });
 
-  const p = localProduct ? {
-    name: localProduct.name,
-    desc: localProduct.description,
-    image: localProduct.images[0]
-  } : null;
+  let p: any = null;
+  let selectedVariant: any = null;
+
+  if (localProduct) {
+    p = {
+      name: localProduct.name,
+      desc: localProduct.description,
+      image: localProduct.images[0]
+    };
+    if (targetVid) {
+      selectedVariant = localProduct.variants.find(v => v.cjId === targetVid || v.color === targetVid);
+    }
+  } else {
+    // 2. Try CJ API fallback
+    const cjRes = await getProductDetails(id);
+    if (cjRes.success && cjRes.data) {
+      p = {
+        name: cjRes.data.productNameEn || cjRes.data.productName,
+        desc: cjRes.data.description,
+        image: cjRes.data.bigImage || cjRes.data.productImage
+      };
+      if (targetVid) {
+        selectedVariant = (cjRes.data.variants || []).find((v: any) => v.vid === targetVid || v.variantKey === targetVid);
+      }
+    }
+  }
 
   if (!p) return { title: 'Product Not Found' };
+
+  // Update image and title if variant is selected
+  const displayImage = selectedVariant?.image || selectedVariant?.variantImage || p.image;
+  const displayTitle = selectedVariant 
+    ? `${p.name} (${selectedVariant.color || selectedVariant.variantNameEn || selectedVariant.variantKey}) | BangParjo Shop`
+    : `${p.name} | BangParjo Shop`;
 
   const cleanDesc = p.desc?.substring(0, 160).replace(/<[^>]*>?/gm, '') || 'Shop the best products at bangparjo.shop';
 
   return {
-    title: `${p.name} | BangParjo Shop`,
+    title: displayTitle,
     description: cleanDesc,
     alternates: {
-      canonical: `${baseUrl}/product/${id}`,
+      canonical: `${baseUrl}/product/${id}${targetVid ? `?v=${targetVid}` : ''}`,
     },
     openGraph: {
-      title: p.name,
+      title: displayTitle,
       description: cleanDesc,
       url: `${baseUrl}/product/${id}`,
       siteName: 'BangParjo Shop',
       images: [
         {
-          url: p.image || '',
+          url: displayImage || '',
           width: 800,
           height: 800,
           alt: p.name,
@@ -45,20 +83,23 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     },
     twitter: {
       card: 'summary_large_image',
-      title: p.name,
+      title: displayTitle,
       description: cleanDesc,
-      images: [p.image || ''],
+      images: [displayImage || ''],
     },
   };
 }
 
 // Komponen untuk JSON-LD (Struktur Data Google)
-function ProductSchema({ product }: { product: any }) {
+function ProductSchema({ product, selectedVariant }: { product: any, selectedVariant?: any }) {
+  const displayImage = selectedVariant?.image || selectedVariant?.variantImage || product.productImage;
+  const displayPrice = selectedVariant?.variantSellPrice || product.variants?.[0]?.variantSellPrice || 0;
+
   const jsonLd = {
     "@context": "https://schema.org/",
     "@type": "Product",
     "name": product.productNameEn || product.productName,
-    "image": [product.productImage, ...(product.productImageSet || [])],
+    "image": [displayImage, ...(product.productImageSet || [])],
     "description": product.description?.replace(/<[^>]*>?/gm, ''),
     "sku": product.pid,
     "brand": {
@@ -67,9 +108,9 @@ function ProductSchema({ product }: { product: any }) {
     },
     "offers": {
       "@type": "Offer",
-      "url": `https://bangparjo.shop/product/${product.pid}`,
+      "url": `https://bangparjo.shop/product/${product.pid}${selectedVariant ? `?v=${selectedVariant.vid || selectedVariant.cjId}` : ''}`,
       "priceCurrency": "USD",
-      "price": product.variants?.[0]?.variantSellPrice || 0,
+      "price": displayPrice,
       "itemCondition": "https://schema.org/NewCondition",
       "availability": "https://schema.org/InStock"
     }
@@ -83,9 +124,17 @@ function ProductSchema({ product }: { product: any }) {
   );
 }
 
-export default async function Page({ params }: { params: Promise<{ id: string, slug?: string[] }> }) {
+export default async function Page({ 
+  params,
+  searchParams
+}: { 
+  params: Promise<{ id: string, slug?: string[] }>,
+  searchParams: Promise<{ v?: string, color?: string, variant?: string }>
+}) {
   const resolvedParams = await params;
+  const sParams = await searchParams;
   const id = resolvedParams.slug?.[0] || resolvedParams.id;
+  const targetVid = sParams.v || sParams.variant || sParams.color;
   
   // 1. Try fetching from Local DB first
   const localProduct = await prisma.product.findUnique({
@@ -97,12 +146,11 @@ export default async function Page({ params }: { params: Promise<{ id: string, s
   });
 
   if (localProduct) {
-    // Map local DB format back to CJ format for the ProductView component
     const mappedData = {
       pid: localProduct.cjId,
       productName: localProduct.name,
       productNameEn: localProduct.name,
-      description: localProduct.description,
+      description: localProduct.description || '',
       productImage: localProduct.images[0],
       bigImage: localProduct.images[0],
       productImageSet: localProduct.images,
@@ -111,6 +159,7 @@ export default async function Page({ params }: { params: Promise<{ id: string, s
       variants: localProduct.variants.map(v => ({
         vid: v.cjId,
         variantNameEn: v.color && v.size ? `${v.color} / ${v.size}` : v.color || v.size || 'Default',
+        variantKey: v.color || 'Default',
         variantSellPrice: v.sellingPrice,
         variantSku: v.sku,
         variantWeight: v.weight,
@@ -119,24 +168,68 @@ export default async function Page({ params }: { params: Promise<{ id: string, s
       }))
     };
 
+    const selectedVariant = mappedData.variants.find(v => v.vid === targetVid || v.variantKey === targetVid);
+
     return (
       <>
-        <ProductSchema product={mappedData} />
+        <ProductSchema product={mappedData} selectedVariant={selectedVariant} />
         <ProductView 
           id={id} 
           initialData={mappedData}
           initialError={null}
+          selectedVid={targetVid}
         />
       </>
     );
   }
 
-  // 2. No fallback to CJ API — only serve imported products
+  // 2. Fallback to CJ API
+  const cjRes = await getProductDetails(id);
+  if (cjRes.success && cjRes.data) {
+    const product = cjRes.data;
+    const mappedData = {
+      pid: product.pid,
+      productName: product.productNameEn || product.productName,
+      productNameEn: product.productNameEn || product.productName,
+      description: product.description,
+      productImage: product.productImage || product.bigImage,
+      bigImage: product.bigImage || product.productImage,
+      productImageSet: product.productImageSet || [],
+      categoryName: product.categoryName || 'Imported',
+      categoryId: product.categoryId,
+      variants: (product.variants || []).map((v: any) => ({
+        vid: v.vid,
+        variantNameEn: v.variantNameEn || v.variantKey || 'Default',
+        variantKey: v.variantKey || 'Default',
+        variantSellPrice: v.variantSellPrice,
+        variantSku: v.variantSku,
+        variantWeight: v.variantWeight,
+        inventory: v.inventory,
+        variantImage: v.variantImage
+      }))
+    };
+
+    const selectedVariant = mappedData.variants.find(v => v.vid === targetVid || v.variantKey === targetVid);
+
+    return (
+      <>
+        <ProductSchema product={mappedData} selectedVariant={selectedVariant} />
+        <ProductView 
+          id={id} 
+          initialData={mappedData}
+          initialError={null}
+          selectedVid={targetVid}
+        />
+      </>
+    );
+  }
+
   return (
     <ProductView 
       id={id} 
       initialData={null}
-      initialError="Produk belum diimpor ke database. Hubungi admin untuk informasi lebih lanjut."
+      initialError="Product not found on CJ Dropshipping."
+      selectedVid={targetVid}
     />
   );
 }

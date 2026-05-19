@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { getTrackingInfo } from '@/lib/cj-api';
-import { Bot, Send, X, Sparkles, User, MessageCircle, Loader2 } from 'lucide-react';
 
 export default function AIChat() {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,6 +11,21 @@ export default function AIChat() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Listen for openAiChat custom event from product page
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.productName) {
+        setMessages(prev => [
+          { role: 'ai', content: `Hi! I see you're looking at **${detail.productName}**. How can I help you with this product? 😊` }
+        ]);
+      }
+      setIsOpen(true);
+    };
+    window.addEventListener('openAiChat', handler);
+    return () => window.removeEventListener('openAiChat', handler);
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -60,93 +74,100 @@ export default function AIChat() {
   };
 
   return (
-    <div className="fixed bottom-8 right-8 z-[100] flex flex-col items-end">
+    <div className="fixed bottom-8 right-4 z-[1000] flex flex-col items-end">
       {/* Chat Window */}
       {isOpen && (
-        <div className="mb-6 w-[380px] h-[550px] bg-black/80 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-10 duration-500">
+        <div className="w-[min(380px,calc(100vw-32px))] h-[min(550px,calc(100vh-180px))] mb-4 flex flex-col overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.12)] rounded-[24px] bg-white">
           {/* Header */}
-          <div className="p-6 bg-primary/10 border-b border-white/5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center text-black shadow-lg shadow-primary/20">
-                <Bot size={20} />
-              </div>
-              <div>
-                <h4 className="text-sm font-black text-white uppercase tracking-widest">Parjo Assistant</h4>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">Online & Ready</span>
+          <div className="p-5 bg-[#FF6B00] text-black">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-[8px] bg-white flex items-center justify-center">
+                  <i className="fas fa-robot text-[#FF6B00]"></i>
+                </div>
+                <div>
+                  <h4 className="m-0 text-[14px] font-black uppercase tracking-[1px]">Parjo AI</h4>
+                  <div className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-[#22C55E] inline-block"></span>
+                    <span className="text-[10px] font-bold opacity-70">Online</span>
+                  </div>
                 </div>
               </div>
+              <button 
+                onClick={() => setIsOpen(false)}
+                className="bg-none border-none cursor-pointer opacity-50 text-black"
+              >
+                <i className="fas fa-times"></i>
+              </button>
             </div>
-            <button 
-              onClick={() => setIsOpen(false)}
-              className="p-2 text-gray-500 hover:text-white transition-colors"
+            <a
+              href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP || '628219105980'}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 bg-[rgba(255,255,255,0.2)] text-black px-4 py-2 rounded-[12px] text-[12px] font-bold no-underline backdrop-blur-[4px]"
             >
-              <X size={20} />
-            </button>
+              <i className="fab fa-whatsapp text-base"></i>
+              Chat via WhatsApp (24/7)
+            </a>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth" ref={scrollRef}>
+          <div className="flex-1 overflow-y-auto p-5 bg-[#fcfcfc] flex flex-col gap-4" ref={scrollRef}>
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`flex gap-3 max-w-[85%] ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                  <div className={`w-8 h-8 rounded-xl shrink-0 flex items-center justify-center ${m.role === 'user' ? 'bg-white/10 text-white' : 'bg-primary/20 text-primary border border-primary/20'}`}>
-                    {m.role === 'user' ? <User size={14} /> : <Sparkles size={14} />}
-                  </div>
-                  <div className={`p-4 rounded-[1.5rem] text-sm leading-relaxed ${m.role === 'user' ? 'bg-white text-black font-medium rounded-tr-none' : 'bg-white/5 border border-white/10 text-gray-300 rounded-tl-none'}`}>
-                    {m.content}
-                  </div>
+                <div className="max-w-[85%] px-4 py-3 rounded-[16px] text-[13px] leading-[1.5]" style={{ 
+                  background: m.role === 'user' ? '#FF6B00' : '#fff',
+                  color: m.role === 'user' ? '#000' : '#444',
+                  boxShadow: m.role === 'user' ? 'none' : '0 2px 8px rgba(0,0,0,0.05)',
+                  border: m.role === 'user' ? 'none' : '1px solid #eee',
+                  fontWeight: m.role === 'user' ? '700' : '500'
+                }}>
+                  {m.content}
                 </div>
               </div>
             ))}
             {loading && (
               <div className="flex justify-start">
-                <div className="flex gap-3 max-w-[85%]">
-                  <div className="w-8 h-8 rounded-xl bg-primary/20 text-primary border border-primary/20 flex items-center justify-center">
-                    <Loader2 size={14} className="animate-spin" />
-                  </div>
-                  <div className="p-4 rounded-[1.5rem] rounded-tl-none bg-white/5 border border-white/10 text-gray-500 text-sm flex items-center gap-2 italic">
-                    AI is processing...
-                  </div>
+                <div className="bg-[#eee] px-4 py-2 rounded-[16px] text-[11px] text-[#888]">
+                  <i className="fas fa-spinner fa-spin"></i> Parjo is thinking...
                 </div>
               </div>
             )}
           </div>
 
           {/* Input */}
-          <form className="p-6 bg-white/5 border-t border-white/10 flex items-center gap-3" onSubmit={handleSend}>
-            <input
-              type="text"
-              placeholder="Ask me anything..."
-              className="flex-1 bg-black/50 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:border-primary outline-none transition-all"
-              value={input}
-              onChange={e => setInput(e.target.value)}
-            />
-            <button 
-              type="submit"
-              disabled={loading || !input.trim()}
-              className="w-12 h-12 bg-primary text-black rounded-2xl flex items-center justify-center disabled:opacity-50 disabled:grayscale transition-all active:scale-90"
-            >
-              <Send size={18} />
-            </button>
-          </form>
+          <div className="p-4 bg-white border-t border-[#eee]">
+            <form onSubmit={handleSend} className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Ask anything..."
+                className="flex-1 border border-[#eee] rounded-[12px] px-4 py-2.5 text-[13px] outline-none"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+              />
+              <button 
+                type="submit"
+                disabled={loading || !input.trim()}
+                className="w-10 h-10 p-0 rounded-[12px] flex items-center justify-center bg-[#FF6B00] text-white font-semibold cursor-pointer transition-all duration-200 active:scale-95 shadow-lg shadow-[rgba(255,107,53,0.2)] border-none disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <i className="fas fa-paper-plane"></i>
+              </button>
+            </form>
+          </div>
         </div>
       )}
 
       {/* Toggle Button */}
       <button 
-        className={`w-16 h-16 rounded-[1.5rem] shadow-2xl flex items-center justify-center transition-all duration-500 active:scale-90 group ${isOpen ? 'bg-white text-black rotate-90 scale-90' : 'bg-primary text-black shadow-primary/20'}`}
+        className={`w-16 h-16 rounded-[20px] text-2xl flex items-center justify-center cursor-pointer transition-all duration-200 active:scale-95 border-none ${
+          isOpen 
+            ? 'bg-transparent border-2 border-[#FF6B00] text-[#FF6B00]' 
+            : 'bg-[#FF6B00] text-white shadow-[0_8px_32px_rgba(255,107,53,0.3)]'
+        }`}
         onClick={() => setIsOpen(!isOpen)}
       >
-        {isOpen ? <X size={24} /> : <MessageCircle size={24} className="group-hover:scale-110 transition-transform" />}
-        {!isOpen && (
-          <span className="absolute right-full mr-4 px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all shadow-xl pointer-events-none">
-            Need Help?
-          </span>
-        )}
+        {isOpen ? <i className="fas fa-times"></i> : <i className="fas fa-comment-dots"></i>}
       </button>
     </div>
   );
 }
-

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { notifyContactAdmin } from '@/lib/openclaw';
 
 export async function POST(req: Request) {
   try {
@@ -10,7 +11,6 @@ export async function POST(req: Request) {
     }
 
     // Save to database
-    // Menggunakan raw SQL jika prisma client belum di-generate ulang
     try {
       await (prisma as any).supportTicket.create({
         data: { name, email, subject, message }
@@ -30,6 +30,10 @@ export async function POST(req: Request) {
         )
       `;
     }
+
+    // Kirim notifikasi WA ke admin
+    notifyContactAdmin({ name, email, subject, message })
+      .catch(err => console.warn('[OpenClaw] Notif contact gagal:', err));
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

@@ -1,123 +1,149 @@
 'use client';
 
-import { parseProductName, parseProductImage, slugify } from '@/lib/cj-api';
+import { parseProductName, parseProductImage, formatUSD, stripCommonPrefix } from '@/lib/utils';
 import { calculateFinalPrice } from '@/lib/pricing';
-
-function formatUSD(price: number | string) {
-  const p = typeof price === 'string' ? parseFloat(price) : price;
-  return isNaN(p) ? '$0.00' : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(p);
-}
-
-/**
- * Find the longest common prefix across all variant names,
- * stopping at a word boundary (space). Used to strip the
- * repeated product name so only the unique part is shown.
- */
-function stripCommonPrefix(names: string[]): string[] {
-  if (names.length === 0) return [];
-  if (names.length === 1) return names;
-
-  // Find common character-level prefix
-  let prefix = names[0];
-  for (const name of names.slice(1)) {
-    let i = 0;
-    while (i < prefix.length && i < name.length && prefix[i] === name[i]) i++;
-    prefix = prefix.slice(0, i);
-  }
-
-  // Trim to the last word boundary so we don't cut mid-word
-  const lastSpace = prefix.lastIndexOf(' ');
-  const safeLen = lastSpace > 0 ? lastSpace : prefix.length;
-
-  return names.map(n => n.slice(safeLen).trim() || n);
-}
 import Image from 'next/image';
 import Link from 'next/link';
-import ProductImage from '@/components/ProductImage';
 import { useCart } from '@/context/CartContext';
 import { useSettings } from '@/context/SettingsContext';
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { ProductDetailSkeleton } from '@/components/ProductSkeleton';
-import styles from './product.module.css';
 
-export default function ProductView({ id, initialData, initialError }: { id: string, initialData: any, initialError: string | null }) {
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import AIChat from '@/components/AIChat';
+
+export default function ProductView({ id, initialData, initialError, selectedVid }: { id: string, initialData: any, initialError: string | null, selectedVid?: string }) {
   const { addToCart } = useCart();
   const { settings } = useSettings();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [product, setProduct] = useState<any>(initialData);
   const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(initialError);
+
+  const initialVariant = (initialData?.variants || []).find((v: any) => v.vid === selectedVid || v.variantKey === selectedVid) || ((initialData?.variants?.length > 0) ? initialData.variants[0] : null);
+
   const [selectedImage, setSelectedImage] = useState<string>(() => {
+    const vImg = initialVariant?.variantImage || initialVariant?.image;
+    if (vImg) return parseProductImage(vImg);
     return initialData ? parseProductImage(initialData.bigImage) : '';
   });
-  const [added, setAdded] = useState(false);
-  const [selectedVariant, setSelectedVariant] = useState<any>(() => {
-    return (initialData?.variants?.length > 0) ? initialData.variants[0] : null;
-  });
-  const [showToast, setShowToast] = useState(false);
+  const [selectedVariant, setSelectedVariant] = useState<any>(initialVariant);
+  const [qty, setQty] = useState(1);
+  const [showShareMenu, setShowShareMenu] = useState(false);
   const displayName = product ? parseProductName(product.productNameEn || product.productName) : '';
 
-    // Initialize selected image and variant from initialData
-  // Related products section removed
+  // Social share
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const shareText = `Check out ${displayName} on Bangparjo!`;
+  const shareLinks = [
+    { name: 'WhatsApp', url: `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`, icon: 'fab fa-whatsapp', color: '#25D366' },
+    { name: 'Facebook', url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, icon: 'fab fa-facebook', color: '#1877F2' },
+    { name: 'Twitter', url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, icon: 'fab fa-twitter', color: '#1DA1F2' },
+    { name: 'Pinterest', url: `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(shareUrl)}&description=${encodeURIComponent(shareText)}`, icon: 'fab fa-pinterest', color: '#E60023' },
+    { name: 'Copy Link', url: '#', icon: 'fas fa-link', color: '#666', action: () => { navigator.clipboard.writeText(shareUrl); setShowShareMenu(false); alert('Link copied!'); } },
+  ];
 
-
-
-  // Fetch product from local DB (client-side fallback when no initialData)
   useEffect(() => {
     if (!id || initialData) return;
-
     setLoading(true);
     setError(null);
-
     fetch(`/api/pproduct?cjId=${encodeURIComponent(id)}`)
       .then(res => res.json())
       .then(res => {
         if (res.success && res.data) {
           setProduct(res.data);
-          setSelectedImage(parseProductImage(res.data.bigImage || res.data.productImage));
-          if (res.data.variants?.length > 0) {
-            setSelectedVariant(res.data.variants[0]);
-          }
+          const matchedVariant = (res.data.variants || []).find((v: any) => v.vid === selectedVid || v.variantKey === selectedVid) || ((res.data.variants?.length > 0) ? res.data.variants[0] : null);
+          
+          setSelectedVariant(matchedVariant);
+          const vImg = matchedVariant?.image || matchedVariant?.variantImage;
+          setSelectedImage(parseProductImage(vImg || res.data.bigImage || res.data.productImage));
         } else {
-          setError('Produk tidak ditemukan. Mungkin belum diimpor ke database.');
+          setError('Product not found.');
         }
         setLoading(false);
       })
       .catch(err => {
         console.error('[ProductView] Error:', err);
-        setError('Gagal memuat produk.');
+        setError('Failed to load product.');
         setLoading(false);
       });
-  }, [id]);
+  }, [id, initialData, selectedVid]);
+
+  // Update URL when variant changes
+  const handleVariantSelect = (variant: any) => {
+    setSelectedVariant(variant);
+    
+    // Update URL query param without full navigation
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('v', variant.vid);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   useEffect(() => {
     const vImg = selectedVariant?.image || selectedVariant?.variantImage;
     if (vImg) {
       const variantImg = parseProductImage(vImg);
-      if (variantImg && variantImg !== '/placeholder.png') {
-        setSelectedImage(variantImg);
-      }
+      if (variantImg && variantImg !== '/placeholder.png') setSelectedImage(variantImg);
     }
-
-    // Update URL dynamically to include title and selected options for SEO
-    if (product && selectedVariant) {
-      const titleSlug = slugify(displayName);
-      const variantName = selectedVariant.variantNameEn || selectedVariant.variantKey || '';
-      const variantSlug = slugify(variantName);
-      
-      const newUrl = `/product/${id}/${titleSlug}/${variantSlug}`;
-      window.history.replaceState(null, '', newUrl);
-    }
-  }, [selectedVariant, id, product, displayName]);
+  }, [selectedVariant]);
 
   const [shippingRates, setShippingRates] = useState<any[]>([]);
   const [shippingLoading, setShippingLoading] = useState(false);
 
-  // Dynamic price calculation based on selected variant
+  // ── Product Reviews ──────────────────────────────────────────────────────
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsTotal, setReviewsTotal] = useState(0);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const [reviewsScore, setReviewsScore] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    if (!product?.pid) return;
+    setReviewsLoading(true);
+    const params = new URLSearchParams({ pid: product.pid });
+    if (reviewsScore != null) params.set('score', reviewsScore.toString());
+    params.set('pageNum', reviewsPage.toString());
+    params.set('pageSize', '5');
+    fetch(`/api/cj-proxy?endpoint=/api2.0/v1/product/productComments?${params.toString()}`)
+      .then(r => r.json())
+      .then(res => {
+        if (res.success && res.data) {
+          setReviews(res.data.list || []);
+          setReviewsTotal(parseInt(res.data.total || '0'));
+        }
+      })
+      .catch(console.error)
+      .finally(() => setReviewsLoading(false));
+  }, [product?.pid, reviewsPage, reviewsScore]);
+
+  // ── Inventory ────────────────────────────────────────────────────────────
+  const [inventory, setInventory] = useState<{ total: number; warehouses: any[] } | null>(null);
+  const [inventoryLoading, setInventoryLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selectedVariant?.vid) return;
+    setInventoryLoading(true);
+    fetch(`/api/cj-proxy?endpoint=/api2.0/v1/product/stock/queryByVid?vid=${selectedVariant.vid}`)
+      .then(r => r.json())
+      .then(res => {
+        if (res.success && res.data) {
+          const data = res.data as any[];
+          const total = data.reduce((sum: number, w: any) => sum + (w.totalInventoryNum || 0), 0);
+          setInventory({ total, warehouses: data });
+        }
+      })
+      .catch(console.error)
+      .finally(() => setInventoryLoading(false));
+  }, [selectedVariant?.vid]);
+
   const currentCjPrice = selectedVariant?.variantSellPrice 
     ? Number(selectedVariant.variantSellPrice)
     : (typeof product?.sellPrice === 'number' ? product?.sellPrice : parseFloat(String(product?.sellPrice)));
     
-  const originalPrice = calculateFinalPrice(currentCjPrice, settings);
+  const finalPrice = calculateFinalPrice(currentCjPrice, settings);
 
   useEffect(() => {
     if (selectedVariant?.vid) {
@@ -125,321 +151,397 @@ export default function ProductView({ id, initialData, initialError }: { id: str
         setShippingLoading(true);
         try {
           const sku = selectedVariant.variantSku || selectedVariant.vid;
-          const res = await fetch(`/api/shipping-rates?sku=${sku}&quantity=1&country=ID&subtotal=${originalPrice}`);
+          const res = await fetch(`/api/shipping-rates?sku=${sku}&quantity=1&country=ID&subtotal=${finalPrice}`);
           const data = await res.json();
-          if (data.success) {
-            setShippingRates(data.data);
-          }
+          if (data.success) setShippingRates(data.data);
         } catch (err) {
           console.error('Failed to fetch shipping:', err);
         } finally {
           setShippingLoading(false);
         }
-      }, 500); // 500ms debounce
-
+      }, 500);
       return () => clearTimeout(timer);
     }
-  }, [selectedVariant?.vid, originalPrice]);
+  }, [selectedVariant?.vid, finalPrice]);
 
   const handleAddToCart = () => {
-    // Pass the selected variant so checkout can send a valid vid to CJ API
-    const variantInfo = selectedVariant
-      ? { 
-          vid: selectedVariant.vid, 
-          sku: selectedVariant.variantSku,
-          name: selectedVariant.variantNameEn || selectedVariant.variantKey 
-        }
-      : undefined;
-
-    // Fix NaN issue by overriding product sellPrice with normalized value
-    const normalizedPrice = selectedVariant?.variantSellPrice 
-      ? selectedVariant.variantSellPrice 
-      : (typeof product.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product.sellPrice)));
-
+    const variantInfo = selectedVariant ? { vid: selectedVariant.vid, sku: selectedVariant.variantSku, name: selectedVariant.variantNameEn || selectedVariant.variantKey } : undefined;
+    const normalizedPrice = selectedVariant?.variantSellPrice ? selectedVariant.variantSellPrice : (typeof product.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product.sellPrice)));
     const cartProduct = { ...product, sellPrice: normalizedPrice };
-
-    addToCart(cartProduct, variantInfo);
-    setAdded(true);
-    setShowToast(true);
-    setTimeout(() => {
-      setAdded(false);
-      setShowToast(false);
-    }, 3000);
+    for (let i = 0; i < qty; i++) {
+      addToCart(cartProduct, variantInfo);
+    }
   };
 
-  if (loading) return (
-    <div style={{ minHeight: '100vh' }}>
-      <ProductDetailSkeleton />
-    </div>
-  );
-
-
-  if (error) {
-    const isRateLimit = error.toLowerCase().includes('too many') || error.toLowerCase().includes('qps') || error.toLowerCase().includes('terlalu');
-    return (
-      <div className={styles.errorPage}>
-        <div className={styles.errorIcon}>{isRateLimit ? '⏳' : '😕'}</div>
-        <h1>{isRateLimit ? 'Too Many Requests' : 'Product Not Found'}</h1>
-        <p>{isRateLimit ? 'The server is busy. Please wait a moment and try again.' : `Sorry, product with ID ${id} was not found or is not available for your region.`}</p>
-        <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>{error}</p>
-        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-          {isRateLimit && (
-            <button
-              className={styles.backBtn}
-              onClick={() => window.location.reload()}
-              style={{ border: 'none', cursor: 'pointer' }}
-            >
-              🔄 Try Again
-            </button>
-          )}
-          <Link href="/" className={styles.backBtn} style={{ background: 'var(--gray-600)' }}>
-            ← Back to Home
-          </Link>
-        </div>
+  if (loading) return <ProductDetailSkeleton />;
+  if (error || !product) return (
+    <div className="py-16 text-center">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6">
+        <h1 className="text-2xl font-bold text-[#1A1A1A]">{error || 'Product Not Found'}</h1>
+        <Link href="/" className="inline-block mt-5 px-6 py-2.5 rounded-md font-semibold bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200 no-underline">Back to Home</Link>
       </div>
-    );
-  }
-
-
-  if (!product) return (
-    <div className={styles.errorPage}>
-      <div className={styles.errorIcon}>📭</div>
-      <h1>Product Unavailable</h1>
-      <Link href="/" className={styles.backBtn}>← Back to Home</Link>
     </div>
   );
 
-  // Build deduplicated image list — bigImage always first (cover)
   const allImages = (() => {
-    const raw = [
-      product.bigImage,
-      ...(product.productImageSet || []),
-      ...(typeof product.productImage === 'string' && product.productImage.startsWith('[') ?
-          (() => { try { return JSON.parse(product.productImage); } catch { return []; } })() :
-          [product.productImage]),
-    ]
+    const raw = [product.bigImage, ...(product.productImageSet || []), ...(typeof product.productImage === 'string' && product.productImage.startsWith('[') ? (() => { try { return JSON.parse(product.productImage); } catch { return []; } })() : [product.productImage])]
       .map((img: any) => parseProductImage(img))
       .filter((img: string) => img && img !== '/placeholder.png');
-
     const seen = new Set<string>();
-    return raw.filter((img: string) => {
-      if (seen.has(img)) return false;
-      seen.add(img);
-      return true;
-    }).slice(0, 6);
+    return raw.filter((img: string) => { if (seen.has(img)) return false; seen.add(img); return true; }).slice(0, 6);
   })();
 
-  const discountPct = 15;
-  
-  const originalPriceHigher = originalPrice * (1 + discountPct / 100);
+  // ── Real data from CJ (if available) ─────────────────────────────────────
+  // Use real reviews data for rating display
+  const realRatingCount = reviewsTotal || 0;
+  const realAvgScore = reviews.length > 0 
+    ? Math.round(reviews.reduce((sum: number, r: any) => sum + parseInt(r.score || '0'), 0) / reviews.length) 
+    : 0;
+  const hasRealReviews = realRatingCount > 0;
 
 
   return (
-    <div className={styles.page}>
+    <div className="bg-white">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6">
+        <div className="flex items-center gap-2 py-4 text-sm text-gray-500">
+          <Link href="/" className="text-gray-500 no-underline hover:text-[#FF6B00]">Home</Link>
+          <span>/</span>
+          <Link href="/category" className="text-gray-500 no-underline hover:text-[#FF6B00]">Products</Link>
+          <span>/</span>
+          <span className="text-[#1A1A1A] font-medium truncate">{displayName}</span>
+        </div>
+      </div>
 
-      {/* Product Layout */}
-      <div className="container">
-        <div className={styles.productLayout}>
-          {/* Image Gallery */}
-          <div className={styles.gallery}>
-            {/* Main Image — wrapped for consistent square sizing */}
-            <div className={styles.mainImageWrapper}>
-              <div className={styles.mainImage}>
-                {selectedImage && (
-                  <ProductImage
-                    src={selectedImage}
-                    alt={displayName}
-                    fill
-                    priority
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    unoptimized={true}
-                    style={{ objectFit: 'contain' }}
-                  />
-                )}
-                {/* Badge wrapper excluded from .mainImage > * inset rule */}
-                <div className={styles.badgeWrapper}>
-                  <div className={styles.discountTag}>-{discountPct}%</div>
-                </div>
+      <section className="py-8 md:py-12">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+              <div className="relative w-full aspect-square rounded-[16px] overflow-hidden bg-gray-50 border border-gray-100">
+                <img src={selectedImage} alt={displayName} className="w-full h-full object-cover" loading="lazy" />
               </div>
-            </div>
-
-            {/* Thumbnails */}
-            {allImages.length > 1 && (
-              <div className={styles.thumbnails}>
-                {allImages.map((img: string, i: number) => (
-                  <button
-                    key={img}
-                    className={`${styles.thumbnail} ${selectedImage === img ? styles.thumbnailActive : ''}`}
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                {allImages.map((img: string) => (
+                  <div 
+                    key={img} 
+                    className={`relative w-20 h-20 rounded-[10px] overflow-hidden border-2 cursor-pointer transition-all duration-200 shrink-0 ${selectedImage === img ? 'border-[#FF6B00] shadow-md' : 'border-gray-200 opacity-70 hover:opacity-100'}`} 
                     onClick={() => setSelectedImage(img)}
                   >
-                    <ProductImage src={img} alt={`${displayName} ${i + 1}`} fill sizes="80px" unoptimized={true} />
-                  </button>
+                    <img src={img} alt="Thumbnail" className="w-full h-full object-cover" loading="lazy" />
+                  </div>
                 ))}
               </div>
-            )}
-          </div>
-
-          {/* Product Details */}
-          <div className={styles.details}>
-            <h1 className={styles.title}>{displayName}</h1>
-
-            {/* Rating */}
-            <div className={styles.ratingRow}>
-              <span className={styles.stars}>★★★★☆</span>
-              <span className={styles.ratingCount}>4.5 (128 reviews)</span>
-              <span className={styles.sold}>| 1.2K+ sold</span>
             </div>
 
-            {/* Price */}
-            <div className={styles.priceSection}>
-              <div className={styles.price}>{formatUSD(originalPrice)}</div>
-              <div className={styles.priceRow}>
-                <span className={styles.originalPrice}>{formatUSD(originalPriceHigher)}</span>
-                <span className={styles.discountBadge}>Save {discountPct}%</span>
+            <div className="space-y-5 lg:max-h-screen lg:overflow-y-auto">
+              <p className="text-sm font-semibold text-[#FF6B00] uppercase tracking-wider">{product.categoryName || 'Imported'}</p>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1A1A1A] leading-tight">{displayName}</h1>
+              
+              {hasRealReviews ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-[#FFB800] text-base sm:text-lg">{'★'.repeat(realAvgScore)}{'☆'.repeat(5 - realAvgScore)}</span>
+                  <span className="text-xs sm:text-sm text-gray-500">({realRatingCount} reviews)</span>
+                </div>
+              ) : reviewsLoading ? (
+                <div className="h-5 w-32 bg-gray-200 rounded animate-pulse"></div>
+              ) : null}
+
+              <div className="flex items-center gap-3">
+                <span className="text-2xl md:text-3xl font-black text-[#FF6B00]">{formatUSD(finalPrice)}</span>
               </div>
-              <p className={styles.usdPrice}>Price in USD · Worldwide shipping available</p>
-            </div>
 
-            {/* Variants */}
-            {product.variants && product.variants.length > 0 && (() => {
-              const allVariants = product.variants;
-              const rawNames: string[] = allVariants.map((v: any) => v.variantNameEn || v.variantKey || '');
-              const shortLabels = stripCommonPrefix(rawNames);
 
-              return (
-                <div className={styles.variantSection}>
-                  <h3 className={styles.variantLabel}>
-                    Options
-                    {selectedVariant && (
-                      <span className={styles.selectedVariantLabel}>
-                        — {shortLabels[allVariants.findIndex((v: any) => v.vid === selectedVariant.vid)] || ''}
-                      </span>
-                    )}
-                  </h3>
-                  <div className={styles.variantList}>
-                    {allVariants.map((variant: any, idx: number) => {
-                      const isActive = selectedVariant?.vid === variant.vid;
-                      const label = shortLabels[idx] || variant.variantNameEn || variant.variantKey;
-                      return (
-                        <button
-                          key={variant.vid}
-                          className={`${styles.variantItem} ${isActive ? styles.variantItemActive : ''}`}
-                          onClick={() => setSelectedVariant(variant)}
-                          title={rawNames[idx]}
-                          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem' }}
+              {product.variants && product.variants.length > 0 && (() => {
+                const shortLabels = stripCommonPrefix(product.variants.map((v: any) => v.variantNameEn || v.variantKey || ''));
+                return (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-bold text-[#1A1A1A]">Options</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {product.variants.map((variant: any, idx: number) => (
+                        <button 
+                          key={variant.vid} 
+                          className={`px-4 py-2 rounded-[8px] text-sm font-semibold border-2 transition-all duration-200 cursor-pointer ${
+                            selectedVariant?.vid === variant.vid 
+                              ? 'border-[#FF6B00] bg-orange-50 text-[#FF6B00]' 
+                              : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                          }`}
+                          onClick={() => handleVariantSelect(variant)}
                         >
-                          {(variant.image || variant.variantImage) && (
-                            <div style={{ width: '24px', height: '24px', position: 'relative', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-                              <img 
-                                src={parseProductImage(variant.image || variant.variantImage)} 
-                                alt={label} 
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                              />
-                            </div>
-                          )}
-                          <span>{label}</span>
+                          {shortLabels[idx]}
                         </button>
-                      );
-                    })}
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-[#1A1A1A]">Quantity</h3>
+                <div className="flex items-center border border-gray-200 rounded-[10px] overflow-hidden w-fit">
+                  <button 
+                    className="px-4 py-2.5 text-lg font-bold text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer border-none"
+                    onClick={() => setQty(Math.max(1, qty - 1))}
+                  >
+                    −
+                  </button>
+                  <input 
+                    type="number" 
+                    value={qty} 
+                    readOnly 
+                    className="w-16 text-center py-2.5 text-sm font-bold text-[#1A1A1A] border-x border-gray-200 outline-none"
+                  />
+                  <button 
+                    className="px-4 py-2.5 text-lg font-bold text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer border-none"
+                    onClick={() => setQty(qty + 1)}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              {/* Actions (Add to Cart & Buy Now) */}
+              <div className="flex gap-3 pt-2">
+                <button 
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px] font-bold text-sm bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200 cursor-pointer border-none"
+                  onClick={handleAddToCart}
+                >
+                  <i className="fas fa-shopping-bag"></i> Add to Cart
+                </button>
+                <Link 
+                  href={`/checkout?pid=${id}${selectedVariant ? `&vid=${selectedVariant.vid}` : ''}`} 
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px] font-bold text-sm bg-[#1A1A1A] text-white hover:bg-[#333] transition-all duration-200 no-underline"
+                >
+                  Buy Now
+                </Link>
+              </div>
+
+              {/* Share Buttons */}
+              <div className="relative">
+                <button 
+                  className="flex items-center gap-2 px-4 py-2 rounded-[8px] text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+                  onClick={() => setShowShareMenu(!showShareMenu)}
+                >
+                  <i className="fas fa-share-alt"></i> Share
+                </button>
+                {showShareMenu && (
+                  <div className="absolute top-full left-0 mt-2 bg-white rounded-[12px] border border-gray-200 shadow-lg p-2 z-50 min-w-[200px]">
+                    {shareLinks.map((link) => (
+                      link.action ? (
+                        <button 
+                          key={link.name} 
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-200 cursor-pointer border-none"
+                          onClick={link.action}
+                        >
+                          <i className={link.icon} style={{ color: link.color, width: '20px', textAlign: 'center' }}></i>
+                          {link.name}
+                        </button>
+                      ) : (
+                        <a 
+                          key={link.name} 
+                          href={link.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-200 no-underline"
+                        >
+                          <i className={link.icon} style={{ color: link.color, width: '20px', textAlign: 'center' }}></i>
+                          {link.name}
+                        </a>
+                      )
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Shipping Calculator */}
+              <div className="p-5 bg-gray-50 rounded-[10px] border border-gray-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <i className="fas fa-truck text-[#FF6B00]"></i>
+                  <h3 className="text-base font-bold text-[#1A1A1A] m-0">Shipping Calculator</h3>
+                </div>
+                
+                <div className="mb-3">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-500">Destination:</span>
+                    <span className="font-semibold text-[#1A1A1A]">🇮🇩 Indonesia (ID)</span>
                   </div>
                 </div>
-              );
-            })()}
 
-            {/* Shipping Info */}
-            <div className={styles.shippingInfo}>
-              <div className={styles.shippingHeader}>
-                <span className={styles.shippingIcon}>🚚</span>
-                <div>
-                  <strong>Worldwide Shipping</strong>
-                  {shippingLoading ? (
-                    <p className={styles.loadingText}>Calculating rates...</p>
-                  ) : shippingRates.length > 0 ? (
-                    <p className={styles.shippingSummary}>
-                      Starting from <strong>{shippingRates[0].formattedPrice}</strong> ({shippingRates[0].estimatedDays})
-                    </p>
-                  ) : (
-                    <p className={styles.errorText}>No shipping methods available</p>
-                  )}
-                </div>
+                {shippingLoading ? (
+                  <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+                ) : shippingRates.length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                    {shippingRates
+                      .sort((a, b) => a.logisticPrice - b.logisticPrice)
+                      .slice(0, 2)
+                      .map((rate, idx) => (
+                      <div key={idx} className="flex justify-between p-2.5 bg-white rounded-[6px] border border-gray-200 text-[13px]">
+                        <div>
+                          <div className="font-semibold text-[#1A1A1A]">{rate.logisticName}</div>
+                          <div className="text-[11px] text-gray-500">Est. {rate.logisticAging} days</div>
+                        </div>
+                        <div className="font-bold text-[#FF6B00]">{rate.formattedPrice}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[13px] text-gray-500 m-0">Select a variant to see shipping costs.</p>
+                )}
               </div>
-              
-              {!shippingLoading && shippingRates.length > 0 && (
-                <div className={styles.shippingMethodsList}>
-                   {shippingRates.slice(0, 2).map((rate) => (
-                     <div key={rate.logisticName} className={styles.shippingMethodItem}>
-                        <span>{rate.logisticName}</span>
-                        <span>{rate.formattedPrice}</span>
-                     </div>
-                   ))}
+
+              {/* Inventory Status */}
+              <div className="p-4 bg-gray-50 rounded-[10px] border border-gray-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <i className="fas fa-boxes text-[#FF6B00]"></i>
+                  <h3 className="text-sm font-bold text-[#1A1A1A] m-0">Stock Availability</h3>
                 </div>
-              )}
-
-              <div className={styles.shippingItem}>
-                <span>🔒</span>
-                <span>Secure &amp; encrypted payment</span>
+                {inventoryLoading ? (
+                  <div className="h-8 bg-gray-200 rounded animate-pulse"></div>
+                ) : inventory ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2.5 h-2.5 rounded-full ${inventory.total > 0 ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      <span className="text-sm font-semibold text-[#1A1A1A]">
+                        {inventory.total > 0 ? `${inventory.total.toLocaleString()} units in stock` : 'Out of stock'}
+                      </span>
+                    </div>
+                    {inventory.warehouses.slice(0, 3).map((w: any, i: number) => (
+                      <div key={i} className="flex justify-between text-xs text-gray-500 pl-5">
+                        <span>{w.areaEn || w.countryCode}</span>
+                        <span className="font-medium">{w.totalInventoryNum?.toLocaleString() || 0} pcs</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 m-0">Select a variant to check stock.</p>
+                )}
               </div>
-            </div>
 
-            {/* Actions */}
-            <div className={styles.actions}>
-              <button 
-                className={`${styles.cartButton} ${added ? styles.cartButtonAdded : ''}`}
-                onClick={handleAddToCart}
-              >
-                {added ? '✅ Added!' : '🛒 Add to Cart'}
-              </button>
-              <Link 
-                href={`/checkout?pid=${id}${selectedVariant ? `&vid=${selectedVariant.vid}` : ''}`} 
-                className={styles.buyButton}
-              >
-                ⚡ Buy Now
-              </Link>
-            </div>
+              {/* Contact AI Chat */}
+              <div className="p-4 bg-[#FFF3E8] rounded-[10px] border border-[#FF6B00]/20 flex items-center gap-3">
+                <div className="w-11 h-11 rounded-full bg-[#FF6B00] flex items-center justify-center shrink-0">
+                  <i className="fas fa-robot text-white text-xl"></i>
+                </div>
+                <div className="flex-1">
+                  <div className="font-bold text-sm text-[#1A1A1A]">Need help? Ask Parjo AI!</div>
+                  <p className="text-xs text-[#888] m-0">Get instant answers about this product</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    const event = new CustomEvent('openAiChat', { detail: { productId: id, productName: displayName } });
+                    window.dispatchEvent(event);
+                  }}
+                  className="px-4 py-2 rounded-[6px] font-bold text-[13px] bg-[#FF6B00] text-white border-none whitespace-nowrap hover:bg-[#E06000] transition-all duration-200 cursor-pointer"
+                >
+                  <i className="fas fa-comment-dots mr-1.5"></i> Ask AI
+                </button>
+              </div>
 
-            {/* Trust Badges */}
-            <div className={styles.trustBadges}>
-              {['✅ Genuine Product', '🔒 Secure Payment', '📞 24/7 Support', '🌍 Worldwide Shipping'].map(b => (
-                <span key={b} className={styles.trustBadge}>{b}</span>
-              ))}
             </div>
           </div>
-        </div>
 
-        {/* Description */}
-        {product.description && (
-          <div className={styles.description}>
-            <h2 className={styles.descTitle}>Product Description</h2>
+          {/* Product Description (full width below both columns) */}
+          <div className="pt-8 sm:pt-10 mt-8 sm:mt-10 border-t border-gray-200">
+            <h3 className="text-lg md:text-xl font-bold text-[#1A1A1A] mb-4 sm:mb-5">Product Description</h3>
             <div 
-              className={styles.descContent}
+              className="description-content text-sm sm:text-base leading-relaxed text-gray-600"
               dangerouslySetInnerHTML={{ __html: product.description }} 
             />
           </div>
-        )}
-      </div>
 
-      {/* Toast Notification */}
-      {showToast && (
-        <div style={{
-          position: 'fixed',
-          bottom: '2rem',
-          right: '2rem',
-          background: '#10b981',
-          color: 'white',
-          padding: '1rem 1.5rem',
-          borderRadius: '8px',
-          boxShadow: '0 10px 25px rgba(16, 185, 129, 0.4)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          fontWeight: 600,
-          zIndex: 9999,
-          animation: 'fadeInUp 0.3s ease-out forwards',
-        }}>
-          <span style={{ fontSize: '1.25rem' }}>✅</span>
-          Product added to cart!
+          {/* Product Reviews */}
+          <div className="pt-8 sm:pt-10 mt-8 sm:mt-10 border-t border-gray-200">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg md:text-xl font-bold text-[#1A1A1A]">Customer Reviews</h3>
+              <div className="flex items-center gap-2">
+                <select 
+                  className="px-3 py-1.5 rounded-[8px] text-sm border border-gray-200 bg-white text-gray-600 outline-none cursor-pointer"
+                  value={reviewsScore ?? ''}
+                  onChange={e => { setReviewsScore(e.target.value ? parseInt(e.target.value) : undefined); setReviewsPage(1); }}
+                >
+                  <option value="">All Ratings</option>
+                  <option value="5">★★★★★ (5)</option>
+                  <option value="4">★★★★☆ (4)</option>
+                  <option value="3">★★★☆☆ (3)</option>
+                  <option value="2">★★☆☆☆ (2)</option>
+                  <option value="1">★☆☆☆☆ (1)</option>
+                </select>
+              </div>
+            </div>
+
+            {reviewsLoading ? (
+              <div className="space-y-4">
+                {[1,2,3].map(i => (
+                  <div key={i} className="animate-pulse p-4 bg-gray-50 rounded-[10px]">
+                    <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                ))}
+              </div>
+            ) : reviews.length > 0 ? (
+              <div className="space-y-4">
+                {reviews.map((review: any) => (
+                  <div key={review.commentId} className="p-4 bg-gray-50 rounded-[10px] border border-gray-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-[#FF6B00] flex items-center justify-center text-white text-xs font-bold">
+                          {review.commentUser?.charAt(0) || '?'}
+                        </div>
+                        <div>
+                          <span className="text-sm font-semibold text-[#1A1A1A]">{review.commentUser}</span>
+                          <span className="text-[#FFB800] text-xs ml-2">
+                            {'★'.repeat(parseInt(review.score || '0'))}{'☆'.repeat(5 - parseInt(review.score || '0'))}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-400">{new Date(review.commentDate).toLocaleDateString()}</span>
+                    </div>
+                    <p className="text-sm text-gray-600 leading-relaxed">{review.comment}</p>
+                    {review.commentUrls?.length > 0 && (
+                      <div className="flex gap-2 mt-2">
+                        {review.commentUrls.slice(0, 3).map((url: string, i: number) => (
+                          <img key={i} src={url} alt="Review" className="w-16 h-16 rounded-[8px] object-cover border border-gray-200" loading="lazy" />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                
+                {/* Pagination */}
+                {reviewsTotal > 5 && (
+                  <div className="flex items-center justify-center gap-2 pt-4">
+                    <button 
+                      className="px-3 py-1.5 rounded-[6px] text-sm font-medium border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
+                      disabled={reviewsPage <= 1}
+                      onClick={() => setReviewsPage(p => Math.max(1, p - 1))}
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm text-gray-500">
+                      Page {reviewsPage} of {Math.ceil(reviewsTotal / 5)}
+                    </span>
+                    <button 
+                      className="px-3 py-1.5 rounded-[6px] text-sm font-medium border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
+                      disabled={reviewsPage >= Math.ceil(reviewsTotal / 5)}
+                      onClick={() => setReviewsPage(p => p + 1)}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-10 text-gray-400">
+                <i className="fas fa-comment-dots text-4xl mb-3"></i>
+                <p className="text-sm">No reviews yet for this product.</p>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </section>
+
+
+      {/* AI Chat (floating) */}
+      <AIChat />
     </div>
   );
 }

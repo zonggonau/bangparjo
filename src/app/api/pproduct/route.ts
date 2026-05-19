@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { getProductDetails } from '@/lib/cj-api';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -7,11 +8,41 @@ export async function GET(request: Request) {
   if (!cjId) return NextResponse.json({ success: false, message: 'Missing cjId' }, { status: 400 });
   
   try {
-    const product = await prisma.product.findUnique({
+    let product: any = await prisma.product.findUnique({
       where: { cjId },
       include: { variants: true }
     });
-    if (!product) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
+
+    if (!product) {
+      // Fallback to CJ API
+      const cjRes = await getProductDetails(cjId);
+      if (cjRes.success && cjRes.data) {
+        product = cjRes.data;
+        return NextResponse.json({
+          success: true,
+          data: {
+            pid: product.pid,
+            productName: product.productNameEn || product.productName,
+            productNameEn: product.productNameEn || product.productName,
+            productImage: product.productImage || product.bigImage || '',
+            bigImage: product.bigImage || product.productImage || '',
+            sellPrice: product.sellPrice || 0,
+            description: product.description || '',
+            variants: (product.variants || []).map((v: any) => ({
+              vid: v.vid,
+              variantNameEn: v.variantNameEn || v.variantKey || 'Default',
+              variantSellPrice: v.variantSellPrice,
+              variantSku: v.variantSku,
+              variantWeight: v.variantWeight,
+              inventory: v.inventory,
+              variantImage: v.variantImage || '',
+              variantKey: v.variantKey || 'default',
+            })),
+          }
+        });
+      }
+      return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
+    }
     
     return NextResponse.json({
       success: true,
@@ -22,7 +53,7 @@ export async function GET(request: Request) {
         productImage: product.images?.[0] || '',
         bigImage: product.images?.[0] || '',
         sellPrice: product.variants?.[0]?.baseCost || 0,
-        variants: product.variants.map(v => ({
+        variants: product.variants.map((v: any) => ({
           vid: v.cjId,
           variantNameEn: [v.color, v.size].filter(Boolean).join(' / ') || 'Default',
           variantSellPrice: v.sellingPrice,

@@ -1,57 +1,22 @@
 import { Metadata } from 'next';
-import { prisma } from '@/lib/db';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
-import styles from './category.module.css';
 import SortSelector from '@/components/SortSelector';
+import { getAppCache, setAppCache } from '@/lib/cache';
+import { getCategoryBySlug as getCategoryBySlugLib, getCategoryHierarchy } from '@/lib/categories';
+import { getProductsV2 } from '@/lib/cj-api';
 
 async function getCategoryBySlug(slug: string) {
-  let category = await prisma.category.findUnique({
-    where: { slug },
-    include: {
-      children: {
-        include: { children: true },
-        take: 50,
-      },
-      parent: { include: { parent: true } }
-    }
-  });
+  const category = await getCategoryBySlugLib(slug);
+  if (!category) return null;
 
-  if (!category) {
-    const commonMappings: Record<string, string> = {
-      'electronics': 'consumer-electronics',
-      'gadgets': 'consumer-electronics',
-      'fashion': 'fashion-jewelry',
-      'womens-clothing': 'fashion-jewelry', 
-      'beauty': 'health-beauty-and-hair',
-      'home-kitchen': 'home-garden',
-      'home': 'home-garden',
-      'all': 'all-categories'
-    };
-
-    if (slug === 'all') {
-      category = await prisma.category.findFirst({
-        where: { parentId: null },
-        include: { children: { include: { children: true }, take: 50 }, parent: true }
-      }) as any;
-    } else if (commonMappings[slug]) {
-      const targetSlugPart = commonMappings[slug];
-      const fallbackCat = await prisma.category.findFirst({
-        where: { slug: { contains: targetSlugPart, mode: 'insensitive' } }
-      });
-      
-      if (fallbackCat) {
-        category = await prisma.category.findUnique({
-          where: { id: fallbackCat.id },
-          include: {
-            children: { include: { children: true }, take: 50 },
-            parent: { include: { parent: true } }
-          }
-        }) as any;
-      }
-    }
-  }
-  return category;
+  const hierarchy = await getCategoryHierarchy(category.id);
+  
+  return {
+    ...category,
+    parent: hierarchy.length > 1 ? hierarchy[hierarchy.length - 2] : null,
+    grandparent: hierarchy.length > 2 ? hierarchy[hierarchy.length - 3] : null
+  };
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -113,228 +78,185 @@ export default async function CategoryPage({
 
   if (!category) {
     return (
-      <div className="container" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
-        <h1>Category Not Found</h1>
-        <Link href="/" style={{ color: 'var(--primary)' }}>Return Home</Link>
+      <div className="py-20 text-center">
+        <h1 className="text-2xl font-bold mb-6 text-[#1A1A1A]">Category Not Found</h1>
+        <Link href="/" className="inline-flex items-center justify-center px-6 py-3 rounded-md font-bold bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200 no-underline">Return Home</Link>
       </div>
     );
   }
 
-  // 2. Fetch products from local DB
   let products: any[] = [];
   let total = 0;
 
+  const cacheKey = `cat_api_products_${category.id}_p${pageNum}_s${sort}_min${minPrice || 0}_max${maxPrice || 0}`;
+
   try {
-    // Collect all descendant category IDs (self + children + grandchildren)
-    const childIds: string[] = [category.id];
-    if (category.children?.length > 0) {
-      for (const child of category.children) {
-        childIds.push(child.id);
-        // Add grandchild IDs (children of children)
-        if ((child as any).children?.length > 0) {
-          for (const grandchild of (child as any).children) {
-            childIds.push(grandchild.id);
-          }
+    const cachedData = await getAppCache<{ products: any[], total: number }>(cacheKey);
+    if (cachedData) {
+      products = cachedData.products;
+      total = cachedData.total;
+    } else {
+      const res = await getProductsV2({ 
+        categoryId: category.id, 
+        page: pageNum, 
+        size: 60,
+        productFlag: 0,
+        startSellPrice: minPrice,
+        endSellPrice: maxPrice,
+        orderBy: sort > 0 ? sort : undefined,
+        features: ['enable_description'],
+      });
+      
+      if (res.success && res.data) {
+        const d = res.data;
+        if (d.content && d.content.length > 0) {
+          products = d.content[0].productList || [];
         }
+        total = d.totalRecords || products.length;
+        await setAppCache(cacheKey, { products, total }, 3600);
       }
     }
-
-    const whereClause: any = {
-      categoryId: { in: childIds },
-      status: 'ACTIVE',
-    };
-
-    // Price filter
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      whereClause.variants = {
-        some: {
-          ...(minPrice !== undefined ? { sellingPrice: { gte: minPrice } } : {}),
-          ...(maxPrice !== undefined ? { sellingPrice: { lte: maxPrice } } : {}),
-        }
-      };
-    }
-
-    // Sorting
-    let orderBy: any = { createdAt: 'desc' };
-    if (sort === 1) orderBy = { totalStock: 'desc' };
-    else if (sort === 2) orderBy = { name: 'asc' };
-
-    total = await prisma.product.count({ where: whereClause });
-
-    const dbProducts = await prisma.product.findMany({
-      where: whereClause,
-      include: { variants: true },
-      take: 42,
-      skip: (pageNum - 1) * 42,
-      orderBy,
-    });
-
-    products = dbProducts.map(p => ({
-      pid: p.cjId,
-      productName: p.name,
-      productNameEn: p.name,
-      productImage: p.images[0] || '/placeholder.png',
-      bigImage: p.images[0] || '/placeholder.png',
-      productImageSet: p.images,
-      sellPrice: p.variants[0]?.sellingPrice || 0,
-      categoryName: category.name,
-    }));
   } catch (error) {
-    console.warn(`[CategoryPage] DB query failed for ${slug}:`, error);
+    console.warn(`[CategoryPage] API query/cache failed for ${slug}:`, error);
   }
 
-  const totalPages = Math.ceil(total / 42);
+  const totalPages = Math.ceil(total / 60);
 
   return (
-    <div className={styles.page}>
-      <div className="container">
-        <div className={styles.layout}>
-          {/* Sidebar */}
-          <aside className={styles.sidebar}>
-            {/* Breadcrumbs moved here */}
-            <nav className={styles.sidebarBreadcrumb}>
-              <Link href="/">Home</Link>
-              {category.parent?.parent && (
-                 <div>
-                   <span className={styles.separator}>›</span>
-                   <Link href={`/category/${category.parent.parent.slug}`}>{category.parent.parent.name}</Link>
-                 </div>
-              )}
-              {category.parent && (
-                <div>
-                   <span className={styles.separator}>›</span>
-                   <Link href={`/category/${category.parent.slug}`}>{category.parent.name}</Link>
-                </div>
-              )}
-              <div>
-                <span className={styles.separator}>›</span>
-                <span className={styles.breadcrumbActive}>{category.name}</span>
-              </div>
-            </nav>
-            <div className={styles.sidebarSection}>
-              <h3 className={styles.sidebarTitle}>Sub Categories</h3>
-              {category.children.length > 0 ? (
-                <ul className={styles.catList}>
-                  {category.children.map(child => (
-                    <li key={child.id}>
-                      <Link href={`/category/${child.slug}`}>{child.name}</Link>
-                    </li>
-                  ))}
-                </ul>
-              ) : category.parent ? (
-                <Link href={`/category/${category.parent.slug}`} className={styles.backLink}>
-                  ← Back to {category.parent.name}
+    <div className="bg-gray-50 min-h-screen py-16">
+      <div className="max-w-[1400px] mx-auto px-5">
+        {/* Breadcrumb with icons */}
+        <nav className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-[12px] font-bold uppercase mb-8 text-gray-400">
+          <Link href="/" className="inline-flex items-center gap-1 text-inherit no-underline hover:text-[#FF6B00] transition-colors">
+            <i className="fas fa-home text-[10px]"></i>
+            <span className="hidden sm:inline">Home</span>
+          </Link>
+          {category.grandparent && (
+            <>
+              <i className="fas fa-chevron-right text-[8px] opacity-40"></i>
+              <Link href={`/category/${category.grandparent.slug}`} className="text-inherit no-underline hover:text-[#FF6B00] transition-colors">{category.grandparent.name}</Link>
+            </>
+          )}
+          {category.parent && (
+            <>
+              <i className="fas fa-chevron-right text-[8px] opacity-40"></i>
+              <Link href={`/category/${category.parent.slug}`} className="text-inherit no-underline hover:text-[#FF6B00] transition-colors">{category.parent.name}</Link>
+            </>
+          )}
+          <>
+            <i className="fas fa-chevron-right text-[8px] opacity-40"></i>
+            <span className="text-[#FF6B00]">{category.name}</span>
+          </>
+        </nav>
+
+        {/* Header */}
+        <header className="mb-8 sm:mb-10">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6">
+            <div>
+              <h1 className="text-[28px] sm:text-[36px] lg:text-[40px] font-black m-0 mb-2 text-[#1A1A1A]">{category.name}</h1>
+              <p className="text-gray-500 font-semibold text-sm sm:text-base">{total.toLocaleString()} products available</p>
+            </div>
+            
+            <div className="flex items-center gap-3 shrink-0">
+              <label htmlFor="sort" className="text-[11px] font-extrabold uppercase text-gray-400 hidden sm:block">Sort By:</label>
+              <SortSelector currentSort={sort} />
+            </div>
+          </div>
+
+          {/* Subcategories as chips/pills */}
+          {category.children.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-6">
+              {category.children.map(child => (
+                <Link
+                  key={child.id}
+                  href={`/category/${child.slug}`}
+                  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white border border-gray-200 text-[12px] sm:text-[13px] font-semibold text-gray-600 no-underline transition-all duration-200 hover:border-[#FF6B00] hover:text-[#FF6B00] hover:shadow-sm"
+                >
+                  <i className="fas fa-chevron-right text-[8px] opacity-40"></i>
+                  {child.name}
                 </Link>
-              ) : <p className={styles.emptyText}>No sub-categories</p>}
+              ))}
+            </div>
+          )}
+
+          {/* Back to parent link if no children */}
+          {category.children.length === 0 && category.parent && (
+            <div className="mt-4">
+              <Link href={`/category/${category.parent.slug}`} className="inline-flex items-center gap-2 text-[13px] font-bold text-[#FF6B00] no-underline hover:gap-3 transition-all">
+                <i className="fas fa-arrow-left text-[11px]"></i>
+                Back to {category.parent.name}
+              </Link>
+            </div>
+          )}
+        </header>
+
+        {/* Products Grid - Full Width */}
+        {products.length > 0 ? (
+          <>
+            <div className="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              {products.map((product) => (
+                <ProductCard key={product.pid} product={product} />
+              ))}
             </div>
 
-            <div className={styles.sidebarSection} style={{ marginTop: '2rem' }}>
-              <h3 className={styles.sidebarTitle}>Price Range (USD)</h3>
-              <form action="" method="get" className={styles.filterForm}>
-                <div className={styles.priceInputs}>
-                  <input 
-                    type="number" 
-                    name="minPrice" 
-                    placeholder="Min" 
-                    defaultValue={sParams.minPrice} 
-                    className={styles.filterInput}
-                  />
-                  <span>-</span>
-                  <input 
-                    type="number" 
-                    name="maxPrice" 
-                    placeholder="Max" 
-                    defaultValue={sParams.maxPrice} 
-                    className={styles.filterInput}
-                  />
-                </div>
-                <input type="hidden" name="sort" value={sort} />
-                <button type="submit" className={styles.filterBtn}>Apply Filter</button>
-              </form>
-            </div>
-          </aside>
-
-          {/* Main Content */}
-          <main className={styles.content}>
-            <header className={styles.header}>
-              <div className={styles.headerTop}>
-                <div>
-                  <h1 className={styles.heroTitle}>{category.name}</h1>
-                  <p className={styles.heroCount}>{total.toLocaleString()} products available</p>
-                </div>
-                
-                <div className={styles.sortBox}>
-                  <label htmlFor="sort">Sort By:</label>
-                  <SortSelector currentSort={sort} className={styles.sortSelect} />
-                </div>
-              </div>
-            </header>
-
-            {products.length > 0 ? (
-              <>
-                <div className="productGrid">
-                  {products.map((product) => (
-                    <ProductCard key={product.pid} product={product} />
-                  ))}
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className={styles.pagination}>
-                    {pageNum > 1 && (
-                      <Link 
-                        href={{ query: { ...sParams, page: pageNum - 1 } }} 
-                        className={styles.pageBtn}
-                      >
-                        Prev
-                      </Link>
-                    )}
-                    
-                    <div className={styles.pageNumbers}>
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        // Logic to show 5 pages around current page
-                        let startPage = Math.max(1, pageNum - 2);
-                        let endPage = Math.min(totalPages, startPage + 4);
-                        if (endPage === totalPages) {
-                          startPage = Math.max(1, endPage - 4);
-                        }
-                        
-                        const p = startPage + i;
-                        if (p > totalPages) return null;
-                        
-                        return (
-                          <Link
-                            key={p}
-                            href={{ query: { ...sParams, page: p } }}
-                            className={`${styles.pageNumber} ${pageNum === p ? styles.activePage : ''}`}
-                          >
-                            {p}
-                          </Link>
-                        );
-                      })}
-                    </div>
-
-                    {pageNum < totalPages && (
-                      <Link 
-                        href={{ query: { ...sParams, page: pageNum + 1 } }} 
-                        className={styles.pageBtn}
-                      >
-                        Next
-                      </Link>
-                    )}
-                  </div>
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-4 sm:gap-6 mt-12 sm:mt-16">
+                {pageNum > 1 && (
+                  <Link 
+                    href={{ query: { ...sParams, page: pageNum - 1 } }} 
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md font-semibold border border-gray-200 text-[#1A1A1A] hover:bg-gray-50 transition-all duration-200 no-underline text-sm"
+                  >
+                    <i className="fas fa-chevron-left text-[10px]"></i>
+                    Prev
+                  </Link>
                 )}
-              </>
-            ) : (
-              <div className={styles.emptyState}>
-                <div className={styles.emptyIcon}>📭</div>
-                <h2>No products found</h2>
-                <p>Try adjusting your filters or explore another category.</p>
-                <Link href={`/category/${slug}`} className={styles.clearBtn}>Clear All Filters</Link>
+                
+                <div className="flex gap-1.5 sm:gap-2">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let startPage = Math.max(1, pageNum - 2);
+                    let endPage = Math.min(totalPages, startPage + 4);
+                    if (endPage === totalPages) {
+                      startPage = Math.max(1, endPage - 4);
+                    }
+                    
+                    const p = startPage + i;
+                    if (p > totalPages) return null;
+                    
+                    const isActive = pageNum === p;
+                    return (
+                      <Link
+                        key={p}
+                        href={{ query: { ...sParams, page: p } }}
+                        className={`inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-md font-semibold no-underline transition-all duration-200 text-sm ${isActive ? 'bg-[#FF6B00] text-white' : 'border border-gray-200 text-[#1A1A1A] hover:bg-gray-50'}`}
+                      >
+                        {p}
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                {pageNum < totalPages && (
+                  <Link 
+                    href={{ query: { ...sParams, page: pageNum + 1 } }} 
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md font-semibold border border-gray-200 text-[#1A1A1A] hover:bg-gray-50 transition-all duration-200 no-underline text-sm"
+                  >
+                    Next
+                    <i className="fas fa-chevron-right text-[10px]"></i>
+                  </Link>
+                )}
               </div>
             )}
-          </main>
-        </div>
+          </>
+        ) : (
+          <div className="bg-white rounded-[32px] p-16 sm:p-20 text-center border border-gray-200">
+            <div className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-50 mx-auto mb-6 text-2xl sm:text-3xl text-gray-300">
+              <i className="fas fa-inbox"></i>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black mb-3 text-[#1A1A1A]">No products found</h2>
+            <p className="text-gray-500 mb-8 text-sm sm:text-base">Try adjusting your filters or explore another category.</p>
+            <Link href={`/category/${slug}`} className="inline-flex items-center justify-center px-6 sm:px-8 py-3 rounded-md font-bold bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200 no-underline text-sm">Clear All Filters</Link>
+          </div>
+        )}
       </div>
     </div>
   );

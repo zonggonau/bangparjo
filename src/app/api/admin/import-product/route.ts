@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getProductDetails } from '@/lib/cj-api';
-import { calculateFinalPrice, getDBStoreSettings } from '@/lib/pricing';
 
 /**
  * Import a product from CJ to our local database
@@ -12,34 +11,16 @@ export async function POST(req: Request) {
     const { pid, isHero } = await req.json();
 
     if (!pid) {
-      return NextResponse.json({ error: 'Product ID (pid) is required' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Product ID (pid) is required' }, { status: 400 });
     }
 
     // 1. Fetch full details from CJ
     const res = await getProductDetails(pid);
     if (!res.success || !res.data) {
-      return NextResponse.json({ error: res.message || 'Failed to fetch product from CJ' }, { status: 500 });
+      return NextResponse.json({ success: false, error: res.message || 'Failed to fetch product from CJ' }, { status: 500 });
     }
 
     const cjProduct = res.data;
-
-    // 2. Map to our Prisma schema
-    const settings = await getDBStoreSettings();
-
-    // Handle Category
-    let categoryId = null;
-    if (cjProduct.categoryId) {
-      const cat = await prisma.category.upsert({
-        where: { cjId: cjProduct.categoryId },
-        update: { name: cjProduct.categoryName || 'Unknown Category' },
-        create: {
-          cjId: cjProduct.categoryId,
-          name: cjProduct.categoryName || 'Unknown Category',
-          slug: (cjProduct.categoryName || 'cat').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + cjProduct.categoryId
-        }
-      });
-      categoryId = cat.id;
-    }
 
     // Check if exists
     const existing = await prisma.product.findUnique({
@@ -48,14 +29,17 @@ export async function POST(req: Request) {
     });
 
     if (existing) {
-      // Update isHero flag using Raw Query to bypass locked client validation
-      await prisma.$executeRaw`
-        UPDATE "Product" SET "isHero" = ${!!isHero} WHERE id = ${existing.id}
-      `;
+      await prisma.product.update({
+        where: { id: existing.id },
+        data: { 
+          isHero: !!isHero,
+          cjCategoryId: cjProduct.categoryId || existing.cjCategoryId
+        }
+      });
       
       return NextResponse.json({ 
         success: true, 
-        message: 'Product already exists. Updated isHero flag.', 
+        message: 'Product already exists. Updated metadata.', 
         product: { ...existing, isHero: !!isHero } 
       });
     }
@@ -64,26 +48,26 @@ export async function POST(req: Request) {
     const variantCount = cjProduct.variants.length;
     const totalStock = 2000; // Default placeholder
 
-    // Create product (Tanpa field isHero untuk menghindari error validasi client)
+    // Create product
     const product = await prisma.product.create({
       data: {
         cjId: pid,
         name: cjProduct.productNameEn || cjProduct.productName,
         description: cjProduct.description,
-        images: cjProduct.productImageSet || [cjProduct.productImage],
-        categoryId: categoryId,
+        images: cjProduct.productImageSet && cjProduct.productImageSet.length > 0 ? cjProduct.productImageSet : [cjProduct.productImage],
+        cjCategoryId: cjProduct.categoryId || null,
         variantCount,
         totalStock,
-        // isHero: !!isHero, // Dihapus dari sini
+        isHero: !!isHero,
         variants: {
           create: cjProduct.variants.map((v: any) => ({
             cjId: v.vid,
             sku: v.variantSku,
-            color: v.variantNameEn || v.variantName || 'Default',
+            color: v.variantKey || v.variantNameEn || v.variantName || 'Default',
             size: '', 
             weight: v.variantWeight || 0,
-            baseCost: v.variantSellPrice,
-            sellingPrice: v.variantSellPrice, // Store original cost, frontend will calculate margin dynamically
+            baseCost: Number(v.variantSellPrice),
+            sellingPrice: Number(v.variantSellPrice), 
             inventory: 100, 
             image: v.variantImage || cjProduct.productImage
           }))
@@ -94,15 +78,10 @@ export async function POST(req: Request) {
       }
     });
 
-    // Update isHero setelah create menggunakan raw query
-    await prisma.$executeRaw`
-      UPDATE "Product" SET "isHero" = ${!!isHero} WHERE id = ${product.id}
-    `;
-
     return NextResponse.json({ success: true, product });
 
   } catch (error: any) {
     console.error('[Import Error]:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

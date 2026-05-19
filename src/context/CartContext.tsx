@@ -1,7 +1,8 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
-import { CJProduct } from '@/lib/cj-helpers';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { CJProduct } from '@/lib/cj-api';
+import { useSession } from 'next-auth/react';
 
 export interface CartItem extends CJProduct {
   quantity: number;
@@ -25,7 +26,9 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const { data: session } = useSession();
 
+  // Load cart from localStorage on mount
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
@@ -38,24 +41,76 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsLoaded(true);
   }, []);
 
+  // Sync to localStorage on change
   useEffect(() => {
     if (isLoaded) {
       localStorage.setItem('cart', JSON.stringify(items));
     }
   }, [items, isLoaded]);
 
+  // Sync to DB when session changes or items change (debounced)
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (!session?.user?.email) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        await fetch('/api/cart/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items }),
+        });
+      } catch (e) {
+        console.error('Cart sync to DB failed:', e);
+      }
+    }, 2000); // Debounce 2s
+
+    return () => clearTimeout(timer);
+  }, [items, isLoaded, session?.user?.email]);
+
+  // Load from DB when user logs in
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (!session?.user?.email) return;
+
+    const loadFromDB = async () => {
+      try {
+        const res = await fetch('/api/cart/sync');
+        const data = await res.json();
+        if (data.success && data.data?.length > 0) {
+          // Merge: prefer localStorage items, but add DB items if cart is empty
+          setItems(prev => {
+            if (prev.length > 0) return prev; // Keep local items
+            return data.data.map((dbItem: any) => ({
+              pid: dbItem.pid,
+              selectedVid: dbItem.vid || undefined,
+              selectedSku: dbItem.sku || undefined,
+              selectedVariantName: dbItem.variantName || undefined,
+              productName: dbItem.productName || '',
+              productNameEn: dbItem.productNameEn || '',
+              productImage: dbItem.productImage || '',
+              bigImage: dbItem.bigImage || '',
+              sellPrice: dbItem.sellPrice || 0,
+              quantity: dbItem.quantity || 1,
+            }));
+          });
+        }
+      } catch (e) {
+        console.error('Cart load from DB failed:', e);
+      }
+    };
+
+    loadFromDB();
+  }, [session?.user?.email, isLoaded]);
+
   const addToCart = (product: CJProduct, variant?: { vid: string; sku: string; name?: string }) => {
-    setIsLoaded(true); // Ensure we don't overwrite if adding before first load (rare)
+    setIsLoaded(true);
     setItems(prev => {
-      // Find item with same PID AND same Variant ID (if applicable)
       const existing = prev.find(i => i.pid === product.pid && i.selectedVid === variant?.vid);
       if (existing) {
         return prev.map(i =>
           (i.pid === product.pid && i.selectedVid === variant?.vid)
-            ? {
-                ...i,
-                quantity: i.quantity + 1,
-              }
+            ? { ...i, quantity: i.quantity + 1 }
             : i
         );
       }

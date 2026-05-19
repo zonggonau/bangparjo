@@ -3,12 +3,10 @@ import { prisma } from '@/lib/db';
 
 export async function GET() {
   try {
-    const adminCount = await prisma.user.count({
-      where: { role: 'ADMIN' }
-    });
+    const userCount = await prisma.user.count();
 
     return NextResponse.json({ 
-      isSetup: adminCount > 0 
+      isSetup: userCount > 0 
     });
   } catch (error) {
     return NextResponse.json({ isSetup: true }); // Safety fallback

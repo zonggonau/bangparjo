@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
@@ -46,6 +45,9 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  icons: {
+    icon: '/favicon.svg',
+  },
   verification: {
     google: 'google-site-verification-id', // User should replace this
   },
@@ -64,11 +66,48 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning>
+      <body>
+        {/* JSON-LD Structured Data for SEO */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Store",
+              "name": "bangparjo.shop",
+              "url": "https://bangparjo.shop",
+              "logo": "https://bangparjo.shop/logo-banner.png",
+              "description": "Your trusted global e-commerce marketplace. Find the best global products at the lowest prices.",
+              "sameAs": [
+                "https://facebook.com/bangparjo",
+                "https://instagram.com/bangparjo",
+                "https://tiktok.com/@bangparjo"
+              ],
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://bangparjo.shop/search?q={search_term_string}",
+                "query-input": "required name=search_term_string"
+              }
+            }),
+          }}
+        />
+        
+        {/* PWA Manifest */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#FF6B00" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="BangParjo" />
+
         <Analytics />
         <Providers initialSettings={initialSettings}>
           {children}
         </Providers>
+        
+        {/* Font Awesome for Template Icons */}
+        <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+        <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
       </body>
     </html>
   );

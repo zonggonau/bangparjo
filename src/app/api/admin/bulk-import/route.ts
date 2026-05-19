@@ -1,28 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
-interface ListV2Product {
-  id: string;
-  nameEn?: string;
-  sku?: string;
-  bigImage?: string;
-  sellPrice?: string;
-  nowPrice?: string;
-  description?: string;
-  categoryId?: string;
-  threeCategoryName?: string;
-  twoCategoryName?: string;
-  oneCategoryName?: string;
-  supplierName?: string;
-  createAt?: number;
-  warehouseInventoryNum?: number;
-  variantInventories?: string;
-  propertyKey?: string;
-}
-
 export async function POST(req: NextRequest) {
   try {
-    const { products, pageInfo } = await req.json();
+    const { products } = await req.json();
     
     if (!Array.isArray(products) || products.length === 0) {
       return NextResponse.json({ success: false, error: 'No products provided' }, { status: 400 });
@@ -33,7 +14,7 @@ export async function POST(req: NextRequest) {
     for (const p of products) {
       try {
         const pid = p.id || p.pid;
-        if (!pid || pid.length < 5) {
+        if (!pid) {
           results.skipped++;
           continue;
         }
@@ -41,14 +22,12 @@ export async function POST(req: NextRequest) {
         // Check if already exists
         const existing = await prisma.product.findUnique({ where: { cjId: pid } });
         if (existing) {
-          // Update categoryId if possible
-          if (p.categoryId) {
-            let cat = await prisma.category.findFirst({ where: { cjId: p.categoryId } });
-            if (cat && existing.categoryId !== cat.id) {
-              await prisma.product.update({ where: { id: existing.id }, data: { categoryId: cat.id } });
-              results.details.push({ pid, name: p.nameEn || '', status: 'category updated', cat: cat.name });
-              continue;
-            }
+          // Sync category ID if provided
+          if (p.categoryId && existing.cjCategoryId !== p.categoryId) {
+             await prisma.product.update({
+               where: { id: existing.id },
+               data: { cjCategoryId: p.categoryId }
+             });
           }
           results.skipped++;
           results.details.push({ pid, name: p.nameEn || '', status: 'skipped (exists)' });
@@ -59,38 +38,20 @@ export async function POST(req: NextRequest) {
         const images: string[] = [];
         if (p.bigImage) images.push(p.bigImage);
         if (p.productImage && p.productImage !== p.bigImage) images.push(p.productImage);
-
-        // Parse description
-        const description = p.description || '';
-
-        // Find or create category
-        let categoryId = null;
-        if (p.categoryId) {
-          let cat = await prisma.category.findFirst({ where: { cjId: p.categoryId } });
-          if (!cat) {
-            cat = await prisma.category.create({
-              data: {
-                cjId: p.categoryId,
-                name: p.threeCategoryName || p.twoCategoryName || p.oneCategoryName || 'Uncategorized',
-                slug: (p.threeCategoryName || p.twoCategoryName || 'uncategorized').toLowerCase().replace(/\s+/g, '-'),
-              }
-            });
-          }
-          categoryId = cat.id;
-        }
+        if (images.length === 0) images.push('/placeholder.png');
 
         // Get base price
         const basePrice = parseFloat(p.sellPrice || p.nowPrice || '0');
-        const finalSellingPrice = isNaN(basePrice) ? 0 : basePrice;
+        const finalPrice = isNaN(basePrice) ? 0 : basePrice;
 
-        // Create product with basic data
+        // Create product
         const product = await prisma.product.create({
           data: {
             cjId: pid,
             name: p.nameEn || 'Unknown Product',
-            description: description,
-            images: images.length > 0 ? images : ['/placeholder.png'],
-            categoryId: categoryId,
+            description: p.description || '',
+            images: images,
+            cjCategoryId: p.categoryId || null,
             variantCount: 1,
             totalStock: p.warehouseInventoryNum || 100,
             status: 'ACTIVE',
@@ -107,15 +68,15 @@ export async function POST(req: NextRequest) {
             color: '',
             size: '',
             weight: 0,
-            baseCost: finalSellingPrice,
-            sellingPrice: finalSellingPrice,
+            baseCost: finalPrice,
+            sellingPrice: finalPrice,
             inventory: p.warehouseInventoryNum || 100,
-            image: images[0] || null,
+            image: images[0],
           }
         });
 
         results.imported++;
-        results.details.push({ pid, name: p.nameEn || '', status: 'imported', price: finalSellingPrice });
+        results.details.push({ pid, name: p.nameEn || '', status: 'imported' });
 
       } catch (err: any) {
         results.errors++;
@@ -135,6 +96,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error: any) {
+    console.error('[Bulk Import Error]:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

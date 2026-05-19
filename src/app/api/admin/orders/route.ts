@@ -3,33 +3,40 @@ import { prisma } from '@/lib/db';
 import { getTrackingInfo } from '@/lib/cj-api';
 
 export async function GET() {
-  const orders = await prisma.order.findMany({
-    orderBy: { createdAt: 'desc' },
-    include: {
-      items: {
-        include: {
-          variant: {
-            include: {
-              product: true
+  try {
+    const orders = await prisma.order.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        items: {
+          include: {
+            variant: {
+              include: {
+                product: true
+              }
             }
           }
         }
       }
-    }
-  });
-  return NextResponse.json(orders);
+    });
+    return NextResponse.json({ success: true, data: orders });
+  } catch (error: any) {
+    console.error('[Admin Orders GET Error]:', error);
+    return NextResponse.json({ success: false, error: 'Failed to fetch orders' }, { status: 500 });
+  }
 }
 
 // Sync specific order with CJ
 export async function POST(req: Request) {
   try {
     const { orderId } = await req.json();
+    if (!orderId) return NextResponse.json({ success: false, error: 'Order ID is required' }, { status: 400 });
+
     const order = await prisma.order.findUnique({
       where: { id: orderId }
     });
 
     if (!order?.cjOrderId) {
-      return NextResponse.json({ error: 'Order not linked to CJ' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Order not linked to CJ' }, { status: 400 });
     }
 
     const cjRes = await getTrackingInfo(order.cjOrderId);
@@ -61,8 +68,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, status: newStatus });
     }
 
-    return NextResponse.json({ error: cjRes.message }, { status: 400 });
+    return NextResponse.json({ success: false, error: cjRes.message || 'CJ Sync Failed' }, { status: 400 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('[Admin Orders Sync Error]:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

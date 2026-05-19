@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sparkles, Search, Zap } from 'lucide-react';
 
 const MOODS = [
   { label: 'Trending', icon: '🔥', query: 'trending top seller' },
@@ -32,47 +31,53 @@ export default function MoodSearch() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 mt-8">
-      <div className="flex items-center gap-2 mb-4">
-        <Sparkles size={14} className="text-primary animate-pulse" />
-        <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Curated AI Moods</p>
+    <div className="container" style={{ marginTop: '2rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}>
+        <i className="fas fa-magic" style={{ color: 'var(--primary)', fontSize: '12px' }}></i>
+        <p style={{ fontSize: '12px', fontWeight: '800', color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Curated Moods</p>
       </div>
 
-      <div className="flex flex-wrap gap-3 mb-6">
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '1.5rem' }}>
         {MOODS.map((m) => (
           <button 
             key={m.label} 
-            className="group flex items-center gap-2 bg-white/5 border border-white/5 rounded-full px-5 py-2.5 text-xs font-bold text-white hover:bg-primary/20 hover:border-primary/30 hover:-translate-y-1 transition-all duration-300 shadow-lg"
+            className="btn btn-outline btn-sm"
+            style={{ borderRadius: '50px', padding: '8px 20px', border: '1px solid var(--gray-200)', color: 'var(--black)' }}
             onClick={() => handleMoodClick(m.query)}
           >
-            <span className="group-hover:scale-125 transition-transform">{m.icon}</span>
-            <span className="uppercase tracking-tight">{m.label}</span>
+            <span style={{ marginRight: '8px' }}>{m.icon}</span>
+            <span>{m.label}</span>
           </button>
         ))}
       </div>
 
       <form 
-        className="relative group bg-white/5 border border-white/10 rounded-2xl p-1.5 focus-within:border-primary/50 transition-all shadow-2xl overflow-hidden"
         onSubmit={handleCustomMood}
+        style={{ 
+          display: 'flex', 
+          background: 'var(--gray-50)', 
+          border: '1px solid var(--gray-200)', 
+          borderRadius: 'var(--radius-md)', 
+          padding: '8px',
+          alignItems: 'center',
+          gap: '12px'
+        }}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity" />
-        
-        <div className="relative z-10 flex items-center gap-3 pl-4">
-          <Zap size={18} className="text-white/20 group-focus-within:text-primary transition-colors" />
-          <input 
-            type="text" 
-            placeholder="Describe your vibe (e.g. 'retro aesthetic tech')..." 
-            className="flex-1 bg-transparent border-none py-3 text-sm text-white placeholder:text-white/10 outline-none font-medium"
-            value={customMood}
-            onChange={e => setCustomMood(e.target.value)}
-          />
-          <button 
-            type="submit"
-            className="bg-white text-black px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-primary transition-all active:scale-95 flex items-center gap-2"
-          >
-            <Sparkles size={14} /> AI Discover
-          </button>
-        </div>
+        <i className="fas fa-bolt" style={{ color: 'var(--gray-300)', marginLeft: '12px' }}></i>
+        <input 
+          type="text" 
+          placeholder="Describe your vibe (e.g. 'retro aesthetic tech')..." 
+          style={{ flex: 1, background: 'transparent', border: 'none', padding: '10px 0', fontSize: '14px' }}
+          value={customMood}
+          onChange={e => setCustomMood(e.target.value)}
+        />
+        <button 
+          type="submit"
+          className="btn btn-primary"
+          style={{ padding: '10px 24px', borderRadius: 'var(--radius-sm)' }}
+        >
+          <i className="fas fa-sparkles"></i> Discover
+        </button>
       </form>
     </div>
   );

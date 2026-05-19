@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 // @ts-ignore
 import Midtrans from 'midtrans-client';
-import { getExchangeRateIDR } from '@/lib/currency';
 
 const snap = new Midtrans.Snap({
   isProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
@@ -12,12 +11,16 @@ const snap = new Midtrans.Snap({
 export async function POST(req: Request) {
   try {
     const { orderId, amount, customerDetails } = await req.json();
-    const rate = await getExchangeRateIDR();
-    const idrAmount = Math.round(amount * rate);
+    // amount is already in IDR (converted on the frontend using real-time rate)
+    const idrAmount = Math.round(amount);
+
+    // Append a unique suffix to orderId for Midtrans (to allow retries)
+    // Format: ORD-123-171585...
+    const midtransOrderId = `${orderId}-${Date.now()}`;
 
     const parameter = {
       transaction_details: {
-        order_id: orderId,
+        order_id: midtransOrderId,
         gross_amount: idrAmount,
       },
       customer_details: {

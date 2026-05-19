@@ -8,8 +8,8 @@ export default function CartCounter() {
   if (totalItems === 0) return null;
 
   return (
-    <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-[10px] font-black flex items-center justify-center rounded-full shadow-lg shadow-red-500/20 animate-in zoom-in duration-300">
-      {totalItems}
+    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold leading-none px-1 shadow-sm">
+      {totalItems > 99 ? '99+' : totalItems}
     </span>
   );
 }

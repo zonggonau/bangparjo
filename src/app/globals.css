@@ -27,10 +27,9 @@
 
 @layer base {
   body {
-    @apply bg-background-dark text-[#f0f0f6] font-sans antialiased selection:bg-primary selection:text-white;
+    @apply bg-white text-[#1A1A1A] font-sans antialiased;
   }
 }
-
 
 @layer components {
   .container {
@@ -58,5 +57,3 @@
     animation: progress 5s linear forwards;
   }
 }
-
-

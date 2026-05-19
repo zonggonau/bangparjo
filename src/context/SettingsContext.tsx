@@ -20,6 +20,11 @@ export function SettingsProvider({
 }) {
   const [settings, setSettings] = useState<StoreSettings>(initialSettings || DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(!initialSettings);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchSettings = async () => {
     try {
@@ -27,8 +32,10 @@ export function SettingsProvider({
       if (res.ok) {
         const data = await res.json();
         setSettings(data);
-        // Also sync to localStorage for legacy code compatibility
-        localStorage.setItem('admin_settings', JSON.stringify(data));
+        // Sync to localStorage only after mount (safe from hydration)
+        if (mounted && typeof window !== 'undefined') {
+          localStorage.setItem('admin_settings', JSON.stringify(data));
+        }
       }
     } catch (error) {
       console.error('Failed to fetch settings:', error);
@@ -40,11 +47,11 @@ export function SettingsProvider({
   useEffect(() => {
     if (!initialSettings) {
       fetchSettings();
-    } else {
-      // Still sync to localStorage if we have initial settings
+    } else if (mounted && typeof window !== 'undefined') {
+      // Sync to localStorage only after mount (safe from hydration)
       localStorage.setItem('admin_settings', JSON.stringify(initialSettings));
     }
-  }, [initialSettings]);
+  }, [initialSettings, mounted]);
 
   return (
     <SettingsContext.Provider value={{ settings, loading, refreshSettings: fetchSettings }}>

@@ -29,7 +29,7 @@ export interface StoreSettings {
 export const DEFAULT_SETTINGS: StoreSettings = {
   markupPct: 0,
   marginTiers: [],
-  freeShippingThreshold: 50,
+  freeShippingThreshold: 1000,
   shippingMarkup: 2.00,
   currencySymbol: 'USD',
   storeName: 'BangParjo Shop',
@@ -73,6 +73,7 @@ export async function getDBStoreSettings(): Promise<StoreSettings> {
         pct: t.pct
       }));
     }
+    settings.freeShippingThreshold = 1000;
     return settings as StoreSettings;
   } catch (error) {
     console.error('Error fetching DB settings:', error);
@@ -87,11 +88,13 @@ export function getStoreSettings(): StoreSettings {
     if (s) {
       const parsed = JSON.parse(s);
       if (!parsed.marginTiers) parsed.marginTiers = DEFAULT_SETTINGS.marginTiers;
-      return { ...DEFAULT_SETTINGS, ...parsed };
+      const settings = { ...DEFAULT_SETTINGS, ...parsed };
+      settings.freeShippingThreshold = 1000;
+      return settings;
     }
-    return DEFAULT_SETTINGS;
+    return { ...DEFAULT_SETTINGS, freeShippingThreshold: 1000 };
   } catch {
-    return DEFAULT_SETTINGS;
+    return { ...DEFAULT_SETTINGS, freeShippingThreshold: 1000 };
   }
 }
 

@@ -4,9 +4,10 @@ import { authConfig } from "./auth.config";
 export default NextAuth(authConfig).auth;
 
 export const config = {
-  // Protect only dashboard routes
+  // Protect routes based on auth.config.ts
   matcher: [
     "/dashboard/:path*",
+    "/account/:path*",
     "/api/admin/:path*",
   ],
 };

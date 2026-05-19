@@ -1,18 +1,26 @@
+/**
+ * CJ Dropshipping Webhook — Legacy Compatibility
+ *
+ * Routes incoming CJ webhooks to the new enhanced handler.
+ * This ensures backward compatibility for any existing CJ dashboard configurations
+ * that point to /api/webhooks/cj instead of /api/cjdropship/webhook.
+ *
+ * New setups should register: /api/cjdropship/webhook
+ */
+
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { sendCustomWA } from '@/lib/openclaw-client';
+import { notifyCJOrderUpdate, notifyTrackingUpdate } from '@/lib/openclaw-client';
 
-/**
- * CJ Dropshipping Webhook Handler
- * Documentation: https://developers.cjdropshipping.com/
- */
 export async function POST(req: Request) {
   try {
     const payload = await req.json();
-    console.log('[CJ Webhook] Received:', JSON.stringify(payload, null, 2));
+    console.log('[CJ Webhook (Legacy)] Received:', JSON.stringify(payload, null, 2));
 
     const { type, messageType, params } = payload;
 
-    // 1. Log the webhook event
+    // Log the webhook event
     await prisma.webhookLog.create({
       data: {
         eventType: type || messageType || 'UNKNOWN',
@@ -20,47 +28,86 @@ export async function POST(req: Request) {
       },
     });
 
-    // 2. Handle ORDER status changes
+    // Handle ORDER status changes
     if (type === 'ORDER' && messageType === 'UPDATE') {
-      const { orderId, status, trackingNumber } = params || {};
+      const { orderId, orderNumber, status, trackingNumber } = params || {};
+      const orderRef = orderNumber || orderId;
 
-      if (orderId) {
-        // CJ Order Status Mapping (Contoh)
-        // 1: Pending, 2: Processing, 3: Shipped, 4: Delivered, 10: Cancelled
+      if (orderRef) {
         let localStatus = 'PROCESSING';
         if (status === 3) localStatus = 'SHIPPED';
         if (status === 4) localStatus = 'DELIVERED';
         if (status === 10) localStatus = 'CANCELLED';
 
-        await prisma.order.update({
-          where: { cjOrderId: orderId },
+        // Try updating by orderNum first, then by cjOrderId
+        const updatedOrder = await prisma.order.update({
+          where: { orderNum: orderRef },
           data: {
             status: localStatus,
             trackingNumber: trackingNumber || undefined,
-            cjResponse: payload, // Simpan respons lengkap untuk audit
+            cjResponse: payload,
           },
-        });
-        
-        console.log(`[CJ Webhook] Updated order ${orderId} to ${localStatus}`);
+        }).catch(() =>
+          prisma.order.update({
+            where: { cjOrderId: orderRef },
+            data: {
+              status: localStatus,
+              trackingNumber: trackingNumber || undefined,
+              cjResponse: payload,
+            },
+          }).catch(() => null)
+        );
+
+        if (updatedOrder) {
+          console.log(`[CJ Webhook] Updated order ${orderRef} → ${localStatus}`);
+
+          // Notify admin via OpenClaw
+          await notifyCJOrderUpdate({
+            orderNumber: orderRef,
+            cjOrderId: orderId,
+            orderStatus: localStatus,
+          });
+
+          // Notify customer
+          if (updatedOrder.customerPhone && localStatus === 'SHIPPED') {
+            const phone = updatedOrder.customerPhone.replace(/^\+/, '');
+            const waMsg = [
+              `📦 *Your Order Has Shipped!*`,
+              ``,
+              `Hi *${updatedOrder.customerName || 'there'}*! 🚀`,
+              ``,
+              `Your order *#${updatedOrder.orderNum}* is on its way!`,
+              `Tracking: ${trackingNumber || 'N/A'}`,
+              ``,
+              `Track here: https://www.17track.net`,
+              ``,
+              `— BangParjo Shop`,
+            ].join('\n');
+
+            await sendCustomWA(phone, waMsg).catch(e =>
+              console.warn('[CJ Webhook] Customer WA failed:', e.message)
+            );
+          }
+        }
       }
     }
 
-    // 3. Handle STOCK changes (Optional but professional)
+    // Handle STOCK changes
     if (type === 'STOCK' && messageType === 'UPDATE') {
-       const { variantId, inventory } = params || {};
-       if (variantId) {
-         await prisma.variant.update({
-           where: { cjId: variantId },
-           data: { inventory: parseInt(inventory) || 0 }
-         });
-         console.log(`[CJ Webhook] Updated stock for variant ${variantId} to ${inventory}`);
-       }
+      const { variantId, inventory } = params || {};
+      if (variantId) {
+        await prisma.variant.update({
+          where: { cjId: variantId },
+          data: { inventory: parseInt(inventory) || 0 },
+        });
+        console.log(`[CJ Webhook] Updated stock for ${variantId} → ${inventory}`);
+      }
     }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('[CJ Webhook] Error:', error);
-    // Kita tetap return 200 agar CJ tidak terus menerus me-retry jika error bukan dari koneksi
-    return NextResponse.json({ success: false, error: error.message }, { status: 200 });
+    // Always return 200 to prevent CJ retries
+    return NextResponse.json({ success: false, error: error.message });
   }
 }

@@ -15,49 +15,37 @@ export default function Error({
   }, [error]);
 
   return (
-    <div style={{
-      minHeight: '70vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      textAlign: 'center',
-      padding: '2rem'
-    }}>
-      <div style={{ fontSize: '5rem', marginBottom: '1rem' }}>⚠️</div>
-      <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '1rem' }}>Oops! Something went wrong 😅</h1>
-      <p style={{ color: 'var(--text-secondary)', maxWidth: '450px', marginBottom: '2rem', lineHeight: '1.6' }}>
-        Our social shopping vibes hit a little snag. Give it another try — the community&apos;s waiting!
+    <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-8">
+      <div className="text-5xl mb-4">⚠️</div>
+      <h1 className="text-[32px] font-black text-[#1A1A1A] mb-4">Oops! Something went wrong 😅</h1>
+      <p className="text-gray-500 max-w-[450px] mb-8 leading-relaxed">
+        Our social shopping vibes hit a little snag. Give it another try — the community's waiting!
       </p>
-      <div style={{ display: 'flex', gap: '1rem' }}>
+      <div className="flex gap-4 flex-wrap justify-center">
         <button
           onClick={() => reset()}
-          style={{
-            background: 'var(--primary)',
-            color: 'white',
-            padding: '0.875rem 1.75rem',
-            borderRadius: 'var(--radius-full)',
-            fontWeight: '700',
-            border: 'none',
-            cursor: 'pointer'
-          }}
+          className="inline-flex items-center justify-center px-7 py-3.5 rounded-full font-bold bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200 border-none cursor-pointer"
         >
-          Try again
+          🔄 Try Again
         </button>
         <Link
           href="/"
-          style={{
-            background: 'var(--bg-secondary)',
-            color: 'var(--text-primary)',
-            padding: '0.875rem 1.75rem',
-            borderRadius: 'var(--radius-full)',
-            fontWeight: '700',
-            border: '1px solid var(--border)'
-          }}
+          className="inline-flex items-center justify-center px-7 py-3.5 rounded-full font-bold bg-gray-100 text-[#1A1A1A] border border-gray-200 hover:bg-gray-200 transition-all duration-200 no-underline"
         >
-          Go Home
+          🏠 Go Home
+        </Link>
+        <Link
+          href="/contact"
+          className="inline-flex items-center justify-center px-7 py-3.5 rounded-full font-semibold bg-transparent text-gray-500 border border-gray-200 hover:bg-gray-50 transition-all duration-200 no-underline text-sm"
+        >
+          📧 Contact Support
         </Link>
       </div>
+      {error.digest && (
+        <p className="mt-8 text-xs text-gray-400">
+          Error ID: {error.digest}
+        </p>
+      )}
     </div>
   );
 }

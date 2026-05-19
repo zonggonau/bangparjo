@@ -30,15 +30,15 @@ async function generate() {
   const checkoutUrl = `https://bangparjo.shop/checkout?pid=${p.pid}&vid=${p.variants?.[0]?.vid || ''}`;
 
   const post = {
-    facebook: `🛒 **PRODUK TERBARU** 🛒\n\n${p.productNameEn}\n\n💰 Harga: $${price} (~Rp ${priceIDR.toLocaleString('id-ID')})\n🚚 FREE Shipping Worldwide!\n✅ Produk Original — Dropship Langsung dari Supplier\n\n🔗 ORDER SEKARANG: ${checkoutUrl}\n\n#Dropship #BangParjo #BelanjaOnline #GlobalShipping`,
+    facebook: `🛒 **PRODUK TERBARU** 🛒\n\n${p.productNameEn}\n\n💰 Harga: $${price} (~Rp ${priceIDR.toLocaleString('id-ID')})\n🚚 Worldwide Shipping\n✅ Produk Original — Dropship Langsung dari Supplier\n\n🔗 ORDER SEKARANG: ${checkoutUrl}\n\n#Dropship #BangParjo #BelanjaOnline #GlobalShipping`,
 
-    instagram: `✨ NEW ARRIVAL ✨\n\n${p.productNameEn}\n\n💰 $${price} | Rp ${priceIDR.toLocaleString('id-ID')}\n🌍 Free Shipping Worldwide\n✅ Original Product\n\n👇 ORDER LINK IN BIO\n🔗 bangparjo.shop/checkout?pid=${p.pid}`,
+    instagram: `✨ NEW ARRIVAL ✨\n\n${p.productNameEn}\n\n💰 $${price} | Rp ${priceIDR.toLocaleString('id-ID')}\n🌍 Worldwide Shipping\n✅ Original Product\n\n👇 ORDER LINK IN BIO\n🔗 bangparjo.shop/checkout?pid=${p.pid}`,
 
-    twitter: `🛍️ ${p.productNameEn}\n💰 $${price} (~Rp ${priceIDR.toLocaleString('id-ID')})\n🚚 FREE Shipping\n\nOrder: ${checkoutUrl}`,
+    twitter: `🛍️ ${p.productNameEn}\n💰 $${price} (~Rp ${priceIDR.toLocaleString('id-ID')})\n🚚 Worldwide Shipping\n\nOrder: ${checkoutUrl}`,
 
     google_ads: {
       headline: `${p.productNameEn} — Hanya $${price}`,
-      description: `Dapatkan ${p.productNameEn} dengan harga terbaik. FREE Shipping Worldwide. Original Product. Pesan sekarang!`,
+      description: `Dapatkan ${p.productNameEn} dengan harga terbaik. Worldwide Shipping. Original Product. Pesan sekarang!`,
       final_url: checkoutUrl,
     }
   };
