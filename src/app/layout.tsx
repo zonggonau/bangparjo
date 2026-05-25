@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
 
@@ -104,7 +105,9 @@ export default async function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="BangParjo" />
 
-        <Analytics />
+        <Suspense fallback={null}>
+          <Analytics />
+        </Suspense>
         <Providers initialSettings={initialSettings}>
           {children}
         </Providers>

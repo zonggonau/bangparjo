@@ -24,6 +24,11 @@ export interface StoreSettings {
   taxPct: number;
   cjPayType?: number; // 2: Balance, 3: Manual
   socialLinks?: SocialLink[];
+  address?: string;
+  phone?: string;
+  workingHours?: string;
+  faqContent?: string;
+  returnsContent?: string;
 }
 
 export const DEFAULT_SETTINGS: StoreSettings = {
@@ -33,9 +38,14 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   shippingMarkup: 2.00,
   currencySymbol: 'USD',
   storeName: 'BangParjo Shop',
-  adminEmail: '',
+  adminEmail: 'hello@bangparjo.com',
   taxPct: 0,
   cjPayType: 3,
+  address: '123 Merdeka Street, Jakarta, Indonesia',
+  phone: '+62 21 1234-5678',
+  workingHours: 'Mon - Sat: 08:00 - 20:00 (GMT+7)',
+  faqContent: '',
+  returnsContent: '',
   socialLinks: [
     { platform: 'facebook', label: 'Facebook', url: 'https://facebook.com/bangparjo', icon: '📘' },
     { platform: 'instagram', label: 'Instagram', url: 'https://instagram.com/bangparjo', icon: '📸' },

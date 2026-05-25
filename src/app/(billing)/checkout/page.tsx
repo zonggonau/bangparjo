@@ -281,6 +281,7 @@ function CheckoutContent() {
           return {
             products: cartItems.map(item => ({
               sku: item.selectedSku || item.selectedVid || item.pid,
+              vid: item.selectedVid || item.selectedSku || item.pid,
               quantity: item.quantity
             })),
             country: formData.country,
@@ -288,7 +289,8 @@ function CheckoutContent() {
           };
         }
         return {
-          sku: selectedVariant?.variantSku || selectedVariant?.vid,
+          sku: selectedVariant?.variantSku || selectedVariant?.vid || product?.productSku,
+          vid: selectedVariant?.vid || selectedVariant?.variantSku || product?.productSku,
           quantity: qty,
           country: formData.country,
           subtotal: subtotal

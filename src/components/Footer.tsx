@@ -51,19 +51,19 @@ export default function Footer() {
             <ul className="space-y-4">
               <li className="flex gap-3 text-[14px] text-[#888888]">
                 <span className="text-[#FF6B00] shrink-0"><i className="fas fa-map-marker-alt"></i></span>
-                <span>123 Merdeka Street, Jakarta, Indonesia</span>
+                <span>{settings.address || '123 Merdeka Street, Jakarta, Indonesia'}</span>
               </li>
               <li className="flex gap-3 text-[14px] text-[#888888]">
                 <span className="text-[#FF6B00] shrink-0"><i className="fas fa-phone"></i></span>
-                <span>+62 21 1234-5678</span>
+                <span>{settings.phone || '+62 21 1234-5678'}</span>
               </li>
               <li className="flex gap-3 text-[14px] text-[#888888]">
                 <span className="text-[#FF6B00] shrink-0"><i className="fas fa-envelope"></i></span>
-                <span>hello@bangparjo.com</span>
+                <span>{settings.adminEmail || 'hello@bangparjo.com'}</span>
               </li>
               <li className="flex gap-3 text-[14px] text-[#888888]">
                 <span className="text-[#FF6B00] shrink-0"><i className="fas fa-clock"></i></span>
-                <span>Mon - Sat: 08:00 - 20:00 (GMT+7)</span>
+                <span>{settings.workingHours || 'Mon - Sat: 08:00 - 20:00 (GMT+7)'}</span>
               </li>
             </ul>
           </div>

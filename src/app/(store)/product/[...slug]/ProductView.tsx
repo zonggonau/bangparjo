@@ -163,6 +163,12 @@ export default function ProductView({ id, initialData, initialError, selectedVid
     
   const finalPrice = calculateFinalPrice(currentCjPrice, settings);
 
+  // ── Discount calculation ──────────────────────────────────────────────
+  const nowPrice = product?.nowPrice ? parseFloat(product.nowPrice) : null;
+  const hasDiscount = nowPrice !== null && nowPrice > 0 && nowPrice < currentCjPrice;
+  const discountPercent = hasDiscount ? Math.round((1 - nowPrice / currentCjPrice) * 100) : 0;
+  const fakeOriginalPrice = hasDiscount ? calculateFinalPrice(currentCjPrice, { ...settings, markupPct: 0 }) : finalPrice * 1.35; // Generate 35% fake discount if no real discount
+
 
   const handleAddToCart = () => {
     const variantInfo = selectedVariant ? { vid: selectedVariant.vid, sku: selectedVariant.variantSku, name: selectedVariant.variantNameEn || selectedVariant.variantKey } : undefined;
@@ -245,8 +251,22 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                 <div className="h-5 w-32 bg-gray-200 rounded animate-pulse"></div>
               ) : null}
 
-              <div className="flex items-center gap-3">
-                <span className="text-2xl md:text-3xl font-black text-[#FF6B00]">{formatUSD(finalPrice)}</span>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl md:text-3xl font-black text-[#FF6B00]">{formatUSD(finalPrice)}</span>
+                  {discountPercent > 0 ? (
+                    <span className="px-2 py-1 rounded-[6px] bg-[#FFF3E8] text-[#FF6B00] text-xs font-bold tracking-wide">
+                      -{discountPercent}% OFF
+                    </span>
+                  ) : (
+                    <span className="px-2 py-1 rounded-[6px] bg-[#FFF3E8] text-[#FF6B00] text-xs font-bold tracking-wide">
+                      -35% OFF
+                    </span>
+                  )}
+                </div>
+                <span className="text-sm text-gray-400 line-through font-medium">
+                  {formatUSD(fakeOriginalPrice)}
+                </span>
               </div>
 
 
@@ -259,7 +279,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                       {product.variants.map((variant: any, idx: number) => (
                         <button 
                           key={variant.vid} 
-                          className={`px-4 py-2 rounded-[8px] text-sm font-semibold border-2 transition-all duration-200 cursor-pointer ${
+                          className={`px-3 py-1.5 rounded-[6px] text-[13px] font-semibold border-2 transition-all duration-200 cursor-pointer ${
                             selectedVariant?.vid === variant.vid 
                               ? 'border-[#FF6B00] bg-orange-50 text-[#FF6B00]' 
                               : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
@@ -276,24 +296,24 @@ export default function ProductView({ id, initialData, initialError, selectedVid
 
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-[#1A1A1A]">Quantity</h3>
-                <div className="flex items-center border border-gray-200 rounded-[10px] overflow-hidden w-fit">
+                <div className="flex items-center border border-gray-200 rounded-[8px] overflow-hidden w-fit">
                   <button 
-                    className="px-4 py-2.5 text-lg font-bold text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer border-none"
+                    className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer border-none bg-white"
                     onClick={() => setQty(Math.max(1, qty - 1))}
                   >
-                    −
+                    <i className="fas fa-minus text-[10px]"></i>
                   </button>
                   <input 
                     type="number" 
                     value={qty} 
                     readOnly 
-                    className="w-16 text-center py-2.5 text-sm font-bold text-[#1A1A1A] border-x border-gray-200 outline-none"
+                    className="w-12 h-10 text-center text-[13px] font-bold text-[#1A1A1A] border-x border-gray-200 outline-none bg-white"
                   />
                   <button 
-                    className="px-4 py-2.5 text-lg font-bold text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer border-none"
+                    className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer border-none bg-white"
                     onClick={() => setQty(qty + 1)}
                   >
-                    +
+                    <i className="fas fa-plus text-[10px]"></i>
                   </button>
                 </div>
               </div>

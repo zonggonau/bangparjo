@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { submitContactFormAction } from '@/lib/actions-content';
+import { useSettings } from '@/context/SettingsContext';
 
 export default function ContactPage() {
+  const { settings } = useSettings();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -34,6 +36,9 @@ export default function ContactPage() {
     }
   };
 
+  const whatsappLink = settings.socialLinks?.find(l => l.platform === 'whatsapp')?.url || `https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP || '628219105980'}`;
+  const whatsappNumber = whatsappLink.split('/').pop() || '';
+
   return (
     <div className="max-w-[1400px] mx-auto px-5 py-16">
       <div className="text-center mb-12">
@@ -52,7 +57,7 @@ export default function ContactPage() {
             </div>
             <div>
               <strong className="block text-xs font-bold uppercase text-gray-500">Email</strong>
-              <p className="m-0 font-bold text-[#1A1A1A]">support@bangparjo.shop</p>
+              <p className="m-0 font-bold text-[#1A1A1A]">{settings.adminEmail || 'support@bangparjo.shop'}</p>
             </div>
           </div>
 
@@ -63,12 +68,12 @@ export default function ContactPage() {
             <div>
               <strong className="block text-xs font-bold uppercase text-gray-500">WhatsApp</strong>
               <a 
-                href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP || '628219105980'}`} 
+                href={whatsappLink} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="m-0 font-bold text-[#25D366] no-underline"
               >
-                {(() => { const wa = process.env.NEXT_PUBLIC_WHATSAPP || '628219105980'; return `${wa.slice(2, 6)}-${wa.slice(6, 10)}-${wa.slice(10)}`; })()}
+                {whatsappNumber.length > 10 ? `${whatsappNumber.slice(0, 4)}-${whatsappNumber.slice(4, 8)}-${whatsappNumber.slice(8)}` : whatsappNumber}
               </a>
             </div>
           </div>
@@ -79,7 +84,7 @@ export default function ContactPage() {
             </div>
             <div>
               <strong className="block text-xs font-bold uppercase text-gray-500">Business Hours</strong>
-              <p className="m-0 font-bold text-[#1A1A1A]">Mon - Fri: 09:00 - 18:00 WIB</p>
+              <p className="m-0 font-bold text-[#1A1A1A]">{settings.workingHours || 'Mon - Fri: 09:00 - 18:00 WIB'}</p>
             </div>
           </div>
         </div>

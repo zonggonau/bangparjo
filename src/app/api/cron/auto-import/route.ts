@@ -65,7 +65,7 @@ export async function GET(req: Request) {
 
     for (const p of rawProducts) {
        try {
-          const pid = p.id || p.pid;
+          const pid = p.id || (p as any).pid;
           if (pid) {
              const importRes = await importProductAction(pid, false);
              if (importRes.success) {

@@ -280,8 +280,10 @@ export async function createOrderAction(data: any) {
   }
 }
 
-export async function getOrderAction(orderNum: string, token?: string) {
+export async function getOrderAction(orderNum: string, token: string) {
   try {
+    if (!token) return { success: false, error: 'Security token is required' };
+
     const order = await prisma.order.findUnique({ 
       where: { orderNum },
       include: { items: { include: { variant: true } } }
@@ -289,7 +291,7 @@ export async function getOrderAction(orderNum: string, token?: string) {
     
     if (!order) return { success: false, error: 'Order not found' };
     
-    if (token && order.checkoutToken !== token) {
+    if (order.checkoutToken !== token) {
       return { success: false, error: 'Invalid security token' };
     }
 
@@ -541,7 +543,23 @@ export async function capturePayPalOrderAction(data: { orderId: string; paypalDa
       return { success: false, error: 'Payment not completed' };
     }
 
-    console.log(`[PayPal] Payment verified for ${orderId}. Updating status to PAID...`);
+    const dbOrder = await prisma.order.findUnique({
+      where: { orderNum: orderId }
+    });
+
+    if (!dbOrder || !dbOrder.totalAmount) {
+      return { success: false, error: 'Order not found in database' };
+    }
+
+    const paypalAmount = parseFloat(orderDetails.purchase_units[0].amount.value);
+    
+    // Allow max $0.05 variation for floating point rounding discrepancies
+    if (Math.abs(paypalAmount - dbOrder.totalAmount) > 0.05) {
+      console.warn(`[PayPal Security] Amount mismatch! Order ${orderId} expected $${dbOrder.totalAmount}, but PayPal paid $${paypalAmount}`);
+      return { success: false, error: 'Payment amount mismatch. Possible tampering detected.' };
+    }
+
+    console.log(`[PayPal] Payment verified securely for ${orderId}. Updating status to PAID...`);
 
     await prisma.order.update({
       where: { orderNum: orderId },
@@ -563,10 +581,18 @@ export async function getShippingRatesAction(data: { products?: any[], country?:
     const { products: productsParam, country = 'ID', subtotal = 0, sku, vid, quantity = 1, weight = 0 } = data;
     const settings = await getCachedStoreSettings();
 
-    if (sku) {
-      const price = subtotal / quantity;
+    const skuList = productsParam 
+      ? productsParam.map(p => ({ 
+          sku: p.sku || p.vid || '', 
+          quantity: p.quantity || 1, 
+          weight: p.weight || 200, 
+          price: subtotal > 0 ? subtotal / productsParam.length : 10 
+        })).filter(p => p.sku)
+      : (sku ? [{ sku, quantity, weight: weight || 200, price: subtotal / quantity || 10 }] : []);
+
+    if (skuList.length > 0) {
       const skuRes = await getShippingFeeBySku({
-        products: [{ sku, quantity, weight: weight || 200, price: price || 10 }],
+        products: skuList,
         endCountryCode: country,
       });
 

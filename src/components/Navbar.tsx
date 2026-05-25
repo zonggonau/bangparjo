@@ -107,7 +107,7 @@ export default function Navbar() {
                 <li className="relative static group">
                   <Link href="/category" className="text-[14px] xl:text-[15px] font-semibold text-[#555555] hover:text-[#FF6B00] transition-all duration-300 relative py-1 after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-[#FF6B00] after:transition-all after:duration-300 hover:after:w-full">
                     <i className="fas fa-bars mr-1.5"></i>
-                    Categories
+                    All Categories
                   </Link>
                   
                   {/* CJ Style Mega Menu */}

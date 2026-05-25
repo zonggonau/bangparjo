@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSettings } from '@/context/SettingsContext';
 import { updateStoreSettingsAction } from '@/lib/actions';
 
-type TabType = 'profile' | 'logistics' | 'margins';
+type TabType = 'profile' | 'logistics' | 'margins' | 'pages';
 
 export default function SettingsPage() {
   const { settings: currentSettings, refreshSettings } = useSettings();
@@ -49,7 +49,7 @@ export default function SettingsPage() {
 
       <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-sm">
         <div className="p-5 border-b border-[#E2E8F0]">
-          <div className="flex gap-2 bg-gray-100 p-1.5 rounded-[12px]">
+          <div className="flex gap-2 bg-gray-100 p-1.5 rounded-[12px] flex-wrap">
             <button 
               className={`px-4 py-2 rounded-[8px] text-sm font-bold transition-all duration-200 ${activeTab === 'profile' ? 'bg-[#FF6B00] text-white' : 'bg-transparent text-gray-500'}`}
               onClick={() => setActiveTab('profile')}
@@ -68,6 +68,12 @@ export default function SettingsPage() {
             >
               <i className="fas fa-percentage"></i> Pricing
             </button>
+            <button 
+              className={`px-4 py-2 rounded-[8px] text-sm font-bold transition-all duration-200 ${activeTab === 'pages' ? 'bg-[#FF6B00] text-white' : 'bg-transparent text-gray-500'}`}
+              onClick={() => setActiveTab('pages')}
+            >
+              <i className="fas fa-file-alt"></i> Static Pages
+            </button>
           </div>
         </div>
 
@@ -81,6 +87,18 @@ export default function SettingsPage() {
               <div>
                 <label className={labelClass}>Administrative Email</label>
                 <input type="email" className={inputClass} value={draft.adminEmail} onChange={e => setDraft({...draft, adminEmail: e.target.value})} />
+              </div>
+              <div>
+                <label className={labelClass}>Store Phone Number</label>
+                <input type="text" className={inputClass} value={draft.phone || ''} onChange={e => setDraft({...draft, phone: e.target.value})} />
+              </div>
+              <div>
+                <label className={labelClass}>Store Physical Address</label>
+                <textarea className={inputClass} rows={3} value={draft.address || ''} onChange={e => setDraft({...draft, address: e.target.value})} />
+              </div>
+              <div>
+                <label className={labelClass}>Working Hours</label>
+                <input type="text" className={inputClass} value={draft.workingHours || ''} onChange={e => setDraft({...draft, workingHours: e.target.value})} />
               </div>
               <div>
                 <label className={labelClass}>Base Display Currency</label>
@@ -118,6 +136,31 @@ export default function SettingsPage() {
                 >
                   <i className="fas fa-plug"></i> Register CJ Webhook
                 </button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'pages' && (
+            <div className="grid gap-8">
+              <div>
+                <label className={labelClass}>FAQ Content (HTML)</label>
+                <textarea 
+                  className={`${inputClass} font-mono text-xs`} 
+                  rows={10} 
+                  value={draft.faqContent || ''} 
+                  onChange={e => setDraft({...draft, faqContent: e.target.value})}
+                  placeholder="<h1>FAQ</h1><p>Answers to frequently asked questions...</p>"
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Returns & Refunds Content (HTML)</label>
+                <textarea 
+                  className={`${inputClass} font-mono text-xs`} 
+                  rows={10} 
+                  value={draft.returnsContent || ''} 
+                  onChange={e => setDraft({...draft, returnsContent: e.target.value})}
+                  placeholder="<h1>Returns Policy</h1><p>Our returns policy details...</p>"
+                />
               </div>
             </div>
           )}
