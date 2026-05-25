@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { submitContactFormAction } from '@/lib/actions-content';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -18,13 +19,9 @@ export default function ContactPage() {
     setStatus(null);
 
     try {
-      const res = await fetch('/api/support/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
+      const data = await submitContactFormAction(formData);
 
-      if (res.ok) {
+      if (data.success) {
         setStatus({ type: 'success', msg: 'Your message has been sent! We will get back to you shortly.' });
         setFormData({ name: '', email: '', subject: 'Order Issue', message: '' });
       } else {

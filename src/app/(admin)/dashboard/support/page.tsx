@@ -1,8 +1,6 @@
 import { getDisputeList } from '@/lib/cj-api';
 import { prisma } from '@/lib/db';
 
-export const dynamic = 'force-dynamic';
-
 export default async function SupportPage() {
   // 1. Fetch CJ Disputes
   const res = await getDisputeList({ pageNum: 1, pageSize: 10 });

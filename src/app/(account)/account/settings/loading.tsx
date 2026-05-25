@@ -1,0 +1,23 @@
+export default function Loading() {
+  return (
+    <div className="animate-pulse">
+      <div className="h-8 bg-gray-200 rounded w-1/4 mb-6 sm:mb-8"></div>
+      
+      <div className="bg-white rounded-[12px] p-5 sm:p-8 border border-gray-200">
+        <div className="h-6 bg-gray-200 rounded w-1/4 mb-5 sm:mb-6"></div>
+        
+        <div className="space-y-6">
+          <div>
+            <div className="h-4 bg-gray-200 rounded w-1/6 mb-2"></div>
+            <div className="h-12 bg-gray-200 rounded w-full"></div>
+          </div>
+          <div>
+            <div className="h-4 bg-gray-200 rounded w-1/6 mb-2"></div>
+            <div className="h-12 bg-gray-200 rounded w-full"></div>
+          </div>
+          <div className="h-10 bg-gray-200 rounded w-32 mt-6"></div>
+        </div>
+      </div>
+    </div>
+  );
+}

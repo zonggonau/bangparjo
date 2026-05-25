@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { getUserAddressesAction, saveUserAddressAction, deleteUserAddressAction, setDefaultUserAddressAction } from '@/lib/actions-user';
 
 interface Address {
   id: string;
@@ -58,8 +59,7 @@ export default function AddressesPage() {
 
   const fetchAddresses = async () => {
     try {
-      const res = await fetch(`/api/account/addresses?email=${encodeURIComponent(session?.user?.email || '')}`);
-      const data = await res.json();
+      const data = await getUserAddressesAction(session?.user?.email || '');
       if (data.success) setAddresses(data.data || []);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -98,12 +98,7 @@ export default function AddressesPage() {
       const method = editingId ? 'PUT' : 'POST';
       const body = editingId ? { ...form, id: editingId, email: session?.user?.email } : { ...form, email: session?.user?.email };
 
-      const res = await fetch('/api/account/addresses', {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
+      const data = await saveUserAddressAction(body);
       if (data.success) {
         showToast(editingId ? 'Address updated!' : 'Address added!');
         resetForm();
@@ -116,12 +111,7 @@ export default function AddressesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this address?')) return;
     try {
-      const res = await fetch('/api/account/addresses', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, email: session?.user?.email }),
-      });
-      const data = await res.json();
+      const data = await deleteUserAddressAction(session?.user?.email as string, id);
       if (data.success) { showToast('Address deleted!'); fetchAddresses(); }
       else showToast(data.error || 'Failed to delete', 'error');
     } catch (e: any) { showToast('Error: ' + e.message, 'error'); }
@@ -129,12 +119,7 @@ export default function AddressesPage() {
 
   const handleSetDefault = async (id: string) => {
     try {
-      const res = await fetch('/api/account/addresses', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, email: session?.user?.email, setDefault: true }),
-      });
-      const data = await res.json();
+      const data = await setDefaultUserAddressAction(session?.user?.email as string, id);
       if (data.success) { showToast('Default address updated!'); fetchAddresses(); }
     } catch (e: any) { showToast('Error: ' + e.message, 'error'); }
   };

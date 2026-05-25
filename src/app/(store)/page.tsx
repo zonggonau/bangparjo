@@ -1,4 +1,6 @@
 import { prisma } from '@/lib/db';
+import { getOrSet } from '@/lib/redis';
+import { Suspense } from 'react';
 import HeroSection from '@/components/HeroSection';
 import HomeCategories from '@/components/home-sections/HomeCategories';
 import HomeBestSellers from '@/components/home-sections/HomeBestSellers';
@@ -11,17 +13,20 @@ import Newsletter from '@/components/Newsletter';
 import LiveSales from '@/components/LiveSales';
 import AIChat from '@/components/AIChat';
 
-export const dynamic = 'force-dynamic';
+const CACHE_TTL = 3600; // 1 hour
 
-export default async function HomePage() {
-  // Fetch featured products for hero slideshow
+async function getFeaturedProducts() {
+  return getOrSet('home:featured', fetchFeaturedProducts, CACHE_TTL);
+}
+
+async function fetchFeaturedProducts() {
   let featuredProducts: any[] = [];
   try {
     const dbProducts = await prisma.product.findMany({
-      where: { status: 'ACTIVE' },
+      where: { isHero: true, status: 'ACTIVE' },
       include: { variants: { take: 1 } },
       orderBy: { updatedAt: 'desc' },
-      take: 6,
+      take: 10,
     });
     featuredProducts = dbProducts.map(p => ({
       pid: p.cjId,
@@ -34,10 +39,42 @@ export default async function HomePage() {
     console.warn('[HomePage] Failed to fetch featured products:', e);
   }
 
+  // Fallback: if no pinned products, show latest active products
+  if (featuredProducts.length === 0) {
+    try {
+      const fallbackProducts = await prisma.product.findMany({
+        where: { status: 'ACTIVE' },
+        include: { variants: { take: 1 } },
+        orderBy: { updatedAt: 'desc' },
+        take: 6,
+      });
+      featuredProducts = fallbackProducts.map(p => ({
+        pid: p.cjId,
+        productNameEn: p.name,
+        productImage: p.images?.[0] || '',
+        bigImage: p.images?.[p.images.length > 1 ? 1 : 0] || p.images?.[0] || '',
+        sellPrice: p.variants?.[0]?.sellingPrice || p.variants?.[0]?.baseCost || 0,
+      }));
+    } catch (e) {
+      console.warn('[HomePage] Fallback fetch also failed:', e);
+    }
+  }
+
+  return featuredProducts;
+}
+
+async function FeaturedHeroWrapper() {
+  const featuredProducts = await getFeaturedProducts();
+  return <HeroSection products={featuredProducts} />;
+}
+
+export default function HomePage() {
   return (
     <div>
       {/* ===== HERO ===== */}
-      <HeroSection products={featuredProducts} />
+      <Suspense fallback={<div className="h-[400px] sm:h-[500px] lg:h-[600px] w-full bg-gray-200 animate-pulse flex items-center justify-center text-gray-500">Loading Featured Products...</div>}>
+        <FeaturedHeroWrapper />
+      </Suspense>
 
       {/* ===== GLOBAL SHIPPING BADGE ===== */}
       <div className="bg-gradient-to-r from-[#FF6B00] to-[#E06000] py-3 overflow-hidden">

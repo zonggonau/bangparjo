@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { getAboutContentAction } from '@/lib/actions-content';
 
 interface AboutData {
   id: string;
@@ -17,10 +18,9 @@ export default function AboutPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/about')
-      .then(res => res.json())
+    getAboutContentAction()
       .then(data => {
-        if (data.success) setAbout(data.data);
+        if (data.success) setAbout(data.data as AboutData);
       })
       .catch(console.error)
       .finally(() => setLoading(false));

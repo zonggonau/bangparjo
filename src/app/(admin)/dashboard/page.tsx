@@ -3,34 +3,30 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSettings } from '@/context/SettingsContext';
+import { getDashboardAnalyticsAction } from '@/lib/actions-admin';
 
 export default function DashboardPage() {
   const { settings } = useSettings();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/admin/orders')
-      .then(r => r.json())
+    getDashboardAnalyticsAction()
       .then(res => { 
-        if (res.success && Array.isArray(res.data)) {
-          setOrders(res.data);
-        } else if (Array.isArray(res)) {
-          setOrders(res);
+        if (res.success) {
+          setAnalytics(res.data);
         }
       })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
-  const totalRevenue = orders.reduce((a, o) => a + Number(o.totalAmount || 0), 0);
-  const totalOrders = orders.length;
-  const totalCustomers = new Set(orders.map(o => o.customerEmail)).size;
+  const totalRevenue = analytics?.totalRevenue || 0;
+  const totalOrders = analytics?.totalOrders || 0;
+  const totalCustomers = new Set((analytics?.recentOrders || []).map((o: any) => o.customerEmail)).size; // Approximate for dashboard
   const avgRating = 4.8;
 
-  const recentOrders = [...orders]
-    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
-    .slice(0, 5);
+  const recentOrders = analytics?.recentOrders || [];
 
   return (
     <div>
@@ -127,7 +123,7 @@ export default function DashboardPage() {
                   <tr><td colSpan={4} className="text-center py-20"><i className="fas fa-spinner fa-spin text-[#FF6B00]"></i></td></tr>
                 ) : recentOrders.length === 0 ? (
                   <tr><td colSpan={4} className="text-center py-20 text-[#64748B] font-bold">No orders found.</td></tr>
-                ) : recentOrders.map(o => (
+                ) : recentOrders.map((o: any) => (
                   <tr key={o.id || o.orderNum} className="border-b border-[#F1F5F9] hover:bg-[#FAFBFE] transition-all duration-200">
                     <td className="px-8 py-5 text-sm text-[#1E293B]"><strong>#{o.orderNum.slice(-8)}</strong></td>
                     <td className="px-8 py-5 text-sm text-[#1E293B]">{o.customerName || 'Anonymous'}</td>

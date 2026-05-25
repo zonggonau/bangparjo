@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getAdminWebhooksAction, saveAdminWebhookSettingsAction, testAdminWebhookAction } from '@/lib/actions-admin-webhooks';
 
 export default function WebhookSettingsPage() {
   const [webhookUrl, setWebhookUrl] = useState('');
@@ -17,13 +18,13 @@ export default function WebhookSettingsPage() {
   ];
 
   useEffect(() => {
-    fetch('/api/admin/webhooks?type=settings')
-      .then(r => r.json())
+    getAdminWebhooksAction('settings')
       .then(res => {
         if (res.success && res.data) {
-          setWebhookUrl(res.data.url || '');
-          setSecret(res.data.secret || '');
-          setEvents(res.data.events || []);
+          const d = res.data as any;
+          setWebhookUrl(d.url || '');
+          setSecret(d.secret || '');
+          setEvents(d.events || []);
         }
       })
       .catch(console.error);
@@ -37,12 +38,7 @@ export default function WebhookSettingsPage() {
     setSaving(true);
     setMessage('');
     try {
-      const res = await fetch('/api/admin/webhooks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: webhookUrl, secret, events }),
-      });
-      const data = await res.json();
+      const data = await saveAdminWebhookSettingsAction(webhookUrl, secret, events);
       if (data.success) setMessage('✅ Webhook settings saved successfully!');
       else setMessage('❌ ' + (data.error || 'Failed to save'));
     } catch (err: any) {
@@ -56,8 +52,7 @@ export default function WebhookSettingsPage() {
     setTesting(true);
     setMessage('');
     try {
-      const res = await fetch('/api/admin/test-webhook', { method: 'POST' });
-      const data = await res.json();
+      const data = await testAdminWebhookAction('ORDER');
       if (data.success) setMessage('✅ Test webhook sent!');
       else setMessage('⚠️ ' + (data.error || 'Test failed'));
     } catch (err: any) {

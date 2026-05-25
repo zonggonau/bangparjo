@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { CJProduct } from '@/lib/cj-api';
 import { useSession } from 'next-auth/react';
+import { syncCartAction, getCartAction } from '@/lib/actions';
 
 export interface CartItem extends CJProduct {
   quantity: number;
@@ -55,11 +56,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     const timer = setTimeout(async () => {
       try {
-        await fetch('/api/cart/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items }),
-        });
+        await syncCartAction(items);
       } catch (e) {
         console.error('Cart sync to DB failed:', e);
       }
@@ -75,9 +72,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     const loadFromDB = async () => {
       try {
-        const res = await fetch('/api/cart/sync');
-        const data = await res.json();
-        if (data.success && data.data?.length > 0) {
+        const data = await getCartAction();
+        if (data.success && data.data && data.data.length > 0) {
           // Merge: prefer localStorage items, but add DB items if cart is empty
           setItems(prev => {
             if (prev.length > 0) return prev; // Keep local items
@@ -92,6 +88,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               bigImage: dbItem.bigImage || '',
               sellPrice: dbItem.sellPrice || 0,
               quantity: dbItem.quantity || 1,
+              categoryName: dbItem.categoryName || '',
             }));
           });
         }

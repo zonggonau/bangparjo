@@ -1,14 +1,6 @@
-# Blog & About Pages — Task Progress
+# Task Progress — Blog Template Global Market Optimization
 
-- [ ] Add Blog & About models to Prisma schema
-- [ ] Run Prisma migration
-- [ ] Create Blog CRUD API (`/api/admin/blog`)
-- [ ] Create About CRUD API (`/api/admin/about`)
-- [ ] Create public Blog API (`/api/blog`)
-- [ ] Create public About API (`/api/about`)
-- [ ] Create admin Blog management page
-- [ ] Create admin About management page
-- [ ] Create public Blog listing page
-- [ ] Create public Blog detail page
-- [ ] Create public About page
-- [ ] Add admin sidebar links for Blog & About
+- [x] Update AI prompt ke English (global market)
+- [x] Tambah urgency/trust elements di template (stok terbatas, promo, trust badges)
+- [x] Update fallback content ke English
+- [x] Cek library translasi otomatis

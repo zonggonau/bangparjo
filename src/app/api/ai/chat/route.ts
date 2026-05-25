@@ -241,40 +241,41 @@ When the user asks about an order, product, or sending a message, USE the real d
       systemContext += `\n\n=== REAL-TIME DATA RETRIEVED ===\n${JSON.stringify(toolResults, null, 2)}\n=== END DATA ===`;
     }
 
-    // ── Call Gemini API ────────────────────────────────────────────────────
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    if (!GEMINI_API_KEY) {
-      console.error('Chat API Error: GEMINI_API_KEY is not defined in .env');
-      return NextResponse.json({ success: false, message: 'Gemini API Key missing' }, { status: 500 });
+    // ── Call DeepSeek API ──────────────────────────────────────────────────
+    const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+    if (!DEEPSEEK_API_KEY || DEEPSEEK_API_KEY === 'sk-your-deepseek-api-key-here') {
+      console.error('Chat API Error: DEEPSEEK_API_KEY is not defined in .env');
+      return NextResponse.json({ success: false, message: 'DeepSeek API Key missing' }, { status: 500 });
     }
 
-    const contents = messages.map((m: any) => ({
-      role: m.role === 'ai' ? 'model' : 'user',
-      parts: [{ text: m.content }]
-    }));
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`, {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        'x-goog-api-key': GEMINI_API_KEY.trim() 
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY.trim()}`
       },
       body: JSON.stringify({
-        system_instruction: {
-          parts: [{ text: systemContext }]
-        },
-        contents: contents
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: systemContext },
+          ...messages.map((m: any) => ({
+            role: m.role === 'ai' ? 'assistant' : 'user',
+            content: m.content
+          }))
+        ],
+        temperature: 0.7,
+        max_tokens: 1024,
       }),
     });
 
     const data = await response.json();
     
     if (!response.ok) {
-      console.error('Gemini API Error:', data);
-      throw new Error(data.error?.message || 'Failed to fetch from Gemini');
+      console.error('DeepSeek API Error:', data);
+      throw new Error(data.error?.message || 'Failed to fetch from DeepSeek');
     }
 
-    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I am experiencing technical difficulties. Please try again later.";
+    const aiText = data.choices?.[0]?.message?.content || "I'm sorry, I am experiencing technical difficulties. Please try again later.";
 
     return NextResponse.json({ success: true, text: aiText });
   } catch (error: any) {

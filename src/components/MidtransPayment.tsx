@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { getMidtransTokenAction } from '@/lib/actions';
 
 interface MidtransPaymentProps {
   orderId: string;
@@ -62,12 +63,7 @@ export default function MidtransPayment({ orderId, amount, customerDetails, onSu
     setLoading(true);
 
     try {
-      const res = await fetch('/api/midtrans/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, amount, customerDetails }),
-      });
-      const data = await res.json();
+      const data = await getMidtransTokenAction({ orderId, customerDetails });
 
       if (data.token) {
         // Prevent re-opening if it's the exact same token we just processed

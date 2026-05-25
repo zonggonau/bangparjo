@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { getAdminOrdersAction, fulfillAdminOrderAction, syncAdminOrderAction } from '@/lib/actions-admin-orders';
 
 function StatusBadge({ status }: { status: string }) {
   const s = (status || 'PENDING').toUpperCase();
@@ -37,8 +38,7 @@ export default function OrdersPage() {
         .catch(console.error)
         .finally(() => setLoading(false));
     } else {
-      fetch('/api/admin/orders')
-        .then(r => r.json())
+      getAdminOrdersAction()
         .then(res => { 
           if (res.success && Array.isArray(res.data)) {
             setLocalOrders(res.data);
@@ -57,17 +57,12 @@ export default function OrdersPage() {
     if (!confirm(`Initialize fulfillment sequence for order ${orderNum} to CJ terminal?`)) return;
     setBusy(orderNum);
     try {
-      const res = await fetch('/api/admin/orders/fulfill', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderNum }),
-      });
-      const data = await res.json();
+      const data = await fulfillAdminOrderAction(orderNum) as any;
       if (data.success) { 
         alert('Fulfillment sequence initialized successfully.'); 
         fetchOrders(); 
       } else {
-        alert('Sequence failure: ' + data.error);
+        alert('Sequence failure: ' + (data.error || data.message));
       }
     } catch (e: any) { 
       alert('Critical error: ' + e.message); 
@@ -79,12 +74,7 @@ export default function OrdersPage() {
   const handleSync = async (orderNum: string) => {
     setBusy(orderNum);
     try {
-      const res = await fetch('/api/admin/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: orderNum }),
-      });
-      const data = await res.json();
+      const data = await syncAdminOrderAction(orderNum);
       if (data.success) { 
         alert('Status synchronization complete: ' + data.status); 
         fetchOrders(); 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { deleteAdminSubscriberAction } from '@/lib/actions-admin-content';
 
 interface Subscriber {
   id: string;
@@ -39,8 +40,8 @@ export default function SubscriberList({
     
     setDeleting(id);
     try {
-      const res = await fetch(`/api/admin/subscribers?id=${id}`, { method: 'DELETE' });
-      if (res.ok) {
+      const json = await deleteAdminSubscriberAction(id);
+      if (json.success) {
         setSubscribers(subscribers.filter(s => s.id !== id));
         showToast('Subscriber removed');
       } else {

@@ -1,10 +1,11 @@
 export default function JsonLd() {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
   const organizationJson = {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "BangParjo Shop",
-    "url": "https://bangparjo.shop",
-    "logo": "https://bangparjo.shop/logo-banner.png",
+    "url": baseUrl,
+    "logo": baseUrl + "/logo-banner.png",
     "sameAs": [
       "https://facebook.com/bangparjo.shop",
       "https://twitter.com/bangparjo_shop",
@@ -23,10 +24,10 @@ export default function JsonLd() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "BangParjo Shop",
-    "url": "https://bangparjo.shop",
+    "url": baseUrl,
     "potentialAction": {
       "@type": "SearchAction",
-      "target": "https://bangparjo.shop/?q={search_term_string}",
+      "target": baseUrl + "/?q={search_term_string}",
       "query-input": "required name=search_term_string"
     }
   };

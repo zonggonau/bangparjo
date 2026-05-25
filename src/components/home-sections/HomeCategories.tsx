@@ -1,5 +1,8 @@
 import { prisma } from '@/lib/db';
+import { getOrSet } from '@/lib/redis';
 import Link from 'next/link';
+
+const CACHE_TTL = 3600; // 1 hour
 
 // Map kategori ke icon yang sesuai
 const categoryIcons: Record<string, string> = {
@@ -24,11 +27,21 @@ function getIcon(name: string): string {
   return categoryIcons[name] || '📦';
 }
 
-export default async function HomeCategories() {
+async function getCategories() {
+  return getOrSet('home:categories', fetchCategories, CACHE_TTL);
+}
+
+async function fetchCategories() {
   const categories = await prisma.category.findMany({
     where: { parentId: null },
     orderBy: { name: 'asc' },
   });
+
+  return categories;
+}
+
+export default async function HomeCategories() {
+  const categories = await getCategories();
 
   if (categories.length === 0) return null;
 

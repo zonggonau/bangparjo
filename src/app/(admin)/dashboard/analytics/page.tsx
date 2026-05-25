@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getDashboardAnalyticsAction } from '@/lib/actions-admin';
 
 export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
@@ -35,8 +36,7 @@ export default function AnalyticsPage() {
   });
 
   useEffect(() => {
-    fetch('/api/admin/analytics')
-      .then(r => r.json())
+    getDashboardAnalyticsAction()
       .then(data => {
         if (data.success) setAnalytics(prev => ({ ...prev, ...data.data }));
       })

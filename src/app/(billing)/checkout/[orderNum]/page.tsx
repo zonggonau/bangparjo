@@ -8,6 +8,7 @@ import Link from 'next/link';
 import PayPalButton from '@/components/PayPalButton';
 import MidtransPayment from '@/components/MidtransPayment';
 import ProductImage from '@/components/ProductImage';
+import { getOrderAction, sendOrderLinkAction, getCurrencyRateAction } from '@/lib/actions';
 
 function formatUSD(price: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
@@ -38,8 +39,7 @@ function SecurePaymentContent() {
       return;
     }
 
-    fetch(`/api/orders?orderNum=${orderNum}&token=${token}`)
-      .then(res => res.json())
+    getOrderAction(orderNum as string, token as string)
       .then(res => {
         if (res.success && res.data) {
           setOrder(res.data);
@@ -47,17 +47,12 @@ function SecurePaymentContent() {
           
           clearCart();
 
-          fetch('/api/orders/send-link', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              orderNum, 
-              token,
-              checkoutUrl: window.location.href
-            })
-          }).then(r => r.json())
-            .then(res => {
-              if (res.success && res.message !== 'Email already sent previously') {
+          sendOrderLinkAction({ 
+            orderNum: orderNum as string, 
+            token: token as string,
+            checkoutUrl: window.location.href
+          }).then(linkRes => {
+              if (linkRes.success && linkRes.message !== 'Email already sent previously') {
                 console.log('[SecurePayment] Confirmation email sent.');
               }
             }).catch(console.error);
@@ -74,8 +69,7 @@ function SecurePaymentContent() {
 
   // Fetch real-time USD to IDR exchange rate
   useEffect(() => {
-    fetch('/api/currency/rate')
-      .then(res => res.json())
+    getCurrencyRateAction()
       .then(data => {
         if (data.success && data.rate) {
           setExchangeRate(data.rate);

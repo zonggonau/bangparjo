@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { cjProxyAction } from '@/lib/actions-catalog';
+import { trackOrderAction } from '@/lib/actions-user';
 
 const STATUS_STEPS = [
   { label: 'Order Placed', icon: 'fa-clipboard-list' },
@@ -35,8 +37,7 @@ export default function TrackPage() {
     setSearched(false);
 
     try {
-      const localRes = await fetch(`/api/orders/track?id=${encodeURIComponent(id)}`);
-      const localData = await localRes.json();
+      const localData = await trackOrderAction(id);
 
       if (localData.success && localData.order) {
         setTrackingData({ source: 'local', ...localData.order });
@@ -44,8 +45,7 @@ export default function TrackPage() {
         return;
       }
 
-      const cjRes = await fetch(`/api/cj-proxy?endpoint=/v1/shopping/order/getOrderDetail?orderId=${encodeURIComponent(id)}`);
-      const cjData = await cjRes.json();
+      const cjData = await cjProxyAction(`/v1/shopping/order/getOrderDetail?orderId=${encodeURIComponent(id)}`);
 
       if (cjData.success && cjData.data) {
         setTrackingData({ source: 'cj', ...cjData.data });

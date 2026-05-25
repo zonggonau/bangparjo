@@ -92,6 +92,7 @@ export async function generateMetadata({
 
 // Komponen untuk JSON-LD (Struktur Data Google)
 function ProductSchema({ product, selectedVariant }: { product: any, selectedVariant?: any }) {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
   const displayImage = selectedVariant?.image || selectedVariant?.variantImage || product.productImage;
   const displayPrice = selectedVariant?.variantSellPrice || product.variants?.[0]?.variantSellPrice || 0;
 
@@ -108,7 +109,7 @@ function ProductSchema({ product, selectedVariant }: { product: any, selectedVar
     },
     "offers": {
       "@type": "Offer",
-      "url": `https://bangparjo.shop/product/${product.pid}${selectedVariant ? `?v=${selectedVariant.vid || selectedVariant.cjId}` : ''}`,
+      "url": `${baseUrl}/product/${product.pid}${selectedVariant ? `?v=${selectedVariant.vid || selectedVariant.cjId}` : ''}`,
       "priceCurrency": "USD",
       "price": displayPrice,
       "itemCondition": "https://schema.org/NewCondition",

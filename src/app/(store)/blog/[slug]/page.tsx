@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { isProductData, parseProductData, renderProductTemplate } from '@/lib/blog-templates';
+import { getBlogPostsAction } from '@/lib/actions-content';
 
 interface BlogPost {
   id: string;
@@ -24,15 +26,34 @@ export default function BlogDetailPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch(`/api/blog?slug=${slug}`)
-      .then(res => res.json())
+    getBlogPostsAction(slug)
       .then(data => {
-        if (data.success) setPost(data.data);
+        if (data.success) setPost(data.data as unknown as BlogPost);
         else setError(data.error || 'Post not found');
       })
       .catch(() => setError('Failed to load post'))
       .finally(() => setLoading(false));
   }, [slug]);
+
+  // Detect if content is a product JSON and render the product template
+  const productHtml = useMemo(() => {
+    if (!post) return null;
+    const productData = parseProductData(post.content);
+    if (!productData) return null;
+    // Render the full product landing page template
+    return renderProductTemplate(productData, '628219105980', window.location.origin);
+  }, [post]);
+
+  // Check if content is raw HTML (not JSON)
+  const isRawHtml = useMemo(() => {
+    if (!post) return false;
+    try {
+      JSON.parse(post.content);
+      return false; // It's JSON, not raw HTML
+    } catch {
+      return true; // Not JSON, treat as raw HTML
+    }
+  }, [post]);
 
   if (loading) {
     return (
@@ -62,6 +83,20 @@ export default function BlogDetailPage() {
             ← Back to Blog
           </Link>
         </div>
+      </div>
+    );
+  }
+
+  // If it's a product landing page, render the full template (no blog chrome)
+  if (productHtml) {
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="fixed top-0 left-0 z-50 m-4">
+          <Link href="/blog" className="inline-flex items-center gap-1 text-sm bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-gray-200 text-gray-600 hover:text-[#FF6B00] hover:border-[#FF6B00] transition-all no-underline">
+            ← Blog
+          </Link>
+        </div>
+        <div dangerouslySetInnerHTML={{ __html: productHtml }} />
       </div>
     );
   }
@@ -105,11 +140,17 @@ export default function BlogDetailPage() {
           </div>
         )}
 
-        {/* Content */}
-        <div
-          className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-[#FF6B00] prose-img:rounded-xl"
-          dangerouslySetInnerHTML={{ __html: post.content }}
-        />
+        {/* Content — render as HTML if it's raw HTML, or show JSON if it's unrecognized JSON */}
+        {isRawHtml ? (
+          <div
+            className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-[#FF6B00] prose-img:rounded-xl"
+            dangerouslySetInnerHTML={{ __html: post.content }}
+          />
+        ) : (
+          <div className="text-center py-12 text-gray-400">
+            <p>Product content is loading...</p>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-gray-100">

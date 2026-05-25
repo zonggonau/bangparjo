@@ -100,7 +100,6 @@ export default async function CategoryPage({
         categoryId: category.id, 
         page: pageNum, 
         size: 60,
-        productFlag: 0,
         startSellPrice: minPrice,
         endSellPrice: maxPrice,
         orderBy: sort > 0 ? sort : undefined,
@@ -110,7 +109,26 @@ export default async function CategoryPage({
       if (res.success && res.data) {
         const d = res.data;
         if (d.content && d.content.length > 0) {
-          products = d.content[0].productList || [];
+          const rawProducts = d.content[0].productList || [];
+          // Map CJProductV2 → CJProduct shape (ProductCard expects CJProduct fields)
+          products = rawProducts.map((p: any) => ({
+            pid: p.id || p.pid,
+            productName: p.nameEn || p.productName || '',
+            productNameEn: p.nameEn || p.productNameEn || '',
+            productImage: p.bigImage || p.productImage || '',
+            bigImage: p.bigImage || '',
+            sellPrice: typeof p.sellPrice === 'number' ? p.sellPrice : parseFloat(p.sellPrice || p.nowPrice || '0'),
+            nowPrice: p.nowPrice || '',
+            discountPrice: p.discountPrice || '',
+            categoryName: p.oneCategoryName || p.twoCategoryName || p.threeCategoryName || '',
+            categoryId: p.categoryId || '',
+            productSku: p.sku || '',
+            productWeight: p.productWeight || 0,
+            productUnit: p.productUnit || 'piece',
+            listedNum: p.listedNum || 0,
+            isFreeShipping: p.addMarkStatus === 1,
+          }));
+
         }
         total = d.totalRecords || products.length;
         await setAppCache(cacheKey, { products, total }, 3600);
@@ -195,8 +213,9 @@ export default async function CategoryPage({
           <>
             <div className="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {products.map((product) => (
-                <ProductCard key={product.pid} product={product} />
+                <ProductCard key={product.id || product.pid} product={product} />
               ))}
+
             </div>
 
             {totalPages > 1 && (

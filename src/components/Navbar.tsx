@@ -8,6 +8,7 @@ import CartCounter from './CartCounter';
 import FavoriteCounter from './FavoriteCounter';
 
 import { useSession } from 'next-auth/react';
+import { getCategoryMenuAction } from '@/lib/actions-catalog';
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -19,10 +20,9 @@ export default function Navbar() {
   const { settings } = useSettings();
 
   useEffect(() => {
-    fetch('/api/categories/menu')
-      .then(res => res.json())
+    getCategoryMenuAction()
       .then(data => {
-        if (data.success) {
+        if (data.success && data.data) {
           setCategories(data.data);
           if (data.data.length > 0) setActiveL1(data.data[0].id);
         }
@@ -68,12 +68,12 @@ export default function Navbar() {
         <div className="max-w-[1400px] mx-auto px-3 sm:px-5 flex items-center justify-between">
           {/* Left: Shipping info */}
           <div className="hidden sm:flex items-center gap-1 whitespace-nowrap overflow-x-auto scrollbar-hide">
-            <span>🌍 Worldwide Delivery | ✈️ Fast International Shipping | </span>
-            <span className="text-[#FF6B00] font-semibold">Free shipping over ${settings.freeShippingThreshold}</span>
+            <span>🌍 Worldwide Delivery | ✈️ Fast International Shipping  </span>
+            {/* <span className="text-[#FF6B00] font-semibold">Free shipping over ${settings.freeShippingThreshold}</span> */}
           </div>
           <div className="sm:hidden flex items-center gap-1 whitespace-nowrap overflow-x-auto scrollbar-hide">
             <span>🌍 Worldwide | ✈️ Fast Shipping | </span>
-            <span className="text-[#FF6B00] font-semibold">Free shipping over ${settings.freeShippingThreshold}</span>
+            {/* <span className="text-[#FF6B00] font-semibold">Free shipping over ${settings.freeShippingThreshold}</span> */}
           </div>
           {/* Right: Track Order | Help | Contact */}
           <div className="flex items-center gap-3 sm:gap-4 whitespace-nowrap">
@@ -105,8 +105,8 @@ export default function Navbar() {
                   </Link>
                   
                   {/* CJ Style Mega Menu */}
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-full max-w-[1400px] bg-white shadow-[0_15px_30px_rgba(0,0,0,0.1)] rounded-b-[16px] opacity-0 invisible translate-y-2.5 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] z-[1000] overflow-hidden group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 hover:opacity-100 hover:visible hover:translate-y-0">
-                    <div className="flex h-auto max-h-[520px]">
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-full max-w-[1400px] bg-white shadow-[0_15px_30px_rgba(0,0,0,0.1)]  opacity-0 invisible translate-y-2.5 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] z-[1000] overflow-hidden group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 hover:opacity-100 hover:visible hover:translate-y-0">
+                    <div className="flex h-auto max-h-[650px]">
                       {/* Sidebar - scroll if more than 14 categories */}
                       <div className="w-[280px] bg-[#fcfcfc] border-r border-[#f0f0f0] py-2.5 overflow-y-auto">
                         {categories.map((cat) => (
@@ -129,7 +129,7 @@ export default function Navbar() {
                       {/* Content Panel */}
                       <div className="flex-1 p-[30px_40px] overflow-y-auto bg-white">
                         {activeCategory && (
-                          <div className="grid grid-cols-3 gap-10">
+                          <div className="grid grid-cols-4 gap-10">
                             {activeCategory.children?.map((l2: any) => (
                               <div key={l2.id} className="mb-5">
                                 <h4 className="text-[15px] font-extrabold mb-[15px] pb-2 border-b-2 border-[#f0f0f0] relative after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-10 after:h-[2px] after:bg-[#FF6B00]">

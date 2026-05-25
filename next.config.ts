@@ -1,11 +1,20 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ['complimentary-rebate-clouds-proper.trycloudflare.com'],
-  
+  // @ts-ignore - Next.js internal property for dev tunnels
+  allowedDevOrigins: [
+    'walking-cart-montana-essentials.trycloudflare.com',
+    '*.trycloudflare.com'
+  ],
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb',
+      allowedOrigins: [
+        'localhost:3000',
+        'localhost:3001',
+        '*.trycloudflare.com',
+        'walking-cart-montana-essentials.trycloudflare.com'
+      ],
     },
     optimizePackageImports: ['@/components', '@/lib'],
   },

@@ -1,15 +1,24 @@
 /**
- * Blog Post Detail — Full-page raw HTML render
+ * Blog Post Detail — Full-page render
  *
  * Route: /[slug]
- * Renders the blog post `content` field as-is (raw HTML).
+ *
+ * The blog `content` field can be either:
+ * 1. Raw HTML — rendered as-is (for marketing pages, custom landing pages)
+ * 2. JSON with `type: "product"` — rendered using the professional product template
+ *
  * No store layout (Navbar/Footer) — full page from top to bottom.
- * Perfect for embedding marketing HTML, landing pages, etc.
  */
 
 import { prisma } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+
+import { isProductData, parseProductData, renderProductTemplate } from '@/lib/blog-templates';
+import { getOrSet } from '@/lib/redis';
+import { getCachedStoreSettings } from '@/lib/server-settings';
+import { calculateFinalPrice } from '@/lib/pricing';
+
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -19,10 +28,35 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await prisma.blogPost.findUnique({
     where: { slug, published: true },
-    select: { title: true, excerpt: true, image: true },
+    select: { title: true, excerpt: true, image: true, content: true },
   });
 
   if (!post) return {};
+
+  // If it's product JSON data, use AI-generated metadata if available
+  if (isProductData(post.content)) {
+    const product = parseProductData(post.content);
+    if (product) {
+      const aiContent = (product as any).ai || {};
+      const seoTitle = aiContent.seoTitle || `${product.name} — BangParjo`;
+      const seoDescription = aiContent.seoDescription || `Buy ${product.name} at the best price. Premium quality, global shipping, and satisfaction guaranteed.`;
+      return {
+        title: seoTitle,
+        description: seoDescription,
+        openGraph: {
+          title: seoTitle,
+          description: seoDescription,
+          images: product.images[0] ? [{ url: product.images[0], width: 1200, height: 630 }] : [],
+        },
+        twitter: {
+          card: 'summary_large_image',
+          title: seoTitle,
+          description: seoDescription,
+          images: product.images[0] ? [product.images[0]] : [],
+        },
+      };
+    }
+  }
 
   return {
     title: post.title,
@@ -31,16 +65,108 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function BlogSlugPage({ params }: Props) {
-  const { slug } = await params;
-  const post = await prisma.blogPost.findUnique({
-    where: { slug, published: true },
-  });
+export default async function BlogSlugPage(props: Props) {
+  const { slug } = await props.params;
+
+  const cacheKey = 'blog:post:' + slug;
+
+  const post = await getOrSet(
+    cacheKey,
+    async () => {
+      const p = await prisma.blogPost.findUnique({
+        where: { slug, published: true },
+      });
+      if (!p) return null;
+      return {
+        id: p.id,
+        title: p.title,
+        slug: p.slug,
+        excerpt: p.excerpt,
+        content: p.content,
+        image: p.image,
+        author: p.author,
+        createdAt: p.createdAt.toISOString(),
+        updatedAt: p.updatedAt.toISOString(),
+      };
+    },
+    300, // 5 minutes
+  );
 
   if (!post) {
     notFound();
   }
 
+  // Detect if content is JSON product data and render with template
+  if (isProductData(post.content)) {
+    const product = parseProductData(post.content);
+    if (product) {
+      const settings = await getCachedStoreSettings();
+
+      // Dynamically recalculate prices based on current live margin settings
+      product.variants = product.variants.map(v => ({
+        ...v,
+        sellingPrice: calculateFinalPrice(v.baseCost, settings)
+      }));
+
+      // Fetch other blog posts for recommendations (cached separately)
+      const recCacheKey = 'blog:recs:' + slug;
+      const recommendations = await getOrSet(
+        recCacheKey,
+        async () => {
+          const recs = await prisma.blogPost.findMany({
+            where: {
+              published: true,
+              slug: { not: slug },
+              content: { contains: '"type":"product"' },
+            },
+            select: {
+              title: true,
+              slug: true,
+              image: true,
+              content: true,
+            },
+            take: 4,
+            orderBy: { createdAt: 'desc' },
+          });
+          return recs.map(r => ({
+            title: r.title,
+            slug: r.slug,
+            image: r.image,
+            content: r.content,
+          }));
+        },
+        300, // 5 minutes
+      );
+
+      // Parse recommendation data
+      const recs = recommendations
+        .map(r => {
+          const p = parseProductData(r.content);
+          if (!p) return null;
+          const minP = Math.min(...p.variants.map(v => calculateFinalPrice(v.baseCost, settings)));
+          const maxP = Math.max(...p.variants.map(v => calculateFinalPrice(v.baseCost, settings)));
+          const price = minP === maxP ? `$${minP.toFixed(2)}` : `$${minP.toFixed(2)} – $${maxP.toFixed(2)}`;
+          return {
+            title: r.title,
+            slug: r.slug,
+            image: r.image,
+            price,
+          };
+        })
+        .filter(Boolean) as Array<{ title: string; slug: string; image: string | null; price: string }>;
+
+      // Attach recommendations to product data
+      const enrichedProduct = { ...product, recommendations: recs };
+      const waNumber = process.env.NEXT_PUBLIC_WHATSAPP || '628219105980';
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
+      const html = renderProductTemplate(enrichedProduct, waNumber, baseUrl);
+
+
+      return <div dangerouslySetInnerHTML={{ __html: html }} />;
+    }
+  }
+
+  // Default: render raw HTML
   return (
     <div
       dangerouslySetInnerHTML={{ __html: post.content }}

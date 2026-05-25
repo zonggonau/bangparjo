@@ -46,8 +46,26 @@ export default async function SearchPage({
         const d = res.data;
         // V2 response: data.content[0].productList
         if (d.content && d.content.length > 0) {
-          products = d.content[0].productList || [];
+          const rawProducts = d.content[0].productList || [];
+          products = rawProducts.map((p: any) => ({
+            pid: p.id || p.pid,
+            productName: p.nameEn || p.productName || '',
+            productNameEn: p.nameEn || p.productNameEn || '',
+            productImage: p.bigImage || p.productImage || '',
+            bigImage: p.bigImage || '',
+            sellPrice: typeof p.sellPrice === 'number' ? p.sellPrice : parseFloat(p.sellPrice || p.nowPrice || '0'),
+            nowPrice: p.nowPrice || '',
+            discountPrice: p.discountPrice || '',
+            categoryName: p.oneCategoryName || p.twoCategoryName || p.threeCategoryName || '',
+            categoryId: p.categoryId || '',
+            productSku: p.sku || '',
+            productWeight: p.productWeight || 0,
+            productUnit: p.productUnit || 'piece',
+            listedNum: p.listedNum || 0,
+            isFreeShipping: p.addMarkStatus === 1,
+          }));
         }
+
         total = d.totalRecords || 0;
       } else {
         error = res.message || 'Search failed';

@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import '../globals.css';
+import { connection } from 'next/server';
 
-export default function BillingLayout({ children }: { children: React.ReactNode }) {
+export default async function BillingLayout({ children }: { children: React.ReactNode }) {
+  await connection();
   return (
     <div className="bg-gray-50 min-h-screen">
       <header className="py-6 border-b border-gray-200 bg-white">

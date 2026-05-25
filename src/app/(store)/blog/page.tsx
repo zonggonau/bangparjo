@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { getBlogPostsAction } from '@/lib/actions-content';
 
 interface BlogPost {
   id: string;
@@ -18,10 +19,9 @@ export default function BlogPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/blog')
-      .then(res => res.json())
+    getBlogPostsAction()
       .then(data => {
-        if (data.success) setPosts(data.data);
+        if (data.success) setPosts((data.data as any) || []);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -61,9 +61,11 @@ export default function BlogPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {posts.map(post => (
-              <Link
+              <a
                 key={post.id}
                 href={`/${post.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="group block bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 no-underline"
               >
                 <div className="h-48 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
@@ -97,7 +99,7 @@ export default function BlogPage() {
                     Read More →
                   </div>
                 </div>
-              </Link>
+              </a>
             ))}
           </div>
         )}

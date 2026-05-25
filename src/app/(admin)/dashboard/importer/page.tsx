@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { parseProductImage } from '@/lib/utils';
+import { importProductAction } from '@/lib/actions-admin-inventory';
 
 export default function ProductImporter() {
   const [toast, setToast] = useState<{ show: boolean, message: string, type: 'success' | 'error' }>({ show: false, message: '', type: 'success' });
@@ -67,12 +68,7 @@ export default function ProductImporter() {
   const handleImport = async (pid: string) => {
     setImporting(pid);
     try {
-      const res = await fetch('/api/admin/import-product', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pid, isHero: false })
-      });
-      const data = await res.json();
+      const data = await importProductAction(pid, false);
       if (data.success) showToast('Product imported to inventory');
       else showToast(data.error || 'Import failure', 'error');
     } catch (err: any) { showToast('Server crash during import', 'error'); } 

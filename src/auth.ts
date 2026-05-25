@@ -20,8 +20,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!user) return null;
 
-        // If user has password, verify it (for admin accounts)
-        if (user.password && credentials.password) {
+        // If user has password, strictly verify it (for admin accounts)
+        if (user.password) {
+          if (!credentials.password) return null;
           const isValid = await bcrypt.compare(
             credentials.password as string,
             user.password

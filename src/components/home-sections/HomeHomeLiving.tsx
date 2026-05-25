@@ -1,9 +1,16 @@
 import { prisma } from '@/lib/db';
+import { getOrSet } from '@/lib/redis';
 import ProductCard from '../ProductCard';
 import { getProducts } from '@/lib/cj-api';
 import Link from 'next/link';
 
-export default async function HomeHomeLiving() {
+const CACHE_TTL = 3600; // 1 hour
+
+async function getHomeLivingProducts() {
+  return getOrSet('home:homeliving', fetchHomeLivingProducts, CACHE_TTL);
+}
+
+async function fetchHomeLivingProducts() {
   // Try to get from local DB first
   const dbProducts = await prisma.product.findMany({
     take: 10,
@@ -47,6 +54,12 @@ export default async function HomeHomeLiving() {
       console.warn('[HomeHomeLiving] CJ API Fallback failed');
     }
   }
+
+  return mainProducts;
+}
+
+export default async function HomeHomeLiving() {
+  const mainProducts = await getHomeLivingProducts();
 
   if (mainProducts.length === 0) return null;
 

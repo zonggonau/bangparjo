@@ -2,6 +2,7 @@
 
 import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { useState } from "react";
+import { capturePayPalOrderAction } from '@/lib/actions';
 
 interface PayPalButtonProps {
   amount: number;
@@ -48,16 +49,10 @@ export default function PayPalButton({ amount, orderId, onSuccess }: PayPalButto
               const details = await actions.order.capture();
               
               // Call our backend to update status
-              const res = await fetch('/api/paypal/capture', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  orderId: orderId,
-                  paypalData: details
-                })
+              const resData = await capturePayPalOrderAction({
+                orderId: orderId,
+                paypalData: details
               });
-              
-              const resData = await res.json();
               if (resData.success) {
                 onSuccess();
               } else {

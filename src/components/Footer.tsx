@@ -2,9 +2,15 @@
 
 import Link from 'next/link';
 import { useSettings } from '@/context/SettingsContext';
+import { useEffect, useState } from 'react';
 
 export default function Footer() {
   const { settings } = useSettings();
+  const [year, setYear] = useState('2026');
+
+  useEffect(() => {
+    setYear(String(new Date().getFullYear()));
+  }, []);
   
   return (
     <footer className="bg-[#FAFAFA] border-t border-[#E5E5E5] pt-16 pb-0">
@@ -63,7 +69,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="py-6 flex flex-col md:flex-row justify-between items-center text-[14px] text-[#888888]">
-          <p>&copy; {new Date().getFullYear()} {settings.storeName}. All rights reserved. | Global Dropshipping Marketplace</p>
+          <p>&copy; {year} {settings.storeName}. All rights reserved. | Global Dropshipping Marketplace</p>
           <div className="flex gap-2 text-2xl text-[#888888]">
             <i className="fab fa-cc-visa"></i>
             <i className="fab fa-cc-mastercard"></i>

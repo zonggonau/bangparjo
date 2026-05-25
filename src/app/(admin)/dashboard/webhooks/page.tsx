@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getAdminWebhooksAction } from '@/lib/actions-admin-webhooks';
 
 export default function WebhookLogsPage() {
   const [logs, setLogs] = useState<any[]>([]);
@@ -15,9 +16,8 @@ export default function WebhookLogsPage() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/webhooks'); 
-      const data = await res.json();
-      if (data.success) setLogs(data.data);
+      const data = await getAdminWebhooksAction();
+      if (data.success) setLogs((data as any).data || []);
     } catch (e) {
       console.error(e);
     } finally {

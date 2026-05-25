@@ -17,6 +17,7 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { revalidateTag } from 'next/cache';
 import { sendCustomWA } from '@/lib/openclaw-client';
 import {
   notifyCJOrderUpdate,
@@ -240,6 +241,16 @@ async function handleStockUpdate(params: any) {
       }
     }
   }
+
+  // Invalidate home page cache so updated products appear
+  revalidateTag('home:featured', { expire: 0 });
+  revalidateTag('home:bestsellers', { expire: 0 });
+  revalidateTag('home:beauty', { expire: 0 });
+  revalidateTag('home:fashion', { expire: 0 });
+  revalidateTag('home:electronics', { expire: 0 });
+  revalidateTag('home:toys', { expire: 0 });
+  revalidateTag('home:homeliving', { expire: 0 });
+  revalidateTag('home:categories', { expire: 0 });
 
   // Alert admin if there are low stock items
   if (lowStockVariants.length > 0) {

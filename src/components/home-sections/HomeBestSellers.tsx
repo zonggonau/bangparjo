@@ -1,8 +1,15 @@
 import { getProducts } from '@/lib/cj-api';
 import { prisma } from '@/lib/db';
+import { getOrSet } from '@/lib/redis';
 import ProductCard from '@/components/ProductCard';
 
-export default async function HomeBestSellers() {
+const CACHE_TTL = 3600; // 1 hour
+
+async function getBestSellers() {
+  return getOrSet('home:bestsellers', fetchBestSellers, CACHE_TTL);
+}
+
+async function fetchBestSellers() {
   const dbProducts = await prisma.product.findMany({
     take: 8,
     orderBy: { createdAt: 'desc' },
@@ -37,6 +44,12 @@ export default async function HomeBestSellers() {
       console.warn('[HomeBestSellers] CJ API Fallback failed, showing empty or DB only.');
     }
   }
+
+  return mainProducts;
+}
+
+export default async function HomeBestSellers() {
+  const mainProducts = await getBestSellers();
 
   if (mainProducts.length === 0) return null;
 

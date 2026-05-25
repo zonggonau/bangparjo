@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { getAdminOrdersAction, fulfillAdminOrderAction, syncAdminOrderAction } from '@/lib/actions-admin-orders';
 
 function formatUSD(price: number | string | null | undefined) {
   const p = typeof price === 'string' ? parseFloat(price) : (price || 0);
@@ -32,8 +33,7 @@ export default function AdminOrderDetail() {
   useEffect(() => {
     if (!orderNum) return;
     setLoading(true);
-    fetch('/api/admin/orders')
-      .then(r => r.json())
+    getAdminOrdersAction()
       .then(res => {
         const orders = res.success && Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
         const found = orders.find((o: any) => o.orderNum === orderNum || o.id === orderNum);
@@ -58,25 +58,15 @@ export default function AdminOrderDetail() {
   const handleFulfill = async () => {
     if (!confirm(`Submit order ${orderNum} to CJ for fulfillment?`)) return;
     try {
-      const res = await fetch('/api/admin/orders/fulfill', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderNum }),
-      });
-      const data = await res.json();
-      alert(data.success ? 'Fulfillment initiated!' : 'Error: ' + data.error);
+      const data = await fulfillAdminOrderAction(orderNum) as any;
+      alert(data.success ? 'Fulfillment initiated!' : 'Error: ' + (data.error || data.message));
       if (data.success) window.location.reload();
     } catch (e: any) { alert('Error: ' + e.message); }
   };
 
   const handleSync = async () => {
     try {
-      const res = await fetch('/api/admin/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: order.id }),
-      });
-      const data = await res.json();
+      const data = await syncAdminOrderAction(order.id);
       alert(data.success ? 'Status synced: ' + data.status : 'Sync error: ' + data.error);
       if (data.success) window.location.reload();
     } catch (e: any) { alert('Error: ' + e.message); }

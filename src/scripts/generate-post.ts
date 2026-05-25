@@ -1,47 +1,72 @@
 /**
- * Generate Sosial Media Post untuk Produk CJ
- * Jalanin: npx tsx src/scripts/generate-post.ts <CJ_PRODUCT_ID>
- * Contoh:  npx tsx src/scripts/generate-post.ts 2050034562827591682
+ * Generate Social Media Post for CJ Products
+ * Run: npx tsx src/scripts/generate-post.ts <CJ_PRODUCT_ID>
+ * Example: npx tsx src/scripts/generate-post.ts 2050034562827591682
  * 
- * Hasil: Output siap copy-paste ke FB, IG, Twitter
+ * Output: Ready to copy-paste to FB, IG, Twitter
  */
 import 'dotenv/config';
 import { getProductDetails } from '@/lib/cj-api';
 
 const productId = process.argv[2];
 if (!productId) {
-  console.log('Cara pakai: npx tsx src/scripts/generate-post.ts <PRODUCT_ID>');
-  console.log('Cari product ID dari CJ Dashboard atau hasil sync');
+  console.log('Usage: npx tsx src/scripts/generate-post.ts <PRODUCT_ID>');
+  console.log('Find product ID from CJ Dashboard or sync results');
   process.exit(1);
 }
 
 async function generate() {
-  console.log(`🔍 Generating post untuk produk: ${productId}\n`);
+  console.log(`🔍 Generating post for product: ${productId}\n`);
   
   const res = await getProductDetails(productId);
   if (!res.success || !res.data) {
-    console.log(`❌ Gagal ambil produk: ${res.message}`);
+    console.log(`❌ Failed to fetch product: ${res.message}`);
     process.exit(1);
   }
 
   const p = res.data;
   const price = p.variants?.[0]?.variantSellPrice || p.sellPrice || 0;
-  const priceIDR = Math.round(price * 16500);
-  const checkoutUrl = `https://bangparjo.shop/checkout?pid=${p.pid}&vid=${p.variants?.[0]?.vid || ''}`;
+  // Build product URL: /product/[cjId]/[slug]?v=[variantId]&color=[color]&size=[size]&price=[price]
+  const firstVariant = p.variants?.[0] || {};
+  const productSlug = p.productNameEn
+    ? p.productNameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    : p.pid;
+  const variantParams = new URLSearchParams();
+  if (firstVariant.vid) variantParams.set('v', firstVariant.vid);
+  if (firstVariant.color) variantParams.set('color', firstVariant.color);
+  if (firstVariant.size) variantParams.set('size', firstVariant.size);
+  variantParams.set('price', price.toFixed(2));
+  const checkoutUrl = `https://bangparjo.shop/product/${p.pid}/${productSlug}?${variantParams.toString()}`;
+
+
+  // Generate coupon codes based on product price
+  var couponCode = '';
+  var couponText = '';
+  if (price >= 50) {
+    couponCode = 'FREESHIP';
+    couponText = '🚚 FREE SHIPPING — Use code: FREESHIP';
+  } else if (price >= 20) {
+    couponCode = 'SAVE10';
+    couponText = '💸 10% OFF — Use code: SAVE10';
+  } else {
+    couponCode = 'WELCOME5';
+    couponText = '🎉 $5 OFF — Use code: WELCOME5';
+  }
 
   const post = {
-    facebook: `🛒 **PRODUK TERBARU** 🛒\n\n${p.productNameEn}\n\n💰 Harga: $${price} (~Rp ${priceIDR.toLocaleString('id-ID')})\n🚚 Worldwide Shipping\n✅ Produk Original — Dropship Langsung dari Supplier\n\n🔗 ORDER SEKARANG: ${checkoutUrl}\n\n#Dropship #BangParjo #BelanjaOnline #GlobalShipping`,
+    facebook: `🛒 **NEW PRODUCT** 🛒\n\n${p.productNameEn}\n\n💰 Price: $${price}\n🚚 Worldwide Shipping\n✅ Original Product — Direct Dropship from Supplier\n${couponText}\n\n🔗 ORDER NOW: ${checkoutUrl}\n\n#Dropship #BangParjo #OnlineShopping #GlobalShipping`,
 
-    instagram: `✨ NEW ARRIVAL ✨\n\n${p.productNameEn}\n\n💰 $${price} | Rp ${priceIDR.toLocaleString('id-ID')}\n🌍 Worldwide Shipping\n✅ Original Product\n\n👇 ORDER LINK IN BIO\n🔗 bangparjo.shop/checkout?pid=${p.pid}`,
+    instagram: `✨ NEW ARRIVAL ✨\n\n${p.productNameEn}\n\n💰 $${price}\n🌍 Worldwide Shipping\n✅ Original Product\n${couponText}\n\n👇 ORDER LINK IN BIO\n🔗 bangparjo.shop/checkout?pid=${p.pid}`,
 
-    twitter: `🛍️ ${p.productNameEn}\n💰 $${price} (~Rp ${priceIDR.toLocaleString('id-ID')})\n🚚 Worldwide Shipping\n\nOrder: ${checkoutUrl}`,
+    twitter: `🛍️ ${p.productNameEn}\n💰 $${price}\n🚚 Worldwide Shipping\n${couponText}\n\nOrder: ${checkoutUrl}`,
 
     google_ads: {
-      headline: `${p.productNameEn} — Hanya $${price}`,
-      description: `Dapatkan ${p.productNameEn} dengan harga terbaik. Worldwide Shipping. Original Product. Pesan sekarang!`,
+      headline: `${p.productNameEn} — Only $${price}`,
+      description: `Get ${p.productNameEn} at the best price. ${couponText.replace(/[^a-zA-Z0-9 $%.]/g, '')}. Worldwide Shipping. Order now!`,
       final_url: checkoutUrl,
     }
   };
+
 
   console.log('='.repeat(60));
   console.log('📘 FACEBOOK');
@@ -62,12 +87,12 @@ async function generate() {
   console.log('🔍 GOOGLE ADS');
   console.log('='.repeat(60));
   console.log(`Headline: ${post.google_ads.headline}`);
-  console.log(`Deskripsi: ${post.google_ads.description}`);
+  console.log(`Description: ${post.google_ads.description}`);
   console.log(`URL: ${post.google_ads.final_url}`);
 
   // Image
   if (p.productImage) {
-    console.log('\n📷 GAMBAR PRODUK:');
+    console.log('\n📷 PRODUCT IMAGE:');
     console.log(p.productImage);
   }
 }

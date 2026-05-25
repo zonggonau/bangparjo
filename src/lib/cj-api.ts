@@ -16,9 +16,9 @@ async function waitForSlot(): Promise<void> {
 export async function getCache(key: string) {
   if (typeof window !== 'undefined') return null;
   try {
-    const { redis } = await import('@/lib/redis');
-    if (redis.status !== 'ready') return null;
-    const data = await redis.get(key);
+    const { redis: r } = await import('@/lib/redis');
+    if (!r || r.status !== 'ready') return null;
+    const data = await r.get(key);
     return data ? JSON.parse(data) : null;
   } catch (e) {
     console.warn('[Redis Get Cache Error]:', e);
@@ -29,9 +29,9 @@ export async function getCache(key: string) {
 export async function setCache(key: string, data: any, ttl = 1800) {
   if (typeof window !== 'undefined') return;
   try {
-    const { redis } = await import('@/lib/redis');
-    if (redis.status !== 'ready') return;
-    await redis.set(key, JSON.stringify(data), 'EX', ttl);
+    const { redis: r } = await import('@/lib/redis');
+    if (!r || r.status !== 'ready') return;
+    await r.set(key, JSON.stringify(data), 'EX', ttl);
   } catch (e) {
     console.warn('[Redis Set Cache Error]:', e);
   }
@@ -59,30 +59,157 @@ export interface CJResponse<T> {
   requestId: string;
 }
 
-export async function getAccessTokenServer(): Promise<string> {
-  if (cachedToken && tokenExpiry && Date.now() < tokenExpiry) return cachedToken;
+/**
+ * Auth endpoint base URL — uses the recommended api2.0/v1 path as per CJ docs
+ */
+const AUTH_BASE_URL = process.env.CJ_AUTH_BASE_URL || 'https://developers.cjdropshipping.com';
 
-  try {
-    const { prisma } = await import('@/lib/db');
-    const dbToken = await prisma.storeSetting.findUnique({ where: { key: 'CJ_ACCESS_TOKEN' } });
-    const dbExpiry = await prisma.storeSetting.findUnique({ where: { key: 'CJ_TOKEN_EXPIRY' } });
-    
-    if (dbToken && dbExpiry && Date.now() < parseInt(dbExpiry.value)) {
-      cachedToken = dbToken.value;
-      tokenExpiry = parseInt(dbExpiry.value);
-      return cachedToken;
-    }
-  } catch (e) {
-    console.error('[Token DB Load Error]:', e);
+/**
+ * Parse an ISO date string (e.g. "2021-08-18T09:16:33+08:00") to a timestamp.
+ */
+function parseCJDate(dateStr: string): number {
+  return new Date(dateStr).getTime();
+}
+
+/**
+ * Response shape from auth endpoints (getAccessToken / refreshAccessToken).
+ */
+interface CJTokenResponse {
+  openId?: number;
+  accessToken: string;
+  accessTokenExpiryDate: string;
+  refreshToken: string;
+  refreshTokenExpiryDate: string;
+  createDate?: string;
+}
+
+/**
+ * Save token data to the database.
+ */
+async function saveTokensToDB(
+  prisma: any,
+  accessToken: string,
+  accessExpiry: number,
+  refreshToken: string,
+  refreshExpiry: number,
+): Promise<void> {
+  await prisma.storeSetting.upsert({
+    where: { key: 'CJ_ACCESS_TOKEN' },
+    update: { value: accessToken },
+    create: { key: 'CJ_ACCESS_TOKEN', value: accessToken },
+  });
+  await prisma.storeSetting.upsert({
+    where: { key: 'CJ_TOKEN_EXPIRY' },
+    update: { value: accessExpiry.toString() },
+    create: { key: 'CJ_TOKEN_EXPIRY', value: accessExpiry.toString() },
+  });
+  await prisma.storeSetting.upsert({
+    where: { key: 'CJ_REFRESH_TOKEN' },
+    update: { value: refreshToken },
+    create: { key: 'CJ_REFRESH_TOKEN', value: refreshToken },
+  });
+  await prisma.storeSetting.upsert({
+    where: { key: 'CJ_REFRESH_TOKEN_EXPIRY' },
+    update: { value: refreshExpiry.toString() },
+    create: { key: 'CJ_REFRESH_TOKEN_EXPIRY', value: refreshExpiry.toString() },
+  });
+}
+
+/**
+ * Call the CJ refresh token endpoint (POST /api2.0/v1/authentication/refreshAccessToken).
+ *
+ * As per CJ docs:
+ * - Access token life: 15 days
+ * - Refresh token life: 180 days
+ * - Token Caching: same token returned within 24 hours (server-side cache)
+ */
+async function refreshAccessTokenFromCJ(
+  refreshToken: string,
+  prisma: any,
+): Promise<{ accessToken: string; accessExpiry: number }> {
+  const url = `${AUTH_BASE_URL}/api2.0/v1/authentication/refreshAccessToken`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken }),
+  });
+  const data = await response.json();
+
+  if (!data.success && !data.result) {
+    throw new Error(data.message || 'Refresh token failed');
   }
 
-  await waitForSlot();
-  if (cachedToken && tokenExpiry && Date.now() < tokenExpiry) return cachedToken;
+  const tokenData: CJTokenResponse = data.data;
+  const accessExpiry = parseCJDate(tokenData.accessTokenExpiryDate);
+  const refreshExpiry = parseCJDate(tokenData.refreshTokenExpiryDate);
 
-  const url = `${BASE_URL}/v1/authentication/getAccessToken`;
+  await saveTokensToDB(prisma, tokenData.accessToken, accessExpiry, tokenData.refreshToken, refreshExpiry);
+
+  return { accessToken: tokenData.accessToken, accessExpiry };
+}
+
+export async function getAccessTokenServer(): Promise<string> {
+  // 1. In-memory cache check
+  if (cachedToken && tokenExpiry && Date.now() < tokenExpiry) {
+    return cachedToken!;
+  }
+
+  let prisma: any;
+
+  try {
+    const db = await import('@/lib/db');
+    prisma = db.prisma;
+  } catch {
+    // DB not available, fall back to direct API call
+  }
+
+  if (prisma) {
+    try {
+      const [dbToken, dbExpiry, dbRefreshToken, dbRefreshExpiry] = await Promise.all([
+        prisma.storeSetting.findUnique({ where: { key: 'CJ_ACCESS_TOKEN' } }),
+        prisma.storeSetting.findUnique({ where: { key: 'CJ_TOKEN_EXPIRY' } }),
+        prisma.storeSetting.findUnique({ where: { key: 'CJ_REFRESH_TOKEN' } }),
+        prisma.storeSetting.findUnique({ where: { key: 'CJ_REFRESH_TOKEN_EXPIRY' } }),
+      ]);
+
+      // 2. Access token still valid → use it
+      if (dbToken && dbExpiry && Date.now() < parseInt(dbExpiry.value)) {
+        cachedToken = dbToken.value;
+        tokenExpiry = parseInt(dbExpiry.value);
+        return cachedToken!;
+      }
+
+      // 3. Access token expired, but refresh token still valid → refresh
+      if (dbRefreshToken && dbRefreshExpiry && Date.now() < parseInt(dbRefreshExpiry.value)) {
+        try {
+          await waitForSlot();
+          const result = await refreshAccessTokenFromCJ(dbRefreshToken.value, prisma);
+          cachedToken = result.accessToken;
+          tokenExpiry = result.accessExpiry;
+          return cachedToken;
+        } catch (err) {
+          console.warn('[Token Refresh Failed]:', err);
+          // Fall through to full re-auth
+        }
+      }
+    } catch (e) {
+      console.error('[Token DB Load Error]:', e);
+    }
+  }
+
+  // 4. Double-check in-memory (in case another concurrent call already fetched)
+  if (cachedToken && tokenExpiry && Date.now() < tokenExpiry) {
+    return cachedToken;
+  }
+
+  // 5. Full re-authentication with API key
+  await waitForSlot();
+
+  const url = `${AUTH_BASE_URL}/api2.0/v1/authentication/getAccessToken`;
   let retryCount = 0;
   const maxRetries = 3;
-  
+
   while (retryCount < maxRetries) {
     try {
       const response = await fetch(url, {
@@ -90,8 +217,8 @@ export async function getAccessTokenServer(): Promise<string> {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apiKey: API_KEY }),
       });
-      const data: CJResponse<{ accessToken: string }> = await response.json();
-      
+      const data: CJResponse<CJTokenResponse> = await response.json();
+
       if (!data.success && !data.result) {
         if (data.message?.includes('QPS limit') || data.code === 1600100) {
           retryCount++;
@@ -101,24 +228,19 @@ export async function getAccessTokenServer(): Promise<string> {
         throw new Error(data.message || 'Auth failed');
       }
 
-      cachedToken = data.data.accessToken;
-      tokenExpiry = Date.now() + 14 * 24 * 60 * 60 * 1000;
+      const tokenData: CJTokenResponse = data.data;
+      cachedToken = tokenData.accessToken;
+      tokenExpiry = parseCJDate(tokenData.accessTokenExpiryDate);
 
-      try {
-        const { prisma } = await import('@/lib/db');
-        await prisma.storeSetting.upsert({
-          where: { key: 'CJ_ACCESS_TOKEN' },
-          update: { value: cachedToken },
-          create: { key: 'CJ_ACCESS_TOKEN', value: cachedToken }
-        });
-        await prisma.storeSetting.upsert({
-          where: { key: 'CJ_TOKEN_EXPIRY' },
-          update: { value: tokenExpiry.toString() },
-          create: { key: 'CJ_TOKEN_EXPIRY', value: tokenExpiry.toString() }
-        });
-      } catch (e) {
-        console.error('[Token DB Save Error]:', e);
+      if (prisma) {
+        try {
+          const refreshExpiry = parseCJDate(tokenData.refreshTokenExpiryDate);
+          await saveTokensToDB(prisma, cachedToken, tokenExpiry, tokenData.refreshToken, refreshExpiry);
+        } catch (e) {
+          console.error('[Token DB Save Error]:', e);
+        }
       }
+
       return cachedToken!;
     } catch (err: any) {
       if (retryCount >= maxRetries) throw err;
@@ -132,26 +254,21 @@ export async function getAccessTokenServer(): Promise<string> {
 // ── Generic fetcher ───────────────────────────────────────────────────────
 export async function cjFetch<T>(
   endpoint: string,
-  options: RequestInit & { next?: { revalidate?: number | false; tags?: string[] } } = {}
+  options: RequestInit & { next?: { revalidate?: number | false; tags?: string[] }; timeout?: number; maxRetries?: number } = {}
 ): Promise<CJResponse<T>> {
   if (typeof window !== 'undefined') {
+    const { cjProxyAction } = await import('@/lib/actions-catalog');
+    
     const isGet = !options.method || options.method.toUpperCase() === 'GET';
     if (isGet) {
-      const url = `/api/cj-proxy?endpoint=${encodeURIComponent(endpoint)}`;
-      const response = await fetch(url);
-      return response.json();
+      return (await cjProxyAction(endpoint, { method: 'GET' })) as CJResponse<T>;
     }
-    const response = await fetch('/api/cj-proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        endpoint,
-        method: options.method,
-        data: options.body ? JSON.parse(options.body as string) : undefined,
-        headers: options.headers,
-      }),
-    });
-    return response.json();
+    
+    return (await cjProxyAction(endpoint, {
+      method: options.method,
+      headers: options.headers,
+      body: options.body ? JSON.parse(options.body as string) : undefined,
+    })) as CJResponse<T>;
   }
 
   const isGet = !options.method || options.method.toUpperCase() === 'GET';
@@ -164,8 +281,15 @@ export async function cjFetch<T>(
     if (cached) return cached;
   }
 
+  // ── Fix double-path: BASE_URL already includes /api2.0, so strip it from endpoints ──
+  const cleanEndpoint = endpoint.replace(/^\/api2\.0/, '');
+  
+  // ── AbortController with 20-second timeout ──
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000);
+
   let retryCount = 0;
-  const maxRetries = 5; // Increased to 5 retries
+  const maxRetries = 3; // Reduce to 3 to avoid excessive spinning
 
   while (retryCount < maxRetries) {
     try {
@@ -174,6 +298,7 @@ export async function cjFetch<T>(
 
       const fetchOptions: any = {
         ...options,
+        signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
           'CJ-Access-Token': token,
@@ -185,7 +310,7 @@ export async function cjFetch<T>(
         fetchOptions.next = { revalidate: 3600 };
       }
 
-      const response = await fetch(`${BASE_URL}${endpoint}`, fetchOptions);
+      const response = await fetch(`${BASE_URL}${cleanEndpoint}`, fetchOptions);
       const data = await response.json();
 
       // Handle Invalid/Expired Token (Retry once with fresh token)
@@ -492,6 +617,8 @@ export async function getShippingFeeBySku(params: {
     const res = await cjFetch<any>('/v1/logistic/freightCalculateTip', {
       method: 'POST',
       body: JSON.stringify({ reqDTOS }),
+      timeout: 10000,
+      maxRetries: 0,
     });
 
     if (res.success && res.data && res.data.length > 0) {
@@ -532,6 +659,8 @@ export async function getShippingFee(params: {
         endCountryCode: params.endCountryCode,
         products: params.products,
       }),
+      timeout: 10000,
+      maxRetries: 0,
     });
     
     // Fallback logic if API fails due to QPS or other issues
@@ -1026,4 +1155,305 @@ export async function querySourcing(sourceIds: string[]): Promise<CJResponse<CJS
     method: 'POST',
     body: JSON.stringify({ sourceIds }),
   });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Missing API Implementations (from reference table)
+// ════════════════════════════════════════════════════════════════════════════
+
+// ── Authentication: Others ────────────────────────────────────────────────
+
+/**
+ * Logout (POST)
+ * Endpoint: /api2.0/v1/authentication/logout
+ * Invalidates the current access token and refresh token.
+ */
+export async function logout(): Promise<CJResponse<boolean>> {
+  return cjFetch<boolean>('/api2.0/v1/authentication/logout', {
+    method: 'POST',
+  });
+}
+
+/**
+ * Get Authorize URL (GET)
+ * Endpoint: /api2.0/v1/authentication/getAuthorizeUrl
+ * Returns the authorization URL for OAuth flow.
+ */
+export async function getAuthorizeUrl(params: {
+  redirectUri: string;
+  state?: string;
+}): Promise<CJResponse<{ authorizeUrl: string }>> {
+  const query = new URLSearchParams({ redirectUri: params.redirectUri });
+  if (params.state) query.set('state', params.state);
+  return cjFetch<{ authorizeUrl: string }>(`/api2.0/v1/authentication/getAuthorizeUrl?${query.toString()}`);
+}
+
+/**
+ * Exchange Access Token (POST)
+ * Endpoint: /api2.0/v1/authentication/exchangeAccessToken
+ * Exchange authorization code for an access token.
+ */
+export interface CJExchangeTokenResponse {
+  accessToken: string;
+  accessTokenExpiryDate: string;
+  refreshToken: string;
+  refreshTokenExpiryDate: string;
+}
+
+export async function exchangeAccessToken(params: {
+  code: string;
+  redirectUri: string;
+}): Promise<CJResponse<CJExchangeTokenResponse>> {
+  return cjFetch<CJExchangeTokenResponse>('/api2.0/v1/authentication/exchangeAccessToken', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
+/**
+ * Get Affiliate Access Token (POST)
+ * Endpoint: /api2.0/v1/authentication/getAffiliateAccessToken
+ * Get access token with affiliate privileges.
+ */
+export async function getAffiliateAccessToken(params: {
+  apiKey: string;
+}): Promise<CJResponse<CJTokenResponse>> {
+  return cjFetch<CJTokenResponse>('/api2.0/v1/authentication/getAffiliateAccessToken', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
+// ── Settings ───────────────────────────────────────────────────────────────
+
+/**
+ * Get Settings (GET)
+ * Endpoint: /api2.0/v1/setting/get
+ * Returns the current CJ account settings.
+ */
+export interface CJSetting {
+  key: string;
+  value: string;
+  description?: string;
+}
+
+export async function getSettings(): Promise<CJResponse<CJSetting[]>> {
+  return cjFetch<CJSetting[]>('/api2.0/v1/setting/get');
+}
+
+// ── Shopping: Order (V1 & V3) ─────────────────────────────────────────────
+
+/**
+ * Create Order V1 (POST)
+ * Endpoint: /api2.0/v1/shopping/order/createOrder
+ * Original create order endpoint.
+ */
+export async function createOrderV1(orderData: {
+  orderNumber: string;
+  shippingZip?: string;
+  shippingCountry: string;
+  shippingCountryCode: string;
+  shippingProvince: string;
+  shippingCity: string;
+  shippingPhone?: string;
+  shippingCustomerName: string;
+  shippingAddress: string;
+  shippingAddress2?: string;
+  logisticName?: string;
+  fromCountryCode?: string;
+  payType?: number;
+  products: Array<{ vid?: string; sku?: string; quantity: number }>;
+}): Promise<CJResponse<any>> {
+  return cjFetch<any>('/api2.0/v1/shopping/order/createOrder', {
+    method: 'POST',
+    body: JSON.stringify({
+      fromCountryCode: orderData.fromCountryCode || 'CN',
+      logisticName: orderData.logisticName || 'CJPacket Ordinary',
+      platform: 'Api',
+      ...orderData,
+      payType: orderData.payType || 3,
+    }),
+  });
+}
+
+/**
+ * Create Order V3 (POST)
+ * Endpoint: /api2.0/v1/shopping/order/createOrderV3
+ * Enhanced order creation with additional fields.
+ */
+export async function createOrderV3(orderData: {
+  orderNumber: string;
+  shippingZip?: string;
+  shippingCountry: string;
+  shippingCountryCode: string;
+  shippingProvince: string;
+  shippingCity: string;
+  shippingPhone?: string;
+  shippingCustomerName: string;
+  shippingAddress: string;
+  shippingAddress2?: string;
+  shippingEmail?: string;
+  logisticName?: string;
+  fromCountryCode?: string;
+  payType?: number;
+  remark?: string;
+  warehouseId?: string;
+  products: Array<{
+    vid?: string;
+    sku?: string;
+    quantity: number;
+    storeLineItemId?: string;
+    warehouseId?: string;
+  }>;
+}): Promise<CJResponse<any>> {
+  return cjFetch<any>('/api2.0/v1/shopping/order/createOrderV3', {
+    method: 'POST',
+    body: JSON.stringify({
+      fromCountryCode: orderData.fromCountryCode || 'CN',
+      logisticName: orderData.logisticName || 'CJPacket Ordinary',
+      platform: 'Api',
+      ...orderData,
+      payType: orderData.payType || 3,
+    }),
+  });
+}
+
+/**
+ * Order Confirmation (PATCH)
+ * Endpoint: /api2.0/v1/shopping/order/confirmOrder
+ * Confirm and submit an order that was created in draft mode.
+ */
+export async function confirmOrder(params: {
+  orderNumber: string;
+}): Promise<CJResponse<any>> {
+  return cjFetch<any>('/api2.0/v1/shopping/order/confirmOrder', {
+    method: 'PATCH',
+    body: JSON.stringify(params),
+  });
+}
+
+// ── Shopping: Payment ──────────────────────────────────────────────────────
+
+/**
+ * Get Balance (GET)
+ * Endpoint: /api2.0/v1/shopping/pay/getBalance
+ * Returns the current account balance.
+ */
+export interface CJBalance {
+  balance: number;
+  balanceStr: string;
+  currency: string;
+}
+
+export async function getBalance(): Promise<CJResponse<CJBalance>> {
+  return cjFetch<CJBalance>('/api2.0/v1/shopping/pay/getBalance');
+}
+
+/**
+ * Balance Payment (POST)
+ * Endpoint: /api2.0/v1/shopping/pay/payBalance
+ * Pay for an order using the account balance.
+ */
+export async function payBalance(params: {
+  orderNumber: string;
+  payPassword?: string;
+}): Promise<CJResponse<any>> {
+  return cjFetch<any>('/api2.0/v1/shopping/pay/payBalance', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
+/**
+ * Balance Payment V2 (POST)
+ * Endpoint: /api2.0/v1/shopping/pay/payBalanceV2
+ * Enhanced balance payment with more options.
+ */
+export async function payBalanceV2(params: {
+  orderNumbers: string[];
+  payPassword?: string;
+}): Promise<CJResponse<any>> {
+  return cjFetch<any>('/api2.0/v1/shopping/pay/payBalanceV2', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
+// ── Logistics: Calculate ───────────────────────────────────────────────────
+
+/**
+ * Partner Freight Calculate (POST)
+ * Endpoint: /api2.0/v1/logistic/partnerFreightCalculate
+ * Calculate shipping cost using partner logistics.
+ */
+export interface CJPartnerFreightRequest {
+  startCountryCode?: string;
+  endCountryCode: string;
+  weight: number;
+  volume?: number;
+  totalGoodsAmount?: number;
+  productProp?: string[];
+}
+
+export async function partnerFreightCalculate(params: CJPartnerFreightRequest): Promise<CJResponse<any>> {
+  return cjFetch<any>('/api2.0/v1/logistic/partnerFreightCalculate', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
+/**
+ * Get Supplier Logistics Template (POST)
+ * Endpoint: /api2.0/v1/logistic/getSupplierLogisticsTemplate
+ * Get logistics template for a supplier product.
+ */
+export async function getSupplierLogisticsTemplate(params: {
+  productId: string;
+  countryCode: string;
+  quantity?: number;
+}): Promise<CJResponse<any>> {
+  return cjFetch<any>('/api2.0/v1/logistic/getSupplierLogisticsTemplate', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
+// ── Logistics: Tracking ────────────────────────────────────────────────────
+
+/**
+ * Track Query (Deprecated) (GET)
+ * Endpoint: /api2.0/v1/logistic/getTrackInfo
+ * Get tracking information for a shipment (deprecated — use trackInfo instead).
+ */
+export interface CJTrackInfo {
+  trackingNumber: string;
+  logisticName: string;
+  trackingFrom: string;
+  trackingTo: string;
+  deliveryDay: string;
+  deliveryTime: string;
+  trackingStatus: string;
+  lastMileCarrier: string;
+  lastTrackNumber: string;
+}
+
+/**
+ * Track Query (Deprecated) (GET)
+ * Endpoint: /api2.0/v1/logistic/getTrackInfo
+ */
+export async function getTrackInfo(trackNumbers: string | string[]): Promise<CJResponse<CJTrackInfo[]>> {
+  const params = Array.isArray(trackNumbers) ? trackNumbers : [trackNumbers];
+  const query = params.map(t => `trackNumber=${encodeURIComponent(t)}`).join('&');
+  return cjFetch<CJTrackInfo[]>(`/api2.0/v1/logistic/getTrackInfo?${query}`);
+}
+
+/**
+ * Track Query (GET)
+ * Endpoint: /api2.0/v1/logistic/trackInfo
+ * Get comprehensive tracking information for shipments.
+ */
+export async function trackInfo(trackNumbers: string | string[]): Promise<CJResponse<CJTrackInfo[]>> {
+  const params = Array.isArray(trackNumbers) ? trackNumbers : [trackNumbers];
+  const query = params.map(t => `trackNumber=${encodeURIComponent(t)}`).join('&');
+  return cjFetch<CJTrackInfo[]>(`/api2.0/v1/logistic/trackInfo?${query}`);
 }

@@ -11,6 +11,7 @@ import { ProductDetailSkeleton } from '@/components/ProductSkeleton';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import AIChat from '@/components/AIChat';
+import { getProductDetailsAction, cjProxyAction } from '@/lib/actions-catalog';
 
 export default function ProductView({ id, initialData, initialError, selectedVid }: { id: string, initialData: any, initialError: string | null, selectedVid?: string }) {
   const { addToCart } = useCart();
@@ -50,8 +51,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
     if (!id || initialData) return;
     setLoading(true);
     setError(null);
-    fetch(`/api/pproduct?cjId=${encodeURIComponent(id)}`)
-      .then(res => res.json())
+    getProductDetailsAction(id)
       .then(res => {
         if (res.success && res.data) {
           setProduct(res.data);
@@ -90,8 +90,6 @@ export default function ProductView({ id, initialData, initialError, selectedVid
     }
   }, [selectedVariant]);
 
-  const [shippingRates, setShippingRates] = useState<any[]>([]);
-  const [shippingLoading, setShippingLoading] = useState(false);
 
   // ── Product Reviews ──────────────────────────────────────────────────────
   const [reviews, setReviews] = useState<any[]>([]);
@@ -107,12 +105,12 @@ export default function ProductView({ id, initialData, initialError, selectedVid
     if (reviewsScore != null) params.set('score', reviewsScore.toString());
     params.set('pageNum', reviewsPage.toString());
     params.set('pageSize', '5');
-    fetch(`/api/cj-proxy?endpoint=/api2.0/v1/product/productComments?${params.toString()}`)
-      .then(r => r.json())
+    cjProxyAction(`/api2.0/v1/product/productComments?${params.toString()}`)
       .then(res => {
         if (res.success && res.data) {
-          setReviews(res.data.list || []);
-          setReviewsTotal(parseInt(res.data.total || '0'));
+          const resData = res.data as any;
+          setReviews(resData.list || []);
+          setReviewsTotal(parseInt(resData.total || '0'));
         }
       })
       .catch(console.error)
@@ -120,24 +118,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
   }, [product?.pid, reviewsPage, reviewsScore]);
 
   // ── Inventory ────────────────────────────────────────────────────────────
-  const [inventory, setInventory] = useState<{ total: number; warehouses: any[] } | null>(null);
-  const [inventoryLoading, setInventoryLoading] = useState(false);
-
-  useEffect(() => {
-    if (!selectedVariant?.vid) return;
-    setInventoryLoading(true);
-    fetch(`/api/cj-proxy?endpoint=/api2.0/v1/product/stock/queryByVid?vid=${selectedVariant.vid}`)
-      .then(r => r.json())
-      .then(res => {
-        if (res.success && res.data) {
-          const data = res.data as any[];
-          const total = data.reduce((sum: number, w: any) => sum + (w.totalInventoryNum || 0), 0);
-          setInventory({ total, warehouses: data });
-        }
-      })
-      .catch(console.error)
-      .finally(() => setInventoryLoading(false));
-  }, [selectedVariant?.vid]);
+  // Using static inventory from product details instead of live API fetch
 
   const currentCjPrice = selectedVariant?.variantSellPrice 
     ? Number(selectedVariant.variantSellPrice)
@@ -145,24 +126,6 @@ export default function ProductView({ id, initialData, initialError, selectedVid
     
   const finalPrice = calculateFinalPrice(currentCjPrice, settings);
 
-  useEffect(() => {
-    if (selectedVariant?.vid) {
-      const timer = setTimeout(async () => {
-        setShippingLoading(true);
-        try {
-          const sku = selectedVariant.variantSku || selectedVariant.vid;
-          const res = await fetch(`/api/shipping-rates?sku=${sku}&quantity=1&country=ID&subtotal=${finalPrice}`);
-          const data = await res.json();
-          if (data.success) setShippingRates(data.data);
-        } catch (err) {
-          console.error('Failed to fetch shipping:', err);
-        } finally {
-          setShippingLoading(false);
-        }
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedVariant?.vid, finalPrice]);
 
   const handleAddToCart = () => {
     const variantInfo = selectedVariant ? { vid: selectedVariant.vid, sku: selectedVariant.variantSku, name: selectedVariant.variantNameEn || selectedVariant.variantKey } : undefined;
@@ -351,41 +314,6 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                 )}
               </div>
 
-              {/* Shipping Calculator */}
-              <div className="p-5 bg-gray-50 rounded-[10px] border border-gray-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <i className="fas fa-truck text-[#FF6B00]"></i>
-                  <h3 className="text-base font-bold text-[#1A1A1A] m-0">Shipping Calculator</h3>
-                </div>
-                
-                <div className="mb-3">
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-500">Destination:</span>
-                    <span className="font-semibold text-[#1A1A1A]">🇮🇩 Indonesia (ID)</span>
-                  </div>
-                </div>
-
-                {shippingLoading ? (
-                  <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
-                ) : shippingRates.length > 0 ? (
-                  <div className="flex flex-col gap-2">
-                    {shippingRates
-                      .sort((a, b) => a.logisticPrice - b.logisticPrice)
-                      .slice(0, 2)
-                      .map((rate, idx) => (
-                      <div key={idx} className="flex justify-between p-2.5 bg-white rounded-[6px] border border-gray-200 text-[13px]">
-                        <div>
-                          <div className="font-semibold text-[#1A1A1A]">{rate.logisticName}</div>
-                          <div className="text-[11px] text-gray-500">Est. {rate.logisticAging} days</div>
-                        </div>
-                        <div className="font-bold text-[#FF6B00]">{rate.formattedPrice}</div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-[13px] text-gray-500 m-0">Select a variant to see shipping costs.</p>
-                )}
-              </div>
 
               {/* Inventory Status */}
               <div className="p-4 bg-gray-50 rounded-[10px] border border-gray-200">
@@ -393,22 +321,14 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                   <i className="fas fa-boxes text-[#FF6B00]"></i>
                   <h3 className="text-sm font-bold text-[#1A1A1A] m-0">Stock Availability</h3>
                 </div>
-                {inventoryLoading ? (
-                  <div className="h-8 bg-gray-200 rounded animate-pulse"></div>
-                ) : inventory ? (
+                {selectedVariant ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className={`w-2.5 h-2.5 rounded-full ${inventory.total > 0 ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      <span className={`w-2.5 h-2.5 rounded-full ${selectedVariant.inventory > 0 ? 'bg-green-500' : 'bg-red-500'}`}></span>
                       <span className="text-sm font-semibold text-[#1A1A1A]">
-                        {inventory.total > 0 ? `${inventory.total.toLocaleString()} units in stock` : 'Out of stock'}
+                        {selectedVariant.inventory > 0 ? `${selectedVariant.inventory.toLocaleString()} units in stock` : 'Out of stock'}
                       </span>
                     </div>
-                    {inventory.warehouses.slice(0, 3).map((w: any, i: number) => (
-                      <div key={i} className="flex justify-between text-xs text-gray-500 pl-5">
-                        <span>{w.areaEn || w.countryCode}</span>
-                        <span className="font-medium">{w.totalInventoryNum?.toLocaleString() || 0} pcs</span>
-                      </div>
-                    ))}
                   </div>
                 ) : (
                   <p className="text-xs text-gray-500 m-0">Select a variant to check stock.</p>

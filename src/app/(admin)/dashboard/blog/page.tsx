@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { getAdminBlogPostsAction, saveAdminBlogPostAction, deleteAdminBlogPostAction } from '@/lib/actions-admin-content';
 
 interface BlogPost {
   id: string;
@@ -32,10 +33,9 @@ export default function AdminBlogPage() {
 
   const loadPosts = () => {
     setLoading(true);
-    fetch('/api/admin/blog')
-      .then(res => res.json())
+    getAdminBlogPostsAction()
       .then(data => {
-        if (data.success) setPosts(data.data);
+        if (data.success) setPosts((data.data as any[]) || []);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -65,14 +65,14 @@ export default function AdminBlogPage() {
     setMessage('');
 
     // Fetch full content
-    fetch(`/api/admin/blog?id=${post.id}`)
-      .then(res => res.json())
+    getAdminBlogPostsAction(post.id)
       .then(data => {
         if (data.success) {
+          const d = data.data as any;
           setForm(prev => ({
             ...prev,
-            content: data.data.content || '',
-            image: data.data.image || '',
+            content: d.content || '',
+            image: d.image || '',
           }));
         }
       })
@@ -92,18 +92,11 @@ export default function AdminBlogPage() {
     setMessage('');
 
     try {
-      const url = editing ? '/api/admin/blog' : '/api/admin/blog';
-      const method = editing ? 'PUT' : 'POST';
       const body = editing
         ? { id: editing.id, ...form }
         : form;
 
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
+      const data = await saveAdminBlogPostAction(body);
 
       if (data.success) {
         setMessage(editing ? '✅ Post updated!' : '✅ Post created!');
@@ -122,8 +115,7 @@ export default function AdminBlogPage() {
   const deletePost = async (id: string) => {
     if (!confirm('Delete this post?')) return;
     try {
-      const res = await fetch(`/api/admin/blog?id=${id}`, { method: 'DELETE' });
-      const data = await res.json();
+      const data = await deleteAdminBlogPostAction(id);
       if (data.success) {
         loadPosts();
       } else {
@@ -136,12 +128,7 @@ export default function AdminBlogPage() {
 
   const togglePublish = async (post: BlogPost) => {
     try {
-      const res = await fetch('/api/admin/blog', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: post.id, published: !post.published }),
-      });
-      const data = await res.json();
+      const data = await saveAdminBlogPostAction({ id: post.id, published: !post.published });
       if (data.success) loadPosts();
     } catch (err: any) {
       alert(err.message);

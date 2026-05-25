@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getAdminAboutAction, saveAdminAboutAction } from '@/lib/actions-admin-content';
 
 interface AboutData {
   id: string;
@@ -28,8 +29,7 @@ export default function AdminAboutPage() {
 
   const loadAbout = () => {
     setLoading(true);
-    fetch('/api/admin/about')
-      .then(res => res.json())
+    getAdminAboutAction()
       .then(data => {
         if (data.success && data.data) {
           setAbout(data.data);
@@ -55,15 +55,8 @@ export default function AdminAboutPage() {
     setMessage('');
 
     try {
-      const method = about ? 'PUT' : 'POST';
       const body = about ? { id: about.id, ...form } : form;
-
-      const res = await fetch('/api/admin/about', {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
+      const data = await saveAdminAboutAction(body);
 
       if (data.success) {
         setMessage('✅ About page saved!');

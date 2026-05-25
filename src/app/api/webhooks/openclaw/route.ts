@@ -423,6 +423,120 @@ export async function POST(req: Request) {
         break;
       }
 
+      // ── Get blog post by slug ───────────────────────────────────────────
+      case 'get-blog': {
+        const { slug } = data || {};
+        if (!slug) {
+          return NextResponse.json(
+            { success: false, error: 'slug is required' },
+            { status: 400 }
+          );
+        }
+
+        const post = await prisma.blogPost.findUnique({
+          where: { slug },
+        });
+
+        if (!post) {
+          return NextResponse.json(
+            { success: false, error: 'Blog post not found' },
+            { status: 404 }
+          );
+        }
+
+        result = {
+          success: true,
+          data: {
+            id: post.id,
+            title: post.title,
+            slug: post.slug,
+            excerpt: post.excerpt,
+            content: post.content,
+            image: post.image,
+            author: post.author,
+            published: post.published,
+            createdAt: post.createdAt,
+            updatedAt: post.updatedAt,
+          },
+        };
+        break;
+      }
+
+      // ── Update blog post content (for OpenClaw to fill in content) ──────
+      case 'update-blog': {
+        const { slug, content, title, excerpt, image, published } = data || {};
+        if (!slug) {
+          return NextResponse.json(
+            { success: false, error: 'slug is required' },
+            { status: 400 }
+          );
+        }
+
+        const existing = await prisma.blogPost.findUnique({ where: { slug } });
+        if (!existing) {
+          return NextResponse.json(
+            { success: false, error: 'Blog post not found' },
+            { status: 404 }
+          );
+        }
+
+        const updateData: any = {};
+        if (content !== undefined) updateData.content = content;
+        if (title !== undefined) updateData.title = title;
+        if (excerpt !== undefined) updateData.excerpt = excerpt;
+        if (image !== undefined) updateData.image = image;
+        if (published !== undefined) updateData.published = published;
+
+        const updated = await prisma.blogPost.update({
+          where: { slug },
+          data: updateData,
+        });
+
+        result = {
+          success: true,
+          data: {
+            id: updated.id,
+            title: updated.title,
+            slug: updated.slug,
+            excerpt: updated.excerpt,
+            content: updated.content,
+            image: updated.image,
+            author: updated.author,
+            published: updated.published,
+            createdAt: updated.createdAt,
+            updatedAt: updated.updatedAt,
+          },
+        };
+        break;
+      }
+
+      // ── List blog posts ─────────────────────────────────────────────────
+      case 'list-blogs': {
+        const { limit = 20, published: onlyPublished } = data || {};
+        const where: any = {};
+        if (onlyPublished !== undefined) where.published = onlyPublished;
+
+        const posts = await prisma.blogPost.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          take: Math.min(limit, 50),
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            excerpt: true,
+            image: true,
+            author: true,
+            published: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        });
+
+        result = { success: true, data: posts };
+        break;
+      }
+
       // ── Analytics: Get order stats ──────────────────────────────────────
       case 'analytics': {
         const { days = 30 } = data || {};
@@ -487,6 +601,9 @@ export async function GET() {
     'list-orders',
     'get-customer',
     'cj-webhook-status',
+    'get-blog',
+    'update-blog',
+    'list-blogs',
     'analytics',
   ];
 

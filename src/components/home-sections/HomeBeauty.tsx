@@ -1,9 +1,16 @@
 import { getProducts } from '@/lib/cj-api';
 import { prisma } from '@/lib/db';
+import { getOrSet } from '@/lib/redis';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
 
-export default async function HomeBeauty() {
+const CACHE_TTL = 3600; // 1 hour
+
+async function getBeautyProducts() {
+  return getOrSet('home:beauty', fetchBeautyProducts, CACHE_TTL);
+}
+
+async function fetchBeautyProducts() {
   const dbProducts = await prisma.product.findMany({
     take: 10,
     where: { 
@@ -43,6 +50,12 @@ export default async function HomeBeauty() {
       console.warn('[HomeBeauty] CJ API Fallback failed, using DB only.');
     }
   }
+
+  return mainProducts;
+}
+
+export default async function HomeBeauty() {
+  const mainProducts = await getBeautyProducts();
 
   if (mainProducts.length === 0) return null;
 

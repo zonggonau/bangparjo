@@ -7,7 +7,6 @@ import { getTrackingInfo } from '@/lib/cj-api';
 // Endpoint: GET /api/cron/sync-orders?key={CRON_SECRET}
 // Syncs local order statuses with CJ Dropshipping tracking data.
 
-export const dynamic = 'force-dynamic';
 export const maxDuration = 120; // 2 minutes max execution
 
 const STATUS_MAP: Record<string, string> = {

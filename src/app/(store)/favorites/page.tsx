@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
 import { useSession } from 'next-auth/react';
+import { syncWishlistAction, getWishlistAction } from '@/lib/actions';
 
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<any[]>([]);
@@ -50,11 +51,7 @@ export default function FavoritesPage() {
 
     const timer = setTimeout(async () => {
       try {
-        await fetch('/api/wishlist/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: favorites }),
-        });
+        await syncWishlistAction(favorites);
       } catch (e) {
         console.error('Wishlist sync failed:', e);
       }
@@ -70,9 +67,8 @@ export default function FavoritesPage() {
 
     const loadFromDB = async () => {
       try {
-        const res = await fetch('/api/wishlist/sync');
-        const data = await res.json();
-        if (data.success && data.data?.length > 0) {
+        const data = await getWishlistAction();
+        if (data.success && data.data && data.data.length > 0) {
           const dbItems = data.data.map((item: any) => ({
             pid: item.pid,
             productName: item.productName || '',

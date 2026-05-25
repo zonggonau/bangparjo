@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
 
-export const dynamic = 'force-dynamic';
-
 export async function GET() {
   const start = Date.now();
   const checks: Record<string, any> = {};
@@ -17,9 +15,9 @@ export async function GET() {
 
   // 2. Redis check (optional — fallback ok if down)
   try {
-    const { redis } = await import('@/lib/redis');
-    if (redis.status === 'ready') {
-      await redis.ping();
+    const { redis: r } = await import('@/lib/redis');
+    if (r && r.status === 'ready') {
+      await r.ping();
       checks.redis = { status: 'healthy' };
     } else {
       checks.redis = { status: 'disconnected' };

@@ -10,6 +10,7 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { revalidateTag } from 'next/cache';
 import { sendCustomWA } from '@/lib/openclaw-client';
 import { notifyCJOrderUpdate, notifyTrackingUpdate } from '@/lib/openclaw-client';
 
@@ -102,6 +103,16 @@ export async function POST(req: Request) {
         });
         console.log(`[CJ Webhook] Updated stock for ${variantId} → ${inventory}`);
       }
+
+      // Invalidate home page cache so updated products appear
+      revalidateTag('home:featured', { expire: 0 });
+      revalidateTag('home:bestsellers', { expire: 0 });
+      revalidateTag('home:beauty', { expire: 0 });
+      revalidateTag('home:fashion', { expire: 0 });
+      revalidateTag('home:electronics', { expire: 0 });
+      revalidateTag('home:toys', { expire: 0 });
+      revalidateTag('home:homeliving', { expire: 0 });
+      revalidateTag('home:categories', { expire: 0 });
     }
 
     return NextResponse.json({ success: true });

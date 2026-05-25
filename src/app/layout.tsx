@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
+
 export const metadata: Metadata = {
   title: {
     template: '%s | bangparjo.shop',
@@ -8,14 +10,14 @@ export const metadata: Metadata = {
   description: "Your trusted global e-commerce marketplace. Find the best global products at the lowest prices. Fashion, electronics, beauty, and more.",
   keywords: "e-commerce, online shopping, global products, fashion, electronics, beauty, worldwide shipping, online store, imported products",
   authors: [{ name: 'bangparjo' }],
-  metadataBase: new URL('https://bangparjo.shop'),
+  metadataBase: new URL(baseUrl),
   alternates: {
     canonical: '/',
   },
   openGraph: {
     title: "bangparjo.shop — Global Shopping, Best Prices",
     description: "Your trusted global e-commerce marketplace with worldwide shipping. Global shopping made easy.",
-    url: 'https://bangparjo.shop',
+    url: baseUrl,
     siteName: 'bangparjo.shop',
     images: [
       {
@@ -55,14 +57,15 @@ export const metadata: Metadata = {
 
 import { Providers } from "@/components/Providers";
 import Analytics from "@/components/Analytics";
-import { getDBStoreSettings } from "@/lib/pricing";
+import { getCachedStoreSettings } from "@/lib/server-settings";
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const initialSettings = await getDBStoreSettings();
+  const initialSettings = await getCachedStoreSettings();
+  const storeUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -75,8 +78,8 @@ export default async function RootLayout({
               "@context": "https://schema.org",
               "@type": "Store",
               "name": "bangparjo.shop",
-              "url": "https://bangparjo.shop",
-              "logo": "https://bangparjo.shop/logo-banner.png",
+              "url": storeUrl,
+              "logo": storeUrl + "/logo-banner.png",
               "description": "Your trusted global e-commerce marketplace. Find the best global products at the lowest prices.",
               "sameAs": [
                 "https://facebook.com/bangparjo",
@@ -85,7 +88,7 @@ export default async function RootLayout({
               ],
               "potentialAction": {
                 "@type": "SearchAction",
-                "target": "https://bangparjo.shop/search?q={search_term_string}",
+                "target": storeUrl + "/search?q={search_term_string}",
                 "query-input": "required name=search_term_string"
               }
             }),
