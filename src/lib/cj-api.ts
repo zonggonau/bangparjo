@@ -49,6 +49,7 @@ const API_KEY = process.env.CJ_API_KEY;
 // ── Token cache ───────────────────────────────────────────────────────────
 let cachedToken: string | null = null;
 let tokenExpiry: number | null = null;
+let tokenFetchPromise: Promise<string> | null = null;
 
 export interface CJResponse<T> {
   success: boolean;
@@ -155,100 +156,116 @@ export async function getAccessTokenServer(): Promise<string> {
     return cachedToken!;
   }
 
-  let prisma: any;
+  if (tokenFetchPromise) {
+    return tokenFetchPromise;
+  }
+
+  tokenFetchPromise = (async () => {
+    let prisma: any;
+    try {
+      const db = await import('@/lib/db');
+      prisma = db.prisma;
+    } catch {
+      // DB not available, fall back to direct API call
+    }
+
+    if (prisma) {
+      try {
+        const [dbToken, dbExpiry, dbRefreshToken, dbRefreshExpiry] = await Promise.all([
+          prisma.storeSetting.findUnique({ where: { key: 'CJ_ACCESS_TOKEN' } }),
+          prisma.storeSetting.findUnique({ where: { key: 'CJ_TOKEN_EXPIRY' } }),
+          prisma.storeSetting.findUnique({ where: { key: 'CJ_REFRESH_TOKEN' } }),
+          prisma.storeSetting.findUnique({ where: { key: 'CJ_REFRESH_TOKEN_EXPIRY' } }),
+        ]);
+
+        // 2. Access token still valid → use it
+        if (dbToken && dbExpiry && Date.now() < parseInt(dbExpiry.value)) {
+          cachedToken = dbToken.value;
+          tokenExpiry = parseInt(dbExpiry.value);
+          return cachedToken!;
+        }
+
+        // 3. Access token expired, but refresh token still valid → refresh
+        if (dbRefreshToken && dbRefreshExpiry && Date.now() < parseInt(dbRefreshExpiry.value)) {
+          try {
+            await waitForSlot();
+            const result = await refreshAccessTokenFromCJ(dbRefreshToken.value, prisma);
+            cachedToken = result.accessToken;
+            tokenExpiry = result.accessExpiry;
+            return cachedToken;
+          } catch (err) {
+            console.warn('[Token Refresh Failed]:', err);
+            try {
+               await prisma.storeSetting.deleteMany({
+                 where: { key: { in: ['CJ_REFRESH_TOKEN', 'CJ_REFRESH_TOKEN_EXPIRY'] } }
+               });
+            } catch (e) {}
+            // Fall through to full re-auth
+          }
+        }
+      } catch (e) {
+        console.error('[Token DB Load Error]:', e);
+      }
+    }
+
+    // 4. Double-check in-memory (in case another concurrent call already fetched)
+    if (cachedToken && tokenExpiry && Date.now() < tokenExpiry) {
+      return cachedToken!;
+    }
+
+    // 5. Full re-authentication with API key
+    await waitForSlot();
+
+    const url = `${AUTH_BASE_URL}/api2.0/v1/authentication/getAccessToken`;
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    while (retryCount < maxRetries) {
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ apiKey: API_KEY }),
+        });
+        const data: CJResponse<CJTokenResponse> = await response.json();
+
+        if (!data.success && !data.result) {
+          if (data.message?.includes('QPS limit') || data.code === 1600100) {
+            retryCount++;
+            await new Promise(resolve => setTimeout(resolve, 2000 * retryCount));
+            continue;
+          }
+          throw new Error(data.message || 'Auth failed');
+        }
+
+        const tokenData: CJTokenResponse = data.data;
+        cachedToken = tokenData.accessToken;
+        tokenExpiry = parseCJDate(tokenData.accessTokenExpiryDate);
+
+        if (prisma) {
+          try {
+            const refreshExpiry = parseCJDate(tokenData.refreshTokenExpiryDate);
+            await saveTokensToDB(prisma, cachedToken, tokenExpiry, tokenData.refreshToken, refreshExpiry);
+          } catch (e) {
+            console.error('[Token DB Save Error]:', e);
+          }
+        }
+
+        return cachedToken!;
+      } catch (err: any) {
+        if (retryCount >= maxRetries) throw err;
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+    }
+    throw new Error('Failed to get CJ access token after retries');
+  })();
 
   try {
-    const db = await import('@/lib/db');
-    prisma = db.prisma;
-  } catch {
-    // DB not available, fall back to direct API call
+    return await tokenFetchPromise;
+  } finally {
+    tokenFetchPromise = null;
   }
-
-  if (prisma) {
-    try {
-      const [dbToken, dbExpiry, dbRefreshToken, dbRefreshExpiry] = await Promise.all([
-        prisma.storeSetting.findUnique({ where: { key: 'CJ_ACCESS_TOKEN' } }),
-        prisma.storeSetting.findUnique({ where: { key: 'CJ_TOKEN_EXPIRY' } }),
-        prisma.storeSetting.findUnique({ where: { key: 'CJ_REFRESH_TOKEN' } }),
-        prisma.storeSetting.findUnique({ where: { key: 'CJ_REFRESH_TOKEN_EXPIRY' } }),
-      ]);
-
-      // 2. Access token still valid → use it
-      if (dbToken && dbExpiry && Date.now() < parseInt(dbExpiry.value)) {
-        cachedToken = dbToken.value;
-        tokenExpiry = parseInt(dbExpiry.value);
-        return cachedToken!;
-      }
-
-      // 3. Access token expired, but refresh token still valid → refresh
-      if (dbRefreshToken && dbRefreshExpiry && Date.now() < parseInt(dbRefreshExpiry.value)) {
-        try {
-          await waitForSlot();
-          const result = await refreshAccessTokenFromCJ(dbRefreshToken.value, prisma);
-          cachedToken = result.accessToken;
-          tokenExpiry = result.accessExpiry;
-          return cachedToken;
-        } catch (err) {
-          console.warn('[Token Refresh Failed]:', err);
-          // Fall through to full re-auth
-        }
-      }
-    } catch (e) {
-      console.error('[Token DB Load Error]:', e);
-    }
-  }
-
-  // 4. Double-check in-memory (in case another concurrent call already fetched)
-  if (cachedToken && tokenExpiry && Date.now() < tokenExpiry) {
-    return cachedToken;
-  }
-
-  // 5. Full re-authentication with API key
-  await waitForSlot();
-
-  const url = `${AUTH_BASE_URL}/api2.0/v1/authentication/getAccessToken`;
-  let retryCount = 0;
-  const maxRetries = 3;
-
-  while (retryCount < maxRetries) {
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey: API_KEY }),
-      });
-      const data: CJResponse<CJTokenResponse> = await response.json();
-
-      if (!data.success && !data.result) {
-        if (data.message?.includes('QPS limit') || data.code === 1600100) {
-          retryCount++;
-          await new Promise(resolve => setTimeout(resolve, 2000 * retryCount));
-          continue;
-        }
-        throw new Error(data.message || 'Auth failed');
-      }
-
-      const tokenData: CJTokenResponse = data.data;
-      cachedToken = tokenData.accessToken;
-      tokenExpiry = parseCJDate(tokenData.accessTokenExpiryDate);
-
-      if (prisma) {
-        try {
-          const refreshExpiry = parseCJDate(tokenData.refreshTokenExpiryDate);
-          await saveTokensToDB(prisma, cachedToken, tokenExpiry, tokenData.refreshToken, refreshExpiry);
-        } catch (e) {
-          console.error('[Token DB Save Error]:', e);
-        }
-      }
-
-      return cachedToken!;
-    } catch (err: any) {
-      if (retryCount >= maxRetries) throw err;
-      retryCount++;
-      await new Promise(resolve => setTimeout(resolve, 1500));
-    }
-  }
-  throw new Error('Failed to get CJ access token after retries');
 }
 
 // ── Generic fetcher ───────────────────────────────────────────────────────
@@ -316,13 +333,24 @@ export async function cjFetch<T>(
       // Handle Invalid/Expired Token (Retry once with fresh token)
       if (!data.success && !data.result && (data.code === 1600101 || data.code === 1600102 || data.message?.toLowerCase().includes('access token'))) {
         if (retryCount === 0) {
-          console.warn(`[CJ API] Token invalid or expired. Clearing cache and retrying...`);
+          console.warn(`[CJ API] Token invalid or expired. Calling explicit logout to flush CJ cache and retrying...`);
+          
+          // ── Explicitly call Logout to flush CJ's 24-hour server-side cache! ──
+          try {
+            await fetch(`${AUTH_BASE_URL}/api2.0/v1/authentication/logout`, {
+              method: 'POST',
+              headers: { 'CJ-Access-Token': token },
+            });
+          } catch (e) {
+            // Ignore logout failure
+          }
+
           cachedToken = null;
           tokenExpiry = null;
           try {
             const { prisma } = await import('@/lib/db');
             await prisma.storeSetting.deleteMany({
-              where: { key: { in: ['CJ_ACCESS_TOKEN', 'CJ_TOKEN_EXPIRY'] } }
+              where: { key: { in: ['CJ_ACCESS_TOKEN', 'CJ_TOKEN_EXPIRY', 'CJ_REFRESH_TOKEN', 'CJ_REFRESH_TOKEN_EXPIRY'] } }
             });
           } catch (e) {
             console.error('[Token Clear Error]:', e);
@@ -665,37 +693,19 @@ export async function getShippingFee(params: {
     
     // Fallback logic if API fails due to QPS or other issues
     if (!res.success) {
-       console.warn(`[Shipping API] Failed: ${res.message}. Returning fallback.`);
-       // Minimal fallback to avoid blocking checkout
-       return {
-         success: true,
-         result: true,
-         data: [{
-           logisticName: 'Standard Shipping (Fallback)',
-           logisticPrice: 5.00,
-           logisticAging: '15-25',
-           logisticId: 'fallback'
-         }] as any,
-         code: 200,
-         message: 'Fallback',
-         requestId: 'fallback'
-       };
+       console.warn(`[Shipping API] Failed: ${res.message}`);
     }
 
     return res;
-  } catch (err) {
+  } catch (err: any) {
+    console.warn('[Shipping API] Error:', err);
     return {
-      success: true,
-      result: true,
-      data: [{
-        logisticName: 'Economy Shipping',
-        logisticPrice: 4.50,
-        logisticAging: '20-30',
-        logisticId: 'fallback-err'
-      }] as any,
-      code: 200,
-      message: 'Network Fallback',
-      requestId: 'error-fallback'
+      success: false,
+      result: false,
+      data: [] as any,
+      code: 500,
+      message: err.message || 'Network Error',
+      requestId: 'error'
     };
   }
 }
@@ -715,16 +725,26 @@ export async function createOrder(orderData: {
   logisticName?: string;
   fromCountryCode?: string;
   payType?: number; 
+  iossType?: number;
+  iossNumber?: string;
+  shopLogisticsType?: number;
+  platformToken?: string;
   products: Array<{ vid?: string; sku?: string; quantity: number; storeLineItemId?: string }>;
 }) {
+  const { platformToken, ...restData } = orderData;
+  const headers: any = {};
+  if (platformToken) headers['platformToken'] = platformToken;
+
   return cjFetch<any>('/v1/shopping/order/createOrderV2', {
     method: 'POST',
+    headers: Object.keys(headers).length > 0 ? headers : undefined,
     body: JSON.stringify({
-      fromCountryCode: orderData.fromCountryCode || 'CN',
-      logisticName: orderData.logisticName || 'CJPacket Ordinary',
+      fromCountryCode: restData.fromCountryCode || 'CN',
+      logisticName: restData.logisticName || 'CJPacket Ordinary',
       platform: 'Api',
-      ...orderData,
-      payType: orderData.payType || 3, // Default to 3 if not provided
+      ...restData,
+      payType: restData.payType || 3, // Default to 3 if not provided
+      shopLogisticsType: restData.shopLogisticsType || 2, // Default to 2 (Seller Logistics)
     }),
   });
 }

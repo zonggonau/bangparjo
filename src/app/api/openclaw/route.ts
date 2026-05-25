@@ -44,6 +44,19 @@ export async function POST(req: Request) {
         result = await notifyContactAdmin(data);
         break;
 
+      case 'chat-ai':
+        try {
+          const aiRes = await fetch(new URL('/api/ai/chat', req.url).toString(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          result = await aiRes.json();
+        } catch (e: any) {
+          result = { success: false, text: "OpenClaw AI Router Error: " + e.message };
+        }
+        break;
+
       case 'send-wa':
         if (!data?.target || !data?.message) {
           return NextResponse.json({ success: false, error: 'target and message required' }, { status: 400 });

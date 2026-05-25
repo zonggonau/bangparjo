@@ -14,7 +14,7 @@ import { sendWhatsAppOrderNotification } from '@/lib/social-poster';
  */
 export async function POST(req: Request) {
   const body = await req.json();
-  const { type, params, messageId } = body;
+  const { type, messageType, params, messageId } = body;
 
   try {
     // 1. Log webhook
@@ -34,6 +34,10 @@ export async function POST(req: Request) {
         break;
       case 'STOCK':
         await handleStockUpdate(params);
+        break;
+      case 'PRODUCT':
+      case 'VARIANT':
+        await handleProductUpdate(type, messageType, params);
         break;
       default:
         console.warn(`[CJ WEBHOOK]: Unhandled type: ${type}`);
@@ -116,6 +120,39 @@ async function handleStockUpdate(params: any) {
         where: { cjId: vid },
         data: { inventory: totalStock },
       });
+    }
+  }
+}
+
+async function handleProductUpdate(type: string, messageType: string, params: any) {
+  const pid = params.pid;
+  const vid = params.vid;
+
+  if (messageType === 'DELETE') {
+    if (type === 'PRODUCT' && pid) {
+      // Soft delete or unpublish product
+      await prisma.product.updateMany({
+        where: { cjId: pid },
+        data: { status: 'INACTIVE' },
+      });
+    } else if (type === 'VARIANT' && vid) {
+      await prisma.variant.updateMany({
+        where: { cjId: vid },
+        data: { inventory: 0 }, // Just set to 0 or we could delete
+      });
+    }
+  } else {
+    // UPDATE or INSERT -> Since we don't sync all fields manually, the safest way 
+    // to ensure consistency is to set a flag or trigger a background sync.
+    // However, to keep it simple, we can just log it or update specific fields if provided.
+    if (type === 'PRODUCT' && pid && params.productStatus) {
+      const isOffSale = params.productStatus === 2;
+      await prisma.product.updateMany({
+        where: { cjId: pid },
+        data: { status: isOffSale ? 'INACTIVE' : 'ACTIVE' },
+      });
+    } else if (type === 'VARIANT' && vid && params.variantStatus) {
+      // similar handling could be done for variant status
     }
   }
 }

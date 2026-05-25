@@ -199,13 +199,14 @@ export default async function Page({
       categoryName: product.categoryName || 'Imported',
       categoryId: product.categoryId,
       variants: (product.variants || []).map((v: any) => ({
+        ...v,
         vid: v.vid,
         variantNameEn: v.variantNameEn || v.variantKey || 'Default',
         variantKey: v.variantKey || 'Default',
         variantSellPrice: v.variantSellPrice,
         variantSku: v.variantSku,
         variantWeight: v.variantWeight,
-        inventory: v.inventory,
+        inventory: v.inventory || v.variantNum || v.variantInventory || 9999,
         variantImage: v.variantImage
       }))
     };

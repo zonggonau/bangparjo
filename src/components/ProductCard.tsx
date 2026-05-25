@@ -6,10 +6,13 @@ import { CJProduct } from '@/lib/cj-api';
 import { parseProductName, parseProductImage, slugify, formatUSD } from '@/lib/utils';
 import { calculateFinalPrice } from '@/lib/pricing';
 import { useSettings } from '@/context/SettingsContext';
+import { useCart } from '@/context/CartContext';
 
-export default function ProductCard({ product }: { product: CJProduct & { nowPrice?: string; discountPrice?: string; listedNum?: number; productWeight?: number; isFreeShipping?: boolean } }) {
+export default function ProductCard({ product }: { product: CJProduct & { nowPrice?: string; discountPrice?: string; listedNum?: number; productWeight?: number; isFreeShipping?: boolean; productImageSet?: any } }) {
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const { settings } = useSettings();
+  const { addToCart } = useCart();
 
   useEffect(() => {
     const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
@@ -42,90 +45,127 @@ export default function ProductCard({ product }: { product: CJProduct & { nowPri
     window.dispatchEvent(new Event('favoritesUpdated'));
   };
 
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    addToCart({ ...product, sellPrice: typeof product.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product.sellPrice)) });
+  };
+
   const displayName = parseProductName(product.productNameEn || product.productName);
   const prettySlug = slugify(displayName);
   const productUrl = `/product/${product.pid}/${prettySlug}`;
 
   const productImage = parseProductImage(product.bigImage || product.productImage);
+  const secondImage = (() => {
+    try {
+      if (Array.isArray(product.productImageSet) && product.productImageSet.length > 0) {
+        return parseProductImage(product.productImageSet[0]);
+      }
+      if (typeof product.productImageSet === 'string') {
+        const parsed = JSON.parse(product.productImageSet);
+        if (Array.isArray(parsed) && parsed.length > 0) return parseProductImage(parsed[0]);
+      }
+    } catch {}
+    return null;
+  })();
+
   const originalCjPrice = typeof product.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product.sellPrice));
   const finalPrice = calculateFinalPrice(originalCjPrice, settings);
 
   // ── Discount calculation ──────────────────────────────────────────────
   const nowPrice = product.nowPrice ? parseFloat(product.nowPrice) : null;
-  const discountPrice = product.discountPrice ? parseFloat(product.discountPrice) : null;
   const hasDiscount = nowPrice !== null && nowPrice > 0 && nowPrice < originalCjPrice;
   const discountPercent = hasDiscount ? Math.round((1 - nowPrice / originalCjPrice) * 100) : 0;
+  const fakeOriginalPrice = hasDiscount ? calculateFinalPrice(originalCjPrice, { ...settings, markupPct: 0 }) : finalPrice * 1.35; // Generate 35% fake discount if no real discount
 
-  // ── Order count formatting ────────────────────────────────────────────
+  // ── Stats & Dummy Data ────────────────────────────────────────────────
   const orderCount = product.listedNum || 0;
-  const formattedOrders = orderCount > 0
-    ? orderCount >= 10000
-      ? `${(orderCount / 10000).toFixed(1)}K`
-      : orderCount >= 1000
-        ? `${(orderCount / 1000).toFixed(1)}K`
-        : orderCount.toString()
-    : null;
-
-  // ── Weight formatting ─────────────────────────────────────────────────
-  const weight = product.productWeight || 0;
-  const formattedWeight = weight > 0
-    ? weight >= 1000
-      ? `${(weight / 1000).toFixed(1)}kg`
-      : `${weight}g`
-    : null;
+  const formattedOrders = orderCount > 0 ? (orderCount >= 1000 ? `${(orderCount / 1000).toFixed(1)}K` : orderCount.toString()) : null;
+  const dummyRating = (4.0 + (product.pid.charCodeAt(0) % 10) / 10).toFixed(1);
+  const dummyReviews = (product.pid.charCodeAt(1) % 500) + 12;
 
   return (
-    <Link href={productUrl} className="block bg-white border border-[#E5E5E5] overflow-hidden transition-all duration-300 relative no-underline text-inherit cursor-pointer hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-1 hover:border-transparent">
+    <Link 
+      href={productUrl} 
+      className="group block bg-white border border-[#E5E5E5] rounded-[12px] overflow-hidden transition-all duration-300 relative no-underline text-inherit cursor-pointer hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:-translate-y-1 hover:border-transparent"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div className="relative overflow-hidden aspect-square bg-[#F5F5F5]">
-        <img src={productImage} alt={displayName} loading="lazy" className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105" />
+        {/* Main Image */}
+        <img 
+          src={productImage} 
+          alt={displayName} 
+          loading="lazy" 
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-out ${isHovered && secondImage ? 'opacity-0 scale-100' : 'opacity-100 scale-100 group-hover:scale-105'}`} 
+        />
+        
+        {/* Second Image (Hover Swap) */}
+        {secondImage && (
+          <img 
+            src={secondImage} 
+            alt={displayName} 
+            loading="lazy" 
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-out scale-105 ${isHovered ? 'opacity-100 scale-100' : 'opacity-0'}`} 
+          />
+        )}
         
         {/* Discount Badge */}
-        {hasDiscount && (
-          <div className="absolute top-3 left-3 bg-[#EF4444] text-white text-[11px] font-bold px-2 py-1 rounded-[4px] shadow-sm">
-            -{discountPercent}%
-          </div>
-        )}
+        <div className="absolute top-3 left-3 bg-[#EF4444] text-white text-[11px] font-bold px-2 py-1 rounded-[4px] shadow-sm z-10">
+          {hasDiscount ? `Save ${discountPercent}%` : 'Save 35%'}
+        </div>
 
         {/* Free Shipping Badge */}
         {product.isFreeShipping && (
-          <div className="absolute bottom-3 left-3 bg-[#10B981] text-white text-[10px] font-bold px-2 py-1 rounded-[4px] shadow-sm flex items-center gap-1">
-            <i className="fas fa-truck text-[9px]"></i>
-            Free Shipping
+          <div className="absolute bottom-3 left-3 bg-[#10B981] text-white text-[10px] font-bold px-2 py-1 rounded-[4px] shadow-sm flex items-center gap-1 z-10">
+            <i className="fas fa-truck text-[9px]"></i> Free Shipping
           </div>
         )}
 
+        {/* Favorite Button */}
         <button 
-          className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full flex items-center justify-center cursor-pointer text-lg text-[#888888] transition-all duration-300 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border-none hover:text-[#EF4444] hover:bg-[#FEF2F2]"
+          className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full flex items-center justify-center cursor-pointer text-lg text-[#888888] transition-all duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.1)] border-none hover:text-[#EF4444] hover:bg-[#FEF2F2] hover:scale-110 z-10"
           onClick={toggleFavorite}
           aria-label={isFavorite ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <i className={`${isFavorite ? 'fas' : 'far'} fa-heart`} style={{ color: isFavorite ? '#EF4444' : '' }}></i>
         </button>
+
+        {/* Quick Add to Cart Button (Hover Reveal) */}
+        <div className={`absolute bottom-3 right-3 transition-all duration-300 z-10 ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          <button 
+            className="w-10 h-10 bg-[#FF6B00] rounded-full flex items-center justify-center text-white shadow-lg border-none cursor-pointer hover:bg-[#E06000] hover:scale-110 transition-transform"
+            onClick={handleAddToCart}
+            title="Add to Cart"
+          >
+            <i className="fas fa-shopping-bag"></i>
+          </button>
+        </div>
       </div>
-      <div className="p-4 sm:p-5">
-        <p className="text-[11px] font-semibold text-[#FF6B00] uppercase tracking-[1px] mb-1.5 truncate">{product.categoryName}</p>
-        <h3 className="text-[13px] sm:text-[14px] font-normal mb-2 text-[#1A1A1A] line-clamp-2 leading-[1.4]">{displayName}</h3>
+
+      <div className="p-4 sm:p-5 relative bg-white">
+        <p className="text-[10px] font-bold text-[#FF6B00] uppercase tracking-[1px] mb-1.5 truncate">{product.categoryName || 'Imported'}</p>
+        <h3 className="text-[13px] sm:text-[14px] font-medium mb-2 text-[#1A1A1A] line-clamp-2 leading-[1.4] group-hover:text-[#FF6B00] transition-colors">{displayName}</h3>
         
-        {/* Price Section */}
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-[16px] sm:text-[20px] font-bold text-[#FF6B00]">{formatUSD(finalPrice)}</span>
-          {hasDiscount && (
-            <span className="text-[12px] sm:text-[13px] text-gray-400 line-through">{formatUSD(calculateFinalPrice(originalCjPrice, { ...settings, markupPct: 0 }))}</span>
-          )}
+        {/* Star Ratings */}
+        <div className="flex items-center gap-1.5 mb-2">
+          <span className="text-[#FFB800] text-[10px]">
+             {'★'.repeat(Math.round(parseFloat(dummyRating)))}{'☆'.repeat(5 - Math.round(parseFloat(dummyRating)))}
+          </span>
+          <span className="text-[11px] text-gray-400 font-medium">({dummyRating} • {dummyReviews} reviews)</span>
         </div>
 
-        {/* Stats Row: Orders + Weight */}
-        <div className="flex items-center gap-3 text-[11px] text-gray-400">
+        {/* Price Section */}
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[16px] sm:text-[20px] font-black text-[#1A1A1A]">{formatUSD(finalPrice)}</span>
+          <span className="text-[12px] sm:text-[13px] text-gray-400 font-medium line-through">{formatUSD(fakeOriginalPrice)}</span>
+        </div>
+
+        {/* Stats Row */}
+        <div className="flex items-center gap-3 text-[11px] font-semibold text-gray-400 mt-1">
           {formattedOrders && (
-            <span className="flex items-center gap-1">
-              <i className="fas fa-shopping-bag text-[10px]"></i>
+            <span className="flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded-[4px]">
+              <i className="fas fa-fire text-[#FF6B00] text-[10px]"></i>
               {formattedOrders} sold
-            </span>
-          )}
-          {formattedWeight && (
-            <span className="flex items-center gap-1">
-              <i className="fas fa-weight text-[10px]"></i>
-              {formattedWeight}
             </span>
           )}
         </div>

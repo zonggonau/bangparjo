@@ -294,3 +294,11 @@ model AboutPage {
   updatedAt DateTime @updatedAt
 }
 
+model AutoImportState {
+  id              String   @id @default("default")
+  currentCategory String?  
+  currentPage     Int      @default(1)
+  status          String   @default("IDLE") 
+  updatedAt       DateTime @updatedAt
+}
+

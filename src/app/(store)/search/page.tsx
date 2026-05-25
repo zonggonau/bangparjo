@@ -108,26 +108,7 @@ export default async function SearchPage({
           )}
         </div>
 
-        {/* Search Form */}
-        <form
-          action="/search"
-          method="GET"
-          className="flex gap-3 mb-6 max-w-[600px] flex-wrap"
-        >
-          <input
-            type="text"
-            name="q"
-            defaultValue={query}
-            placeholder="Search products globally..."
-            className="flex-1 min-w-[200px] px-5 py-3.5 rounded-md border-2 border-gray-200 text-base outline-none focus:border-[#FF6B00]"
-          />
-          <button
-            type="submit"
-            className="px-8 py-3.5 rounded-md font-semibold bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200"
-          >
-            <i className="fas fa-search"></i> Search
-          </button>
-        </form>
+
 
         {/* Filters Row */}
         {query && (

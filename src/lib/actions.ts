@@ -598,22 +598,8 @@ export async function getShippingRatesAction(data: { products?: any[], country?:
 
     const res = await getShippingFee({ products, endCountryCode: country });
 
-    if (!res.success || !res.data) {
-      const fallbackRates = [
-        { logisticName: 'Economy Shipping', logisticPrice: 4.50, logisticAging: '20-30' },
-        { logisticName: 'Standard Shipping', logisticPrice: 7.00, logisticAging: '15-25' },
-        { logisticName: 'Express Shipping', logisticPrice: 15.00, logisticAging: '7-12' },
-      ];
-      const finalFallback = fallbackRates.map(rate => {
-        const finalPrice = calculateShippingFee(rate.logisticPrice, subtotal, settings);
-        return {
-          ...rate,
-          logisticPrice: finalPrice,
-          estimatedDays: rate.logisticAging ? `${rate.logisticAging} days` : '',
-          formattedPrice: finalPrice === 0 ? 'FREE' : `USD ${finalPrice.toFixed(2)}`
-        };
-      });
-      return { success: true, data: finalFallback };
+    if (!res.success || !res.data || res.data.length === 0) {
+      return { success: false, error: 'Failed to calculate shipping rates from CJ.' };
     }
 
     const finalRates = res.data.map((rate: any) => {

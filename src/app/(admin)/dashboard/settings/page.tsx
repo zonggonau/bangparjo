@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSettings } from '@/context/SettingsContext';
+import { updateStoreSettingsAction } from '@/lib/actions';
 
 type TabType = 'profile' | 'logistics' | 'margins';
 
@@ -20,17 +21,13 @@ export default function SettingsPage() {
     setSaving(true);
     setMessage('');
     try {
-      const res = await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(draft),
-      });
-      if (res.ok) {
+      const res = await updateStoreSettingsAction(draft);
+      if (res.success) {
         await refreshSettings();
         setMessage('✅ Settings saved successfully');
         setTimeout(() => setMessage(''), 3000);
       } else {
-        setMessage('❌ Failed to save settings');
+        setMessage('❌ Failed to save settings: ' + (res.error || 'Unknown error'));
       }
     } catch (err) {
       console.error(err);
@@ -92,6 +89,35 @@ export default function SettingsPage() {
                    <option value="IDR">IDR (Rp) — Indonesia</option>
                    <option value="EUR">EUR (€) — Europe</option>
                 </select>
+              </div>
+              <div className="pt-4 border-t border-[#E2E8F0]">
+                <h4 className="text-[15px] font-black mb-2 text-[#1E293B]">Integrations</h4>
+                <p className="text-xs text-gray-500 mb-4">Register your store's webhook URL with CJ Dropshipping to receive real-time updates for products, stock, and orders.</p>
+                <button
+                  className="px-4 py-2 bg-blue-50 text-blue-600 border border-blue-200 rounded-[8px] text-sm font-bold hover:bg-blue-100 transition-all duration-200 disabled:opacity-50"
+                  disabled={saving}
+                  onClick={async () => {
+                    setSaving(true);
+                    setMessage('');
+                    try {
+                      // Dynamically import the action
+                      const { registerCJWebhookAction } = await import('@/lib/actions-admin');
+                      const baseUrl = window.location.origin;
+                      const res = await registerCJWebhookAction(baseUrl);
+                      if (res.success) {
+                        setMessage(`✅ ${res.message}`);
+                      } else {
+                        setMessage(`❌ ${res.message}`);
+                      }
+                    } catch (err: any) {
+                      setMessage(`❌ System error: ${err.message}`);
+                    } finally {
+                      setSaving(false);
+                    }
+                  }}
+                >
+                  <i className="fas fa-plug"></i> Register CJ Webhook
+                </button>
               </div>
             </div>
           )}

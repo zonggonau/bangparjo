@@ -17,9 +17,19 @@ export default function AIChat() {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (detail?.productName) {
-        setMessages(prev => [
-          { role: 'ai', content: `Hi! I see you're looking at **${detail.productName}**. How can I help you with this product? 😊` }
-        ]);
+        const productMsg = `[PRODUCT_CARD] ${JSON.stringify(detail)}`;
+        setMessages(prev => {
+          const lastMsg = prev[prev.length - 1];
+          if (lastMsg?.content === productMsg) return prev;
+          return [...prev, { role: 'user', content: productMsg }];
+        });
+        setTimeout(() => {
+          setMessages(prev => {
+             const alreadyGreeted = prev.some(m => m.content.includes("I see you're interested"));
+             if (alreadyGreeted) return prev;
+             return [...prev, { role: 'ai', content: `I see you're interested in **${detail.productName}**. What would you like to know about it? 😊` }];
+          });
+        }, 500);
       }
       setIsOpen(true);
     };
@@ -43,16 +53,19 @@ export default function AIChat() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/ai/chat', {
+      const response = await fetch('/api/openclaw', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [...messages, { role: 'user', content: userMsg }]
+          action: 'chat-ai',
+          data: {
+            messages: [...messages, { role: 'user', content: userMsg }]
+          }
         }),
       });
 
       const data = await response.json();
-      let aiResponse = data.text || "I'm sorry, I encountered an error.";
+      let aiResponse = data.text || data.reply || "I'm sorry, I encountered an error. Is OpenClaw running?";
 
       if (userMsg.toLowerCase().includes('track') || userMsg.toLowerCase().includes('resi')) {
         const orderIdMatch = userMsg.match(/[0-9a-zA-Z-]{10,}/);
@@ -113,19 +126,42 @@ export default function AIChat() {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-5 bg-[#fcfcfc] flex flex-col gap-4" ref={scrollRef}>
-            {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className="max-w-[85%] px-4 py-3 rounded-[16px] text-[13px] leading-[1.5]" style={{ 
-                  background: m.role === 'user' ? '#FF6B00' : '#fff',
-                  color: m.role === 'user' ? '#000' : '#444',
-                  boxShadow: m.role === 'user' ? 'none' : '0 2px 8px rgba(0,0,0,0.05)',
-                  border: m.role === 'user' ? 'none' : '1px solid #eee',
-                  fontWeight: m.role === 'user' ? '700' : '500'
-                }}>
-                  {m.content}
+            {messages.map((m, i) => {
+              if (m.content.startsWith('[PRODUCT_CARD]')) {
+                try {
+                  const data = JSON.parse(m.content.replace('[PRODUCT_CARD] ', ''));
+                  return (
+                    <div key={i} className="flex justify-end">
+                      <div className="max-w-[85%] p-3 rounded-[16px] rounded-br-[4px] bg-[#FFF3E8] border border-[#FF6B00]/20 flex items-center gap-3 shadow-sm">
+                        <img src={data.productImage} alt="Product" className="w-14 h-14 rounded-[8px] object-cover bg-white" />
+                        <div className="flex-1 overflow-hidden">
+                          <div className="text-[12px] font-bold text-[#1A1A1A] line-clamp-2 leading-tight mb-1">{data.productName}</div>
+                          <div className="text-[13px] font-black text-[#FF6B00]">{data.price}</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                } catch (e) {
+                  return null;
+                }
+              }
+
+              return (
+                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className="max-w-[85%] px-4 py-3 rounded-[16px] text-[13px] leading-[1.5]" style={{ 
+                    background: m.role === 'user' ? '#FF6B00' : '#fff',
+                    color: m.role === 'user' ? '#fff' : '#444',
+                    boxShadow: m.role === 'user' ? '0 4px 12px rgba(255,107,53,0.2)' : '0 2px 8px rgba(0,0,0,0.05)',
+                    border: m.role === 'user' ? 'none' : '1px solid #eee',
+                    fontWeight: m.role === 'user' ? '600' : '500',
+                    borderBottomRightRadius: m.role === 'user' ? '4px' : '16px',
+                    borderBottomLeftRadius: m.role === 'ai' ? '4px' : '16px',
+                  }}>
+                    {m.content}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {loading && (
               <div className="flex justify-start">
                 <div className="bg-[#eee] px-4 py-2 rounded-[16px] text-[11px] text-[#888]">

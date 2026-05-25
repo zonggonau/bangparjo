@@ -124,3 +124,27 @@ export async function getAdminCouponsAction() {
     return { success: false, error: error.message };
   }
 }
+
+export async function registerCJWebhookAction(baseUrl: string) {
+  try {
+    const { setWebhook } = await import('@/lib/cj-api');
+    const callbackUrl = `${baseUrl}/api/cj-webhook`;
+    
+    const setting = { type: 'ENABLE' as 'ENABLE', callbackUrls: [callbackUrl] };
+    const res = await setWebhook({
+      product: setting,
+      stock: setting,
+      order: setting,
+      logistics: setting,
+    });
+
+    if (res.success) {
+      return { success: true, message: 'Webhook registered successfully with CJ API.' };
+    } else {
+      return { success: false, message: res.message || 'Failed to register webhook.' };
+    }
+  } catch (error: any) {
+    console.error('[Webhook Registration Error]:', error);
+    return { success: false, message: error.message };
+  }
+}

@@ -57,6 +57,7 @@ export const metadata: Metadata = {
 
 import { Providers } from "@/components/Providers";
 import Analytics from "@/components/Analytics";
+import ScrollToTop from "@/components/ScrollToTop";
 import { getCachedStoreSettings } from "@/lib/server-settings";
 
 export default async function RootLayout({
@@ -70,6 +71,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
+        <ScrollToTop />
         {/* JSON-LD Structured Data for SEO */}
         <script
           type="application/ld+json"

@@ -12,6 +12,7 @@ import { ProductDetailSkeleton } from '@/components/ProductSkeleton';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import AIChat from '@/components/AIChat';
 import { getProductDetailsAction, cjProxyAction } from '@/lib/actions-catalog';
+import { countries } from '@/lib/countries';
 
 export default function ProductView({ id, initialData, initialError, selectedVid }: { id: string, initialData: any, initialError: string | null, selectedVid?: string }) {
   const { addToCart } = useCart();
@@ -117,8 +118,44 @@ export default function ProductView({ id, initialData, initialError, selectedVid
       .finally(() => setReviewsLoading(false));
   }, [product?.pid, reviewsPage, reviewsScore]);
 
+  // ── Shipping Rates ───────────────────────────────────────────────────────
+  const [shippingLoading, setShippingLoading] = useState(false);
+  const [shippingRates, setShippingRates] = useState<any[]>([]);
+  const [shippingCountry, setShippingCountry] = useState('US');
+  const [showShippingCalculator, setShowShippingCalculator] = useState(false);
+
+  const calculateShipping = async () => {
+    if (!selectedVariant) return;
+    
+    const originalPrice = selectedVariant?.variantSellPrice ? Number(selectedVariant.variantSellPrice) : (typeof product?.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product?.sellPrice)));
+
+    setShippingRates([]);
+    setShippingLoading(true);
+
+    try {
+      const sku = selectedVariant.variantSku || selectedVariant.vid;
+      const res = await fetch(`/api/shipping-rates?sku=${sku}&quantity=${qty}&country=${shippingCountry}&subtotal=${originalPrice}`);
+      const data = await res.json();
+      if (data.success) {
+        setShippingRates(data.data);
+      }
+    } catch (err) {
+      console.error('Failed to load shipping rates:', err);
+    } finally {
+      setShippingLoading(false);
+    }
+  };
+
   // ── Inventory ────────────────────────────────────────────────────────────
-  // Using static inventory from product details instead of live API fetch
+  const [realStock, setRealStock] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!selectedVariant) return;
+    const fallbackStock = selectedVariant.inventories 
+      ? selectedVariant.inventories.reduce((sum: number, inv: any) => sum + (inv.totalInventory || inv.totalInventoryNum || 0), 0) 
+      : (selectedVariant.totalInventoryNum || selectedVariant.inventory || 0);
+    setRealStock(fallbackStock);
+  }, [selectedVariant]);
 
   const currentCjPrice = selectedVariant?.variantSellPrice 
     ? Number(selectedVariant.variantSellPrice)
@@ -315,6 +352,68 @@ export default function ProductView({ id, initialData, initialError, selectedVid
               </div>
 
 
+              {/* Shipping Info */}
+              <div className="p-4 bg-gray-50 rounded-[10px] border border-gray-200 space-y-3">
+                <div className="flex items-start gap-3">
+                  <span className="text-xl">🚚</span>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                       <strong className="text-sm text-[#1A1A1A] block">Shipping Estimate</strong>
+                       <button onClick={() => setShowShippingCalculator(!showShippingCalculator)} className="text-xs font-bold text-[#FF6B00] bg-transparent border-none cursor-pointer">
+                         {showShippingCalculator ? 'Hide' : 'Calculate'}
+                       </button>
+                    </div>
+
+                    {showShippingCalculator && (
+                      <div className="mb-3 flex items-center gap-2">
+                        <select 
+                          className="px-3 py-1.5 text-sm border border-gray-200 bg-white text-gray-600 rounded-[6px] outline-none w-full cursor-pointer"
+                          value={shippingCountry}
+                          onChange={(e) => setShippingCountry(e.target.value)}
+                        >
+                          {countries.map(c => (
+                            <option key={c.code} value={c.code}>{c.name}</option>
+                          ))}
+                        </select>
+                        <button 
+                          className="px-4 py-1.5 bg-[#1A1A1A] text-white text-sm font-bold rounded-[6px] border-none cursor-pointer disabled:opacity-50"
+                          onClick={calculateShipping}
+                          disabled={shippingLoading}
+                        >
+                          {shippingLoading ? '...' : 'Go'}
+                        </button>
+                      </div>
+                    )}
+
+                    {shippingLoading ? (
+                      <p className="text-sm text-gray-500 m-0 mt-1 animate-pulse">Calculating rates...</p>
+                    ) : shippingRates.length > 0 ? (
+                      <p className="text-sm text-gray-600 m-0 mt-1">
+                        Starting from <strong className="text-[#1A1A1A]">{shippingRates[0].formattedPrice}</strong> <span className="text-xs text-gray-500">({shippingRates[0].estimatedDays})</span>
+                      </p>
+                    ) : showShippingCalculator && !shippingLoading && shippingRates.length === 0 ? (
+                      <p className="text-sm text-red-500 m-0 mt-1">Click Go to calculate or no methods available.</p>
+                    ) : null}
+                  </div>
+                </div>
+                
+                {!shippingLoading && shippingRates.length > 0 && (
+                  <div className="pt-3 border-t border-gray-200 space-y-2">
+                     {shippingRates.slice(0, 2).map((rate) => (
+                       <div key={rate.logisticName} className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600">{rate.logisticName}</span>
+                          <strong className="text-[#1A1A1A]">{rate.formattedPrice}</strong>
+                       </div>
+                     ))}
+                  </div>
+                )}
+
+                <div className="pt-3 border-t border-gray-200 flex items-center gap-3">
+                  <span className="text-xl">🔒</span>
+                  <span className="text-sm text-gray-600">Secure &amp; encrypted payment</span>
+                </div>
+              </div>
+
               {/* Inventory Status */}
               <div className="p-4 bg-gray-50 rounded-[10px] border border-gray-200">
                 <div className="flex items-center gap-2 mb-3">
@@ -324,9 +423,11 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                 {selectedVariant ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className={`w-2.5 h-2.5 rounded-full ${selectedVariant.inventory > 0 ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      <span className={`w-2.5 h-2.5 rounded-full ${(realStock ?? 0) > 0 ? 'bg-green-500' : 'bg-red-500'}`}></span>
                       <span className="text-sm font-semibold text-[#1A1A1A]">
-                        {selectedVariant.inventory > 0 ? `${selectedVariant.inventory.toLocaleString()} units in stock` : 'Out of stock'}
+                        {(realStock ?? 0) > 999 
+                          ? '999+ units in stock' 
+                          : `${(realStock ?? 0).toLocaleString()} units in stock`}
                       </span>
                     </div>
                   </div>
@@ -346,7 +447,14 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                 </div>
                 <button 
                   onClick={() => {
-                    const event = new CustomEvent('openAiChat', { detail: { productId: id, productName: displayName } });
+                    const event = new CustomEvent('openAiChat', { 
+                      detail: { 
+                        productId: id, 
+                        productName: displayName,
+                        productImage: selectedImage,
+                        price: formatUSD(finalPrice)
+                      } 
+                    });
                     window.dispatchEvent(event);
                   }}
                   className="px-4 py-2 rounded-[6px] font-bold text-[13px] bg-[#FF6B00] text-white border-none whitespace-nowrap hover:bg-[#E06000] transition-all duration-200 cursor-pointer"
