@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { CJProduct } from '@/lib/cj-api';
 import { useSession } from 'next-auth/react';
 import { syncCartAction, getCartAction } from '@/lib/actions';
+import { toast } from 'react-hot-toast';
 
 export interface CartItem extends CJProduct {
   quantity: number;
@@ -122,6 +123,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         },
       ];
     });
+    toast.success('Added to cart!');
   };
 
   const removeFromCart = (pid: string, vid?: string) => {
