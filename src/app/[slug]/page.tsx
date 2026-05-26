@@ -102,9 +102,19 @@ export default async function BlogSlugPage(props: Props) {
     if (product) {
       const settings = await getCachedStoreSettings();
 
-      // Clear expired coupon if present in JSON
-      if (product.coupon && product.coupon.expiresAt && new Date(product.coupon.expiresAt) <= new Date()) {
-        product.coupon = undefined;
+      // Validate coupon status (expired, exhausted, or deactivated) against the database
+      if (product.coupon) {
+        const dbCoupon = await prisma.coupon.findUnique({
+          where: { code: product.coupon.code.toUpperCase() }
+        });
+        const now = new Date();
+        const isExpired = product.coupon.expiresAt ? new Date(product.coupon.expiresAt) <= now : false;
+        const isExhausted = dbCoupon && dbCoupon.maxUses !== null ? dbCoupon.usedCount >= dbCoupon.maxUses : false;
+        const isActive = dbCoupon ? dbCoupon.isActive : false;
+
+        if (isExpired || isExhausted || !isActive) {
+          product.coupon = undefined;
+        }
       }
 
       // If no coupon attached or it was expired, look up the best active coupon dynamically
@@ -152,11 +162,30 @@ export default async function BlogSlugPage(props: Props) {
         }
       }
 
-      // Dynamically recalculate prices based on current live margin settings
-      product.variants = product.variants.map(v => ({
-        ...v,
-        sellingPrice: calculateFinalPrice(v.baseCost, settings)
-      }));
+      // Dynamically recalculate prices based on current live margin settings & coupon inflation (PERCENTAGE / FIXED)
+      product.variants = product.variants.map(v => {
+        const targetPrice = calculateFinalPrice(v.baseCost, settings);
+        let finalPrice = targetPrice;
+        if (product.coupon) {
+          if (product.coupon.type === 'PERCENTAGE') {
+            const pct = product.coupon.value;
+            if (pct > 0 && pct < 100) {
+              // Inflate the price so that when the percentage coupon is subtracted, it returns exactly to targetPrice
+              finalPrice = targetPrice / (1 - pct / 100);
+            }
+          } else if (product.coupon.type === 'FIXED') {
+            const amount = product.coupon.value;
+            if (amount > 0) {
+              // Inflate the price by adding the fixed coupon amount so that after the discount it returns to targetPrice
+              finalPrice = targetPrice + amount;
+            }
+          }
+        }
+        return {
+          ...v,
+          sellingPrice: finalPrice
+        };
+      });
 
       // Fetch other blog posts for recommendations (cached separately)
       const recCacheKey = 'blog:recs:' + slug;
@@ -212,7 +241,7 @@ export default async function BlogSlugPage(props: Props) {
       const html = renderProductTemplate(enrichedProduct, waNumber, baseUrl);
 
 
-      return <div dangerouslySetInnerHTML={{ __html: html }} />;
+      return <div dangerouslySetInnerHTML={{ __html: html }} suppressHydrationWarning />;
     }
   }
 
@@ -220,6 +249,7 @@ export default async function BlogSlugPage(props: Props) {
   return (
     <div
       dangerouslySetInnerHTML={{ __html: post.content }}
+      suppressHydrationWarning
     />
   );
 }

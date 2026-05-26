@@ -156,6 +156,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
   var safeSeoDesc = h(seoDescription.substring(0, 160));
   var safeShipping = h(shippingPolicy);
   var safeReturn = h(returnPolicy);
+  var couponCode = '';
 
   // Build product link — direct to product page with CJ ID and slug
   // Include first variant ID, color, size, and price as query params for pre-selection
@@ -238,10 +239,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     '&#127974;', // bank
     '&#128666;', // paypal/cod
   ];
-  var visitorCount = Math.floor(Math.random() * 50) + 15; // Simulated live visitors
-  var limitedOfferEnd = new Date();
-  limitedOfferEnd.setHours(limitedOfferEnd.getHours() + 48); // 48-hour countdown
-  var offerEndStr = limitedOfferEnd.toISOString();
+  var visitorCount = 45; // Fixed initial visitors to prevent hydration mismatch, fluctuates on client
   var isLimitedStock = totalInventory > 0 && totalInventory < 100;
   var stockUrgencyLevel = totalInventory < 20 ? 'high' : (totalInventory < 50 ? 'medium' : 'low');
   var urgencyMessages = [
@@ -274,37 +272,8 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '  "offers": [' + offers + ']\n'
     + '}';
 
-  // Build head
-  var result = '<!DOCTYPE html>\n'
-    + '<html lang="en">\n'
-    + '<head>\n'
-    + '<meta charset="UTF-8" />\n'
-    + '<meta name="viewport" content="width=device-width, initial-scale=1.0"/>\n'
-    + '<meta name="theme-color" content="#FF6B35">\n'
-    + '<title>' + safeSeoTitle + '</title>\n'
-    + '<meta name="description" content="' + safeSeoDesc + '" />\n'
-    + '<link rel="canonical" href="' + safeLink + '" />\n'
-    + '<!-- Open Graph -->\n'
-    + '<meta property="og:title" content="' + safeSeoTitle + '">\n'
-    + '<meta property="og:description" content="' + safeSeoDesc + '">\n'
-    + '<meta property="og:type" content="product">\n'
-    + '<meta property="og:site_name" content="BangParjo">\n'
-    + '<meta property="og:url" content="' + safeLink + '">\n'
-    + '<meta property="og:locale" content="en_US">\n'
-    + (product.images[0] ? '<meta property="og:image" content="' + hAttr(product.images[0]) + '">\n' : '')
-    + '<meta property="og:image:width" content="1200">\n'
-    + '<meta property="og:image:height" content="630">\n'
-    + '<meta property="product:price:amount" content="' + minPrice.toFixed(2) + '">\n'
-    + '<meta property="product:price:currency" content="USD">\n'
-    + (product.createdAt ? '<meta property="article:published_time" content="' + product.createdAt + '">\n' : '')
-    + '<meta property="article:modified_time" content="' + new Date().toISOString() + '">\n'
-    + '<!-- Twitter Card -->\n'
-    + '<meta name="twitter:card" content="summary_large_image">\n'
-    + '<meta name="twitter:site" content="@bangparjo">\n'
-    + '<meta name="twitter:title" content="' + safeSeoTitle + '">\n'
-    + '<meta name="twitter:description" content="' + safeSeoDesc + '">\n'
-    + (product.images[0] ? '<meta name="twitter:image" content="' + hAttr(product.images[0]) + '">\n' : '')
-    + '<!-- JSON-LD Product Schema -->\n'
+  // Build safe in-body tags (JSON-LD schema, hidden ad copy meta, and page styles)
+  var result = '<!-- JSON-LD Product Schema -->\n'
     + '<script type="application/ld+json">\n'
     + jsonLd + '\n'
     + '</script>\n'
@@ -404,9 +373,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '.section{padding:32px 0;}\n'
     + '.hero .hero-image-wrap .price-tag{font-size:16px;padding:8px 14px;}\n'
     + '}\n'
-    + '</style>\n'
-    + '</head>\n'
-    + '<body>\n';
+    + '</style>\n';
 
   // Hero section — modern landing page style
   var stockText = totalInventory > 0 ? '&#9989; In Stock' : '&#9203; Pre-Order';
@@ -472,7 +439,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
   if (product.coupon) {
     var c = product.coupon;
     var couponDesc = h(c.description);
-    var couponCode = h(c.code);
+    couponCode = h(c.code);
     var couponLabel = '';
     var couponIcon = '&#127873;'; // gift box
     var couponBg = 'linear-gradient(135deg,#1A1A2E,#0F3460)';
@@ -565,8 +532,20 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '    if(count > 200) count = 200;\n'
     + '    el.textContent = count;\n'
     + '  }, 3000);\n'
-    + '  // Countdown timer — 48 hours from now\n'
-    + '  var endTime = new Date("' + offerEndStr + '").getTime();\n'
+    + '  // Countdown timer — 48 hours from now with client persistence\n'
+    + '  var endTime;\n'
+    + '  try {\n'
+    + '    var endKey = "offer_end_' + product.cjId + '";\n'
+    + '    endTime = localStorage.getItem(endKey);\n'
+    + '    if(!endTime){\n'
+    + '      endTime = new Date().getTime() + 172800000; // 48 hours\n'
+    + '      localStorage.setItem(endKey, endTime);\n'
+    + '    } else {\n'
+    + '      endTime = parseInt(endTime, 10);\n'
+    + '    }\n'
+    + '  } catch(e) {\n'
+    + '    endTime = new Date().getTime() + 172800000;\n'
+    + '  }\n'
     + '  function updateTimer(){\n'
     + '    var el = document.getElementById("countdownTimer");\n'
     + '    if(!el) return;\n'
@@ -1071,14 +1050,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + 'window.handleDirectCheckout = function(event) {\n'
     + '  if(!selectedVariant) return;\n'
     + '  \n'
-    + '  // Coupon minPurchase check\n'
-    + '  if(productData.coupon && productData.coupon.minPurchase > 0) {\n'
-    + '    var total = selectedVariant.price * quantity;\n'
-    + '    if(total < productData.coupon.minPurchase) {\n'
-    + '      alert("⚠️ Coupon " + productData.coupon.code + " requires a minimum purchase of $" + productData.coupon.minPurchase.toFixed(2) + ".\\nYour current purchase total is $" + total.toFixed(2) + ".\\n\\nPlease increase the quantity (+) to claim this discount!");\n'
-    + '      return;\n'
-    + '    }\n'
-    + '  }\n'
+    + '  // Direct to cart and checkout\n'
     + '  \n'
     + '  var item = {\n'
     + '    pid: productData.pid,\n'
@@ -1113,7 +1085,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '  btn.style.opacity = "0.7";\n'
     + '  btn.disabled = true;\n'
     + '  \n'
-    + '  var checkoutUrl = "/checkout?pid=" + encodeURIComponent(item.pid) + "&vid=" + encodeURIComponent(item.selectedVid);\n'
+    + '  var checkoutUrl = "/checkout?pid=" + encodeURIComponent(item.pid) + "&vid=" + encodeURIComponent(item.selectedVid) + "&qty=" + quantity;\n'
     + '  if(productData.coupon) {\n'
     + '    checkoutUrl += "&coupon=" + encodeURIComponent(productData.coupon.code);\n'
     + '  }\n'
@@ -1125,7 +1097,6 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '</script>\n';
 
   result += scriptBlock;
-  result += '</body>\n</html>';
 
   return result;
 }

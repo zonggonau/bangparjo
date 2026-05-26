@@ -412,6 +412,45 @@ export async function sendOrderLinkAction(data: { orderNum: string, token: strin
 }
 
 // --- Coupon Actions ---
+export async function getActiveCouponsAction() {
+  try {
+    const now = new Date();
+    const coupons = await prisma.coupon.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: now } }
+        ]
+      },
+      include: {
+        products: true
+      }
+    });
+
+    const serialized = coupons.map(c => ({
+      id: c.id,
+      code: c.code,
+      type: c.type,
+      value: c.value,
+      minPurchase: c.minPurchase,
+      maxUses: c.maxUses,
+      usedCount: c.usedCount,
+      isActive: c.isActive,
+      expiresAt: c.expiresAt ? c.expiresAt.toISOString() : null,
+      products: c.products.map(p => ({
+        id: p.id,
+        productCjId: p.productCjId
+      }))
+    }));
+
+    return { success: true, data: serialized };
+  } catch (error: any) {
+    console.error('[Get Active Coupons Error]:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 export async function validateCouponAction(data: { code: string; subtotal?: number; productPid?: string }) {
   try {
     const { code, subtotal, productPid } = data;

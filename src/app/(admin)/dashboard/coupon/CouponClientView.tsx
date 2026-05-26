@@ -16,14 +16,34 @@ interface Coupon {
   expiresAt: string | null;
   description: string | null;
   createdAt: string;
+  products?: Array<{ productCjId: string }>;
 }
 
-export default function CouponClientView({ coupons, total, currentPage }: { coupons: Coupon[], total: number, currentPage: number }) {
+interface ProductOption {
+  id: string;
+  cjId: string;
+  name: string;
+}
+
+export default function CouponClientView({ 
+  coupons, 
+  total, 
+  currentPage,
+  products = []
+}: { 
+  coupons: Coupon[], 
+  total: number, 
+  currentPage: number,
+  products?: ProductOption[]
+}) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const [selectedProductId, setSelectedProductId] = useState('');
+  const [selectedProductCjId, setSelectedProductCjId] = useState('');
 
   const [form, setForm] = useState({
     code: '',
@@ -48,6 +68,8 @@ export default function CouponClientView({ coupons, total, currentPage }: { coup
       description: '',
     });
     setEditingId(null);
+    setSelectedProductId('');
+    setSelectedProductCjId('');
     setError('');
     setSuccess('');
   };
@@ -64,6 +86,12 @@ export default function CouponClientView({ coupons, total, currentPage }: { coup
       description: coupon.description || '',
     });
     setEditingId(coupon.id);
+    const linkedProductCjId = coupon.products?.[0]?.productCjId || '';
+    setSelectedProductCjId(linkedProductCjId);
+    
+    const matchedProduct = products.find(p => p.cjId === linkedProductCjId);
+    setSelectedProductId(matchedProduct ? matchedProduct.id : '');
+
     setShowForm(true);
     setError('');
     setSuccess('');
@@ -94,6 +122,7 @@ export default function CouponClientView({ coupons, total, currentPage }: { coup
         isActive: form.isActive,
         expiresAt: form.expiresAt || null,
         description: form.description || null,
+        productCjIds: selectedProductCjId ? [selectedProductCjId] : [],
       };
 
       const json = await saveAdminCouponAction(body);
@@ -232,7 +261,25 @@ export default function CouponClientView({ coupons, total, currentPage }: { coup
               >
                 <option value="PERCENTAGE">Percentage (%)</option>
                 <option value="FIXED">Fixed Amount ($)</option>
-                <option value="FREE_SHIPPING">Free Shipping</option>
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-bold text-gray-500 uppercase">Linked Product (Optional)</label>
+              <select
+                value={selectedProductCjId}
+                onChange={e => {
+                  setSelectedProductCjId(e.target.value);
+                  const p = products.find(prod => prod.cjId === e.target.value);
+                  if (p) setSelectedProductId(p.id);
+                  else setSelectedProductId('');
+                }}
+                className="px-4 py-3 border border-gray-200 rounded-[8px] text-sm outline-none focus:border-[#FF6B00] transition-colors bg-white font-semibold text-gray-700"
+              >
+                <option value="">Store-wide Coupon (All Products)</option>
+                {products.map((p) => (
+                  <option key={p.cjId} value={p.cjId}>{p.name}</option>
+                ))}
               </select>
             </div>
 
@@ -368,6 +415,12 @@ export default function CouponClientView({ coupons, total, currentPage }: { coup
                   <tr key={coupon.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-4">
                       <span className="font-extrabold text-[15px] text-[#1A1A1A]">{coupon.code}</span>
+                      {coupon.products && coupon.products.length > 0 && (
+                        <div className="text-[10px] font-extrabold text-orange-600 mt-0.5 flex items-center gap-1">
+                          <i className="fas fa-box-open text-[9px]"></i>
+                          <span>Product Specific</span>
+                        </div>
+                      )}
                       {coupon.description && (
                         <p className="text-[11px] text-gray-400 mt-0.5">{coupon.description}</p>
                       )}

@@ -46,12 +46,12 @@ function CouponField({
 }) {
   const [localCode, setLocalCode] = useState(entry.applied ? entry.applied.code : entry.code);
 
-  // Sync localCode when entry is reset (e.g. remove)
+  // Sync localCode when entry changes (e.g. coupon auto-applied or removed)
   useEffect(() => {
     if (!entry.applied) {
-      setLocalCode('');
+      setLocalCode(entry.code || '');
     }
-  }, [entry.applied]);
+  }, [entry.applied, entry.code]);
 
   if (entry.applied) {
     return (
@@ -140,7 +140,7 @@ function CheckoutContent() {
   const [couponMap, setCouponMap] = useState<Record<string, CouponEntry>>({});
   const [couponApplied, setCouponApplied] = useState(false);
 
-  const getCouponEntry = (key: string): CouponEntry => couponMap[key] || makeCouponEntry();
+  const getCouponEntry = (key: string): CouponEntry => couponMap[key] || makeCouponEntry(couponParam || '');
 
   const updateCouponEntry = (key: string, partial: Partial<CouponEntry>) => {
     setCouponMap(prev => ({
@@ -150,14 +150,15 @@ function CheckoutContent() {
   };
 
   // ── Coupon Handlers ───────────────────────────────────────────────────────
-  const handleApplyCoupon = async (key: string, code: string) => {
+  const handleApplyCoupon = async (key: string, code: string, productPid?: string) => {
     if (!code.trim()) return;
 
     updateCouponEntry(key, { code, loading: true, error: '', applied: null });
 
-
-    // Find the item price for this key
+    // Find the item price and productPid for this key
     let itemSubtotal = 0;
+    let resolvedPid = productPid;
+
     if (isCartCheckout) {
       const [pid, vidRaw] = key.split('__');
       const vid = vidRaw === 'novid' ? undefined : vidRaw;
@@ -166,13 +167,24 @@ function CheckoutContent() {
         const rawCj = Number(item.sellPrice);
         const price = isNaN(rawCj) ? 0 : calculateFinalPrice(rawCj, settings);
         itemSubtotal = price * item.quantity;
+        resolvedPid = resolvedPid || item.pid;
       }
     } else if (product) {
-      itemSubtotal = variantPrice * qty;
+      const variantCjPrice = selectedVariant?.variantSellPrice || product.sellPrice || 0;
+      const basePrice = calculateFinalPrice(Number(variantCjPrice), settings);
+      const qParam = searchParams.get('qty');
+      const currentQty = qParam ? (parseInt(qParam, 10) || qty) : qty;
+      itemSubtotal = basePrice * currentQty;
+      resolvedPid = resolvedPid || product.pid || product.cjId;
     }
 
     try {
-      const json = await validateCouponAction({ code: code.trim(), subtotal: itemSubtotal });
+      // Pass productPid so product-specific coupons are accepted by the server
+      const json = await validateCouponAction({
+        code: code.trim(),
+        subtotal: itemSubtotal,
+        productPid: resolvedPid,
+      });
 
       if (json.success && json.data) {
         updateCouponEntry(key, {
@@ -262,6 +274,17 @@ function CheckoutContent() {
     }
   }, [pidParam, vidParam, cartItems]);
 
+  // Set quantity from URL param on load
+  useEffect(() => {
+    const q = searchParams.get('qty');
+    if (q) {
+      const val = parseInt(q, 10);
+      if (!isNaN(val) && val > 0) {
+        setQty(val);
+      }
+    }
+  }, [searchParams]);
+
   // Auto-apply coupon from URL param on load
   useEffect(() => {
     if (!couponParam || !isLoaded || couponApplied) return;
@@ -271,12 +294,14 @@ function CheckoutContent() {
         const firstItem = cartItems[0];
         const key = itemKey(firstItem.pid, firstItem.selectedVid);
         setCouponApplied(true);
-        handleApplyCoupon(key, couponParam);
+        // Pass productPid so product-specific coupons are validated correctly
+        handleApplyCoupon(key, couponParam, firstItem.pid);
       }
     } else if (product && selectedVariant) {
       const key = itemKey(product.pid || product.cjId);
       setCouponApplied(true);
-      handleApplyCoupon(key, couponParam);
+      // Pass productPid so product-specific coupons are validated correctly
+      handleApplyCoupon(key, couponParam, product.pid || product.cjId);
     }
   }, [couponParam, product, selectedVariant, isCartCheckout, cartItems, isLoaded, couponApplied]);
 
@@ -451,16 +476,55 @@ function CheckoutContent() {
     </div>
   );
 
-  const variantCjPrice = selectedVariant?.variantSellPrice || (product ? product.sellPrice : 0);
-  const variantPrice = calculateFinalPrice(variantCjPrice, settings);
+  const variantCjPrice = Number(selectedVariant?.variantSellPrice || (product ? product.sellPrice : 0));
+
+  const itemKeyVal = itemKey(product?.pid || product?.cjId || '');
+  const couponEntry = getCouponEntry(itemKeyVal);
+
+  // Step 1: margin price = CJ price × markup% from DB settings (via calculateFinalPrice)
+  const marginPrice = calculateFinalPrice(variantCjPrice, settings);
+
+  // Step 2: inflate for display when coupon active — same logic as product page
+  //   inflatedPrice × (1 - pct/100) = marginPrice
+  //   → customer sees inflatedPrice, after coupon deduction nets to marginPrice
+  let variantPrice = marginPrice;
+  let discountAmount = 0;
+  if (couponEntry && couponEntry.applied) {
+    if (couponEntry.applied.type === 'PERCENTAGE') {
+      const pct = couponEntry.applied.value;
+      if (pct > 0 && pct < 100) {
+        variantPrice   = marginPrice / (1 - pct / 100);      // inflated
+        discountAmount = variantPrice * qty * (pct / 100);  // nets to marginPrice after deduction
+      }
+    } else if (couponEntry.applied.type === 'FIXED') {
+      variantPrice   = marginPrice + couponEntry.applied.value;
+      discountAmount = Math.min(couponEntry.applied.value, variantPrice * qty);
+    } else {
+      discountAmount = couponEntry.discountAmount || 0;
+    }
+  }
+
+  // For cart items: use dynamic markup from settings, inflate if coupon active
+  const getCartItemInflatedPrice = (item: any) => {
+    const rawCj = Number(item.sellPrice);
+    const baseMargin = isNaN(rawCj) ? 0 : calculateFinalPrice(rawCj, settings);
+    const key = itemKey(item.pid, item.selectedVid);
+    const entry = getCouponEntry(key);
+    if (entry && entry.applied) {
+      if (entry.applied.type === 'PERCENTAGE') {
+        const pct = entry.applied.value;
+        if (pct > 0 && pct < 100) return baseMargin / (1 - pct / 100);
+      } else if (entry.applied.type === 'FIXED') {
+        return baseMargin + entry.applied.value;
+      }
+    }
+    return baseMargin;
+  };
 
   const cartSubtotal = isCartCheckout
-    ? cartItems.reduce((acc, item) => {
-        const rawCj = Number(item.sellPrice);
-        return acc + (isNaN(rawCj) ? 0 : calculateFinalPrice(rawCj, settings)) * item.quantity;
-      }, 0)
+    ? cartItems.reduce((acc, item) => acc + getCartItemInflatedPrice(item) * item.quantity, 0)
     : variantPrice * qty;
-  
+
   const finalShippingCost = selectedShipping 
     ? calculateShippingFee(selectedShipping.logisticPrice || 0, cartSubtotal, settings)
     : 0;
@@ -468,10 +532,29 @@ function CheckoutContent() {
   const subtotal = cartSubtotal;
   const taxAmount = (subtotal * (settings.taxPct || 0)) / 100;
   
-  // Sum all per-product discount amounts
-  const totalDiscount = Object.values(couponMap).reduce((sum, entry) => sum + (entry.discountAmount || 0), 0);
+  // Sum all per-product discounts (pct of inflated price → nets to margin price)
+  const totalDiscount = isCartCheckout
+    ? cartItems.reduce((sum, item) => {
+        const key = itemKey(item.pid, item.selectedVid);
+        const entry = getCouponEntry(key);
+        if (entry && entry.applied) {
+          const inflated = getCartItemInflatedPrice(item);
+          if (entry.applied.type === 'PERCENTAGE') {
+            const pct = entry.applied.value;
+            if (pct > 0 && pct < 100) {
+              return sum + (inflated * item.quantity * pct / 100);
+            }
+          } else if (entry.applied.type === 'FIXED') {
+            return sum + Math.min(entry.applied.value || 0, inflated * item.quantity);
+          } else {
+            return sum + (entry.discountAmount || 0);
+          }
+        }
+        return sum;
+      }, 0)
+    : discountAmount;
   
-  // Apply coupon discount to subtotal
+  // Net = inflated subtotal − coupon discount = margin price
   const discountedSubtotal = Math.max(0, subtotal - totalDiscount);
   
   // If any coupon has freeShipping, override shipping cost to 0
@@ -598,8 +681,21 @@ function CheckoutContent() {
                 const key = itemKey(item.pid, item.selectedVid);
                 const entry = getCouponEntry(key);
                 const name = parseProductName(item.productNameEn || item.productName);
-                const itemPrice = calculateFinalPrice(Number(item.sellPrice), settings) * item.quantity;
-                const itemDiscounted = Math.max(0, itemPrice - (entry.discountAmount || 0));
+                // Use inflated price (same as product page) so coupon deduction nets to margin
+                const inflated = getCartItemInflatedPrice(item);
+                const itemPrice = inflated * item.quantity;
+                let discountVal = 0;
+                if (entry && entry.applied) {
+                  if (entry.applied.type === 'PERCENTAGE') {
+                    const pct = entry.applied.value;
+                    if (pct > 0 && pct < 100) discountVal = itemPrice * (pct / 100);
+                  } else if (entry.applied.type === 'FIXED') {
+                    discountVal = Math.min(entry.applied.value || 0, itemPrice);
+                  } else {
+                    discountVal = entry.discountAmount || 0;
+                  }
+                }
+                const itemDiscounted = Math.max(0, itemPrice - discountVal);
                 return (
                   <div key={key} className="pb-4 border-b border-gray-100 last:border-b-0">
                     <div className="flex gap-3">
@@ -610,7 +706,7 @@ function CheckoutContent() {
                         <div className="flex justify-between items-center mt-1.5">
                           <span className="text-[11px] text-gray-400">Qty: {item.quantity}</span>
                           <span className="text-[13px] font-bold text-[#FF6B00]">
-                            {entry.discountAmount > 0 ? (
+                            {discountVal > 0 ? (
                               <><span className="line-through text-gray-400 mr-1">{formatUSD(itemPrice)}</span>{formatUSD(itemDiscounted)}</>
                             ) : formatUSD(itemPrice)}
                           </span>
@@ -625,7 +721,7 @@ function CheckoutContent() {
                           {entry.error}
                         </p>
                       )}
-                      <CouponField entry={entry} onApply={(code) => handleApplyCoupon(key, code)} onRemove={() => handleRemoveCoupon(key)} />
+                      <CouponField entry={entry} onApply={(code) => handleApplyCoupon(key, code, item.pid)} onRemove={() => handleRemoveCoupon(key)} />
                     </div>
                   </div>
                 );
@@ -635,8 +731,10 @@ function CheckoutContent() {
                 const key = itemKey(product.pid || product.cjId);
                 const entry = getCouponEntry(key);
                 const name = parseProductName(product.productNameEn || product.productName);
+                // variantPrice is already inflated when coupon is active
                 const itemPrice = variantPrice * qty;
-                const itemDiscounted = Math.max(0, itemPrice - (entry.discountAmount || 0));
+                let discountVal = discountAmount; // reuse already-computed discount
+                const itemDiscounted = Math.max(0, itemPrice - discountVal);
                 return (
                   <div key={key} className="pb-4 border-b border-gray-100">
                     <div className="flex gap-3">
@@ -647,7 +745,7 @@ function CheckoutContent() {
                         <div className="flex justify-between items-center mt-1.5">
                           <span className="text-[11px] text-gray-400">Qty: {qty}</span>
                           <span className="text-[13px] font-bold text-[#FF6B00]">
-                            {entry.discountAmount > 0 ? (
+                            {discountVal > 0 ? (
                               <><span className="line-through text-gray-400 mr-1">{formatUSD(itemPrice)}</span>{formatUSD(itemDiscounted)}</>
                             ) : formatUSD(itemPrice)}
                           </span>
@@ -662,8 +760,7 @@ function CheckoutContent() {
                           {entry.error}
                         </p>
                       )}
-                      <CouponField entry={entry} onApply={(code) => handleApplyCoupon(key, code)} onRemove={() => handleRemoveCoupon(key)} />
-
+                      <CouponField entry={entry} onApply={(code) => handleApplyCoupon(key, code, product.pid || product.cjId)} onRemove={() => handleRemoveCoupon(key)} />
                     </div>
                   </div>
                 );

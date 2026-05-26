@@ -11,7 +11,8 @@ import {
   updateAdminInventoryAction, 
   syncAdminInventoryAction, 
   deleteAdminProductAction, 
-  exportToBlogAction 
+  exportToBlogAction,
+  generateAndSaveAiCouponAction
 } from '@/lib/actions-admin-inventory';
 
 interface Variant {
@@ -54,14 +55,16 @@ export default function InventoryList({
   currentPage = 1,
   categories = [],
   currentCategory = '',
-  currentSort = 'newest'
+  currentSort = 'newest',
+  activeCoupons = []
 }: { 
   initialProducts: any[], 
   total?: number, 
   currentPage?: number,
   categories?: any[],
   currentCategory?: string,
-  currentSort?: string
+  currentSort?: string,
+  activeCoupons?: any[]
 }) {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>(initialProducts);
@@ -78,6 +81,51 @@ export default function InventoryList({
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [selectedCouponId, setSelectedCouponId] = useState<string | null>(null);
   const { settings } = useSettings();
+
+  const getProductActiveCoupon = (productCjId: string): Coupon | null => {
+    const now = new Date();
+    // 1. Find coupon specifically assigned to this product
+    const specificCoupon = activeCoupons.find(c => {
+      const isExpired = c.expiresAt ? new Date(c.expiresAt) <= now : false;
+      const isExhausted = c.maxUses !== null ? c.usedCount >= c.maxUses : false;
+      const isValid = c.isActive && !isExpired && !isExhausted;
+      if (!isValid) return false;
+      return c.products && c.products.some((pr: any) => pr.productCjId === productCjId);
+    });
+
+    if (specificCoupon) return specificCoupon;
+
+    // 2. Find general active coupon (no products listed, meaning general store-wide)
+    const generalCoupon = activeCoupons.find(c => {
+      const isExpired = c.expiresAt ? new Date(c.expiresAt) <= now : false;
+      const isExhausted = c.maxUses !== null ? c.usedCount >= c.maxUses : false;
+      const isValid = c.isActive && !isExpired && !isExhausted;
+      if (!isValid) return false;
+      return !c.products || c.products.length === 0;
+    });
+
+    return generalCoupon || null;
+  };
+
+  const getInflatedVariantPrice = (sellingPrice: number, productCjId: string) => {
+    const targetPrice = calculateFinalPrice(sellingPrice, settings);
+    const activeCoupon = getProductActiveCoupon(productCjId);
+    
+    if (activeCoupon) {
+      if (activeCoupon.type === 'PERCENTAGE') {
+        const pct = activeCoupon.value;
+        if (pct > 0 && pct < 100) {
+          return targetPrice / (1 - pct / 100);
+        }
+      } else if (activeCoupon.type === 'FIXED') {
+        const amount = activeCoupon.value;
+        if (amount > 0) {
+          return targetPrice + amount;
+        }
+      }
+    }
+    return targetPrice;
+  };
 
   const handleFilterChange = (key: string, value: string) => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -202,24 +250,46 @@ export default function InventoryList({
 
   // ── CJ Real-time Stock ──────────────────────────────────────────────────
   const [cjStocks, setCjStocks] = useState<Record<string, { total: number; warehouses: any[] }>>({});
-  const [cjStockLoading, setCjStockLoading] = useState<Record<string, boolean>>({});
+  const [productCjLoading, setProductCjLoading] = useState<Record<string, boolean>>({});
 
-  const fetchCjStock = async (variantCjId: string) => {
-    if (cjStocks[variantCjId]) return; // already fetched
-    setCjStockLoading(prev => ({ ...prev, [variantCjId]: true }));
+  const fetchProductCjStocks = async (productCjId: string) => {
+    if (cjStocks[productCjId]) return; // already fetched
+    if (productCjLoading[productCjId]) return;
+    setProductCjLoading(prev => ({ ...prev, [productCjId]: true }));
     try {
-      const res = await fetch(`/api/cj-proxy?endpoint=/api2.0/v1/product/stock/queryByVid?vid=${variantCjId}`);
+      const res = await fetch(`/api/cj-proxy?endpoint=/api2.0/v1/product/stock/getInventoryByPid?pid=${productCjId}`);
       const data = await res.json();
-      if (data.success && data.data) {
-        const total = data.data.reduce((sum: number, w: any) => sum + (w.totalInventoryNum || 0), 0);
-        setCjStocks(prev => ({ ...prev, [variantCjId]: { total, warehouses: data.data } }));
+      if (data.success && data.data && Array.isArray(data.data.variantInventories)) {
+        const newStocks: Record<string, { total: number; warehouses: any[] }> = {};
+        for (const vi of data.data.variantInventories) {
+          if (!vi.vid) continue;
+          let total = 0;
+          let warehouses: any[] = [];
+          if (Array.isArray(vi.inventory)) {
+            total = vi.inventory.reduce((sum: number, inv: any) => sum + (Number(inv.totalInventory || inv.totalInventoryNum || 0) || 0), 0);
+            warehouses = vi.inventory.map((inv: any) => ({
+              areaEn: inv.areaEn || inv.countryNameEn || inv.countryCode || 'Warehouse',
+              totalInventoryNum: inv.totalInventory || inv.totalInventoryNum || 0,
+            }));
+          }
+          newStocks[vi.vid] = { total, warehouses };
+        }
+        setCjStocks(prev => ({ ...prev, ...newStocks }));
       }
     } catch (err) {
-      console.error('Failed to fetch CJ stock:', err);
+      console.error('Failed to fetch CJ stocks for product:', err);
     } finally {
-      setCjStockLoading(prev => ({ ...prev, [variantCjId]: false }));
+      setProductCjLoading(prev => ({ ...prev, [productCjId]: false }));
     }
   };
+
+  // Trigger CJ stock fetch when a product is expanded
+  useEffect(() => {
+    if (!expandedId) return;
+    const product = products.find(p => p.id === expandedId);
+    if (!product) return;
+    fetchProductCjStocks(product.cjId);
+  }, [expandedId, products]);
 
   const handleDeleteVariant = async (e: React.MouseEvent, productId: string, variantId: string) => {
     e.preventDefault();
@@ -241,6 +311,24 @@ export default function InventoryList({
       }
     } catch (err: any) {
       showToast('Error', 'error');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleGenerateAiCoupon = async (e: React.MouseEvent, productId: string) => {
+    e.stopPropagation();
+    setLoading(`ai-coupon-${productId}`);
+    try {
+      const res = await generateAndSaveAiCouponAction(productId);
+      if (res.success && res.coupon) {
+        showToast(`✨ AI Coupon ${res.coupon.code} generated and linked!`);
+        router.refresh();
+      } else {
+        showToast(res.error || 'Failed to generate coupon', 'error');
+      }
+    } catch (err: any) {
+      showToast('Error: ' + err.message, 'error');
     } finally {
       setLoading(null);
     }
@@ -362,13 +450,14 @@ export default function InventoryList({
               <th className="w-[50px] px-5 py-3.5"></th>
               <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Product Information</th>
               <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Variants</th>
+              <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Coupon</th>
               <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Stock Status</th>
               <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
           <tbody>
             {products.length === 0 ? (
-              <tr><td colSpan={5} className="text-center py-[100px] text-gray-400">No products imported yet.</td></tr>
+              <tr><td colSpan={6} className="text-center py-[100px] text-gray-400">No products imported yet.</td></tr>
             ) : (
               products.map((p) => (
                 <React.Fragment key={p.id}>
@@ -394,6 +483,20 @@ export default function InventoryList({
                     </td>
                     <td className="px-5 py-3.5">
                       <span className="inline-block px-2.5 py-1 rounded-[6px] text-xs font-bold bg-blue-100 text-blue-700">{p.variants.length} Specs</span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {(() => {
+                        const coupon = getProductActiveCoupon(p.cjId);
+                        if (coupon) {
+                          return (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-[11px] font-extrabold bg-green-50 text-green-700 border border-green-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                              <span>{coupon.code} ({coupon.type === 'PERCENTAGE' ? `${coupon.value}%` : `$${coupon.value}`})</span>
+                            </span>
+                          );
+                        }
+                        return <span className="text-xs text-gray-400 font-bold">—</span>;
+                      })()}
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex flex-col gap-1">
@@ -432,6 +535,14 @@ export default function InventoryList({
                           <i className={`fa${p.isHero ? 's' : 'r'} fa-star`}></i>
                         </button>
                         <button 
+                          className="px-2.5 py-1.5 rounded-[8px] text-sm border border-gray-200 text-purple-600 hover:bg-purple-50 transition-all duration-200"
+                          title="Generate Coupon with AI"
+                          disabled={loading === `ai-coupon-${p.id}`}
+                          onClick={(e) => handleGenerateAiCoupon(e, p.id)}
+                        >
+                          <i className={`fas fa-magic ${loading === `ai-coupon-${p.id}` ? 'fa-spin' : ''}`}></i>
+                        </button>
+                        <button 
                           className="px-2.5 py-1.5 rounded-[8px] text-sm border border-gray-200 text-green-600 hover:bg-green-50 transition-all duration-200"
                           title="Export to Blog"
                           disabled={loading === `blog-${p.id}`}
@@ -456,7 +567,7 @@ export default function InventoryList({
                   </tr>
                   {expandedId === p.id && (
                     <tr className="bg-gray-50">
-                      <td colSpan={5} className="p-0">
+                      <td colSpan={6} className="p-0">
                         <div className="p-8 border-l-4 border-[#FF6B00]">
                           <div className="bg-white rounded-[12px] border border-gray-200 shadow-sm">
                             <table className="w-full border-collapse">
@@ -473,7 +584,7 @@ export default function InventoryList({
                               <tbody>
                                 {p.variants.map((v) => {
                                   const cjStock = cjStocks[v.cjId];
-                                  const cjLoading = cjStockLoading[v.cjId];
+                                  const cjLoading = productCjLoading[p.id];
                                   return (
                                     <tr key={v.id} className="border-t border-gray-100">
                                       <td className="px-6 py-3">
@@ -506,16 +617,34 @@ export default function InventoryList({
                                             </button>
                                           </div>
                                         ) : (
-                                          <span
-                                            className="inline-block px-2.5 py-1 rounded-[6px] text-[13px] font-black bg-green-100 text-green-700 cursor-pointer"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setEditingPrice({ variantId: v.id, value: String(v.sellingPrice) });
-                                            }}
-                                            title="Click to edit price"
-                                          >
-                                            ${calculateFinalPrice(v.sellingPrice, settings).toFixed(2)}
-                                          </span>
+                                          <div className="flex flex-col">
+                                            <span
+                                              className="inline-block px-2.5 py-1 rounded-[6px] text-[13px] font-black bg-green-100 text-green-700 cursor-pointer w-fit"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setEditingPrice({ variantId: v.id, value: String(v.sellingPrice) });
+                                              }}
+                                              title="Click to edit price"
+                                            >
+                                              ${getInflatedVariantPrice(v.sellingPrice, p.cjId).toFixed(2)}
+                                            </span>
+                                            {(() => {
+                                              const activeCoupon = getProductActiveCoupon(p.cjId);
+                                              if (activeCoupon) {
+                                                const originalPrice = calculateFinalPrice(v.sellingPrice, settings);
+                                                return (
+                                                  <div className="text-[10px] font-extrabold text-orange-500 mt-1 flex flex-col gap-0.5">
+                                                    <span className="flex items-center gap-1">
+                                                      <i className="fas fa-tag"></i>
+                                                      <span>{activeCoupon.code} ({activeCoupon.type === 'PERCENTAGE' ? `+${activeCoupon.value}%` : `+$${activeCoupon.value}`})</span>
+                                                    </span>
+                                                    <span className="text-gray-400 font-medium">Base: ${originalPrice.toFixed(2)}</span>
+                                                  </div>
+                                                );
+                                              }
+                                              return null;
+                                            })()}
+                                          </div>
                                         )}
                                       </td>
                                       <td className="px-6 py-3">

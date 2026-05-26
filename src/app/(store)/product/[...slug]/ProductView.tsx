@@ -16,7 +16,7 @@ import { countries } from '@/lib/countries';
 
 export default function ProductView({ id, initialData, initialError, selectedVid }: { id: string, initialData: any, initialError: string | null, selectedVid?: string }) {
   const { addToCart } = useCart();
-  const { settings } = useSettings();
+  const { settings, activeCoupons } = useSettings();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -157,11 +157,57 @@ export default function ProductView({ id, initialData, initialError, selectedVid
     setRealStock(fallbackStock);
   }, [selectedVariant]);
 
+  const getProductActiveCoupon = (productCjId: string) => {
+    if (!activeCoupons) return null;
+    const now = new Date();
+    // 1. Find coupon specifically assigned to this product
+    const specificCoupon = activeCoupons.find(c => {
+      const isExpired = c.expiresAt ? new Date(c.expiresAt) <= now : false;
+      const isExhausted = c.maxUses !== null ? c.usedCount >= c.maxUses : false;
+      const isValid = c.isActive && !isExpired && !isExhausted;
+      if (!isValid) return false;
+      return c.products && c.products.some((pr: any) => pr.productCjId === productCjId);
+    });
+
+    if (specificCoupon) return specificCoupon;
+
+    // 2. Find general active coupon (no products listed, meaning general store-wide)
+    const generalCoupon = activeCoupons.find(c => {
+      const isExpired = c.expiresAt ? new Date(c.expiresAt) <= now : false;
+      const isExhausted = c.maxUses !== null ? c.usedCount >= c.maxUses : false;
+      const isValid = c.isActive && !isExpired && !isExhausted;
+      if (!isValid) return false;
+      return !c.products || c.products.length === 0;
+    });
+
+    return generalCoupon || null;
+  };
+
   const currentCjPrice = selectedVariant?.variantSellPrice 
     ? Number(selectedVariant.variantSellPrice)
     : (typeof product?.sellPrice === 'number' ? product?.sellPrice : parseFloat(String(product?.sellPrice)));
     
-  const finalPrice = calculateFinalPrice(currentCjPrice, settings);
+  const targetPrice = calculateFinalPrice(currentCjPrice, settings);
+
+  const getInflatedPrice = () => {
+    const activeCoupon = getProductActiveCoupon(product?.pid || id);
+    if (activeCoupon) {
+      if (activeCoupon.type === 'PERCENTAGE') {
+        const pct = activeCoupon.value;
+        if (pct > 0 && pct < 100) {
+          return targetPrice / (1 - pct / 100);
+        }
+      } else if (activeCoupon.type === 'FIXED') {
+        const amount = activeCoupon.value;
+        if (amount > 0) {
+          return targetPrice + amount;
+        }
+      }
+    }
+    return targetPrice;
+  };
+
+  const finalPrice = getInflatedPrice();
 
   // ── Discount calculation ──────────────────────────────────────────────
   const nowPrice = product?.nowPrice ? parseFloat(product.nowPrice) : null;
@@ -327,7 +373,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                   <i className="fas fa-shopping-bag"></i> Add to Cart
                 </button>
                 <Link 
-                  href={`/checkout?pid=${id}${selectedVariant ? `&vid=${selectedVariant.vid}` : ''}`} 
+                  href={`/checkout?pid=${id}${selectedVariant ? `&vid=${selectedVariant.vid}` : ''}&qty=${qty}`} 
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px] font-bold text-sm bg-[#1A1A1A] text-white hover:bg-[#333] transition-all duration-200 no-underline"
                 >
                   Buy Now

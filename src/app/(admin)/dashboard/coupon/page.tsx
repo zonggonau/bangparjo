@@ -15,6 +15,7 @@ export default async function CouponManagementPage({
   const coupons = await prisma.coupon.findMany({
     skip: (page - 1) * pageSize,
     take: pageSize,
+    include: { products: true },
     orderBy: { createdAt: 'desc' },
   });
 
@@ -23,8 +24,30 @@ export default async function CouponManagementPage({
     ...c,
     expiresAt: c.expiresAt ? c.expiresAt.toISOString() : null,
     createdAt: c.createdAt.toISOString(),
-    value: Number(c.value) // Ensure Decimal is converted
+    value: Number(c.value), // Ensure Decimal is converted
+    products: (c.products || []).map(cp => ({
+      productCjId: cp.productCjId
+    }))
   }));
 
-  return <CouponClientView coupons={safeCoupons} total={total} currentPage={page} />;
+  // Fetch active products list for AI selection and linking
+  const products = await prisma.product.findMany({
+    where: { status: 'ACTIVE' },
+    select: {
+      id: true,
+      cjId: true,
+      name: true,
+    },
+    orderBy: { name: 'asc' },
+  });
+
+  return (
+    <CouponClientView 
+      coupons={safeCoupons} 
+      total={total} 
+      currentPage={page} 
+      products={products} 
+    />
+  );
 }
+

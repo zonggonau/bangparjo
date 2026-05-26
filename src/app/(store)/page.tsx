@@ -12,6 +12,7 @@ import HomeHomeLiving from '@/components/home-sections/HomeHomeLiving';
 import Newsletter from '@/components/Newsletter';
 import LiveSales from '@/components/LiveSales';
 import AIChat from '@/components/AIChat';
+import { getDBStoreSettings, calculateFinalPrice } from '@/lib/pricing';
 
 const CACHE_TTL = 3600; // 1 hour
 
@@ -64,7 +65,64 @@ async function fetchFeaturedProducts() {
 }
 
 async function FeaturedHeroWrapper() {
-  const featuredProducts = await getFeaturedProducts();
+  const rawFeaturedProducts = await getFeaturedProducts();
+
+  // Fetch real-time settings and active coupons
+  const settings = await getDBStoreSettings();
+  const now = new Date();
+  let dbCoupons: any[] = [];
+  try {
+    dbCoupons = await prisma.coupon.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: now } }
+        ]
+      },
+      include: { products: true }
+    });
+  } catch (err) {
+    console.warn('[FeaturedHeroWrapper] Failed to fetch active coupons:', err);
+  }
+
+  const featuredProducts = rawFeaturedProducts.map((p: any) => {
+    const rawPrice = Number(p.sellPrice || 0);
+    const targetPrice = calculateFinalPrice(rawPrice, settings);
+
+    // Find active coupon associated with this product
+    const activeCoupon = dbCoupons.find(c => {
+      const isExhausted = c.maxUses !== null ? c.usedCount >= c.maxUses : false;
+      if (isExhausted) return false;
+
+      const specific = c.products && c.products.some((pr: any) => pr.productCjId === p.pid);
+      if (specific) return true;
+
+      const general = !c.products || c.products.length === 0;
+      return general;
+    });
+
+    let finalPrice = targetPrice;
+    if (activeCoupon) {
+      if (activeCoupon.type === 'PERCENTAGE') {
+        const pct = Number(activeCoupon.value);
+        if (pct > 0 && pct < 100) {
+          finalPrice = targetPrice / (1 - pct / 100);
+        }
+      } else if (activeCoupon.type === 'FIXED') {
+        const amount = Number(activeCoupon.value);
+        if (amount > 0) {
+          finalPrice = targetPrice + amount;
+        }
+      }
+    }
+
+    return {
+      ...p,
+      sellPrice: finalPrice,
+    };
+  });
+
   return <HeroSection products={featuredProducts} />;
 }
 

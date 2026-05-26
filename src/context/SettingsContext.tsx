@@ -2,11 +2,12 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { StoreSettings, DEFAULT_SETTINGS } from '@/lib/pricing';
-import { getStoreSettingsAction } from '@/lib/actions';
+import { getStoreSettingsAction, getActiveCouponsAction } from '@/lib/actions';
 
 interface SettingsContextType {
   settings: StoreSettings;
   loading: boolean;
+  activeCoupons: any[];
   refreshSettings: () => Promise<void>;
 }
 
@@ -20,6 +21,7 @@ export function SettingsProvider({
   initialSettings?: StoreSettings 
 }) {
   const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
+  const [activeCoupons, setActiveCoupons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
@@ -36,8 +38,14 @@ export function SettingsProvider({
           localStorage.setItem('admin_settings', JSON.stringify(res.data));
         }
       }
+
+      // Fetch active coupons
+      const coupRes = await getActiveCouponsAction();
+      if (coupRes.success && coupRes.data) {
+        setActiveCoupons(coupRes.data);
+      }
     } catch (error) {
-      console.error('Failed to fetch settings:', error);
+      console.error('Failed to fetch settings/coupons:', error);
     } finally {
       setLoading(false);
     }
@@ -62,7 +70,7 @@ export function SettingsProvider({
 
 
   return (
-    <SettingsContext.Provider value={{ settings, loading, refreshSettings: fetchSettings }}>
+    <SettingsContext.Provider value={{ settings, loading, activeCoupons, refreshSettings: fetchSettings }}>
       {children}
     </SettingsContext.Provider>
   );

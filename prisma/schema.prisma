@@ -266,6 +266,7 @@ model Coupon {
   expiresAt   DateTime?
   description String?
   products    CouponProduct[]
+  variants    CouponVariant[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 }
@@ -279,6 +280,17 @@ model CouponProduct {
   createdAt   DateTime @default(now())
 
   @@unique([couponId, productCjId])
+}
+
+// Many-to-many: Coupon assigned to specific variants/inventory items (by cjId)
+model CouponVariant {
+  id          String   @id @default(cuid())
+  couponId    String
+  coupon      Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  variantCjId String   // CJ variant ID (vid)
+  createdAt   DateTime @default(now())
+
+  @@unique([couponId, variantCjId])
 }
 
 

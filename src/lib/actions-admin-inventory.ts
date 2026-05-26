@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/db';
-import { cjFetch, getProductDetails } from '@/lib/cj-api';
+import { cjFetch, getProductDetails, getInventoryByPid } from '@/lib/cj-api';
 import { revalidateTag } from 'next/cache';
 import { slugify, parseProductName } from '@/lib/cj-utils';
 import { generateLandingPageContent } from '@/lib/ai-content';
@@ -30,20 +30,52 @@ export async function updateAdminInventoryAction(data: { variantId?: string; sel
 
 export async function syncAdminInventoryAction(cjId: string) {
   try {
-    const res = await cjFetch(`/v1/product/query?pid=${cjId}`, { method: 'GET' });
-    if (!res.result) return { success: false, error: 'Product not found in CJ' };
+    const res = await getProductDetails(cjId);
+    if (!res.success || !res.data) return { success: false, error: res.message || 'Product not found in CJ' };
 
-    const cjProduct = res.data as any;
+    const cjProduct = res.data;
     const variants = cjProduct.variants || [];
+
+    // Fetch warehouse stock from getInventoryByPid
+    const stockRes = await getInventoryByPid(cjId);
+    const variantStockMap = new Map<string, number>();
+    if (stockRes.success && stockRes.data && Array.isArray(stockRes.data.variantInventories)) {
+      for (const vi of stockRes.data.variantInventories) {
+        if (!vi.vid) continue;
+        let total = 0;
+        if (Array.isArray(vi.inventory)) {
+          total = vi.inventory.reduce((acc: number, inv: any) => acc + (Number(inv.totalInventory || inv.totalInventoryNum || 0) || 0), 0);
+        }
+        variantStockMap.set(vi.vid, total);
+      }
+    }
 
     const updatedVariants = [];
     for (const v of variants) {
       if (!v.vid) continue;
+      
+      let variantStock = 0;
+      if (variantStockMap.has(v.vid)) {
+        variantStock = variantStockMap.get(v.vid)!;
+      } else {
+        // Fallback to variant metadata properties
+        const vAny = v as any;
+        if (Array.isArray(vAny.inventories) && vAny.inventories.length > 0) {
+          variantStock = vAny.inventories.reduce((acc: number, inv: any) => acc + (Number(inv.totalInventory || inv.totalInventoryNum || 0) || 0), 0);
+        } else if (vAny.variantNum !== undefined) {
+          variantStock = Number(vAny.variantNum);
+        } else if (vAny.inventory !== undefined) {
+          variantStock = Number(vAny.inventory);
+        }
+      }
+
+      const baseCost = Number(v.variantSellPrice || 0);
+
       const updated = await prisma.variant.updateMany({
         where: { cjId: v.vid },
         data: {
-          inventory: Number(v.variantNum || 0),
-          baseCost: Number(v.variantPrice || 0),
+          inventory: variantStock,
+          baseCost: baseCost,
         },
       });
       if (updated.count > 0) {
@@ -51,6 +83,20 @@ export async function syncAdminInventoryAction(cjId: string) {
         updatedVariants.push(variantDoc);
       }
     }
+
+    // Also update parent product totalStock
+    const product = await prisma.product.findUnique({
+      where: { cjId },
+      include: { variants: true }
+    });
+    if (product) {
+      const totalStock = product.variants.reduce((acc, v) => acc + v.inventory, 0);
+      await prisma.product.update({
+        where: { id: product.id },
+        data: { totalStock }
+      });
+    }
+
     return { success: true, data: { variants: updatedVariants } };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -325,12 +371,28 @@ export async function importProductAction(pid: string, isHero: boolean = false) 
       return { success: true, message: 'Product already exists. Updated metadata.', product: { ...existing, isHero: !!isHero } };
     }
 
+    // Fetch warehouse stock from getInventoryByPid
+    const stockRes = await getInventoryByPid(pid);
+    const variantStockMap = new Map<string, number>();
+    if (stockRes.success && stockRes.data && Array.isArray(stockRes.data.variantInventories)) {
+      for (const vi of stockRes.data.variantInventories) {
+        if (!vi.vid) continue;
+        let total = 0;
+        if (Array.isArray(vi.inventory)) {
+          total = vi.inventory.reduce((acc: number, inv: any) => acc + (Number(inv.totalInventory || inv.totalInventoryNum || 0) || 0), 0);
+        }
+        variantStockMap.set(vi.vid, total);
+      }
+    }
+
     const variantCount = cjProduct.variants.length;
     let totalStock = 0;
 
     const variantsData = cjProduct.variants.map((v: any) => {
       let variantStock = 100; // fallback
-      if (Array.isArray(v.inventories) && v.inventories.length > 0) {
+      if (variantStockMap.has(v.vid)) {
+        variantStock = variantStockMap.get(v.vid)!;
+      } else if (Array.isArray(v.inventories) && v.inventories.length > 0) {
         variantStock = v.inventories.reduce((acc: number, inv: any) => acc + (Number(inv.totalInventory) || 0), 0);
       } else if (v.variantNum !== undefined) {
         variantStock = Number(v.variantNum);
@@ -374,3 +436,141 @@ export async function importProductAction(pid: string, isHero: boolean = false) 
     return { success: false, error: error.message };
   }
 }
+
+export async function generateAndSaveAiCouponAction(productId: string) {
+  try {
+    if (!productId) return { success: false, error: 'Product ID is required' };
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: { variants: true }
+    });
+
+    if (!product) return { success: false, error: 'Product not found' };
+    if (!product.variants || product.variants.length === 0) {
+      return { success: false, error: 'Product has no variants' };
+    }
+
+    const minBaseCost = Math.min(...product.variants.map(v => v.baseCost));
+    const maxBaseCost = Math.max(...product.variants.map(v => v.baseCost));
+    const minSellingPrice = Math.min(...product.variants.map(v => v.sellingPrice));
+    const maxSellingPrice = Math.max(...product.variants.map(v => v.sellingPrice));
+
+    const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || '';
+    const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+
+    let code = '';
+    let type = 'PERCENTAGE';
+    let value = 15;
+    let minPurchase: number | null = null;
+    let maxUses: number | null = 100;
+    let expiresInDays = 7;
+    let description = '';
+
+    if (!DEEPSEEK_API_KEY || DEEPSEEK_API_KEY === 'sk-your-deepseek-api-key-here') {
+      const suggestedPercent = 15;
+      const codeBase = product.name.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6);
+      code = `${codeBase}${suggestedPercent}`;
+      type = 'PERCENTAGE';
+      value = suggestedPercent;
+      minPurchase = Math.floor(minSellingPrice);
+      description = `Save ${suggestedPercent}% on ${product.name.slice(0, 20)}`;
+    } else {
+      const systemPrompt = "You are an AI e-commerce strategist specialized in pricing and coupon optimization. Generate ONLY pure JSON, no markdown, no backticks, no explanations.";
+      const userPrompt = `Generate an optimal conversion-focused discount coupon for this dropshipping product:
+PRODUCT INFO:
+- Name: ${product.name}
+- Base Cost (Wholesale): $${minBaseCost.toFixed(2)} - $${maxBaseCost.toFixed(2)}
+- Selling Price (Before Coupon): $${minSellingPrice.toFixed(2)} - $${maxSellingPrice.toFixed(2)}
+
+INSTRUCTIONS:
+1. Suggest a highly engaging UPPERCASE coupon code (letters and numbers only, e.g. BSDSAFE20, GLOWUP15) based on the product name.
+2. Recommend the best discount type: "PERCENTAGE" or "FIXED".
+3. Calculate a "best price discount value" that provides a highly attractive deal for customers while preserving profitability.
+   - For PERCENTAGE: Recommend a value between 10% and 25%.
+   - For FIXED: Recommend a flat discount.
+   - IMPORTANT: The discount MUST NOT exceed 60% of the net profit margin (Selling Price - Base Cost) so the store remains highly profitable.
+4. Set a suitable "minPurchase" requirement (usually slightly below the selling price for single items or slightly above to encourage multi-item purchases).
+5. Generate an attractive, conversion-focused description under 80 characters (English).
+6. Recommend a logical "maxUses" (e.g. 50, 100, 250) to create a sense of artificial scarcity.
+7. Recommend a logical "expiresInDays" (e.g. 3, 7, 14 days) to induce urgency.
+
+Generate a JSON object with this exact structure:
+{
+  "code": "COUPONCODE",
+  "type": "PERCENTAGE" or "FIXED",
+  "value": number,
+  "minPurchase": number or null,
+  "maxUses": number or null,
+  "expiresInDays": number or null,
+  "description": "Short description of coupon offer"
+}`;
+
+      const response = await fetch(DEEPSEEK_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 512,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`AI service responded with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      const text = data?.choices?.[0]?.message?.content || '';
+      const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      const parsed = JSON.parse(cleaned);
+
+      code = String(parsed.code || 'SAVE15').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      type = ['PERCENTAGE', 'FIXED'].includes(parsed.type) ? parsed.type : 'PERCENTAGE';
+      value = Number(parsed.value) || 15;
+      minPurchase = parsed.minPurchase ? Number(parsed.minPurchase) : null;
+      maxUses = parsed.maxUses ? Number(parsed.maxUses) : null;
+      expiresInDays = parsed.expiresInDays ? Number(parsed.expiresInDays) : 7;
+      description = String(parsed.description || 'Special AI Generated discount');
+    }
+
+    // Check if coupon with this code already exists, if so delete it
+    const existingCoupon = await prisma.coupon.findUnique({ where: { code } });
+    if (existingCoupon) {
+      await prisma.couponProduct.deleteMany({ where: { couponId: existingCoupon.id } });
+      await prisma.coupon.delete({ where: { id: existingCoupon.id } });
+    }
+
+    // Save coupon to database linked to this product SPU
+    const coupon = await prisma.coupon.create({
+      data: {
+        code,
+        type,
+        value: parseFloat(String(value)),
+        minPurchase: minPurchase ? parseFloat(String(minPurchase)) : null,
+        maxUses: maxUses ? parseInt(String(maxUses)) : null,
+        isActive: true,
+        expiresAt: expiresInDays ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000) : null,
+        description: description || null,
+        products: {
+          create: [{ productCjId: product.cjId }]
+        }
+      },
+      include: {
+        products: true
+      }
+    });
+
+    return { success: true, coupon };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+

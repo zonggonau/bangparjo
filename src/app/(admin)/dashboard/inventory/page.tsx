@@ -44,6 +44,36 @@ export default async function InventoryPage({
     orderBy: { name: 'asc' }
   });
 
+  const now = new Date();
+  const activeCoupons = await prisma.coupon.findMany({
+    where: {
+      isActive: true,
+      OR: [
+        { expiresAt: null },
+        { expiresAt: { gt: now } }
+      ]
+    },
+    include: {
+      products: true
+    }
+  });
+
+  const serializedCoupons = activeCoupons.map(c => ({
+    id: c.id,
+    code: c.code,
+    type: c.type,
+    value: c.value,
+    minPurchase: c.minPurchase,
+    maxUses: c.maxUses,
+    usedCount: c.usedCount,
+    isActive: c.isActive,
+    expiresAt: c.expiresAt ? c.expiresAt.toISOString() : null,
+    products: c.products.map(p => ({
+      id: p.id,
+      productCjId: p.productCjId
+    }))
+  }));
+
   return (
     <div>
       <div className="mb-10 flex justify-between items-end">
@@ -60,6 +90,7 @@ export default async function InventoryPage({
         categories={categories}
         currentCategory={categoryId || ''}
         currentSort={sort || 'newest'}
+        activeCoupons={serializedCoupons}
       />
     </div>
   );
