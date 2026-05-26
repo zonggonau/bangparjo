@@ -102,6 +102,56 @@ export default async function BlogSlugPage(props: Props) {
     if (product) {
       const settings = await getCachedStoreSettings();
 
+      // Clear expired coupon if present in JSON
+      if (product.coupon && product.coupon.expiresAt && new Date(product.coupon.expiresAt) <= new Date()) {
+        product.coupon = undefined;
+      }
+
+      // If no coupon attached or it was expired, look up the best active coupon dynamically
+      if (!product.coupon) {
+        const now = new Date();
+        const specificCoupon = await prisma.coupon.findFirst({
+          where: {
+            isActive: true,
+            OR: [
+              { expiresAt: null },
+              { expiresAt: { gt: now } }
+            ],
+            products: {
+              some: {
+                productCjId: product.cjId
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        });
+
+        const activeCoupon = specificCoupon || await prisma.coupon.findFirst({
+          where: {
+            isActive: true,
+            OR: [
+              { expiresAt: null },
+              { expiresAt: { gt: now } }
+            ],
+            products: {
+              none: {}
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        });
+
+        if (activeCoupon) {
+          product.coupon = {
+            code: activeCoupon.code,
+            type: activeCoupon.type as 'PERCENTAGE' | 'FIXED' | 'FREE_SHIPPING',
+            value: activeCoupon.value,
+            description: activeCoupon.description || `Use code ${activeCoupon.code} for savings`,
+            minPurchase: activeCoupon.minPurchase || undefined,
+            expiresAt: activeCoupon.expiresAt?.toISOString() || undefined,
+          };
+        }
+      }
+
       // Dynamically recalculate prices based on current live margin settings
       product.variants = product.variants.map(v => ({
         ...v,

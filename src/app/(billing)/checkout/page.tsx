@@ -110,6 +110,7 @@ function CheckoutContent() {
   const router = useRouter();
   const pidParam = searchParams.get('pid');
   const vidParam = searchParams.get('vid');
+  const couponParam = searchParams.get('coupon');
   
   const { items: cartItems, clearCart, isLoaded } = useCart();
   const { settings } = useSettings();
@@ -137,6 +138,7 @@ function CheckoutContent() {
   
   // ── Per-Product Coupon State ──────────────────────────────────────────────
   const [couponMap, setCouponMap] = useState<Record<string, CouponEntry>>({});
+  const [couponApplied, setCouponApplied] = useState(false);
 
   const getCouponEntry = (key: string): CouponEntry => couponMap[key] || makeCouponEntry();
 
@@ -258,7 +260,25 @@ function CheckoutContent() {
           setProductError('❌ Failed to load product data.');
         });
     }
-  }, [pidParam, vidParam]);
+  }, [pidParam, vidParam, cartItems]);
+
+  // Auto-apply coupon from URL param on load
+  useEffect(() => {
+    if (!couponParam || !isLoaded || couponApplied) return;
+
+    if (isCartCheckout) {
+      if (cartItems.length > 0) {
+        const firstItem = cartItems[0];
+        const key = itemKey(firstItem.pid, firstItem.selectedVid);
+        setCouponApplied(true);
+        handleApplyCoupon(key, couponParam);
+      }
+    } else if (product && selectedVariant) {
+      const key = itemKey(product.pid || product.cjId);
+      setCouponApplied(true);
+      handleApplyCoupon(key, couponParam);
+    }
+  }, [couponParam, product, selectedVariant, isCartCheckout, cartItems, isLoaded, couponApplied]);
 
   // Fetch shipping
   useEffect(() => {
@@ -559,7 +579,13 @@ function CheckoutContent() {
           )}
 
           <button type="submit" className="w-full px-6 py-4 rounded-[8px] font-bold text-[16px] bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed" disabled={loading}>
-            {loading ? <><i className="fas fa-spinner fa-spin"></i> Processing...</> : selectedShipping ? `⚡ Place Order — ${formatUSD(grandTotal)}` : '⚡ Place Order'}
+            {loading ? (
+              <><i className="fas fa-spinner fa-spin"></i> Processing...</>
+            ) : Object.values(couponMap).some(entry => entry.applied !== null) ? (
+              selectedShipping ? `⚡ Claim Now — ${formatUSD(grandTotal)}` : '⚡ Claim Now'
+            ) : (
+              selectedShipping ? `⚡ Order Now — ${formatUSD(grandTotal)}` : '⚡ Order Now'
+            )}
           </button>
         </form>
 

@@ -29,6 +29,9 @@ export interface StoreSettings {
   workingHours?: string;
   faqContent?: string;
   returnsContent?: string;
+  heroHeadline?: string;
+  heroSubheadline?: string;
+  heroImage?: string;
 }
 
 export const DEFAULT_SETTINGS: StoreSettings = {
@@ -52,6 +55,9 @@ export const DEFAULT_SETTINGS: StoreSettings = {
     { platform: 'tiktok', label: 'TikTok', url: 'https://tiktok.com/@bangparjo', icon: '🎵' },
     { platform: 'whatsapp', label: 'WhatsApp', url: 'https://wa.me/6281355315427', icon: '💬' },
   ],
+  heroHeadline: 'Discover Premium Dropshipping Products',
+  heroSubheadline: 'High quality items at unbeatable prices, shipped directly to your door.',
+  heroImage: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2000&auto=format&fit=crop',
 };
 
 /**

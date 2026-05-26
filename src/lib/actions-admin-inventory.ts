@@ -136,8 +136,52 @@ export async function exportToBlogAction(productId: string, couponId?: string | 
     if (existing) return { success: false, error: 'Blog post already exists for this product', status: 409 };
 
     let couponData: any = null;
-    if (couponId) {
-      const coupon = await prisma.coupon.findUnique({ where: { id: couponId } });
+    let actualCouponId = couponId;
+
+    if (!actualCouponId) {
+      const now = new Date();
+      // 1. Try to find a coupon specifically assigned to this product
+      const specificCoupon = await prisma.coupon.findFirst({
+        where: {
+          isActive: true,
+          OR: [
+            { expiresAt: null },
+            { expiresAt: { gt: now } }
+          ],
+          products: {
+            some: {
+              productCjId: product.cjId
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      if (specificCoupon) {
+        actualCouponId = specificCoupon.id;
+      } else {
+        // 2. Try to find a global coupon (no product constraints)
+        const globalCoupon = await prisma.coupon.findFirst({
+          where: {
+            isActive: true,
+            OR: [
+              { expiresAt: null },
+              { expiresAt: { gt: now } }
+            ],
+            products: {
+              none: {}
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        });
+        if (globalCoupon) {
+          actualCouponId = globalCoupon.id;
+        }
+      }
+    }
+
+    if (actualCouponId) {
+      const coupon = await prisma.coupon.findUnique({ where: { id: actualCouponId } });
       if (coupon && coupon.isActive) {
         if (!coupon.expiresAt || new Date(coupon.expiresAt) > new Date()) {
           couponData = {
@@ -282,7 +326,29 @@ export async function importProductAction(pid: string, isHero: boolean = false) 
     }
 
     const variantCount = cjProduct.variants.length;
-    const totalStock = 2000;
+    let totalStock = 0;
+
+    const variantsData = cjProduct.variants.map((v: any) => {
+      let variantStock = 100; // fallback
+      if (Array.isArray(v.inventories) && v.inventories.length > 0) {
+        variantStock = v.inventories.reduce((acc: number, inv: any) => acc + (Number(inv.totalInventory) || 0), 0);
+      } else if (v.variantNum !== undefined) {
+        variantStock = Number(v.variantNum);
+      }
+      totalStock += variantStock;
+
+      return {
+        cjId: v.vid,
+        sku: v.variantSku,
+        color: v.variantKey || v.variantNameEn || v.variantName || 'Default',
+        size: '', 
+        weight: v.variantWeight || 0,
+        baseCost: Number(v.variantSellPrice),
+        sellingPrice: Number(v.variantSellPrice), 
+        inventory: variantStock, 
+        image: v.variantImage || cjProduct.productImage
+      };
+    });
 
     const product = await prisma.product.create({
       data: {
@@ -295,17 +361,7 @@ export async function importProductAction(pid: string, isHero: boolean = false) 
         totalStock,
         isHero: !!isHero,
         variants: {
-          create: cjProduct.variants.map((v: any) => ({
-            cjId: v.vid,
-            sku: v.variantSku,
-            color: v.variantKey || v.variantNameEn || v.variantName || 'Default',
-            size: '', 
-            weight: v.variantWeight || 0,
-            baseCost: Number(v.variantSellPrice),
-            sellingPrice: Number(v.variantSellPrice), 
-            inventory: 100, 
-            image: v.variantImage || cjProduct.productImage
-          }))
+          create: variantsData
         }
       },
       include: {

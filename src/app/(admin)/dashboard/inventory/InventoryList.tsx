@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { calculateFinalPrice } from '@/lib/pricing';
 import { useSettings } from '@/context/SettingsContext';
@@ -47,8 +48,28 @@ interface Coupon {
   maxUses: number | null;
 }
 
-export default function InventoryList({ initialProducts }: { initialProducts: any[] }) {
+export default function InventoryList({ 
+  initialProducts, 
+  total = 0, 
+  currentPage = 1,
+  categories = [],
+  currentCategory = '',
+  currentSort = 'newest'
+}: { 
+  initialProducts: any[], 
+  total?: number, 
+  currentPage?: number,
+  categories?: any[],
+  currentCategory?: string,
+  currentSort?: string
+}) {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  
+  // Update products when initialProducts changes
+  useEffect(() => {
+    setProducts(initialProducts);
+  }, [initialProducts]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<{ show: boolean, message: string, type: 'success' | 'error' }>({ show: false, message: '', type: 'success' });
@@ -57,6 +78,17 @@ export default function InventoryList({ initialProducts }: { initialProducts: an
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [selectedCouponId, setSelectedCouponId] = useState<string | null>(null);
   const { settings } = useSettings();
+
+  const handleFilterChange = (key: string, value: string) => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (value) {
+      searchParams.set(key, value);
+    } else {
+      searchParams.delete(key);
+    }
+    searchParams.set('page', '1'); // Reset to page 1 on filter change
+    router.push(`/dashboard/inventory?${searchParams.toString()}`);
+  };
 
   // Fetch available coupons when modal opens
   useEffect(() => {
@@ -70,6 +102,9 @@ export default function InventoryList({ initialProducts }: { initialProducts: an
               c.isActive && (!c.expiresAt || new Date(c.expiresAt) > now)
             );
             setCoupons(active);
+            if (active.length > 0) {
+              setSelectedCouponId(active[0].id);
+            }
           }
         })
         .catch(err => console.error('Failed to fetch coupons:', err));
@@ -267,6 +302,38 @@ export default function InventoryList({ initialProducts }: { initialProducts: an
           {toast.message}
         </div>
       )}
+
+      {/* Filter and Sort Controls */}
+      <div className="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row gap-4 bg-white">
+        <div className="flex-1">
+          <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Category Filter</label>
+          <select 
+            className="w-full sm:max-w-xs px-4 py-2 border border-gray-200 rounded-[10px] text-sm font-semibold text-gray-700 outline-none focus:border-[#FF6B00] transition-colors bg-gray-50 hover:bg-white"
+            value={currentCategory}
+            onChange={(e) => handleFilterChange('categoryId', e.target.value)}
+          >
+            <option value="">All Categories</option>
+            {categories.map((c: any) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Sort By</label>
+          <select 
+            className="w-full sm:w-auto px-4 py-2 border border-gray-200 rounded-[10px] text-sm font-semibold text-gray-700 outline-none focus:border-[#FF6B00] transition-colors bg-gray-50 hover:bg-white"
+            value={currentSort}
+            onChange={(e) => handleFilterChange('sort', e.target.value)}
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="stock_desc">Highest Stock</option>
+            <option value="stock_asc">Lowest Stock</option>
+            <option value="name_asc">Name (A-Z)</option>
+            <option value="name_desc">Name (Z-A)</option>
+          </select>
+        </div>
+      </div>
 
       {/* Bulk Export All Button */}
       {products.length > 0 && (
@@ -583,6 +650,39 @@ export default function InventoryList({ initialProducts }: { initialProducts: an
                 Generate Blog
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {total > 0 && (
+        <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between bg-white rounded-b-[16px]">
+          <div className="text-sm font-semibold text-gray-500">
+            Showing {((currentPage - 1) * 20) + 1} to {Math.min(currentPage * 20, total)} of {total} entries
+          </div>
+          <div className="flex gap-2">
+            <button 
+              className="px-4 py-2 rounded-[10px] text-sm font-bold border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200 disabled:opacity-30"
+              disabled={currentPage <= 1}
+              onClick={() => { 
+                const params = new URLSearchParams(window.location.search);
+                params.set('page', String(currentPage - 1));
+                router.push(`/dashboard/inventory?${params.toString()}`); 
+              }}
+            >
+              <i className="fas fa-chevron-left"></i> Prev
+            </button>
+            <button 
+              className="px-4 py-2 rounded-[10px] text-sm font-bold border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200 disabled:opacity-30"
+              disabled={currentPage >= Math.ceil(total / 20)}
+              onClick={() => { 
+                const params = new URLSearchParams(window.location.search);
+                params.set('page', String(currentPage + 1));
+                router.push(`/dashboard/inventory?${params.toString()}`); 
+              }}
+            >
+              Next <i className="fas fa-chevron-right"></i>
+            </button>
           </div>
         </div>
       )}

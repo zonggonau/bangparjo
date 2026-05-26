@@ -414,6 +414,36 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
   var urgencyText = totalInventory > 0 && totalInventory < 50
     ? '<div style="background:linear-gradient(135deg,#f43f5e,#e11d48);color:white;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:700;margin-bottom:12px;display:inline-flex;align-items:center;gap:6px;animation:pulse 2s infinite;">&#9888; Only ' + totalInventory + ' left in stock — Order soon!</div>\n'
     : '';
+  var directCheckoutUrl = '/checkout?pid=' + encodeURIComponent(product.cjId);
+  if (firstVariant) {
+    directCheckoutUrl += '&vid=' + encodeURIComponent(firstVariant.cjId);
+  }
+
+  var heroActionsHtml = '';
+  if (product.coupon) {
+    var c = product.coupon;
+    var couponParam = 'coupon=' + encodeURIComponent(c.code);
+    var couponCheckoutUrl = directCheckoutUrl + (directCheckoutUrl.indexOf('?') >= 0 ? '&' : '?') + couponParam;
+
+    heroActionsHtml = '<div class="hero-coupon-info" style="margin: 16px 0 20px 0; text-align: left;">\n'
+      + '<div style="background: rgba(255, 107, 53, 0.08); border: 1.5px dashed #FF6B35; border-radius: 12px; padding: 14px 18px; display: inline-flex; align-items: center; gap: 16px; width: 100%; max-width: 440px; box-shadow: 0 4px 12px rgba(255,107,53,0.04);">\n'
+      + '  <div style="font-size: 28px; line-height: 1;">&#127873;</div>\n'
+      + '  <div style="flex: 1; min-width: 0;">\n'
+      + '    <span style="font-size: 10px; font-weight: 800; color: #FF6B35; text-transform: uppercase; letter-spacing: 0.8px; display: block;">Special Discount Coupon Included!</span>\n'
+      + '    <strong style="font-family:\'Outfit\',sans-serif; font-size: 15px; color: #1A1A2E; display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="' + hAttr(c.description) + '">' + h(c.description) + '</strong>\n'
+      + '  </div>\n'
+      + '  <code style="background: #FF6B35; color: white; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 800; letter-spacing: 1.5px; border: 1px dashed rgba(255,255,255,0.4); flex-shrink: 0;">' + h(c.code) + '</code>\n'
+      + '</div>\n'
+      + '</div>\n'
+      + '<div class="hero-actions">\n'
+      + '<a href="#checkout-section" class="btn btn-primary">&#127873; Claim Now — ' + priceDisplay + '</a>\n'
+      + '</div>\n';
+  } else {
+    heroActionsHtml = '<div class="hero-actions">\n'
+      + '<a href="#checkout-section" class="btn btn-primary">&#128722; Order Now — ' + priceDisplay + '</a>\n'
+      + '</div>\n';
+  }
+
   result += '<section class="hero">\n'
     + '<div class="container">\n'
     + '<div class="grid-2">\n'
@@ -426,10 +456,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '</div>\n'
     + '<h1>' + safeName + '</h1>\n'
     + '<p>' + safeTagline + '</p>\n'
-    + '<div class="hero-actions">\n'
-    + '<a href="' + safeLink + '" class="btn btn-primary">&#128722; Order Now — ' + priceDisplay + '</a>\n'
-    + '<a href="#detail" class="btn btn-outline">&#128269; View Details</a>\n'
-    + '</div>\n'
+    + heroActionsHtml
     + '</div>\n'
     + '<div class="hero-image-wrap">\n'
     + '<div class="price-tag">' + priceDisplay + '</div>\n'
@@ -450,8 +477,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     var couponIcon = '&#127873;'; // gift box
     var couponBg = 'linear-gradient(135deg,#1A1A2E,#0F3460)';
     var couponBtnBg = '#FF6B35';
-    // Coupon "Claim Now" links to the product page with variant params
-    var checkoutLink = productLink;
+    var checkoutLink = '#checkout-section';
 
 
     if (c.type === 'FREE_SHIPPING') {
@@ -682,6 +708,123 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '</div>\n'
     + '</section>\n';
 
+  // --- Interactive Checkout Preparation Section ---
+  var initialPrice = firstVariant ? firstVariant.sellingPrice : 0.00;
+  var initialComparePrice = initialPrice * 1.5;
+
+  var leftColumnHtml = '';
+  if (product.coupon) {
+    var c = product.coupon;
+    var couponLabel = '';
+    if (c.type === 'FREE_SHIPPING') {
+      couponLabel = 'FREE SHIPPING';
+    } else if (c.type === 'PERCENTAGE') {
+      couponLabel = c.value + '% OFF';
+    } else if (c.type === 'FIXED') {
+      couponLabel = '$' + c.value.toFixed(0) + ' OFF';
+    }
+    
+    leftColumnHtml = '<div style="background: linear-gradient(135deg, #1A1A2E, #0F3460); color: white; padding: 32px; border-radius: 16px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; height: 100%; box-shadow: 0 12px 30px rgba(15,52,96,0.15);">\n'
+      + '  <div style="position: absolute; top: -50%; right: -20%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,107,53,0.12) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>\n'
+      + '  <div style="position: absolute; bottom: -30%; left: -10%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>\n'
+      + '  <div style="position: relative; z-index: 1;">\n'
+      + '    <div style="display: inline-block; background: rgba(255,107,53,0.2); color: #FF6B35; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 800; letter-spacing: 1px; margin-bottom: 12px; border: 1px solid rgba(255,107,53,0.3);">' + couponLabel + '</div>\n'
+      + '    <h3 style="font-family: Outfit, sans-serif; font-size: 28px; font-weight: 900; color: white; margin-bottom: 8px; line-height: 1.25;">Exclusive Discount Applied!</h3>\n'
+      + '    <p style="color: rgba(255,255,255,0.7); font-size: 15px; line-height: 1.6; margin-bottom: 24px;">' + h(c.description) + '</p>\n'
+      + '    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">\n'
+      + '      <span style="font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Coupon Code:</span>\n'
+      + '      <code style="background: rgba(255,255,255,0.12); color: #FFD700; padding: 8px 18px; border-radius: 8px; font-size: 18px; font-weight: 800; letter-spacing: 2px; border: 1px dashed rgba(255,215,0,0.3);">' + couponCode + '</code>\n'
+      + '    </div>\n'
+      + '    <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: rgba(255,255,255,0.6);">\n'
+      + (c.minPurchase ? '      <div>&#10003; Minimum purchase: <strong>$' + c.minPurchase.toFixed(2) + '</strong></div>\n' : '')
+      + (c.expiresAt ? '      <div>&#10003; Offer valid until: <strong>' + new Date(c.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '</strong></div>\n' : '')
+      + '      <div>&#10003; Discount will be automatically calculated at checkout</div>\n'
+      + '    </div>\n'
+      + '  </div>\n'
+      + '</div>\n';
+  } else {
+    leftColumnHtml = '<div style="background: linear-gradient(135deg, #fafafa, #f1f5f9); border: 1px solid #e2e8f0; padding: 32px; border-radius: 16px; display: flex; flex-direction: column; justify-content: center; height: 100%;">\n'
+      + '  <h3 style="font-family: Outfit, sans-serif; font-size: 26px; font-weight: 800; color: #1A1A2E; margin-bottom: 12px; line-height: 1.25;">Satisfaction Guaranteed</h3>\n'
+      + '  <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 24px;">BangParjo is committed to providing premium quality products directly from verified suppliers. Shop with confidence under our secure buyer protection policy.</p>\n'
+      + '  <div style="display: flex; flex-direction: column; gap: 12px;">\n'
+      + '    <div style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: #1A1A2E;">\n'
+      + '      <span style="color: #FF6B35; font-size: 18px;">&#10003;</span> Worldwide Express Shipping\n'
+      + '    </div>\n'
+      + '    <div style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: #1A1A2E;">\n'
+      + '      <span style="color: #FF6B35; font-size: 18px;">&#10003;</span> 7-Day Money-Back Guarantee\n'
+      + '    </div>\n'
+      + '    <div style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: #1A1A2E;">\n'
+      + '      <span style="color: #FF6B35; font-size: 18px;">&#10003;</span> Secure Payments SSL Encrypted\n'
+      + '    </div>\n'
+      + '  </div>\n'
+      + '</div>\n';
+  }
+
+  var variantOptions = product.variants.map(function(v) {
+    var vName = [v.color, v.size].filter(Boolean).join(' / ') || 'Default';
+    return '<option value="' + v.cjId + '" data-price="' + v.sellingPrice.toFixed(2) + '" data-img="' + (v.image || product.images[0]) + '">' + h(vName) + ' - $' + v.sellingPrice.toFixed(2) + '</option>';
+  }).join('');
+
+  var rightColumnButtonHtml = '';
+  if (product.coupon) {
+    rightColumnButtonHtml = '<button type="button" onclick="window.handleDirectCheckout(event)" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">\n'
+      + '&#127873; Claim Now\n'
+      + '</button>\n';
+  } else {
+    rightColumnButtonHtml = '<button type="button" onclick="window.handleDirectCheckout(event)" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">\n'
+      + '&#128722; Order Now\n'
+      + '</button>\n';
+  }
+
+  var rightColumnCardHtml = '<div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 28px; box-shadow: 0 8px 30px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 20px;">\n'
+    + '  <div>\n'
+    + '    <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; display: block; margin-bottom: 4px;">Selected Variant</span>\n'
+    + '    <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px;">\n'
+    + '      <span id="total-price-display" style="font-family:\'Outfit\',sans-serif; font-size: 32px; font-weight: 800; color: #FF6B35; line-height: 1;">$' + initialPrice.toFixed(2) + '</span>\n'
+    + '      <span id="compare-price-display" style="font-size: 16px; color: #94a3b8; text-decoration: line-through; font-weight: 500;">$' + initialComparePrice.toFixed(2) + '</span>\n'
+    + '    </div>\n'
+    + '    <div id="coupon-status-notice" style="display: none; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; margin-bottom: 12px; transition: all 0.2s;"></div>\n'
+    + '    <label style="display:block; font-size:12px; font-weight:700; color:#64748b; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Select Variant</label>\n'
+    + '    <select id="variant-selector" onchange="window.updateVariantSelection(this)" style="width:100%; padding:12px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:14px; color:#1A1A2E; outline:none; font-family:inherit; transition:all 0.2s; cursor:pointer; font-weight:600; background:#f8fafc;" onfocus="this.style.borderColor=\'#FF6B35\';this.style.background=\'#ffffff\'" onblur="this.style.borderColor=\'#e2e8f0\';this.style.background=\'#f8fafc\'">\n'
+    + variantOptions
+    + '    </select>\n'
+    + '  </div>\n'
+    + '  \n'
+    + '  <div>\n'
+    + '    <label style="display:block; font-size:12px; font-weight:700; color:#64748b; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Quantity</label>\n'
+    + '    <div style="display:flex; align-items:center; border:2px solid #e2e8f0; border-radius:10px; overflow:hidden; width:130px; background:#f8fafc;">\n'
+    + '      <button type="button" onclick="window.changeQty(-1)" style="flex:1; padding:10px; border:none; background:transparent; font-size:16px; color:#64748b; cursor:pointer; font-weight:bold; transition:all 0.2s;" onmouseover="this.style.background=\'#e2e8f0\'" onmouseout="this.style.background=\'transparent\'">&minus;</button>\n'
+    + '      <input type="number" id="qty-input" value="1" min="1" readonly style="width:40px; text-align:center; border:none; font-size:15px; font-weight:700; color:#1A1A2E; outline:none; background:transparent;" />\n'
+    + '      <button type="button" onclick="window.changeQty(1)" style="flex:1; padding:10px; border:none; background:transparent; font-size:16px; color:#64748b; cursor:pointer; font-weight:bold; transition:all 0.2s;" onmouseover="this.style.background=\'#e2e8f0\'" onmouseout="this.style.background=\'transparent\'">+</button>\n'
+    + '    </div>\n'
+    + '  </div>\n'
+    + '  \n'
+    + rightColumnButtonHtml
+    + '  \n'
+    + '  <div style="display:flex; align-items:center; justify-content:center; gap:12px; opacity:0.85; margin-top:4px;">\n'
+    + '    <span style="font-size:10px; color:#94a3b8; font-weight:600; display:inline-flex; align-items:center; gap:4px;">&#128274; SSL Secure</span>\n'
+    + '    <span style="color:#e2e8f0;">|</span>\n'
+    + '    <span style="font-size:10px; color:#94a3b8; font-weight:600; display:inline-flex; align-items:center; gap:4px;">🚚 Fast Delivery</span>\n'
+    + '    <span style="color:#e2e8f0;">|</span>\n'
+    + '    <span style="font-size:10px; color:#94a3b8; font-weight:600; display:inline-flex; align-items:center; gap:4px;">&#128179; All Cards</span>\n'
+    + '  </div>\n'
+    + '</div>\n';
+
+  var checkoutSectionHtml = '<section id="checkout-section" class="section" style="scroll-margin-top: 80px; background: #ffffff;">\n'
+    + '<div class="container">\n'
+    + '  <div class="section-title">\n'
+    + '    <h2>Select Your Variant & Claim Offer</h2>\n'
+    + '    <p>Choose your size/color and proceed to secure checkout.</p>\n'
+    + '  </div>\n'
+    + '  <div class="grid-2" style="align-items: stretch;">\n'
+    + '    <div>' + leftColumnHtml + '</div>\n'
+    + '    <div>' + rightColumnCardHtml + '</div>\n'
+    + '  </div>\n'
+    + '</div>\n'
+    + '</section>\n';
+
+  result += checkoutSectionHtml;
+
   // ── Shipping Methods (from CJ API) ──────────────────────────────────────────
   var shippingMethodsHtml = '';
   if (product.shippingMethods && product.shippingMethods.length > 0) {
@@ -837,6 +980,152 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
   result += '<div id="sticky-wa">\n'
     + '<a href="' + waUrl + '" target="_blank" rel="noopener noreferrer">&#128172; Chat on WhatsApp</a>\n'
     + '</div>\n';
+
+  var jsProductData = {
+    pid: product.cjId,
+    productName: product.name,
+    productNameEn: product.name,
+    categoryName: '',
+    images: product.images,
+    coupon: product.coupon ? { 
+      code: product.coupon.code,
+      type: product.coupon.type,
+      value: product.coupon.value,
+      minPurchase: product.coupon.minPurchase || 0
+    } : null,
+    variants: product.variants.map(function(v) {
+      return {
+        vid: v.cjId,
+        sku: v.sku,
+        name: [v.color, v.size].filter(Boolean).join(' / ') || 'Default',
+        price: v.sellingPrice,
+        image: v.image || product.images[0]
+      };
+    })
+  };
+
+  var scriptBlock = '<script>\n'
+    + 'var productData = ' + JSON.stringify(jsProductData) + ';\n'
+    + 'var selectedVariant = productData.variants[0];\n'
+    + 'var quantity = 1;\n'
+    + '\n'
+    + 'window.updateVariantSelection = function(selectEl) {\n'
+    + '  var vid = selectEl.value;\n'
+    + '  selectedVariant = productData.variants.find(function(v) { return v.vid === vid; }) || productData.variants[0];\n'
+    + '  updateDisplay();\n'
+    + '};\n'
+    + '\n'
+    + 'window.changeQty = function(delta) {\n'
+    + '  quantity += delta;\n'
+    + '  if(quantity < 1) quantity = 1;\n'
+    + '  document.getElementById("qty-input").value = quantity;\n'
+    + '  updateDisplay();\n'
+    + '};\n'
+    + '\n'
+    + 'function updateDisplay() {\n'
+    + '  if(!selectedVariant) return;\n'
+    + '  var total = selectedVariant.price * quantity;\n'
+    + '  var displayEl = document.getElementById("total-price-display");\n'
+    + '  if(displayEl) displayEl.textContent = "$" + total.toFixed(2);\n'
+    + '  \n'
+    + '  var compareEl = document.getElementById("compare-price-display");\n'
+    + '  if(compareEl) compareEl.textContent = "$" + (selectedVariant.price * 1.5 * quantity).toFixed(2);\n'
+    + '  \n'
+    + '  // Live Coupon Notice Update\n'
+    + '  var noticeEl = document.getElementById("coupon-status-notice");\n'
+    + '  if(noticeEl && productData.coupon) {\n'
+    + '    var min = productData.coupon.minPurchase;\n'
+    + '    if(min > 0) {\n'
+    + '      noticeEl.style.display = "block";\n'
+    + '      if(total < min) {\n'
+    + '        var needed = min - total;\n'
+    + '        noticeEl.style.background = "#FFF3ED";\n'
+    + '        noticeEl.style.color = "#FF6B35";\n'
+    + '        noticeEl.style.border = "1px solid rgba(255,107,53,0.2)";\n'
+    + '        noticeEl.innerHTML = "⚠️ Add <strong>$" + needed.toFixed(2) + "</strong> more to unlock coupon <strong>" + productData.coupon.code + "</strong>";\n'
+    + '      } else {\n'
+    + '        noticeEl.style.background = "#ECFDF5";\n'
+    + '        noticeEl.style.color = "#10B981";\n'
+    + '        noticeEl.style.border = "1px solid rgba(16,185,129,0.2)";\n'
+    + '        noticeEl.innerHTML = "🎉 Coupon <strong>" + productData.coupon.code + "</strong> unlocked! You save <strong>" + getSavingsDisplay(total) + "</strong>";\n'
+    + '      }\n'
+    + '    }\n'
+    + '  }\n'
+    + '}\n'
+    + '\n'
+    + 'function getSavingsDisplay(total) {\n'
+    + '  if(!productData.coupon) return "$0.00";\n'
+    + '  var c = productData.coupon;\n'
+    + '  if(c.type === "PERCENTAGE") {\n'
+    + '    return "$" + (total * c.value / 100).toFixed(2);\n'
+    + '  } else if(c.type === "FIXED") {\n'
+    + '    return "$" + Math.min(total, c.value).toFixed(2);\n'
+    + '  } else if(c.type === "FREE_SHIPPING") {\n'
+    + '    return "Shipping Fee";\n'
+    + '  }\n'
+    + '  return "$0.00";\n'
+    + '}\n'
+    + '\n'
+    + 'updateDisplay();\n'
+    + '\n'
+    + 'window.handleDirectCheckout = function(event) {\n'
+    + '  if(!selectedVariant) return;\n'
+    + '  \n'
+    + '  // Coupon minPurchase check\n'
+    + '  if(productData.coupon && productData.coupon.minPurchase > 0) {\n'
+    + '    var total = selectedVariant.price * quantity;\n'
+    + '    if(total < productData.coupon.minPurchase) {\n'
+    + '      alert("⚠️ Coupon " + productData.coupon.code + " requires a minimum purchase of $" + productData.coupon.minPurchase.toFixed(2) + ".\\nYour current purchase total is $" + total.toFixed(2) + ".\\n\\nPlease increase the quantity (+) to claim this discount!");\n'
+    + '      return;\n'
+    + '    }\n'
+    + '  }\n'
+    + '  \n'
+    + '  var item = {\n'
+    + '    pid: productData.pid,\n'
+    + '    selectedVid: selectedVariant.vid,\n'
+    + '    selectedSku: selectedVariant.sku,\n'
+    + '    selectedVariantName: selectedVariant.name,\n'
+    + '    productName: productData.productName,\n'
+    + '    productNameEn: productData.productNameEn,\n'
+    + '    productImage: selectedVariant.image,\n'
+    + '    bigImage: selectedVariant.image,\n'
+    + '    sellPrice: selectedVariant.price,\n'
+    + '    quantity: quantity,\n'
+    + '    categoryName: productData.categoryName\n'
+    + '  };\n'
+    + '  \n'
+    + '  var cart = [];\n'
+    + '  try {\n'
+    + '    var saved = localStorage.getItem("cart");\n'
+    + '    if(saved) cart = JSON.parse(saved);\n'
+    + '  } catch(e) {}\n'
+    + '  \n'
+    + '  var existingIdx = cart.findIndex(function(i) { return i.pid === item.pid && i.selectedVid === item.selectedVid; });\n'
+    + '  if(existingIdx >= 0) {\n'
+    + '    cart[existingIdx].quantity = quantity;\n'
+    + '  } else {\n'
+    + '    cart = [item];\n'
+    + '  }\n'
+    + '  localStorage.setItem("cart", JSON.stringify(cart));\n'
+    + '  \n'
+    + '  var btn = event.currentTarget;\n'
+    + '  btn.innerHTML = "&#8987; Processing...";\n'
+    + '  btn.style.opacity = "0.7";\n'
+    + '  btn.disabled = true;\n'
+    + '  \n'
+    + '  var checkoutUrl = "/checkout?pid=" + encodeURIComponent(item.pid) + "&vid=" + encodeURIComponent(item.selectedVid);\n'
+    + '  if(productData.coupon) {\n'
+    + '    checkoutUrl += "&coupon=" + encodeURIComponent(productData.coupon.code);\n'
+    + '  }\n'
+    + '  \n'
+    + '  setTimeout(function() {\n'
+    + '    window.location.href = checkoutUrl;\n'
+    + '  }, 300);\n'
+    + '};\n'
+    + '</script>\n';
+
+  result += scriptBlock;
+  result += '</body>\n</html>';
 
   return result;
 }

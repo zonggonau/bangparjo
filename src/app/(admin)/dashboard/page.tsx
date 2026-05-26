@@ -1,25 +1,9 @@
-'use client';
-
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useSettings } from '@/context/SettingsContext';
 import { getDashboardAnalyticsAction } from '@/lib/actions-admin';
 
-export default function DashboardPage() {
-  const { settings } = useSettings();
-  const [analytics, setAnalytics] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getDashboardAnalyticsAction()
-      .then(res => { 
-        if (res.success) {
-          setAnalytics(res.data);
-        }
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+export default async function DashboardPage() {
+  const analyticsRes = await getDashboardAnalyticsAction();
+  const analytics = analyticsRes.success ? analyticsRes.data : null;
 
   const totalRevenue = analytics?.totalRevenue || 0;
   const totalOrders = analytics?.totalOrders || 0;
@@ -119,13 +103,11 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
-                  <tr><td colSpan={4} className="text-center py-20"><i className="fas fa-spinner fa-spin text-[#FF6B00]"></i></td></tr>
-                ) : recentOrders.length === 0 ? (
+                {recentOrders.length === 0 ? (
                   <tr><td colSpan={4} className="text-center py-20 text-[#64748B] font-bold">No orders found.</td></tr>
                 ) : recentOrders.map((o: any) => (
                   <tr key={o.id || o.orderNum} className="border-b border-[#F1F5F9] hover:bg-[#FAFBFE] transition-all duration-200">
-                    <td className="px-8 py-5 text-sm text-[#1E293B]"><strong>#{o.orderNum.slice(-8)}</strong></td>
+                    <td className="px-8 py-5 text-sm text-[#1E293B]"><strong>#{o.orderNum?.slice(-8)}</strong></td>
                     <td className="px-8 py-5 text-sm text-[#1E293B]">{o.customerName || 'Anonymous'}</td>
                     <td className="px-8 py-5"><StatusBadge status={o.status} /></td>
                     <td className="px-8 py-5 text-right font-extrabold text-sm">${Number(o.totalAmount || 0).toFixed(2)}</td>

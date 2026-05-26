@@ -1,25 +1,10 @@
-'use client';
-
-import { useState, useEffect } from 'react';
 import { getDashboardAnalyticsAction } from '@/lib/actions-admin';
+import Link from 'next/link';
 
-export default function AnalyticsPage() {
-  const [loading, setLoading] = useState(true);
-  const [analytics, setAnalytics] = useState<{
-    totalOrders: number;
-    totalRevenue: number;
-    totalCost: number;
-    totalProfit: number;
-    pendingOrders: number;
-    paidOrders: number;
-    shippedOrders: number;
-    deliveredOrders: number;
-    cancelledOrders: number;
-    lowStockProducts: number;
-    topProducts: any[];
-    recentOrders: any[];
-    dailyRevenue: { date: string; revenue: number; orders: number }[];
-  }>({
+export default async function AnalyticsPage() {
+  const data = await getDashboardAnalyticsAction();
+  
+  const analytics = data.success ? data.data : {
     totalOrders: 0,
     totalRevenue: 0,
     totalCost: 0,
@@ -33,16 +18,7 @@ export default function AnalyticsPage() {
     topProducts: [],
     recentOrders: [],
     dailyRevenue: [],
-  });
-
-  useEffect(() => {
-    getDashboardAnalyticsAction()
-      .then(data => {
-        if (data.success) setAnalytics(prev => ({ ...prev, ...data.data }));
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+  };
 
   const statCards = [
     { label: 'Total Orders', value: analytics.totalOrders, icon: 'fa-shopping-cart', color: 'text-[#FF6B00]', bg: 'bg-[#FFEDD5]' },
@@ -58,10 +34,6 @@ export default function AnalyticsPage() {
     { label: 'Delivered', value: analytics.deliveredOrders, color: 'bg-[#F3E8FF] text-[#7C3AED]', icon: 'fa-home' },
     { label: 'Cancelled', value: analytics.cancelledOrders, color: 'bg-[#FEE2E2] text-[#991B1B]', icon: 'fa-times-circle' },
   ];
-
-  if (loading) {
-    return <div className="text-center py-[100px]"><i className="fas fa-circle-notch fa-spin fa-2x text-[#FF6B00]"></i></div>;
-  }
 
   return (
     <div className="animate-fade-in">
@@ -134,7 +106,7 @@ export default function AnalyticsPage() {
             <i className="fas fa-bolt text-[#FF6B00]"></i> Quick Actions
           </h3>
           <div className="space-y-3">
-            <a href="/dashboard/orders" className="flex items-center gap-3 px-4 py-3 rounded-[10px] bg-[#F8FAFC] hover:bg-[#FFEDD5] transition-all duration-200 no-underline group">
+            <Link href="/dashboard/orders" className="flex items-center gap-3 px-4 py-3 rounded-[10px] bg-[#F8FAFC] hover:bg-[#FFEDD5] transition-all duration-200 no-underline group">
               <div className="w-8 h-8 rounded-[8px] bg-[#DBEAFE] flex items-center justify-center text-[#3B82F6] group-hover:bg-[#BFDBFE] transition-all">
                 <i className="fas fa-list"></i>
               </div>
@@ -142,8 +114,8 @@ export default function AnalyticsPage() {
                 <p className="text-sm font-bold text-[#1E293B]">View All Orders</p>
                 <p className="text-xs text-[#64748B]">{analytics.totalOrders} orders total</p>
               </div>
-            </a>
-            <a href="/dashboard/products" className="flex items-center gap-3 px-4 py-3 rounded-[10px] bg-[#F8FAFC] hover:bg-[#FFEDD5] transition-all duration-200 no-underline group">
+            </Link>
+            <Link href="/dashboard/myproducts" className="flex items-center gap-3 px-4 py-3 rounded-[10px] bg-[#F8FAFC] hover:bg-[#FFEDD5] transition-all duration-200 no-underline group">
               <div className="w-8 h-8 rounded-[8px] bg-[#D1FAE5] flex items-center justify-center text-[#10B981] group-hover:bg-[#A7F3D0] transition-all">
                 <i className="fas fa-box"></i>
               </div>
@@ -151,8 +123,8 @@ export default function AnalyticsPage() {
                 <p className="text-sm font-bold text-[#1E293B]">Manage Products</p>
                 <p className="text-xs text-[#64748B]">Import & manage inventory</p>
               </div>
-            </a>
-            <a href="/dashboard/importer" className="flex items-center gap-3 px-4 py-3 rounded-[10px] bg-[#F8FAFC] hover:bg-[#FFEDD5] transition-all duration-200 no-underline group">
+            </Link>
+            <Link href="/dashboard/importer" className="flex items-center gap-3 px-4 py-3 rounded-[10px] bg-[#F8FAFC] hover:bg-[#FFEDD5] transition-all duration-200 no-underline group">
               <div className="w-8 h-8 rounded-[8px] bg-[#FEF3C7] flex items-center justify-center text-[#F59E0B] group-hover:bg-[#FDE68A] transition-all">
                 <i className="fas fa-download"></i>
               </div>
@@ -160,7 +132,7 @@ export default function AnalyticsPage() {
                 <p className="text-sm font-bold text-[#1E293B]">Import Products</p>
                 <p className="text-xs text-[#64748B]">Import from CJ Dropshipping</p>
               </div>
-            </a>
+            </Link>
           </div>
         </div>
       </div>
@@ -176,7 +148,7 @@ export default function AnalyticsPage() {
           <div className="p-8">
             <div className="flex items-end gap-3 h-[200px]">
               {analytics.dailyRevenue.map((day: any) => {
-                const maxRev = Math.max(...analytics.dailyRevenue.map(d => d.revenue), 1);
+                const maxRev = Math.max(...analytics.dailyRevenue.map((d: any) => d.revenue), 1);
                 const height = (day.revenue / maxRev) * 100;
                 return (
                   <div key={day.date} className="flex-1 flex flex-col items-center gap-2">
@@ -225,7 +197,7 @@ export default function AnalyticsPage() {
             <h3 className="text-lg font-extrabold text-[#1E293B] flex items-center gap-2">
               <i className="fas fa-history text-[#FF6B00]"></i> Recent Orders
             </h3>
-            <a href="/dashboard/orders" className="text-sm font-bold text-[#FF6B00] no-underline hover:underline">View All</a>
+            <Link href="/dashboard/orders" className="text-sm font-bold text-[#FF6B00] no-underline hover:underline">View All</Link>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
@@ -240,7 +212,7 @@ export default function AnalyticsPage() {
               </thead>
               <tbody>
                 {analytics.recentOrders.map((o: any) => (
-                  <tr key={o.id} className="border-b border-[#F1F5F9] hover:bg-[#FAFBFE] transition-all duration-200">
+                  <tr key={o.id || o.orderNum} className="border-b border-[#F1F5F9] hover:bg-[#FAFBFE] transition-all duration-200">
                     <td className="px-6 py-4 font-bold text-sm text-[#1E293B]">#{o.orderNum?.slice(0, 12)}</td>
                     <td className="px-6 py-4 text-sm text-[#475569]">{o.customerName || o.customerEmail}</td>
                     <td className="px-6 py-4 font-bold text-sm text-[#FF6B00]">${(o.totalAmount || 0).toFixed(2)}</td>
