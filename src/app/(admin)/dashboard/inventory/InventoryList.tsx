@@ -41,14 +41,16 @@ export default function InventoryList({
   currentPage = 1,
   categories = [],
   currentCategory = '',
-  currentSort = 'newest'
+  currentSort = 'newest',
+  activeCoupons = []
 }: { 
   initialProducts: any[], 
   total?: number, 
   currentPage?: number,
   categories?: any[],
   currentCategory?: string,
-  currentSort?: string
+  currentSort?: string,
+  activeCoupons?: any[]
 }) {
 
   const router = useRouter();
