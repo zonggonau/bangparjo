@@ -155,8 +155,14 @@ function SecurePaymentContent() {
                   <div className="flex justify-between items-center pt-4 border-t-2 border-dashed border-gray-200">
                     <span className="font-semibold text-gray-500">Amount to Pay</span>
                     <div className="text-right">
-                      <strong className="text-[28px] text-[#FF6B00] block">{formatIDR(order.totalAmount * exchangeRate)}</strong>
-                      <span className="text-[13px] text-gray-400">≈ {formatUSD(order.totalAmount)}</span>
+                      {isIndonesia ? (
+                        <>
+                          <strong className="text-[28px] text-[#FF6B00] block">{formatIDR(order.totalAmount * exchangeRate)}</strong>
+                          <span className="text-[13px] text-gray-400">≈ {formatUSD(order.totalAmount)}</span>
+                        </>
+                      ) : (
+                        <strong className="text-[28px] text-[#FF6B00] block">{formatUSD(order.totalAmount)}</strong>
+                      )}
                     </div>
                   </div>
                 </div>
