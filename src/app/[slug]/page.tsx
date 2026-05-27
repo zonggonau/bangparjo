@@ -238,7 +238,7 @@ export default async function BlogSlugPage(props: Props) {
       const enrichedProduct = { ...product, recommendations: recs };
       const waNumber = process.env.NEXT_PUBLIC_WHATSAPP || '628219105980';
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
-      const html = renderProductTemplate(enrichedProduct, waNumber, baseUrl);
+      const html = renderProductTemplate(enrichedProduct, waNumber, baseUrl, settings.markupPct);
 
 
       return <div dangerouslySetInnerHTML={{ __html: html }} suppressHydrationWarning />;

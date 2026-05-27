@@ -41,7 +41,7 @@ export default function BlogDetailPage() {
     const productData = parseProductData(post.content);
     if (!productData) return null;
     // Render the full product landing page template
-    return renderProductTemplate(productData, '628219105980', window.location.origin);
+    return renderProductTemplate(productData, '628219105980', window.location.origin, 35);
   }, [post]);
 
   // Check if content is raw HTML (not JSON)

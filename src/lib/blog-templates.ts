@@ -118,11 +118,26 @@ export function parseProductData(content: any): ProductData | null {
  * @param waNumber - WhatsApp number for the AI agent (with country code, no +)
  * @param baseUrl - Base URL of the store (e.g. https://bangparjo.shop) for product link
  */
-export function renderProductTemplate(product: ProductData, waNumber?: string, baseUrl?: string): string {
+export function renderProductTemplate(product: ProductData, waNumber?: string, baseUrl?: string, markupPct?: number): string {
   const whatsappNumber = waNumber || '628219105980';
   const storeBaseUrl = baseUrl || 'https://bangparjo.shop';
-  var minPrice = Math.min.apply(null, product.variants.map(function(v) { return v.sellingPrice; }));
-  var maxPrice = Math.max.apply(null, product.variants.map(function(v) { return v.sellingPrice; }));
+  const marginPct = (typeof markupPct === 'number' && markupPct >= 0) ? markupPct : 35; // default 35%
+  const coupon = product.coupon;
+
+  // Calculate margin price (raw CJ price × markup), then inflate if coupon active
+  function getDisplayPrice(sellingPrice: number): number {
+    const marginPrice = sellingPrice * (1 + marginPct / 100);
+    if (coupon && coupon.type === 'PERCENTAGE' && coupon.value > 0 && coupon.value < 100) {
+      return marginPrice / (1 - coupon.value / 100);
+    }
+    if (coupon && coupon.type === 'FIXED' && coupon.value > 0) {
+      return marginPrice + coupon.value;
+    }
+    return marginPrice;
+  }
+
+  var minPrice = Math.min.apply(null, product.variants.map(function(v) { return getDisplayPrice(v.sellingPrice); }));
+  var maxPrice = Math.max.apply(null, product.variants.map(function(v) { return getDisplayPrice(v.sellingPrice); }));
   var priceDisplay = minPrice === maxPrice
     ? '$' + minPrice.toFixed(2)
     : '$' + minPrice.toFixed(2) + ' - $' + maxPrice.toFixed(2);
@@ -168,7 +183,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     if (firstVariant.cjId) params.push('vid=' + encodeURIComponent(firstVariant.cjId));
     if (firstVariant.color) params.push('color=' + encodeURIComponent(firstVariant.color));
     if (firstVariant.size) params.push('size=' + encodeURIComponent(firstVariant.size));
-    params.push('price=' + firstVariant.sellingPrice.toFixed(2));
+    params.push('price=' + getDisplayPrice(firstVariant.sellingPrice).toFixed(2));
     variantParams = '?' + params.join('&');
   }
   var productLink = product.slug
@@ -187,7 +202,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
       + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#1A1A2E;">' + variantName + '</td>'
       + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#64748b;">' + safeSku + '</td>'
       + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;">' + stockStatus + '</td>'
-      + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;font-weight:700;color:#FF6B35;">$' + v.sellingPrice.toFixed(2) + '</td>'
+      + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;font-weight:700;color:#FF6B35;">$' + getDisplayPrice(v.sellingPrice).toFixed(2) + '</td>'
       + '</tr>';
   }).join('');
 
@@ -259,7 +274,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
 
   // --- JSON-LD Product Schema ---
   var offers = product.variants.map(function(v) {
-    return '{"@type":"Offer","price":"' + v.sellingPrice.toFixed(2) + '","priceCurrency":"USD","availability":"' + (v.inventory > 0 ? 'InStock' : 'OutOfStock') + '","sku":"' + hAttr(v.sku) + '"}';
+    return '{"@type":"Offer","price":"' + getDisplayPrice(v.sellingPrice).toFixed(2) + '","priceCurrency":"USD","availability":"' + (v.inventory > 0 ? 'InStock' : 'OutOfStock') + '","sku":"' + hAttr(v.sku) + '"}';
   }).join(',');
   var jsonLd = '{\n'
     + '  "@context": "https://schema.org/",\n'
@@ -741,7 +756,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
 
   var variantOptions = product.variants.map(function(v) {
     var vName = [v.color, v.size].filter(Boolean).join(' / ') || 'Default';
-    return '<option value="' + v.cjId + '" data-price="' + v.sellingPrice.toFixed(2) + '" data-img="' + (v.image || product.images[0]) + '">' + h(vName) + ' - $' + v.sellingPrice.toFixed(2) + '</option>';
+    return '<option value="' + v.cjId + '" data-price="' + getDisplayPrice(v.sellingPrice).toFixed(2) + '" data-img="' + (v.image || product.images[0]) + '">' + h(vName) + ' - $' + getDisplayPrice(v.sellingPrice).toFixed(2) + '</option>';
   }).join('');
 
   var rightColumnButtonHtml = '';
@@ -977,7 +992,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
         vid: v.cjId,
         sku: v.sku,
         name: [v.color, v.size].filter(Boolean).join(' / ') || 'Default',
-        price: v.sellingPrice,
+        price: getDisplayPrice(v.sellingPrice),
         image: v.image || product.images[0]
       };
     })

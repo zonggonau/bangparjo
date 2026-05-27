@@ -53,14 +53,11 @@ export default function AIChat() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/openclaw', {
+      const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'chat-ai',
-          data: {
-            messages: [...messages, { role: 'user', content: userMsg }]
-          }
+          messages: [...messages, { role: 'user', content: userMsg }]
         }),
       });
 

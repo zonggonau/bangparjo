@@ -84,9 +84,13 @@ export default function ProductView({ id, initialData, initialError, selectedVid
     setSelectedVariant(variant);
     
     // Update URL query param without full navigation
-    const params = new URLSearchParams(searchParams ? searchParams.toString() : '');
-    params.set('v', variant.vid);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    try {
+      const params = new URLSearchParams(searchParams ? searchParams.toString() : '');
+      params.set('v', variant.vid);
+      window.history.replaceState(null, '', `${pathname}?${params.toString()}`);
+    } catch (e) {
+      // Fallback: ignore URL update error
+    }
   };
 
   useEffect(() => {
@@ -208,52 +212,30 @@ export default function ProductView({ id, initialData, initialError, selectedVid
     return generalCoupon || null;
   };
 
+  // Harga jual langsung dari DB (sellingPrice sudah include margin)
   const currentCjPrice = selectedVariant?.variantSellPrice 
     ? Number(selectedVariant.variantSellPrice)
-    : (typeof product?.sellPrice === 'number' ? product?.sellPrice : parseFloat(String(product?.sellPrice)));
+    : (typeof product?.sellPrice === 'number' ? product?.sellPrice : Number(product?.sellPrice || 0));
     
-  const targetPrice = calculateFinalPrice(currentCjPrice, settings);
-
-  const getInflatedPrice = () => {
-    const activeCoupon = getProductActiveCoupon(product?.pid || id);
-    const urlCoupon = searchParams ? searchParams.get('coupon')?.toUpperCase() : undefined;
-
-    // Only inflate if the active coupon's code matches the URL parameter
-    if (activeCoupon && urlCoupon === activeCoupon.code.toUpperCase()) {
-      if (activeCoupon.type === 'PERCENTAGE') {
-        const pct = activeCoupon.value;
-        if (pct > 0 && pct < 100) {
-          return targetPrice / (1 - pct / 100);
-        }
-      } else if (activeCoupon.type === 'FIXED') {
-        const amount = activeCoupon.value;
-        if (amount > 0) {
-          return targetPrice + amount;
-        }
-      }
-    }
-    return targetPrice;
-  };
-
-  const finalPrice = getInflatedPrice();
+  const finalPrice = calculateFinalPrice(currentCjPrice, settings);
 
   // ── Discount calculation ──────────────────────────────────────────────
-  const nowPrice = product?.nowPrice ? parseFloat(product.nowPrice) : null;
-  const hasDiscount = nowPrice !== null && nowPrice > 0 && nowPrice < currentCjPrice;
-  const discountPercent = hasDiscount ? Math.round((1 - nowPrice / currentCjPrice) * 100) : 0;
-  const fakeOriginalPrice = hasDiscount ? calculateFinalPrice(currentCjPrice, { ...settings, markupPct: 0 }) : finalPrice * 1.35; // Generate 35% fake discount if no real discount
+  const fakeOriginalPrice = finalPrice * 1.35; // Display 35% fake discount
 
 
   const handleAddToCart = () => {
+    if (!product) return;
     const variantInfo = selectedVariant ? { 
       vid: selectedVariant.vid, 
       sku: selectedVariant.variantSku, 
       name: selectedVariant.variantNameEn || selectedVariant.variantKey,
       image: selectedVariant.variantImage
     } : undefined;
-    const normalizedPrice = selectedVariant?.variantSellPrice ? selectedVariant.variantSellPrice : (typeof product.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product.sellPrice)));
-    const isCouponProduct = !!getProductActiveCoupon(product?.pid || id);
-    const cartProduct = { ...product, sellPrice: normalizedPrice, isCouponProduct };
+    const normalizedPrice = selectedVariant?.variantSellPrice 
+      ? Number(selectedVariant.variantSellPrice)
+      : (typeof product.sellPrice === 'number' ? product.sellPrice : (product.sellPrice ? Number(product.sellPrice) : 0));
+    const isCouponProduct = product?.pid ? !!getProductActiveCoupon(product.pid) : false;
+    const cartProduct = { ...product, sellPrice: normalizedPrice || 0, isCouponProduct };
     addToCart(cartProduct, variantInfo, qty);
   };
 
@@ -340,15 +322,9 @@ export default function ProductView({ id, initialData, initialError, selectedVid
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl md:text-3xl font-black text-[#FF6B00]">{formatUSD(finalPrice)}</span>
-                  {discountPercent > 0 ? (
-                    <span className="px-2 py-1 rounded-[6px] bg-[#FFF3E8] text-[#FF6B00] text-xs font-bold tracking-wide">
-                      -{discountPercent}% OFF
-                    </span>
-                  ) : (
-                    <span className="px-2 py-1 rounded-[6px] bg-[#FFF3E8] text-[#FF6B00] text-xs font-bold tracking-wide">
-                      -35% OFF
-                    </span>
-                  )}
+                  <span className="px-2 py-1 rounded-[6px] bg-[#FFF3E8] text-[#FF6B00] text-xs font-bold tracking-wide">
+                    -35% OFF
+                  </span>
                 </div>
                 <span className="text-sm text-gray-400 line-through font-medium">
                   {formatUSD(fakeOriginalPrice)}

@@ -46,14 +46,18 @@ export async function POST(req: Request) {
 
       case 'chat-ai':
         try {
-          const aiRes = await fetch(new URL('/api/ai/chat', req.url).toString(), {
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+          const aiUrl = baseUrl.replace(/\/+$/, '') + '/api/ai/chat';
+          const aiRes = await fetch(aiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
+            signal: AbortSignal.timeout(30000)
           });
           result = await aiRes.json();
         } catch (e: any) {
-          result = { success: false, text: "OpenClaw AI Router Error: " + e.message };
+          console.error('[Chat-AI] fetch error:', e.message);
+          result = { success: false, text: "Parjo AI is currently unavailable. Please try again later. 😊" };
         }
         break;
 

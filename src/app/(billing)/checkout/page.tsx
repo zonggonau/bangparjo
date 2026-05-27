@@ -463,20 +463,18 @@ function CheckoutContent() {
   const itemKeyVal = itemKey(product?.pid || product?.cjId || '');
   const couponEntry = getCouponEntry(itemKeyVal);
 
-  // Step 1: margin price = CJ price × markup% from DB settings (via calculateFinalPrice)
+  // Step 1: margin price = CJ price × markup% from DB settings
   const marginPrice = calculateFinalPrice(variantCjPrice, settings);
 
-  // Step 2: inflate for display when coupon active — same logic as product page
-  //   inflatedPrice × (1 - pct/100) = marginPrice
-  //   → customer sees inflatedPrice, after coupon deduction nets to marginPrice
+  // Step 2: inflate for display when coupon active — so coupon deduction nets to marginPrice
   let variantPrice = marginPrice;
   let discountAmount = 0;
   if (couponEntry && couponEntry.applied) {
     if (couponEntry.applied.type === 'PERCENTAGE') {
       const pct = couponEntry.applied.value;
       if (pct > 0 && pct < 100) {
-        variantPrice   = marginPrice / (1 - pct / 100);      // inflated
-        discountAmount = variantPrice * qty * (pct / 100);  // nets to marginPrice after deduction
+        variantPrice   = marginPrice / (1 - pct / 100);
+        discountAmount = variantPrice * qty * (pct / 100);
       }
     } else if (couponEntry.applied.type === 'FIXED') {
       variantPrice   = marginPrice + couponEntry.applied.value;
@@ -486,7 +484,7 @@ function CheckoutContent() {
     }
   }
 
-  // For cart items: use dynamic markup from settings, inflate if coupon active
+  // For cart items: apply margin from settings, inflate if coupon active
   const getCartItemInflatedPrice = (item: any) => {
     const rawCj = Number(item.sellPrice);
     const baseMargin = isNaN(rawCj) ? 0 : calculateFinalPrice(rawCj, settings);
