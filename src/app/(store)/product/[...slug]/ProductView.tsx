@@ -84,7 +84,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
     setSelectedVariant(variant);
     
     // Update URL query param without full navigation
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams ? searchParams.toString() : '');
     params.set('v', variant.vid);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
@@ -157,7 +157,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
 
   useEffect(() => {
     if (!selectedVariant) return;
-    const fallbackStock = selectedVariant.inventories 
+    const fallbackStock = Array.isArray(selectedVariant.inventories)
       ? selectedVariant.inventories.reduce((sum: number, inv: any) => sum + (inv.totalInventory || inv.totalInventoryNum || 0), 0) 
       : (selectedVariant.totalInventoryNum || selectedVariant.inventory || 0);
     setRealStock(fallbackStock);
@@ -197,7 +197,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
 
   const getInflatedPrice = () => {
     const activeCoupon = getProductActiveCoupon(product?.pid || id);
-    const urlCoupon = searchParams.get('coupon')?.toUpperCase();
+    const urlCoupon = searchParams ? searchParams.get('coupon')?.toUpperCase() : undefined;
 
     // Only inflate if the active coupon's code matches the URL parameter
     if (activeCoupon && urlCoupon === activeCoupon.code.toUpperCase()) {
@@ -394,7 +394,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                   <i className="fas fa-shopping-bag"></i> Add to Cart
                 </button>
                 <Link 
-                  href={`/checkout?pid=${id}${selectedVariant ? `&vid=${selectedVariant.vid}` : ''}&qty=${qty}${searchParams.get('coupon') ? `&coupon=${searchParams.get('coupon')}` : ''}`} 
+                  href={`/checkout?pid=${id}${selectedVariant ? `&vid=${selectedVariant.vid}` : ''}&qty=${qty}${searchParams?.get('coupon') ? `&coupon=${searchParams.get('coupon')}` : ''}`} 
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px] font-bold text-sm bg-[#1A1A1A] text-white hover:bg-[#333] transition-all duration-200 no-underline"
                 >
                   Buy Now

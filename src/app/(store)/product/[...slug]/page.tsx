@@ -2,6 +2,8 @@ import ProductView from './ProductView';
 import { Metadata } from 'next';
 import { prisma } from '@/lib/db';
 import { getProductDetails } from '@/lib/cj-api';
+import { Suspense } from 'react';
+import { ProductDetailSkeleton } from '@/components/ProductSkeleton';
 
 export async function generateMetadata({ 
   params, 
@@ -174,12 +176,14 @@ export default async function Page({
     return (
       <>
         <ProductSchema product={mappedData} selectedVariant={selectedVariant} />
-        <ProductView 
-          id={id} 
-          initialData={mappedData}
-          initialError={null}
-          selectedVid={targetVid}
-        />
+        <Suspense fallback={<ProductDetailSkeleton />}>
+          <ProductView 
+            id={id} 
+            initialData={mappedData}
+            initialError={null}
+            selectedVid={targetVid}
+          />
+        </Suspense>
       </>
     );
   }
@@ -234,22 +238,26 @@ export default async function Page({
     return (
       <>
         <ProductSchema product={mappedData} selectedVariant={selectedVariant} />
-        <ProductView 
-          id={id} 
-          initialData={mappedData}
-          initialError={null}
-          selectedVid={targetVid}
-        />
+        <Suspense fallback={<ProductDetailSkeleton />}>
+          <ProductView 
+            id={id} 
+            initialData={mappedData}
+            initialError={null}
+            selectedVid={targetVid}
+          />
+        </Suspense>
       </>
     );
   }
 
   return (
-    <ProductView 
-      id={id} 
-      initialData={null}
-      initialError="Product not found on CJ Dropshipping."
-      selectedVid={targetVid}
-    />
+    <Suspense fallback={<ProductDetailSkeleton />}>
+      <ProductView 
+        id={id} 
+        initialData={null}
+        initialError="Product not found on CJ Dropshipping."
+        selectedVid={targetVid}
+      />
+    </Suspense>
   );
 }
