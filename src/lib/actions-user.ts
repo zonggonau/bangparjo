@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db';
 import { auth } from '@/auth';
+import bcrypt from 'bcryptjs';
 
 export async function getUserAddressesAction(email: string) {
   if (!email) return { success: false, error: 'Email is required' };
@@ -206,5 +207,70 @@ export async function trackOrderAction(id: string) {
     };
   } catch (err: any) {
     return { success: false, error: 'Server error' };
+  }
+}
+
+// ── Update Account Email & Password ──────────────────────────────────────
+
+export async function updateAccountAction(data: {
+  currentPassword?: string;
+  newEmail?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+}) {
+  try {
+    const session = await auth();
+    if (!session?.user?.email) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    });
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
+    if (!user.password) {
+      return { success: false, error: 'Account has no password set. Contact admin.' };
+    }
+
+    // Verify current password
+    const isValid = await bcrypt.compare(data.currentPassword || '', user.password);
+    if (!isValid) {
+      return { success: false, error: 'Current password is incorrect' };
+    }
+
+    // Update email if provided
+    if (data.newEmail && data.newEmail !== user.email) {
+      // Check if email is taken
+      const existing = await prisma.user.findUnique({ where: { email: data.newEmail } });
+      if (existing) {
+        return { success: false, error: 'Email already in use' };
+      }
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { email: data.newEmail }
+      });
+    }
+
+    // Update password if provided
+    if (data.newPassword) {
+      if (data.newPassword.length < 6) {
+        return { success: false, error: 'New password must be at least 6 characters' };
+      }
+      if (data.newPassword !== data.confirmPassword) {
+        return { success: false, error: 'Passwords do not match' };
+      }
+      const hashedPassword = await bcrypt.hash(data.newPassword, 10);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword }
+      });
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
   }
 }

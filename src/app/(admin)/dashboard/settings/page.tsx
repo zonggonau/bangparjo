@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useSettings } from '@/context/SettingsContext';
 import { updateStoreSettingsAction } from '@/lib/actions';
+import { updateAccountAction } from '@/lib/actions-user';
+import { useSession } from 'next-auth/react';
 
-type TabType = 'profile' | 'logistics' | 'margins' | 'pages';
+type TabType = 'profile' | 'account' | 'logistics' | 'margins' | 'pages';
 
 export default function SettingsPage() {
   const { settings: currentSettings, refreshSettings } = useSettings();
@@ -12,6 +14,10 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('profile');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [accountMsg, setAccountMsg] = useState('');
+  const [accSaving, setAccSaving] = useState(false);
+  const [accForm, setAccForm] = useState({ currentPassword: '', newEmail: '', newPassword: '', confirmPassword: '' });
+  const { data: session } = useSession();
 
   useEffect(() => {
     setDraft(currentSettings);
@@ -55,6 +61,12 @@ export default function SettingsPage() {
               onClick={() => setActiveTab('profile')}
             >
               <i className="fas fa-store"></i> Store Profile
+            </button>
+            <button 
+              className={`px-4 py-2 rounded-[8px] text-sm font-bold transition-all duration-200 ${activeTab === 'account' ? 'bg-[#FF6B00] text-white' : 'bg-transparent text-gray-500'}`}
+              onClick={() => setActiveTab('account')}
+            >
+              <i className="fas fa-user-cog"></i> Account
             </button>
             <button 
               className={`px-4 py-2 rounded-[8px] text-sm font-bold transition-all duration-200 ${activeTab === 'logistics' ? 'bg-[#FF6B00] text-white' : 'bg-transparent text-gray-500'}`}
@@ -161,6 +173,94 @@ export default function SettingsPage() {
                   onChange={e => setDraft({...draft, returnsContent: e.target.value})}
                   placeholder="<h1>Returns Policy</h1><p>Our returns policy details...</p>"
                 />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'account' && (
+            <div className="grid gap-6">
+              <div className="p-6 bg-blue-50 rounded-[12px] border border-blue-200 mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-[#FF6B00] flex items-center justify-center text-white text-lg font-bold">
+                    {session?.user?.name?.charAt(0) || 'A'}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-[#1E293B]">{session?.user?.name || 'Admin'}</h4>
+                    <p className="text-sm text-gray-500">{session?.user?.email}</p>
+                    <p className="text-xs text-gray-400">Role: {(session?.user as any)?.role || 'ADMIN'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-[#E2E8F0] pt-6">
+                <h4 className="text-[15px] font-black mb-4 text-[#1E293B]">Change Email</h4>
+                <div>
+                  <label className={labelClass}>Current Email</label>
+                  <input type="email" className={inputClass + ' bg-gray-100'} value={session?.user?.email || ''} disabled />
+                </div>
+                <div className="mt-4">
+                  <label className={labelClass}>New Email</label>
+                  <input type="email" className={inputClass} 
+                    value={accForm.newEmail} 
+                    onChange={e => setAccForm({...accForm, newEmail: e.target.value})}
+                    placeholder="new@email.com" />
+                </div>
+              </div>
+
+              <hr className="border-[#E2E8F0]" />
+
+              <div>
+                <h4 className="text-[15px] font-black mb-4 text-[#1E293B]">Change Password</h4>
+                <div className="grid gap-4">
+                  <div>
+                    <label className={labelClass}>Current Password</label>
+                    <input type="password" className={inputClass} 
+                      value={accForm.currentPassword}
+                      onChange={e => setAccForm({...accForm, currentPassword: e.target.value})}
+                      placeholder="Enter current password" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>New Password</label>
+                    <input type="password" className={inputClass} 
+                      value={accForm.newPassword}
+                      onChange={e => setAccForm({...accForm, newPassword: e.target.value})}
+                      placeholder="Min 6 characters" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Confirm New Password</label>
+                    <input type="password" className={inputClass} 
+                      value={accForm.confirmPassword}
+                      onChange={e => setAccForm({...accForm, confirmPassword: e.target.value})}
+                      placeholder="Re-enter new password" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-between">
+                <span className={`text-sm font-bold ${accountMsg.includes('✅') ? 'text-green-600' : 'text-red-500'}`}>{accountMsg}</span>
+                <button 
+                  className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-[12px] font-bold bg-[#FF6B00] text-white hover:bg-[#E65100] shadow-[0_4px_12px_rgba(255,107,0,0.3)] transition-all duration-200 disabled:opacity-50" 
+                  disabled={accSaving}
+                  onClick={async () => {
+                    setAccSaving(true);
+                    setAccountMsg('');
+                    try {
+                      const res = await updateAccountAction(accForm);
+                      if (res.success) {
+                        setAccountMsg('✅ Account updated successfully. Please login again.');
+                        setAccForm({ currentPassword: '', newEmail: '', newPassword: '', confirmPassword: '' });
+                      } else {
+                        setAccountMsg('❌ ' + (res.error || 'Failed'));
+                      }
+                    } catch(e: any) {
+                      setAccountMsg('❌ ' + e.message);
+                    } finally {
+                      setAccSaving(false);
+                    }
+                  }}
+                >
+                  {accSaving ? <><i className="fas fa-spinner fa-spin"></i> Updating...</> : 'Update Account'}
+                </button>
               </div>
             </div>
           )}
