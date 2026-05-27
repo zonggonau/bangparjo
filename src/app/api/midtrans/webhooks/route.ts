@@ -33,8 +33,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Invalid signature' }, { status: 400 });
     }
 
-    // 2. Extract actual orderNum (order_id in Snap is formatted as orderNum-Timestamp)
-    const actualOrderId = order_id.split('-')[0];
+    // 2. Extract actual orderNum
+    // Midtrans Snap formats order_id as: "ORD-{timestamp}-{midtransTimestamp}"
+    // We stored orderNum as "ORD-{timestamp}", so we strip only the LAST segment
+    const parts = (order_id as string).split('-');
+    const actualOrderId = parts.slice(0, -1).join('-') || order_id;
 
     // 3. Handle Payment Success
     // 'settlement' = paid for most methods (QRIS, VA, Cards)
@@ -48,7 +51,14 @@ export async function POST(req: Request) {
 
     if (isSuccess) {
       console.log(`[Midtrans Webhook] Order ${actualOrderId} (from Snap ${order_id}) marked as PAID. Triggering fulfillment...`);
-      
+
+      // Guard: verify order exists before updating
+      const existingOrder = await prisma.order.findUnique({ where: { orderNum: actualOrderId } });
+      if (!existingOrder) {
+        console.error(`[Midtrans Webhook] Order '${actualOrderId}' NOT FOUND in DB (raw order_id: '${order_id}')`);
+        return NextResponse.json({ message: 'Order not found' }, { status: 404 });
+      }
+
       // Update status to PAID first (customer has definitely paid)
       await prisma.order.update({
         where: { orderNum: actualOrderId },
@@ -65,10 +75,13 @@ export async function POST(req: Request) {
       }
     } else if (isFailed) {
       console.log(`[Midtrans Webhook] Order ${actualOrderId} FAILED/CANCELLED: ${transaction_status}`);
-      await prisma.order.update({
-        where: { orderNum: actualOrderId },
-        data: { status: 'CANCELLED' }
-      });
+      const existingOrder = await prisma.order.findUnique({ where: { orderNum: actualOrderId } });
+      if (existingOrder) {
+        await prisma.order.update({
+          where: { orderNum: actualOrderId },
+          data: { status: 'CANCELLED' }
+        });
+      }
     } else if (isPending) {
       console.log(`[Midtrans Webhook] Order ${actualOrderId} is PENDING...`);
     }

@@ -164,7 +164,7 @@ async function fetchCjShippingMethods(variantCjId: string, quantity: number = 1,
   }
 }
 
-export async function exportToBlogAction(productId: string) {
+export async function exportToBlogAction(productId: string, lang: string = 'en') {
   try {
     if (!productId) return { success: false, error: 'productId is required' };
 
@@ -176,7 +176,8 @@ export async function exportToBlogAction(productId: string) {
     if (!product) return { success: false, error: 'Product not found' };
 
     const displayName = parseProductName(product.name);
-    const slug = slugify(displayName) + '-' + product.cjId.toLowerCase();
+    const langSuffix = lang === 'id' ? '-id' : '';
+    const slug = slugify(displayName) + '-' + product.cjId.toLowerCase() + langSuffix;
 
     const existing = await prisma.blogPost.findUnique({ where: { slug } });
     if (existing) return { success: false, error: 'Blog post already exists for this product', status: 409 };
@@ -216,7 +217,8 @@ export async function exportToBlogAction(productId: string) {
             sellingPrice: v.sellingPrice,
             inventory: v.inventory,
           })),
-        }
+        },
+        lang
       );
       productData.ai = aiContent;
     } catch (err) {}
@@ -233,9 +235,11 @@ export async function exportToBlogAction(productId: string) {
 
     const post = await prisma.blogPost.create({
       data: {
-        title: displayName,
+        title: displayName + (lang === 'id' ? ' (ID)' : ' (EN)'),
         slug,
-        excerpt: `Product review and details for ${displayName}. Check pricing, variants, and specifications.`,
+        excerpt: lang === 'id'
+          ? `Ulasan produk dan detail untuk ${displayName}. Periksa harga, varian, dan spesifikasi.`
+          : `Product review and details for ${displayName}. Check pricing, variants, and specifications.`,
         content,
         image: product.images[0] || null,
         author: 'Admin',

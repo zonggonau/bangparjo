@@ -6,9 +6,10 @@ export const dynamic = 'force-dynamic';
 export default async function DisputesPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const page = parseInt((searchParams.page as string) || '1', 10);
+  const resolvedSearchParams = await searchParams;
+  const page = parseInt((resolvedSearchParams.page as string) || '1', 10);
   
   let disputes = [];
   let total = 0;

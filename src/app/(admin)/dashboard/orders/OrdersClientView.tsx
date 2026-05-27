@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { fulfillAdminOrderAction, syncAdminOrderAction } from '@/lib/actions-admin-orders';
+import { fulfillAdminOrderAction, syncAdminOrderAction, markOrderAsPaidAction } from '@/lib/actions-admin-orders';
 
 function StatusBadge({ status }: { status: string }) {
   const s = (status || 'PENDING').toUpperCase();
@@ -75,6 +75,24 @@ export default function OrdersClientView({ orders, currentSource, currentStatus,
       alert('Critical error: ' + e.message); 
     } finally { 
       setBusy(null); 
+    }
+  };
+
+  const handleMarkAsPaid = async (orderId: string, orderNum: string) => {
+    if (!confirm(`Manually mark order #${orderNum} as PAID? Use this only if payment was confirmed outside the system.`)) return;
+    setBusy(orderId);
+    try {
+      const data = await markOrderAsPaidAction(orderId) as any;
+      if (data.success) {
+        alert('Order marked as PAID successfully.');
+        router.refresh();
+      } else {
+        alert('Failed: ' + (data.error || 'Unknown error'));
+      }
+    } catch (e: any) {
+      alert('Critical error: ' + e.message);
+    } finally {
+      setBusy(null);
     }
   };
 
@@ -238,6 +256,16 @@ export default function OrdersClientView({ orders, currentSource, currentStatus,
                           {currentSource === 'LOCAL' && (o.status || '').toUpperCase() === 'PAID' && !o.cjOrderId && (
                             <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-sm font-semibold bg-[#FF6B00] text-white hover:bg-[#E65100] transition-all duration-200" disabled={isBusy} onClick={() => handleFulfill(orderId)} title="Fulfill to CJ">
                               <i className={`fas fa-check-circle ${isBusy ? 'fa-spin' : ''}`}></i>
+                            </button>
+                          )}
+                          {currentSource === 'LOCAL' && (o.status || '').toUpperCase() === 'UNPAID' && (
+                            <button
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-all duration-200"
+                              disabled={isBusy}
+                              onClick={() => handleMarkAsPaid(o.id, orderId)}
+                              title="Manually mark as Paid (use when webhook failed)"
+                            >
+                              <i className={`fas fa-credit-card ${isBusy ? 'fa-spin' : ''}`}></i>
                             </button>
                           )}
                           {(o.cjOrderId || (currentSource === 'LOCAL' && o.status === 'UNPAID')) && (

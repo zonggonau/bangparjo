@@ -40,8 +40,11 @@ interface ProductInput {
  * Call DeepSeek API to generate landing page content for a product
  */
 export async function generateLandingPageContent(
-  product: ProductInput
+  product: ProductInput,
+  lang: string = 'en'
 ): Promise<AiLandingContent> {
+  const isIndo = lang.toLowerCase() === 'id';
+
   const minPrice = Math.min(...product.variants.map(v => v.sellingPrice));
   const maxPrice = Math.max(...product.variants.map(v => v.sellingPrice));
   const priceRange = minPrice === maxPrice
@@ -51,9 +54,51 @@ export async function generateLandingPageContent(
   const totalStock = product.variants.reduce((sum, v) => sum + v.inventory, 0);
   const variantCount = product.variants.length;
 
-  const systemPrompt = `You are a professional e-commerce copywriter for global dropshipping. CRITICAL: You MUST generate ALL text in ENGLISH only. NEVER use any other language. Generate ONLY pure JSON, no markdown, no backticks, no explanations. Focus on benefits, emotional appeal, and conversion optimization.`;
+  const systemPrompt = isIndo
+    ? `You are a professional e-commerce copywriter for dropshipping in Indonesia. CRITICAL: You MUST generate ALL text in INDONESIAN (Bahasa Indonesia) only. NEVER use any other language. Generate ONLY pure JSON, no markdown, no backticks, no explanations. Focus on benefits, emotional appeal, and conversion optimization.`
+    : `You are a professional e-commerce copywriter for global dropshipping. CRITICAL: You MUST generate ALL text in ENGLISH only. NEVER use any other language. Generate ONLY pure JSON, no markdown, no backticks, no explanations. Focus on benefits, emotional appeal, and conversion optimization.`;
 
-  const userPrompt = `Analyze this product and generate optimized marketing content for a social media landing page (Facebook/Instagram/TikTok/Google Ads). Write in ENGLISH for a global audience.
+  const userPrompt = isIndo
+    ? `Analyze this product and generate optimized marketing content for a social media landing page (Facebook/Instagram/TikTok/Google Ads). Write in INDONESIAN (Bahasa Indonesia) for an Indonesian audience.
+
+PRODUCT DATA:
+- Name: ${product.name}
+- Description: ${product.description?.substring(0, 500) || 'No description available'}
+- Price Range: ${priceRange}
+- Variants: ${variantCount}
+- Total Stock: ${totalStock}
+
+INSTRUCTIONS — Focus on BENEFITS over features. Use simple, emotional, and persuasive language. Add urgency where appropriate.
+
+Generate JSON with this exact structure:
+{
+  "tagline": "Slogan pendek yang kuat (maks 8 kata) untuk bagian hero, berfokus pada konversi",
+  "heroBadges": ["3 lencana pendek (maks 2 kata masing-masing), misal: Terlaris, Promo Hot, Stok Terbatas, Sedang Tren"],
+  "benefits": [
+    {"icon": "quality", "title": "judul benefit 1 (2-3 kata)", "desc": "deskripsi benefit singkat 8-12 kata, fokus pada keuntungan pembeli"},
+    {"icon": "price", "title": "judul benefit 2", "desc": "deskripsi singkat"},
+    {"icon": "shipping", "title": "judul benefit 3", "desc": "deskripsi singkat"}
+  ],
+  "socialProof": {
+    "sold": "estimasi unit terjual yang realistis (misal: 2.500+)",
+    "rating": "penilaian bintang (4.5 - 5.0)",
+    "reviews": "jumlah ulasan (misal: 850+)"
+  },
+  "seoTitle": "Judul SEO maks 60 karakter untuk meta tag",
+  "seoDescription": "Deskripsi SEO maks 160 karakter untuk meta tag",
+  "adCopy": "Salinan iklan media sosial 1-2 kalimat pendek yang menarik, maks 150 karakter",
+  "faqs": [
+    {"q": "Pertanyaan FAQ 1 terkait produk ini", "a": "Jawaban singkat yang jelas maks 20 kata"},
+    {"q": "Pertanyaan FAQ 2", "a": "Jawaban 2"},
+    {"q": "Pertanyaan FAQ 3 (pengiriman, ukuran, atau penggunaan)", "a": "Jawaban 3"}
+  ],
+  "shippingPolicy": "Kebijakan pengiriman 1-2 kalimat. Estimasi waktu pengiriman.",
+  "returnPolicy": "Kebijakan pengembalian/garansi 1-2 kalimat. Syarat dan ketentuan."
+}
+
+ALL TEXT MUST BE IN INDONESIAN (BAHASA INDONESIA).
+Pure JSON only, no markdown, no backticks.`
+    : `Analyze this product and generate optimized marketing content for a social media landing page (Facebook/Instagram/TikTok/Google Ads). Write in ENGLISH for a global audience.
 
 PRODUCT DATA:
 - Name: ${product.name}
@@ -97,21 +142,21 @@ Pure JSON only, no markdown, no backticks.`;
   // Try DeepSeek
   if (DEEPSEEK_API_KEY && DEEPSEEK_API_KEY !== 'sk-your-deepseek-api-key-here') {
     try {
-      const result = await callDeepSeek(systemPrompt, userPrompt, product.name);
+      const result = await callDeepSeek(systemPrompt, userPrompt, product.name, isIndo);
       if (result) return result;
     } catch (err) {
       console.warn('[AI Content] DeepSeek failed:', err);
     }
   }
 
-  return getFallbackContent(product.name);
+  return getFallbackContent(product.name, isIndo);
 }
 
 
 /**
  * Call DeepSeek chat completions API
  */
-async function callDeepSeek(systemPrompt: string, userPrompt: string, productName: string): Promise<AiLandingContent | null> {
+async function callDeepSeek(systemPrompt: string, userPrompt: string, productName: string, isIndo: boolean): Promise<AiLandingContent | null> {
   const response = await fetch(DEEPSEEK_API_URL, {
     method: 'POST',
     headers: {
@@ -138,17 +183,17 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, productNam
   const data = await response.json();
   const text = data?.choices?.[0]?.message?.content || '';
 
-  return parseAiResponse(text, productName);
+  return parseAiResponse(text, productName, isIndo);
 }
 
 /**
  * Parse AI response JSON into AiLandingContent
  */
-function parseAiResponse(text: string, productName: string): AiLandingContent | null {
+function parseAiResponse(text: string, productName: string, isIndo: boolean): AiLandingContent | null {
   try {
     const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
     const parsed = JSON.parse(cleaned);
-    const fallback = getFallbackContent(productName);
+    const fallback = getFallbackContent(productName, isIndo);
     return {
       tagline: parsed.tagline || fallback.tagline,
       heroBadges: Array.isArray(parsed.heroBadges) ? parsed.heroBadges.slice(0, 3) : fallback.heroBadges,
@@ -187,7 +232,25 @@ export function calculateMarkupPrice(baseCost: number, markupPercent?: number): 
 /**
  * Fallback content when AI is unavailable
  */
-function getFallbackContent(productName: string): AiLandingContent {
+function getFallbackContent(productName: string, isIndo: boolean): AiLandingContent {
+  if (isIndo) {
+    return {
+      tagline: `${productName} — Harga Terbaik, Pengiriman Cepat`,
+      heroBadges: ['Terlaris', 'Pengiriman Cepat', 'Harga Terbaik'],
+      benefits: [
+        { icon: 'quality', title: 'Kualitas Premium', desc: 'Produk berkualitas tinggi yang memenuhi standar internasional. Kepuasan terjamin.' },
+        { icon: 'price', title: 'Garansi Harga Terbaik', desc: 'Dapatkan harga terbaik langsung dari produsen. Tanpa biaya perantara.' },
+        { icon: 'shipping', title: 'Pengiriman Cepat', desc: 'Pengiriman ke seluruh dunia dengan pelacakan langsung.' },
+      ],
+      socialProof: { sold: '2.500+', rating: '4.8', reviews: '850+' },
+      seoTitle: `${productName} — Belanja Global di BangParjo`,
+      seoDescription: `Beli ${productName} dengan harga terbaik. Kualitas premium, pengiriman cepat ke seluruh dunia, dan garansi uang kembali. Belanja sekarang di BangParjo.`,
+      adCopy: `${productName} dengan harga yang tak tertandingi! ✓ Kualitas premium ✓ Pengiriman cepat ✓ Garansi 30 hari. Pesan sekarang!`,
+      shippingPolicy: 'Pengiriman internasional cepat 7-21 hari kerja dengan nomor pelacakan.',
+      returnPolicy: 'Garansi kepuasan 100%. Kembalikan dalam waktu 7 hari jika produk tidak memuaskan untuk pengembalian dana penuh.'
+    };
+  }
+
   return {
     tagline: `${productName} — Best Price, Global Shipping`,
     heroBadges: ['Best Seller', 'Global Shipping', 'Best Price'],
@@ -200,5 +263,7 @@ function getFallbackContent(productName: string): AiLandingContent {
     seoTitle: `${productName} — Shop Global at BangParjo`,
     seoDescription: `Buy ${productName} at the best price. Premium quality, fast worldwide shipping, and money-back guarantee. Shop now at BangParjo.`,
     adCopy: `${productName} at unbeatable prices! ✓ Premium quality ✓ Fast global shipping ✓ 30-day returns. Order now!`,
+    shippingPolicy: 'Fast worldwide shipping in 7-21 business days with tracking number.',
+    returnPolicy: '100% satisfaction guarantee. Return within 7 days if not satisfied for a full refund.'
   };
 }

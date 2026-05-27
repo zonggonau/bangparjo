@@ -66,6 +66,7 @@ export default function InventoryList({
   const [editingPrice, setEditingPrice] = useState<{ variantId: string; value: string } | null>(null);
   const [exportingBlog, setExportingBlog] = useState<string | null>(null);
   const [exportingBulk, setExportingBulk] = useState(false);
+  const [bulkLang, setBulkLang] = useState<'id' | 'en'>('en');
   const { settings } = useSettings();
 
   const handleFilterChange = (key: string, value: string) => {
@@ -239,12 +240,12 @@ export default function InventoryList({
 
   // ── Export to Blog ──────────────────────────────────────────────────────
 
-  const handleExportToBlog = async (productId: string) => {
-    setExportingBlog(productId);
+  const handleExportToBlog = async (productId: string, lang: 'id' | 'en') => {
+    setExportingBlog(`${productId}-${lang}`);
     try {
-      const data = await exportToBlogAction(productId);
+      const data = await exportToBlogAction(productId, lang);
       if (data.success) {
-        showToast('✅ Blog post created!');
+        showToast(`✅ Blog post (${lang.toUpperCase()}) created!`);
       } else {
         showToast(data.error || 'Export failed', 'error');
       }
@@ -255,14 +256,14 @@ export default function InventoryList({
     }
   };
 
-  const handleBulkExportToBlog = async () => {
+  const handleBulkExportToBlog = async (lang: 'id' | 'en') => {
     setExportingBulk(true);
     let success = 0;
     let skipped = 0;
     let errors = 0;
     for (const p of products) {
       try {
-        const data = await exportToBlogAction(p.id);
+        const data = await exportToBlogAction(p.id, lang);
         if (data.success) success++;
         else if (data.status === 409) skipped++;
         else errors++;
@@ -271,7 +272,7 @@ export default function InventoryList({
       }
     }
     setExportingBulk(false);
-    showToast(`✅ ${success} exported, ${skipped} skipped, ${errors} errors`);
+    showToast(`✅ ${success} exported (${lang.toUpperCase()}), ${skipped} skipped, ${errors} errors`);
   };
 
   return (
@@ -322,14 +323,25 @@ export default function InventoryList({
           <span className="text-sm text-gray-500 font-medium">
             {products.length} products
           </span>
-          <button
-            onClick={handleBulkExportToBlog}
-            disabled={exportingBulk}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold bg-green-600 text-white hover:bg-green-700 transition-all duration-200 disabled:opacity-50"
-          >
-            <i className={`fas ${exportingBulk ? 'fa-spinner fa-spin' : 'fa-blog'}`}></i>
-            {exportingBulk ? 'Exporting...' : '📝 Export All to Blog'}
-          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Bulk Language:</span>
+            <select
+              value={bulkLang}
+              onChange={(e) => setBulkLang(e.target.value as 'id' | 'en')}
+              className="px-2 py-1.5 border border-gray-200 rounded-lg text-xs font-bold text-gray-700 outline-none focus:border-[#FF6B00] bg-white cursor-pointer hover:border-gray-300 transition-all"
+            >
+              <option value="en">🇬🇧 English (EN)</option>
+              <option value="id">🇮🇩 Indonesian (ID)</option>
+            </select>
+            <button
+              onClick={() => handleBulkExportToBlog(bulkLang)}
+              disabled={exportingBulk}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold bg-green-600 text-white hover:bg-green-700 transition-all duration-200 disabled:opacity-50"
+            >
+              <i className={`fas ${exportingBulk ? 'fa-spinner fa-spin' : 'fa-blog'}`}></i>
+              {exportingBulk ? 'Exporting...' : '📝 Export All to Blog'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -412,17 +424,41 @@ export default function InventoryList({
                           <i className={`fa${p.isHero ? 's' : 'r'} fa-star`}></i>
                         </button>
 
-                        <button 
-                          className="px-2.5 py-1.5 rounded-[8px] text-sm border border-gray-200 text-green-600 hover:bg-green-50 transition-all duration-200"
-                          title="Export to Blog"
-                          disabled={exportingBlog === p.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleExportToBlog(p.id);
-                          }}
+                        <div 
+                          className="flex items-center border border-gray-200 rounded-[8px] overflow-hidden bg-white shadow-sm hover:border-gray-300 transition-all shrink-0"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <i className={`fas fa-blog ${exportingBlog === p.id ? 'fa-spin' : ''}`}></i>
-                        </button>
+                          <button
+                            title="Export to Indonesian Blog"
+                            disabled={exportingBlog !== null}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleExportToBlog(p.id, 'id');
+                            }}
+                            className="px-2.5 py-1.5 text-[11px] font-extrabold text-green-600 hover:bg-green-50 transition-colors flex items-center gap-1 border-r border-gray-100 disabled:opacity-50"
+                          >
+                            {exportingBlog === `${p.id}-id` ? (
+                              <i className="fas fa-spinner fa-spin"></i>
+                            ) : (
+                              <span>🇮🇩 ID</span>
+                            )}
+                          </button>
+                          <button
+                            title="Export to English Blog"
+                            disabled={exportingBlog !== null}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleExportToBlog(p.id, 'en');
+                            }}
+                            className="px-2.5 py-1.5 text-[11px] font-extrabold text-blue-600 hover:bg-blue-50 transition-colors flex items-center gap-1 disabled:opacity-50"
+                          >
+                            {exportingBlog === `${p.id}-en` ? (
+                              <i className="fas fa-spinner fa-spin"></i>
+                            ) : (
+                              <span>🇬🇧 EN</span>
+                            )}
+                          </button>
+                        </div>
                         <button 
                           className="px-2.5 py-1.5 rounded-[8px] text-sm border border-gray-200 text-red-500 hover:bg-red-50 transition-all duration-200"
                           title="Delete Product"

@@ -8,11 +8,12 @@ export const dynamic = 'force-dynamic';
 export default async function OrdersPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const source = (searchParams.source as string) || 'LOCAL';
-  const statusFilter = (searchParams.status as string) || 'ALL';
-  const searchQuery = ((searchParams.search as string) || '').toLowerCase();
+  const resolvedSearchParams = await searchParams;
+  const source = (resolvedSearchParams.source as string) || 'LOCAL';
+  const statusFilter = (resolvedSearchParams.status as string) || 'ALL';
+  const searchQuery = ((resolvedSearchParams.search as string) || '').toLowerCase();
 
   let orders = [];
 
