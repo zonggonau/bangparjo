@@ -362,6 +362,12 @@ export async function cjFetch<T>(
 
       // Handle QPS Limit
       if (!data.success && !data.result && (data.code === 1600100 || data.message?.includes('QPS limit'))) {
+        // For non-critical endpoints (reviews/comments), fail fast instead of retrying
+        const isNonCritical = endpoint.includes('productComments') || endpoint.includes('reviews');
+        if (isNonCritical) {
+          clearTimeout(timeoutId);
+          return { success: false, result: false, message: 'QPS limit - skipping', code: 1600100, data: null as unknown as T, requestId: '' };
+        }
         retryCount++;
         // Exponential backoff with jitter: 2s, 4s, 8s, 16s...
         const baseWait = Math.pow(2, retryCount) * 1000;
@@ -377,6 +383,7 @@ export async function cjFetch<T>(
       if (isGet && isProductEndpoint && (data.success || data.result)) {
         await setCache(cacheKey, data);
       }
+      clearTimeout(timeoutId);
       return data;
     } catch (err: any) {
       if (retryCount >= maxRetries) throw err;
@@ -385,6 +392,7 @@ export async function cjFetch<T>(
       await new Promise(resolve => setTimeout(resolve, wait));
     }
   }
+  clearTimeout(timeoutId);
   throw new Error(`Failed to fetch from CJ after ${maxRetries} retries due to QPS limits or network errors`);
 }
 

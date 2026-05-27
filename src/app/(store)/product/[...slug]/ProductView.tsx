@@ -11,7 +11,7 @@ import { ProductDetailSkeleton } from '@/components/ProductSkeleton';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import AIChat from '@/components/AIChat';
-import { getProductDetailsAction, cjProxyAction } from '@/lib/actions-catalog';
+import { getProductDetailsAction } from '@/lib/actions-catalog';
 import { countries } from '@/lib/countries';
 
 function renderStars(score: any) {
@@ -108,20 +108,39 @@ export default function ProductView({ id, initialData, initialError, selectedVid
   useEffect(() => {
     if (!product?.pid) return;
     setReviewsLoading(true);
+
+    // Use the dedicated API route with Redis caching + 5s timeout to avoid
+    // blocking on CJ QPS limits. Falls back to empty gracefully on timeout/error.
     const params = new URLSearchParams({ pid: product.pid });
     if (reviewsScore != null) params.set('score', reviewsScore.toString());
     params.set('pageNum', reviewsPage.toString());
     params.set('pageSize', '5');
-    cjProxyAction(`/api2.0/v1/product/productComments?${params.toString()}`)
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+    fetch(`/api/product-reviews?${params.toString()}`, { signal: controller.signal })
+      .then(r => r.json())
       .then(res => {
         if (res.success && res.data) {
-          const resData = res.data as any;
-          setReviews(resData.list || []);
-          setReviewsTotal(parseInt(resData.total || '0'));
+          setReviews(res.data.list || []);
+          setReviewsTotal(parseInt(res.data.total || '0'));
         }
       })
-      .catch(console.error)
-      .finally(() => setReviewsLoading(false));
+      .catch(() => {
+        // Silently fail — reviews are non-critical
+        setReviews([]);
+        setReviewsTotal(0);
+      })
+      .finally(() => {
+        clearTimeout(timeoutId);
+        setReviewsLoading(false);
+      });
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, [product?.pid, reviewsPage, reviewsScore]);
 
   // ── Shipping Rates ───────────────────────────────────────────────────────
