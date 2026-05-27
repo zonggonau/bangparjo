@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import CartCounter from './CartCounter';
 import FavoriteCounter from './FavoriteCounter';
@@ -12,7 +12,7 @@ import { getCategoryMenuAction } from '@/lib/actions-catalog';
 
 export default function Navbar() {
   const { data: session } = useSession();
-  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [isMobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
@@ -21,9 +21,11 @@ export default function Navbar() {
   const { settings } = useSettings();
 
   useEffect(() => {
-    const q = searchParams?.get('q');
-    if (q) setSearchQuery(q);
-  }, [searchParams]);
+    if (typeof window !== 'undefined') {
+      const q = new URLSearchParams(window.location.search).get('q');
+      setSearchQuery(q || '');
+    }
+  }, [pathname]);
 
   useEffect(() => {
     getCategoryMenuAction()
