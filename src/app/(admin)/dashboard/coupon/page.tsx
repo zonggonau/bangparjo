@@ -1,51 +1,8 @@
-import { prisma } from '@/lib/db';
-import CouponClientView from './CouponClientView';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-export default async function CouponManagementPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
-  const page = parseInt((searchParams.page as string) || '1', 10);
-  const pageSize = 20;
-
-  const total = await prisma.coupon.count();
-  const coupons = await prisma.coupon.findMany({
-    skip: (page - 1) * pageSize,
-    take: pageSize,
-    include: { products: true },
-    orderBy: { createdAt: 'desc' },
-  });
-
-  // Convert Date objects to ISO strings for client component
-  const safeCoupons = JSON.parse(JSON.stringify(coupons)).map((c: any) => ({
-    ...c,
-    value: Number(c.value), // Ensure Decimal is converted
-    products: (c.products || []).map((cp: any) => ({
-      productCjId: cp.productCjId
-    }))
-  }));
-
-  // Fetch active products list for AI selection and linking
-  const products = await prisma.product.findMany({
-    where: { status: 'ACTIVE' },
-    select: {
-      id: true,
-      cjId: true,
-      name: true,
-    },
-    orderBy: { name: 'asc' },
-  });
-
-  return (
-    <CouponClientView 
-      coupons={safeCoupons} 
-      total={total} 
-      currentPage={page} 
-      products={products} 
-    />
-  );
+export default function CouponManagementPage() {
+  // Coupon system has been removed
+  redirect('/dashboard');
 }
-

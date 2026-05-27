@@ -20,15 +20,8 @@ export interface AiLandingContent {
   faqs?: Array<{ q: string; a: string }>;
   shippingPolicy?: string;
   returnPolicy?: string;
-  /** Optional coupon offer to display on the landing page */
-  couponOffer?: {
-    code: string;
-    type: 'PERCENTAGE' | 'FIXED' | 'FREE_SHIPPING';
-    value: number;
-    description: string;
-    minPurchase?: number;
-  };
 }
+
 
 
 interface ProductInput {
@@ -43,23 +36,11 @@ interface ProductInput {
   }>;
 }
 
-/** Coupon data passed from DB to AI for generating marketing content */
-interface CouponInput {
-  code: string;
-  type: 'PERCENTAGE' | 'FIXED' | 'FREE_SHIPPING';
-  value: number;
-  description: string;
-  minPurchase?: number | null;
-  expiresAt?: string | null;
-}
-
 /**
  * Call DeepSeek API to generate landing page content for a product
- * @param coupon - Optional coupon data from DB to incorporate into marketing content
  */
 export async function generateLandingPageContent(
-  product: ProductInput,
-  coupon?: CouponInput
+  product: ProductInput
 ): Promise<AiLandingContent> {
   const minPrice = Math.min(...product.variants.map(v => v.sellingPrice));
   const maxPrice = Math.max(...product.variants.map(v => v.sellingPrice));
@@ -69,34 +50,6 @@ export async function generateLandingPageContent(
 
   const totalStock = product.variants.reduce((sum, v) => sum + v.inventory, 0);
   const variantCount = product.variants.length;
-
-  // Build coupon section for prompt if coupon is provided
-  let couponPromptSection = '';
-  if (coupon) {
-    let couponLabel = '';
-    if (coupon.type === 'PERCENTAGE') {
-      couponLabel = `${coupon.value}% OFF`;
-    } else if (coupon.type === 'FIXED') {
-      couponLabel = `$${coupon.value} OFF`;
-    } else if (coupon.type === 'FREE_SHIPPING') {
-      couponLabel = 'FREE SHIPPING';
-    }
-    couponPromptSection = `
-COUPON OFFER (REAL — use this exact data):
-- Code: ${coupon.code}
-- Type: ${coupon.type}
-- Value: ${coupon.value}
-- Label: ${couponLabel}
-- Description: ${coupon.description || ''}
-- Min Purchase: ${coupon.minPurchase ? '$' + coupon.minPurchase : 'None'}
-- Expires: ${coupon.expiresAt ? new Date(coupon.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No expiry'}
-
-IMPORTANT: Incorporate this coupon offer into the marketing content naturally:
-- Add the coupon label (${couponLabel}) as one of the heroBadges
-- Mention the coupon code ${coupon.code} in the adCopy
-- Include the coupon in the couponOffer field below with the EXACT data above
-- Make the coupon feel like a limited-time bonus to create urgency`;
-  }
 
   const systemPrompt = `You are a professional e-commerce copywriter for global dropshipping. CRITICAL: You MUST generate ALL text in ENGLISH only. NEVER use any other language. Generate ONLY pure JSON, no markdown, no backticks, no explanations. Focus on benefits, emotional appeal, and conversion optimization.`;
 
@@ -108,7 +61,6 @@ PRODUCT DATA:
 - Price Range: ${priceRange}
 - Variants: ${variantCount}
 - Total Stock: ${totalStock}
-${couponPromptSection}
 
 INSTRUCTIONS — Focus on BENEFITS over features. Use simple, emotional language. Add urgency where appropriate.
 
@@ -135,14 +87,7 @@ Generate JSON with this exact structure:
     {"q": "FAQ question 3 (shipping, sizing, or usage)", "a": "Answer 3"}
   ],
   "shippingPolicy": "Shipping policy 1-2 sentences. Estimated delivery time and carrier.",
-  "returnPolicy": "Return/warranty policy 1-2 sentences. Terms and conditions.",
-  "couponOffer": {
-    "code": "Coupon code (uppercase)",
-    "type": "PERCENTAGE or FIXED or FREE_SHIPPING",
-    "value": "Numeric value",
-    "description": "Short compelling description of the offer (max 8 words)",
-    "minPurchase": "Optional minimum purchase amount in USD (number only, e.g. 20)"
-  }
+  "returnPolicy": "Return/warranty policy 1-2 sentences. Terms and conditions."
 }
 
 ALL TEXT MUST BE IN ENGLISH.
@@ -161,6 +106,7 @@ Pure JSON only, no markdown, no backticks.`;
 
   return getFallbackContent(product.name);
 }
+
 
 /**
  * Call DeepSeek chat completions API
@@ -203,17 +149,6 @@ function parseAiResponse(text: string, productName: string): AiLandingContent | 
     const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
     const parsed = JSON.parse(cleaned);
     const fallback = getFallbackContent(productName);
-    // Parse couponOffer if provided by AI
-    var couponOffer: AiLandingContent['couponOffer'] = undefined;
-    if (parsed.couponOffer && parsed.couponOffer.code && parsed.couponOffer.type) {
-      couponOffer = {
-        code: String(parsed.couponOffer.code).toUpperCase().replace(/[^A-Z0-9]/g, ''),
-        type: ['PERCENTAGE', 'FIXED', 'FREE_SHIPPING'].includes(parsed.couponOffer.type) ? parsed.couponOffer.type : 'PERCENTAGE',
-        value: Number(parsed.couponOffer.value) || 0,
-        description: String(parsed.couponOffer.description || 'Special offer'),
-        minPurchase: parsed.couponOffer.minPurchase ? Number(parsed.couponOffer.minPurchase) : undefined,
-      };
-    }
     return {
       tagline: parsed.tagline || fallback.tagline,
       heroBadges: Array.isArray(parsed.heroBadges) ? parsed.heroBadges.slice(0, 3) : fallback.heroBadges,
@@ -225,13 +160,13 @@ function parseAiResponse(text: string, productName: string): AiLandingContent | 
       faqs: Array.isArray(parsed.faqs) ? parsed.faqs.slice(0, 5) : undefined,
       shippingPolicy: parsed.shippingPolicy || undefined,
       returnPolicy: parsed.returnPolicy || undefined,
-      couponOffer: couponOffer,
     };
   } catch {
     console.error('[AI Content] Failed to parse AI response as JSON:', text.substring(0, 200));
     return null;
   }
 }
+
 
 
 /**

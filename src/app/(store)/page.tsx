@@ -12,7 +12,8 @@ import HomeHomeLiving from '@/components/home-sections/HomeHomeLiving';
 import Newsletter from '@/components/Newsletter';
 import LiveSales from '@/components/LiveSales';
 import AIChat from '@/components/AIChat';
-import { getDBStoreSettings, calculateFinalPrice, getActiveCouponProductIds } from '@/lib/pricing';
+import { getDBStoreSettings, calculateFinalPrice } from '@/lib/pricing';
+
 
 const CACHE_TTL = 3600; // 1 hour
 
@@ -67,12 +68,10 @@ async function fetchFeaturedProducts() {
 async function FeaturedHeroWrapper() {
   const rawFeaturedProducts = await getFeaturedProducts();
 
-  // Fetch real-time settings and active coupon product IDs
+  // Fetch real-time settings
   const settings = await getDBStoreSettings();
-  const hiddenPids = await getActiveCouponProductIds();
 
   const featuredProducts = rawFeaturedProducts
-    .filter((p: any) => !hiddenPids.has(p.pid))
     .map((p: any) => {
       const rawPrice = Number(p.sellPrice || 0);
       const targetPrice = calculateFinalPrice(rawPrice, settings);
@@ -82,6 +81,7 @@ async function FeaturedHeroWrapper() {
         sellPrice: targetPrice,
       };
     });
+
 
   return <HeroSection products={featuredProducts} />;
 }

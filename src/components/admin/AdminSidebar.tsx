@@ -22,7 +22,6 @@ const NAV_GROUPS = [
       { id: 'inventory',  label: 'Inventory',   icon: 'fas fa-box',          path: '/dashboard/inventory' },
       { id: 'importer',   label: 'Importer',    icon: 'fas fa-download',     path: '/dashboard/importer' },
       { id: 'disputes',   label: 'Disputes',    icon: 'fas fa-gavel',        path: '/dashboard/disputes' },
-      { id: 'coupon',     label: 'Coupons',     icon: 'fas fa-tag',          path: '/dashboard/coupon' },
     ],
   },
   {

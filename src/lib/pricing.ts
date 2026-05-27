@@ -139,27 +139,5 @@ export function calculateShippingFee(baseShipping: number, subtotal: number, cus
   return baseShipping + (settings.shippingMarkup || 0);
 }
 
-export async function getActiveCouponProductIds(): Promise<Set<string>> {
-  try {
-    const activeCouponProducts = await prisma.couponProduct.findMany({
-      where: {
-        coupon: {
-          isActive: true,
-          OR: [
-            { expiresAt: null },
-            { expiresAt: { gt: new Date() } }
-          ]
-        }
-      },
-      select: {
-        productCjId: true
-      }
-    });
-    return new Set(activeCouponProducts.map(cp => cp.productCjId));
-  } catch (err) {
-    console.error('Error fetching active coupon product IDs:', err);
-    return new Set<string>();
-  }
-}
 
 

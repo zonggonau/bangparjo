@@ -102,90 +102,15 @@ export default async function BlogSlugPage(props: Props) {
     if (product) {
       const settings = await getCachedStoreSettings();
 
-      // Validate coupon status (expired, exhausted, or deactivated) against the database
-      if (product.coupon) {
-        const dbCoupon = await prisma.coupon.findUnique({
-          where: { code: product.coupon.code.toUpperCase() }
-        });
-        const now = new Date();
-        const isExpired = product.coupon.expiresAt ? new Date(product.coupon.expiresAt) <= now : false;
-        const isExhausted = dbCoupon && dbCoupon.maxUses !== null ? dbCoupon.usedCount >= dbCoupon.maxUses : false;
-        const isActive = dbCoupon ? dbCoupon.isActive : false;
-
-        if (isExpired || isExhausted || !isActive) {
-          product.coupon = undefined;
-        }
-      }
-
-      // If no coupon attached or it was expired, look up the best active coupon dynamically
-      if (!product.coupon) {
-        const now = new Date();
-        const specificCoupon = await prisma.coupon.findFirst({
-          where: {
-            isActive: true,
-            OR: [
-              { expiresAt: null },
-              { expiresAt: { gt: now } }
-            ],
-            products: {
-              some: {
-                productCjId: product.cjId
-              }
-            }
-          },
-          orderBy: { createdAt: 'desc' }
-        });
-
-        const activeCoupon = specificCoupon || await prisma.coupon.findFirst({
-          where: {
-            isActive: true,
-            OR: [
-              { expiresAt: null },
-              { expiresAt: { gt: now } }
-            ],
-            products: {
-              none: {}
-            }
-          },
-          orderBy: { createdAt: 'desc' }
-        });
-
-        if (activeCoupon) {
-          product.coupon = {
-            code: activeCoupon.code,
-            type: activeCoupon.type as 'PERCENTAGE' | 'FIXED' | 'FREE_SHIPPING',
-            value: activeCoupon.value,
-            description: activeCoupon.description || `Use code ${activeCoupon.code} for savings`,
-            minPurchase: activeCoupon.minPurchase || undefined,
-            expiresAt: activeCoupon.expiresAt?.toISOString() || undefined,
-          };
-        }
-      }
-
-      // Dynamically recalculate prices based on current live margin settings & coupon inflation (PERCENTAGE / FIXED)
+      // Calculate prices based on current live margin settings
       product.variants = product.variants.map(v => {
-        const targetPrice = calculateFinalPrice(v.baseCost, settings);
-        let finalPrice = targetPrice;
-        if (product.coupon) {
-          if (product.coupon.type === 'PERCENTAGE') {
-            const pct = product.coupon.value;
-            if (pct > 0 && pct < 100) {
-              // Inflate the price so that when the percentage coupon is subtracted, it returns exactly to targetPrice
-              finalPrice = targetPrice / (1 - pct / 100);
-            }
-          } else if (product.coupon.type === 'FIXED') {
-            const amount = product.coupon.value;
-            if (amount > 0) {
-              // Inflate the price by adding the fixed coupon amount so that after the discount it returns to targetPrice
-              finalPrice = targetPrice + amount;
-            }
-          }
-        }
+        const finalPrice = calculateFinalPrice(v.baseCost, settings);
         return {
           ...v,
           sellingPrice: finalPrice
         };
       });
+
 
       // Fetch other blog posts for recommendations (cached separately)
       const recCacheKey = 'blog:recs:' + slug;

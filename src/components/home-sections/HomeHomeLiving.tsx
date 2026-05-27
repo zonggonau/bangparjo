@@ -3,7 +3,6 @@ import { getOrSet } from '@/lib/redis';
 import ProductCard from '../ProductCard';
 import { getProducts } from '@/lib/cj-api';
 import Link from 'next/link';
-import { getActiveCouponProductIds } from '@/lib/pricing';
 
 const CACHE_TTL = 3600; // 1 hour
 
@@ -61,8 +60,7 @@ async function fetchHomeLivingProducts() {
 
 export default async function HomeHomeLiving() {
   const mainProducts = await getHomeLivingProducts();
-  const hiddenPids = await getActiveCouponProductIds();
-  const filteredProducts = mainProducts.filter((product: any) => !hiddenPids.has(product.pid));
+  const filteredProducts = mainProducts.filter((product: any) => product.pid);
 
   if (filteredProducts.length === 0) return null;
 

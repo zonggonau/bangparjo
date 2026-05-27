@@ -126,7 +126,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
 
   // Calculate margin price (raw CJ price × markup), then inflate if coupon active
   function getDisplayPrice(sellingPrice: number): number {
-    const marginPrice = sellingPrice * (1 + marginPct / 100);
+    const marginPrice = sellingPrice;
     if (coupon && coupon.type === 'PERCENTAGE' && coupon.value > 0 && coupon.value < 100) {
       return marginPrice / (1 - coupon.value / 100);
     }
@@ -401,30 +401,9 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     directCheckoutUrl += '&vid=' + encodeURIComponent(firstVariant.cjId);
   }
 
-  var heroActionsHtml = '';
-  if (product.coupon) {
-    var c = product.coupon;
-    var couponParam = 'coupon=' + encodeURIComponent(c.code);
-    var couponCheckoutUrl = directCheckoutUrl + (directCheckoutUrl.indexOf('?') >= 0 ? '&' : '?') + couponParam;
-
-    heroActionsHtml = '<div class="hero-coupon-info" style="margin: 16px 0 20px 0; text-align: left;">\n'
-      + '<div style="background: rgba(255, 107, 53, 0.08); border: 1.5px dashed #FF6B35; border-radius: 12px; padding: 14px 18px; display: inline-flex; align-items: center; gap: 16px; width: 100%; max-width: 440px; box-shadow: 0 4px 12px rgba(255,107,53,0.04);">\n'
-      + '  <div style="font-size: 28px; line-height: 1;">&#127873;</div>\n'
-      + '  <div style="flex: 1; min-width: 0;">\n'
-      + '    <span style="font-size: 10px; font-weight: 800; color: #FF6B35; text-transform: uppercase; letter-spacing: 0.8px; display: block;">Special Discount Coupon Included!</span>\n'
-      + '    <strong style="font-family:\'Outfit\',sans-serif; font-size: 15px; color: #1A1A2E; display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="' + hAttr(c.description) + '">' + h(c.description) + '</strong>\n'
-      + '  </div>\n'
-      + '  <code style="background: #FF6B35; color: white; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 800; letter-spacing: 1.5px; border: 1px dashed rgba(255,255,255,0.4); flex-shrink: 0;">' + h(c.code) + '</code>\n'
-      + '</div>\n'
-      + '</div>\n'
-      + '<div class="hero-actions">\n'
-      + '<a href="#checkout-section" class="btn btn-primary">&#127873; Claim Now — ' + priceDisplay + '</a>\n'
-      + '</div>\n';
-  } else {
-    heroActionsHtml = '<div class="hero-actions">\n'
-      + '<a href="#checkout-section" class="btn btn-primary">&#128722; Order Now — ' + priceDisplay + '</a>\n'
-      + '</div>\n';
-  }
+  var heroActionsHtml = '<div class="hero-actions">\n'
+    + '<a href="#checkout-section" class="btn btn-primary">&#128722; Order Now — ' + priceDisplay + '</a>\n'
+    + '</div>\n';
 
   result += '<section class="hero">\n'
     + '<div class="container">\n'
@@ -485,7 +464,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
       + '<h3 style="font-family:Outfit,-apple-system,sans-serif;font-size:22px;font-weight:800;color:white;margin-bottom:4px;">' + couponDesc + '</h3>\n'
       + '<div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:8px;">\n'
       + '<code style="background:rgba(255,255,255,0.12);color:#FFD700;padding:8px 20px;border-radius:8px;font-size:18px;font-weight:800;letter-spacing:2px;border:1px dashed rgba(255,215,0,0.3);">' + couponCode + '</code>\n'
-      + '<a href="' + checkoutLink + '" style="display:inline-block;background:' + couponBtnBg + ';color:white;padding:10px 24px;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.3s;" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 4px 15px rgba(255,107,53,0.4)\'" onmouseout="this.style.transform=\'none\';this.style.boxShadow=\'none\'">&#128722; Claim Now</a>\n'
+      + '<a href="' + checkoutLink + '" style="display:inline-block;background:' + couponBtnBg + ';color:white;padding:10px 24px;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.3s;" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 4px 15px rgba(255,107,53,0.4)\'" onmouseout="this.style.transform=\'none\';this.style.boxShadow=\'none\'">&#128722; Order Now</a>\n'
       + '</div>\n'
       + '<div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:8px;flex-wrap:wrap;">\n'
       + (minPurchaseText ? '<span style="color:rgba(255,255,255,0.5);font-size:12px;">&#9432; ' + minPurchaseText + '</span>\n' : '')
@@ -706,69 +685,18 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
   var initialPrice = firstVariant ? firstVariant.sellingPrice : 0.00;
   var initialComparePrice = initialPrice * 1.5;
 
-  var leftColumnHtml = '';
-  if (product.coupon) {
-    var c = product.coupon;
-    var couponLabel = '';
-    if (c.type === 'FREE_SHIPPING') {
-      couponLabel = 'FREE SHIPPING';
-    } else if (c.type === 'PERCENTAGE') {
-      couponLabel = c.value + '% OFF';
-    } else if (c.type === 'FIXED') {
-      couponLabel = '$' + c.value.toFixed(0) + ' OFF';
-    }
-    
-    leftColumnHtml = '<div style="background: linear-gradient(135deg, #1A1A2E, #0F3460); color: white; padding: 32px; border-radius: 16px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; height: 100%; box-shadow: 0 12px 30px rgba(15,52,96,0.15);">\n'
-      + '  <div style="position: absolute; top: -50%; right: -20%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,107,53,0.12) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>\n'
-      + '  <div style="position: absolute; bottom: -30%; left: -10%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>\n'
-      + '  <div style="position: relative; z-index: 1;">\n'
-      + '    <div style="display: inline-block; background: rgba(255,107,53,0.2); color: #FF6B35; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 800; letter-spacing: 1px; margin-bottom: 12px; border: 1px solid rgba(255,107,53,0.3);">' + couponLabel + '</div>\n'
-      + '    <h3 style="font-family: Outfit, sans-serif; font-size: 28px; font-weight: 900; color: white; margin-bottom: 8px; line-height: 1.25;">Exclusive Discount Applied!</h3>\n'
-      + '    <p style="color: rgba(255,255,255,0.7); font-size: 15px; line-height: 1.6; margin-bottom: 24px;">' + h(c.description) + '</p>\n'
-      + '    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">\n'
-      + '      <span style="font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Coupon Code:</span>\n'
-      + '      <code style="background: rgba(255,255,255,0.12); color: #FFD700; padding: 8px 18px; border-radius: 8px; font-size: 18px; font-weight: 800; letter-spacing: 2px; border: 1px dashed rgba(255,215,0,0.3);">' + couponCode + '</code>\n'
-      + '    </div>\n'
-      + '    <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: rgba(255,255,255,0.6);">\n'
-      + (c.minPurchase ? '      <div>&#10003; Minimum purchase: <strong>$' + c.minPurchase.toFixed(2) + '</strong></div>\n' : '')
-      + (c.expiresAt ? '      <div>&#10003; Offer valid until: <strong>' + new Date(c.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '</strong></div>\n' : '')
-      + '      <div>&#10003; Discount will be automatically calculated at checkout</div>\n'
-      + '    </div>\n'
-      + '  </div>\n'
-      + '</div>\n';
-  } else {
-    leftColumnHtml = '<div style="background: linear-gradient(135deg, #fafafa, #f1f5f9); border: 1px solid #e2e8f0; padding: 32px; border-radius: 16px; display: flex; flex-direction: column; justify-content: center; height: 100%;">\n'
-      + '  <h3 style="font-family: Outfit, sans-serif; font-size: 26px; font-weight: 800; color: #1A1A2E; margin-bottom: 12px; line-height: 1.25;">Satisfaction Guaranteed</h3>\n'
-      + '  <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 24px;">BangParjo is committed to providing premium quality products directly from verified suppliers. Shop with confidence under our secure buyer protection policy.</p>\n'
-      + '  <div style="display: flex; flex-direction: column; gap: 12px;">\n'
-      + '    <div style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: #1A1A2E;">\n'
-      + '      <span style="color: #FF6B35; font-size: 18px;">&#10003;</span> Worldwide Express Shipping\n'
-      + '    </div>\n'
-      + '    <div style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: #1A1A2E;">\n'
-      + '      <span style="color: #FF6B35; font-size: 18px;">&#10003;</span> 7-Day Money-Back Guarantee\n'
-      + '    </div>\n'
-      + '    <div style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: #1A1A2E;">\n'
-      + '      <span style="color: #FF6B35; font-size: 18px;">&#10003;</span> Secure Payments SSL Encrypted\n'
-      + '    </div>\n'
-      + '  </div>\n'
-      + '</div>\n';
-  }
+  var leftColumnHtml = '<div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100%; box-shadow: 0 8px 30px rgba(0,0,0,0.04); min-height: 420px;">\n'
+    + '  <img id="left-variant-image" src="' + (firstVariant ? (firstVariant.image || product.images[0]) : product.images[0]) + '" alt="' + safeName + '" style="width: 100%; height: 100%; object-fit: cover; transition: all 0.3s ease;" />\n'
+    + '</div>\n';
 
   var variantOptions = product.variants.map(function(v) {
     var vName = [v.color, v.size].filter(Boolean).join(' / ') || 'Default';
     return '<option value="' + v.cjId + '" data-price="' + getDisplayPrice(v.sellingPrice).toFixed(2) + '" data-img="' + (v.image || product.images[0]) + '">' + h(vName) + ' - $' + getDisplayPrice(v.sellingPrice).toFixed(2) + '</option>';
   }).join('');
 
-  var rightColumnButtonHtml = '';
-  if (product.coupon) {
-    rightColumnButtonHtml = '<button type="button" onclick="window.handleDirectCheckout(event)" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">\n'
-      + '&#127873; Claim Now\n'
-      + '</button>\n';
-  } else {
-    rightColumnButtonHtml = '<button type="button" onclick="window.handleDirectCheckout(event)" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">\n'
-      + '&#128722; Order Now\n'
-      + '</button>\n';
-  }
+  var rightColumnButtonHtml = '<button type="button" onclick="window.handleDirectCheckout(event)" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">\n'
+    + '&#128722; Order Now\n'
+    + '</button>\n';
 
   var rightColumnCardHtml = '<div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 28px; box-shadow: 0 8px 30px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 20px;">\n'
     + '  <div>\n'
@@ -807,7 +735,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
   var checkoutSectionHtml = '<section id="checkout-section" class="section" style="scroll-margin-top: 80px; background: #ffffff;">\n'
     + '<div class="container">\n'
     + '  <div class="section-title">\n'
-    + '    <h2>Select Your Variant & Claim Offer</h2>\n'
+    + '    <h2>Select Your Variant & Order Now</h2>\n'
     + '    <p>Choose your size/color and proceed to secure checkout.</p>\n'
     + '  </div>\n'
     + '  <div class="grid-2" style="align-items: stretch;">\n'
@@ -1024,6 +952,11 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '  \n'
     + '  var compareEl = document.getElementById("compare-price-display");\n'
     + '  if(compareEl) compareEl.textContent = "$" + (selectedVariant.price * 1.5 * quantity).toFixed(2);\n'
+    + '  \n'
+    + '  var leftImgEl = document.getElementById("left-variant-image");\n'
+    + '  if(leftImgEl) leftImgEl.src = selectedVariant.image;\n'
+    + '  var leftNameEl = document.getElementById("left-variant-name");\n'
+    + '  if(leftNameEl) leftNameEl.textContent = selectedVariant.name;\n'
     + '  \n'
     + '  // Live Coupon Notice Update\n'
     + '  var noticeEl = document.getElementById("coupon-status-notice");\n'

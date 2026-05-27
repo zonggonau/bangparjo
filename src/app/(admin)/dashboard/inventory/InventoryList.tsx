@@ -6,14 +6,13 @@ import Image from 'next/image';
 import { calculateFinalPrice } from '@/lib/pricing';
 import { useSettings } from '@/context/SettingsContext';
 import { slugify, parseProductName } from '@/lib/cj-utils';
-import { getAdminCouponsAction } from '@/lib/actions-admin';
 import { 
   updateAdminInventoryAction, 
   syncAdminInventoryAction, 
   deleteAdminProductAction, 
-  exportToBlogAction,
-  generateAndSaveAiCouponAction
+  exportToBlogAction
 } from '@/lib/actions-admin-inventory';
+
 
 interface Variant {
   id: string;
@@ -36,36 +35,22 @@ interface Product {
   isHero: boolean;
 }
 
-interface Coupon {
-  id: string;
-  code: string;
-  type: string;
-  value: number;
-  description: string | null;
-  minPurchase: number | null;
-  isActive: boolean;
-  expiresAt: string | Date | null;
-  usedCount: number;
-  maxUses: number | null;
-}
-
 export default function InventoryList({ 
   initialProducts, 
   total = 0, 
   currentPage = 1,
   categories = [],
   currentCategory = '',
-  currentSort = 'newest',
-  activeCoupons = []
+  currentSort = 'newest'
 }: { 
   initialProducts: any[], 
   total?: number, 
   currentPage?: number,
   categories?: any[],
   currentCategory?: string,
-  currentSort?: string,
-  activeCoupons?: any[]
+  currentSort?: string
 }) {
+
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   
@@ -77,57 +62,12 @@ export default function InventoryList({
   const [loading, setLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<{ show: boolean, message: string, type: 'success' | 'error' }>({ show: false, message: '', type: 'success' });
   const [editingPrice, setEditingPrice] = useState<{ variantId: string; value: string } | null>(null);
-  const [couponModal, setCouponModal] = useState<{ show: boolean; productId: string | null; isBulk: boolean }>({ show: false, productId: null, isBulk: false });
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [selectedCouponId, setSelectedCouponId] = useState<string | null>(null);
+  const [exportingBlog, setExportingBlog] = useState<string | null>(null);
+  const [exportingBulk, setExportingBulk] = useState(false);
   const { settings } = useSettings();
 
-  const getProductActiveCoupon = (productCjId: string): Coupon | null => {
-    const now = new Date();
-    // 1. Find coupon specifically assigned to this product
-    const specificCoupon = activeCoupons.find(c => {
-      const isExpired = c.expiresAt ? new Date(c.expiresAt) <= now : false;
-      const isExhausted = c.maxUses !== null ? c.usedCount >= c.maxUses : false;
-      const isValid = c.isActive && !isExpired && !isExhausted;
-      if (!isValid) return false;
-      return c.products && c.products.some((pr: any) => pr.productCjId === productCjId);
-    });
-
-    if (specificCoupon) return specificCoupon;
-
-    // 2. Find general active coupon (no products listed, meaning general store-wide)
-    const generalCoupon = activeCoupons.find(c => {
-      const isExpired = c.expiresAt ? new Date(c.expiresAt) <= now : false;
-      const isExhausted = c.maxUses !== null ? c.usedCount >= c.maxUses : false;
-      const isValid = c.isActive && !isExpired && !isExhausted;
-      if (!isValid) return false;
-      return !c.products || c.products.length === 0;
-    });
-
-    return generalCoupon || null;
-  };
-
-  const getInflatedVariantPrice = (sellingPrice: number, productCjId: string) => {
-    const targetPrice = calculateFinalPrice(sellingPrice, settings);
-    const activeCoupon = getProductActiveCoupon(productCjId);
-    
-    if (activeCoupon) {
-      if (activeCoupon.type === 'PERCENTAGE') {
-        const pct = activeCoupon.value;
-        if (pct > 0 && pct < 100) {
-          return targetPrice / (1 - pct / 100);
-        }
-      } else if (activeCoupon.type === 'FIXED') {
-        const amount = activeCoupon.value;
-        if (amount > 0) {
-          return targetPrice + amount;
-        }
-      }
-    }
-    return targetPrice;
-  };
-
   const handleFilterChange = (key: string, value: string) => {
+
     const searchParams = new URLSearchParams(window.location.search);
     if (value) {
       searchParams.set(key, value);
@@ -137,27 +77,6 @@ export default function InventoryList({
     searchParams.set('page', '1'); // Reset to page 1 on filter change
     router.push(`/dashboard/inventory?${searchParams.toString()}`);
   };
-
-  // Fetch available coupons when modal opens
-  useEffect(() => {
-    if (couponModal.show && coupons.length === 0) {
-      getAdminCouponsAction()
-        .then(data => {
-          if (data.success) {
-            // Filter active & not expired
-            const now = new Date();
-            const active = (data.data || []).filter((c: Coupon) =>
-              c.isActive && (!c.expiresAt || new Date(c.expiresAt) > now)
-            );
-            setCoupons(active);
-            if (active.length > 0) {
-              setSelectedCouponId(active[0].id);
-            }
-          }
-        })
-        .catch(err => console.error('Failed to fetch coupons:', err));
-    }
-  }, [couponModal.show, coupons.length]);
 
   const handlePriceEdit = async (variantId: string, newPrice: string) => {
     const price = parseFloat(newPrice);
@@ -316,69 +235,41 @@ export default function InventoryList({
     }
   };
 
-  const handleGenerateAiCoupon = async (e: React.MouseEvent, productId: string) => {
-    e.stopPropagation();
-    setLoading(`ai-coupon-${productId}`);
+  // ── Export to Blog ──────────────────────────────────────────────────────
+
+  const handleExportToBlog = async (productId: string) => {
+    setExportingBlog(productId);
     try {
-      const res = await generateAndSaveAiCouponAction(productId);
-      if (res.success && res.coupon) {
-        showToast(`✨ AI Coupon ${res.coupon.code} generated and linked!`);
-        router.refresh();
+      const data = await exportToBlogAction(productId);
+      if (data.success) {
+        showToast('✅ Blog post created!');
       } else {
-        showToast(res.error || 'Failed to generate coupon', 'error');
+        showToast(data.error || 'Export failed', 'error');
       }
-    } catch (err: any) {
-      showToast('Error: ' + err.message, 'error');
+    } catch (err) {
+      showToast('Export error', 'error');
     } finally {
-      setLoading(null);
+      setExportingBlog(null);
     }
   };
 
-  // ── Export with coupon ──────────────────────────────────────────────────
-  const handleExportWithCoupon = async () => {
-    const { productId, isBulk } = couponModal;
-    setCouponModal({ show: false, productId: null, isBulk: false });
-
-    if (isBulk) {
-      setLoading('bulk-export');
-      let success = 0;
-      let skipped = 0;
-      let errors = 0;
-      for (const p of products) {
-        try {
-          const data = await exportToBlogAction(p.id, selectedCouponId);
-          if (data.success) success++;
-          else if (data.status === 409) skipped++;
-          else errors++;
-        } catch {
-          errors++;
-        }
-      }
-      setLoading(null);
-      showToast(`✅ ${success} exported, ${skipped} skipped, ${errors} errors`);
-    } else if (productId) {
-      setLoading(`blog-${productId}`);
+  const handleBulkExportToBlog = async () => {
+    setExportingBulk(true);
+    let success = 0;
+    let skipped = 0;
+    let errors = 0;
+    for (const p of products) {
       try {
-        const data = await exportToBlogAction(productId, selectedCouponId);
-        if (data.success) {
-          showToast('✅ Blog post created!');
-        } else {
-          showToast(data.error || 'Export failed', 'error');
-        }
-      } catch (err) {
-        showToast('Export error', 'error');
-      } finally {
-        setLoading(null);
+        const data = await exportToBlogAction(p.id);
+        if (data.success) success++;
+        else if (data.status === 409) skipped++;
+        else errors++;
+      } catch {
+        errors++;
       }
     }
-  };
-
-  // Format coupon label for display
-  const formatCouponLabel = (c: Coupon): string => {
-    if (c.type === 'PERCENTAGE') return `${c.value}% OFF`;
-    if (c.type === 'FIXED') return `$${c.value} OFF`;
-    if (c.type === 'FREE_SHIPPING') return 'FREE SHIPPING';
-    return c.code;
+    setExportingBulk(false);
+    showToast(`✅ ${success} exported, ${skipped} skipped, ${errors} errors`);
   };
 
   return (
@@ -430,15 +321,12 @@ export default function InventoryList({
             {products.length} products
           </span>
           <button
-            onClick={() => {
-              setSelectedCouponId(null);
-              setCouponModal({ show: true, productId: null, isBulk: true });
-            }}
-            disabled={loading === 'bulk-export'}
+            onClick={handleBulkExportToBlog}
+            disabled={exportingBulk}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold bg-green-600 text-white hover:bg-green-700 transition-all duration-200 disabled:opacity-50"
           >
-            <i className={`fas ${loading === 'bulk-export' ? 'fa-spinner fa-spin' : 'fa-blog'}`}></i>
-            {loading === 'bulk-export' ? 'Exporting...' : '📝 Export All to Blog'}
+            <i className={`fas ${exportingBulk ? 'fa-spinner fa-spin' : 'fa-blog'}`}></i>
+            {exportingBulk ? 'Exporting...' : '📝 Export All to Blog'}
           </button>
         </div>
       )}
@@ -450,8 +338,8 @@ export default function InventoryList({
               <th className="w-[50px] px-5 py-3.5"></th>
               <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Product Information</th>
               <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Variants</th>
-              <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Coupon</th>
               <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Stock Status</th>
+
               <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
@@ -485,20 +373,7 @@ export default function InventoryList({
                       <span className="inline-block px-2.5 py-1 rounded-[6px] text-xs font-bold bg-blue-100 text-blue-700">{p.variants.length} Specs</span>
                     </td>
                     <td className="px-5 py-3.5">
-                      {(() => {
-                        const coupon = getProductActiveCoupon(p.cjId);
-                        if (coupon) {
-                          return (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-[11px] font-extrabold bg-green-50 text-green-700 border border-green-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                              <span>{coupon.code} ({coupon.type === 'PERCENTAGE' ? `${coupon.value}%` : `$${coupon.value}`})</span>
-                            </span>
-                          );
-                        }
-                        return <span className="text-xs text-gray-400 font-bold">—</span>;
-                      })()}
-                    </td>
-                    <td className="px-5 py-3.5">
+
                       <div className="flex flex-col gap-1">
                          <span className="font-black text-base">{p.variants.reduce((acc, v) => acc + v.inventory, 0)}</span>
                          <span className="text-[10px] font-bold uppercase text-gray-400">Total Units</span>
@@ -534,25 +409,17 @@ export default function InventoryList({
                         >
                           <i className={`fa${p.isHero ? 's' : 'r'} fa-star`}></i>
                         </button>
-                        <button 
-                          className="px-2.5 py-1.5 rounded-[8px] text-sm border border-gray-200 text-purple-600 hover:bg-purple-50 transition-all duration-200"
-                          title="Generate Coupon with AI"
-                          disabled={loading === `ai-coupon-${p.id}`}
-                          onClick={(e) => handleGenerateAiCoupon(e, p.id)}
-                        >
-                          <i className={`fas fa-magic ${loading === `ai-coupon-${p.id}` ? 'fa-spin' : ''}`}></i>
-                        </button>
+
                         <button 
                           className="px-2.5 py-1.5 rounded-[8px] text-sm border border-gray-200 text-green-600 hover:bg-green-50 transition-all duration-200"
                           title="Export to Blog"
-                          disabled={loading === `blog-${p.id}`}
+                          disabled={exportingBlog === p.id}
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedCouponId(null);
-                            setCouponModal({ show: true, productId: p.id, isBulk: false });
+                            handleExportToBlog(p.id);
                           }}
                         >
-                          <i className={`fas fa-blog ${loading === `blog-${p.id}` ? 'fa-spin' : ''}`}></i>
+                          <i className={`fas fa-blog ${exportingBlog === p.id ? 'fa-spin' : ''}`}></i>
                         </button>
                         <button 
                           className="px-2.5 py-1.5 rounded-[8px] text-sm border border-gray-200 text-red-500 hover:bg-red-50 transition-all duration-200"
@@ -626,25 +493,10 @@ export default function InventoryList({
                                               }}
                                               title="Click to edit price"
                                             >
-                                              ${getInflatedVariantPrice(v.sellingPrice, p.cjId).toFixed(2)}
+                                              ${v.baseCost.toFixed(2)}
                                             </span>
-                                            {(() => {
-                                              const activeCoupon = getProductActiveCoupon(p.cjId);
-                                              if (activeCoupon) {
-                                                const originalPrice = calculateFinalPrice(v.sellingPrice, settings);
-                                                return (
-                                                  <div className="text-[10px] font-extrabold text-orange-500 mt-1 flex flex-col gap-0.5">
-                                                    <span className="flex items-center gap-1">
-                                                      <i className="fas fa-tag"></i>
-                                                      <span>{activeCoupon.code} ({activeCoupon.type === 'PERCENTAGE' ? `+${activeCoupon.value}%` : `+$${activeCoupon.value}`})</span>
-                                                    </span>
-                                                    <span className="text-gray-400 font-medium">Base: ${originalPrice.toFixed(2)}</span>
-                                                  </div>
-                                                );
-                                              }
-                                              return null;
-                                            })()}
                                           </div>
+
                                         )}
                                       </td>
                                       <td className="px-6 py-3">
@@ -697,91 +549,6 @@ export default function InventoryList({
           </tbody>
         </table>
       </div>
-
-      {/* ── Coupon Selection Modal ──────────────────────────────────────── */}
-      {couponModal.show && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-[16px] shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-            <div className="px-6 py-5 border-b border-gray-100">
-              <h3 className="text-lg font-extrabold text-gray-800">Select Coupon</h3>
-              <p className="text-sm text-gray-500 mt-1">Choose a coupon to attach to the blog post (optional)</p>
-            </div>
-            <div className="p-4 space-y-2 max-h-[400px] overflow-y-auto">
-              {/* No Coupon option */}
-              <button
-                onClick={() => {
-                  setSelectedCouponId(null);
-                }}
-                className={`w-full flex items-center gap-4 px-4 py-4 rounded-[12px] border-2 transition-all duration-200 text-left ${
-                  selectedCouponId === null
-                    ? 'border-[#FF6B00] bg-orange-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <span className="text-2xl">🚫</span>
-                <div>
-                  <div className="font-extrabold text-gray-800">No Coupon</div>
-                  <div className="text-xs text-gray-500">Generate blog without any coupon offer</div>
-                </div>
-              </button>
-
-              {/* Coupon list */}
-              {coupons.length === 0 ? (
-                <div className="text-center py-6 text-gray-400 text-sm">
-                  No active coupons available.{' '}
-                  <a href="/dashboard/coupon" className="text-[#FF6B00] font-bold hover:underline">
-                    Create one
-                  </a>
-                </div>
-              ) : (
-                coupons.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => {
-                      setSelectedCouponId(c.id);
-                    }}
-                    className={`w-full flex items-center gap-4 px-4 py-4 rounded-[12px] border-2 transition-all duration-200 text-left ${
-                      selectedCouponId === c.id
-                        ? 'border-[#FF6B00] bg-orange-50'
-                        : 'border-gray-200 hover:border-blue-400 hover:bg-blue-50'
-                    }`}
-                  >
-                    <span className="text-2xl">
-                      {c.type === 'FREE_SHIPPING' ? '🚚' : c.type === 'PERCENTAGE' ? '🏷️' : '💰'}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-extrabold text-gray-800">{c.code}</span>
-                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700">
-                          {formatCouponLabel(c)}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-500 mt-0.5 truncate">
-                        {c.description || formatCouponLabel(c)}
-                        {c.minPurchase ? ` • Min $${c.minPurchase}` : ''}
-                      </div>
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-            <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-              <button
-                onClick={() => setCouponModal({ show: false, productId: null, isBulk: false })}
-                className="px-5 py-2 rounded-[10px] text-sm font-bold text-gray-600 hover:bg-gray-100 transition-all duration-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleExportWithCoupon}
-                className="px-6 py-2.5 rounded-[10px] text-sm font-bold bg-green-600 text-white hover:bg-green-700 transition-all duration-200"
-              >
-                Generate Blog
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Pagination */}
       {total > 0 && (

@@ -164,7 +164,7 @@ async function fetchCjShippingMethods(variantCjId: string, quantity: number = 1,
   }
 }
 
-export async function exportToBlogAction(productId: string, couponId?: string | null) {
+export async function exportToBlogAction(productId: string) {
   try {
     if (!productId) return { success: false, error: 'productId is required' };
 
@@ -180,68 +180,6 @@ export async function exportToBlogAction(productId: string, couponId?: string | 
 
     const existing = await prisma.blogPost.findUnique({ where: { slug } });
     if (existing) return { success: false, error: 'Blog post already exists for this product', status: 409 };
-
-    let couponData: any = null;
-    let actualCouponId = couponId;
-
-    if (!actualCouponId) {
-      const now = new Date();
-      // 1. Try to find a coupon specifically assigned to this product
-      const specificCoupon = await prisma.coupon.findFirst({
-        where: {
-          isActive: true,
-          OR: [
-            { expiresAt: null },
-            { expiresAt: { gt: now } }
-          ],
-          products: {
-            some: {
-              productCjId: product.cjId
-            }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
-
-      if (specificCoupon) {
-        actualCouponId = specificCoupon.id;
-      } else {
-        // 2. Try to find a global coupon (no product constraints)
-        const globalCoupon = await prisma.coupon.findFirst({
-          where: {
-            isActive: true,
-            OR: [
-              { expiresAt: null },
-              { expiresAt: { gt: now } }
-            ],
-            products: {
-              none: {}
-            }
-          },
-          orderBy: { createdAt: 'desc' }
-        });
-        if (globalCoupon) {
-          actualCouponId = globalCoupon.id;
-        }
-      }
-    }
-
-    if (actualCouponId) {
-      const coupon = await prisma.coupon.findUnique({ where: { id: actualCouponId } });
-      if (coupon && coupon.isActive) {
-        if (!coupon.expiresAt || new Date(coupon.expiresAt) > new Date()) {
-          couponData = {
-            id: coupon.id,
-            code: coupon.code,
-            type: coupon.type,
-            value: coupon.value,
-            description: coupon.description || `Use code ${coupon.code} for savings`,
-            minPurchase: coupon.minPurchase,
-            expiresAt: coupon.expiresAt?.toISOString() || null,
-          };
-        }
-      }
-    }
 
     const productData: Record<string, any> = {
       type: 'product',
@@ -266,17 +204,6 @@ export async function exportToBlogAction(productId: string, couponId?: string | 
       createdAt: new Date().toISOString(),
     };
 
-    if (couponData) {
-      productData.coupon = {
-        code: couponData.code,
-        type: couponData.type,
-        value: couponData.value,
-        description: couponData.description,
-        minPurchase: couponData.minPurchase || undefined,
-        expiresAt: couponData.expiresAt || undefined,
-      };
-    }
-
     try {
       const aiContent = await generateLandingPageContent(
         {
@@ -289,15 +216,7 @@ export async function exportToBlogAction(productId: string, couponId?: string | 
             sellingPrice: v.sellingPrice,
             inventory: v.inventory,
           })),
-        },
-        couponData ? {
-          code: couponData.code,
-          type: couponData.type,
-          value: couponData.value,
-          description: couponData.description,
-          minPurchase: couponData.minPurchase,
-          expiresAt: couponData.expiresAt,
-        } : undefined
+        }
       );
       productData.ai = aiContent;
     } catch (err) {}
@@ -335,7 +254,6 @@ export async function exportToBlogAction(productId: string, couponId?: string | 
         slug: post.slug,
         title: post.title,
         aiGenerated: !!productData.ai,
-        hasCoupon: !!couponData,
         hasShipping: !!(productData.shippingMethods?.length > 0),
       },
     };
@@ -343,6 +261,7 @@ export async function exportToBlogAction(productId: string, couponId?: string | 
     return { success: false, error: error.message };
   }
 }
+
 
 export async function importProductAction(pid: string, isHero: boolean = false) {
   try {
@@ -437,140 +356,5 @@ export async function importProductAction(pid: string, isHero: boolean = false) 
   }
 }
 
-export async function generateAndSaveAiCouponAction(productId: string) {
-  try {
-    if (!productId) return { success: false, error: 'Product ID is required' };
 
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
-      include: { variants: true }
-    });
-
-    if (!product) return { success: false, error: 'Product not found' };
-    if (!product.variants || product.variants.length === 0) {
-      return { success: false, error: 'Product has no variants' };
-    }
-
-    const minBaseCost = Math.min(...product.variants.map(v => v.baseCost));
-    const maxBaseCost = Math.max(...product.variants.map(v => v.baseCost));
-    const minSellingPrice = Math.min(...product.variants.map(v => v.sellingPrice));
-    const maxSellingPrice = Math.max(...product.variants.map(v => v.sellingPrice));
-
-    const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || '';
-    const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
-
-    let code = '';
-    let type = 'PERCENTAGE';
-    let value = 15;
-    let minPurchase: number | null = null;
-    let maxUses: number | null = 100;
-    let expiresInDays = 7;
-    let description = '';
-
-    if (!DEEPSEEK_API_KEY || DEEPSEEK_API_KEY === 'sk-your-deepseek-api-key-here') {
-      const suggestedPercent = 15;
-      const codeBase = product.name.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6);
-      code = `${codeBase}${suggestedPercent}`;
-      type = 'PERCENTAGE';
-      value = suggestedPercent;
-      minPurchase = Math.floor(minSellingPrice);
-      description = `Save ${suggestedPercent}% on ${product.name.slice(0, 20)}`;
-    } else {
-      const systemPrompt = "You are an AI e-commerce strategist specialized in pricing and coupon optimization. Generate ONLY pure JSON, no markdown, no backticks, no explanations.";
-      const userPrompt = `Generate an optimal conversion-focused discount coupon for this dropshipping product:
-PRODUCT INFO:
-- Name: ${product.name}
-- Base Cost (Wholesale): $${minBaseCost.toFixed(2)} - $${maxBaseCost.toFixed(2)}
-- Selling Price (Before Coupon): $${minSellingPrice.toFixed(2)} - $${maxSellingPrice.toFixed(2)}
-
-INSTRUCTIONS:
-1. Suggest a highly engaging UPPERCASE coupon code (letters and numbers only, e.g. BSDSAFE20, GLOWUP15) based on the product name.
-2. Recommend the best discount type: "PERCENTAGE" or "FIXED".
-3. Calculate a "best price discount value" that provides a highly attractive deal for customers while preserving profitability.
-   - For PERCENTAGE: Recommend a value between 10% and 25%.
-   - For FIXED: Recommend a flat discount.
-   - IMPORTANT: The discount MUST NOT exceed 60% of the net profit margin (Selling Price - Base Cost) so the store remains highly profitable.
-4. Set a suitable "minPurchase" requirement (usually slightly below the selling price for single items or slightly above to encourage multi-item purchases).
-5. Generate an attractive, conversion-focused description under 80 characters (English).
-6. Recommend a logical "maxUses" (e.g. 50, 100, 250) to create a sense of artificial scarcity.
-7. Recommend a logical "expiresInDays" (e.g. 3, 7, 14 days) to induce urgency.
-
-Generate a JSON object with this exact structure:
-{
-  "code": "COUPONCODE",
-  "type": "PERCENTAGE" or "FIXED",
-  "value": number,
-  "minPurchase": number or null,
-  "maxUses": number or null,
-  "expiresInDays": number or null,
-  "description": "Short description of coupon offer"
-}`;
-
-      const response = await fetch(DEEPSEEK_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-          ],
-          temperature: 0.7,
-          max_tokens: 512,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`AI service responded with status ${response.status}`);
-      }
-
-      const data = await response.json();
-      const text = data?.choices?.[0]?.message?.content || '';
-      const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-      const parsed = JSON.parse(cleaned);
-
-      code = String(parsed.code || 'SAVE15').toUpperCase().replace(/[^A-Z0-9]/g, '');
-      type = ['PERCENTAGE', 'FIXED'].includes(parsed.type) ? parsed.type : 'PERCENTAGE';
-      value = Number(parsed.value) || 15;
-      minPurchase = parsed.minPurchase ? Number(parsed.minPurchase) : null;
-      maxUses = parsed.maxUses ? Number(parsed.maxUses) : null;
-      expiresInDays = parsed.expiresInDays ? Number(parsed.expiresInDays) : 7;
-      description = String(parsed.description || 'Special AI Generated discount');
-    }
-
-    // Check if coupon with this code already exists, if so delete it
-    const existingCoupon = await prisma.coupon.findUnique({ where: { code } });
-    if (existingCoupon) {
-      await prisma.couponProduct.deleteMany({ where: { couponId: existingCoupon.id } });
-      await prisma.coupon.delete({ where: { id: existingCoupon.id } });
-    }
-
-    // Save coupon to database linked to this product SPU
-    const coupon = await prisma.coupon.create({
-      data: {
-        code,
-        type,
-        value: parseFloat(String(value)),
-        minPurchase: minPurchase ? parseFloat(String(minPurchase)) : null,
-        maxUses: maxUses ? parseInt(String(maxUses)) : null,
-        isActive: true,
-        expiresAt: expiresInDays ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000) : null,
-        description: description || null,
-        products: {
-          create: [{ productCjId: product.cjId }]
-        }
-      },
-      include: {
-        products: true
-      }
-    });
-
-    return { success: true, coupon };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
-}
 

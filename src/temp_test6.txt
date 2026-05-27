@@ -1,0 +1,2 @@
+OK: 1102 lines
+Line 388:   var heroActionsHtml = '';

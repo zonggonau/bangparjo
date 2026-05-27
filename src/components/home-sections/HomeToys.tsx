@@ -3,7 +3,6 @@ import { prisma } from '@/lib/db';
 import { getOrSet } from '@/lib/redis';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
-import { getActiveCouponProductIds } from '@/lib/pricing';
 
 const CACHE_TTL = 3600; // 1 hour
 
@@ -58,8 +57,7 @@ async function fetchToysProducts() {
 
 export default async function HomeToys() {
   const mainProducts = await getToysProducts();
-  const hiddenPids = await getActiveCouponProductIds();
-  const filteredProducts = mainProducts.filter((product: any) => !hiddenPids.has(product.pid));
+  const filteredProducts = mainProducts.filter((product: any) => product.pid);
 
   if (filteredProducts.length === 0) return null;
 

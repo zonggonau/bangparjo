@@ -589,8 +589,8 @@ export default function ProductView({ id, initialData, initialError, selectedVid
               </div>
             ) : reviews.length > 0 ? (
               <div className="space-y-4">
-                {reviews.map((review: any) => (
-                  <div key={review.commentId} className="p-4 bg-gray-50 rounded-[10px] border border-gray-100">
+                {reviews.map((review: any, idx: number) => (
+                  <div key={`${review.commentId || idx}-${idx}`} className="p-4 bg-gray-50 rounded-[10px] border border-gray-100">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-[#FF6B00] flex items-center justify-center text-white text-xs font-bold">

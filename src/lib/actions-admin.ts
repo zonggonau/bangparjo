@@ -114,18 +114,8 @@ export async function getCjBalanceAction() {
   }
 }
 
-export async function getAdminCouponsAction() {
-  try {
-    const coupons = await prisma.coupon.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    return { success: true, data: coupons };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
-}
-
 export async function registerCJWebhookAction(baseUrl: string) {
+
   try {
     const { setWebhook } = await import('@/lib/cj-api');
     const callbackUrl = `${baseUrl}/api/cj-webhook`;

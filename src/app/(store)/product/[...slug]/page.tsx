@@ -39,16 +39,20 @@ export async function generateMetadata({
     }
   } else {
     // 2. Try CJ API fallback
-    const cjRes = await getProductDetails(id);
-    if (cjRes.success && cjRes.data) {
-      p = {
-        name: cjRes.data.productNameEn || cjRes.data.productName,
-        desc: cjRes.data.description,
-        image: cjRes.data.bigImage || cjRes.data.productImage
-      };
-      if (targetVid) {
-        selectedVariant = (cjRes.data.variants || []).find((v: any) => v.vid === targetVid || v.variantKey === targetVid);
+    try {
+      const cjRes = await getProductDetails(id);
+      if (cjRes.success && cjRes.data) {
+        p = {
+          name: cjRes.data.productNameEn || cjRes.data.productName,
+          desc: cjRes.data.description,
+          image: cjRes.data.bigImage || cjRes.data.productImage
+        };
+        if (targetVid) {
+          selectedVariant = (cjRes.data.variants || []).find((v: any) => v.vid === targetVid || v.variantKey === targetVid);
+        }
       }
+    } catch (err) {
+      console.error('[generateMetadata] CJ API rate limit or fetch error:', err);
     }
   }
 
@@ -189,64 +193,78 @@ export default async function Page({
   }
 
   // 2. Fallback to CJ API
-  const cjRes = await getProductDetails(id);
-  if (cjRes.success && cjRes.data) {
-    const product = cjRes.data;
-    
-    // Parse productImageSet safely (raw array, comma-separated string, or stringified JSON array)
-    const safeImageSet = (() => {
-      const raw = product.productImageSet as any;
-      if (!raw) return [];
-      if (Array.isArray(raw)) return raw;
-      if (typeof raw === 'string') {
-        if (raw.startsWith('[') && raw.endsWith(']')) {
-          try {
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) return parsed;
-          } catch {}
+  try {
+    const cjRes = await getProductDetails(id);
+    if (cjRes.success && cjRes.data) {
+      const product = cjRes.data;
+      
+      // Parse productImageSet safely (raw array, comma-separated string, or stringified JSON array)
+      const safeImageSet = (() => {
+        const raw = product.productImageSet as any;
+        if (!raw) return [];
+        if (Array.isArray(raw)) return raw;
+        if (typeof raw === 'string') {
+          if (raw.startsWith('[') && raw.endsWith(']')) {
+            try {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed)) return parsed;
+            } catch {}
+          }
+          return raw.split(',').map((s: string) => s.trim()).filter(Boolean);
         }
-        return raw.split(',').map((s: string) => s.trim()).filter(Boolean);
-      }
-      return [];
-    })();
+        return [];
+      })();
 
-    const mappedData = {
-      pid: product.pid,
-      productName: product.productNameEn || product.productName,
-      productNameEn: product.productNameEn || product.productName,
-      description: product.description || '',
-      productImage: product.productImage || product.bigImage,
-      bigImage: product.bigImage || product.productImage,
-      productImageSet: safeImageSet,
-      categoryName: product.categoryName || 'Imported',
-      categoryId: product.categoryId,
-      variants: (product.variants || []).map((v: any) => ({
-        ...v,
-        vid: v.vid,
-        variantNameEn: v.variantNameEn || v.variantKey || 'Default',
-        variantKey: v.variantKey || 'Default',
-        variantSellPrice: v.variantSellPrice,
-        variantSku: v.variantSku,
-        variantWeight: v.variantWeight,
-        inventory: v.inventory || v.variantNum || v.variantInventory || 9999,
-        variantImage: v.variantImage
-      }))
-    };
+      const mappedData = {
+        pid: product.pid,
+        productName: product.productNameEn || product.productName,
+        productNameEn: product.productNameEn || product.productName,
+        description: product.description || '',
+        productImage: product.productImage || product.bigImage,
+        bigImage: product.bigImage || product.productImage,
+        productImageSet: safeImageSet,
+        categoryName: product.categoryName || 'Imported',
+        categoryId: product.categoryId,
+        variants: (product.variants || []).map((v: any) => ({
+          ...v,
+          vid: v.vid,
+          variantNameEn: v.variantNameEn || v.variantKey || 'Default',
+          variantKey: v.variantKey || 'Default',
+          variantSellPrice: v.variantSellPrice,
+          variantSku: v.variantSku,
+          variantWeight: v.variantWeight,
+          inventory: v.inventory || v.variantNum || v.variantInventory || 9999,
+          variantImage: v.variantImage
+        }))
+      };
 
-    const selectedVariant = mappedData.variants.find(v => v.vid === targetVid || v.variantKey === targetVid);
+      const selectedVariant = mappedData.variants.find(v => v.vid === targetVid || v.variantKey === targetVid);
 
+      return (
+        <>
+          <ProductSchema product={mappedData} selectedVariant={selectedVariant} />
+          <Suspense fallback={<ProductDetailSkeleton />}>
+            <ProductView 
+              id={id} 
+              initialData={mappedData}
+              initialError={null}
+              selectedVid={targetVid}
+            />
+          </Suspense>
+        </>
+      );
+    }
+  } catch (err: any) {
+    console.error('[Page] Failed to fetch product from CJ due to QPS limits:', err);
     return (
-      <>
-        <ProductSchema product={mappedData} selectedVariant={selectedVariant} />
-        <Suspense fallback={<ProductDetailSkeleton />}>
-          <ProductView 
-            id={id} 
-            initialData={mappedData}
-            initialError={null}
-            selectedVid={targetVid}
-          />
-        </Suspense>
-      </>
+      <Suspense fallback={<ProductDetailSkeleton />}>
+        <ProductView 
+          id={id} 
+          initialData={null}
+          initialError={err?.message || "Failed to load product from CJ Dropshipping due to rate limits. Please try again in a few seconds."}
+          selectedVid={targetVid}
+        />
+      </Suspense>
     );
   }
 
