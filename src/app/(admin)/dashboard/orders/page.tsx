@@ -38,8 +38,9 @@ export default async function OrdersPage({
     // Note: status param for CJ API might need mapping, but keeping simple for now
     try {
       const res = await getOrderList({ pageNum: 1, pageSize: 50, status: statusFilter === 'ALL' ? '' : statusFilter });
-      if (res.success && res.data && res.data.list) {
-        let cjOrders = res.data.list;
+      const data = res.data as any;
+      if (res.success && data && data.list) {
+        let cjOrders = data.list;
         
         if (searchQuery) {
           cjOrders = cjOrders.filter((o: any) => 

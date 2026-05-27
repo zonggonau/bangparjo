@@ -2,6 +2,7 @@ import { getProducts } from '@/lib/cj-api';
 import { prisma } from '@/lib/db';
 import { getOrSet } from '@/lib/redis';
 import ProductCard from '@/components/ProductCard';
+import { getActiveCouponProductIds } from '@/lib/pricing';
 
 const CACHE_TTL = 3600; // 1 hour
 
@@ -50,12 +51,14 @@ async function fetchBestSellers() {
 
 export default async function HomeBestSellers() {
   const mainProducts = await getBestSellers();
+  const hiddenPids = await getActiveCouponProductIds();
+  const filteredProducts = mainProducts.filter((product: any) => !hiddenPids.has(product.pid));
 
-  if (mainProducts.length === 0) return null;
+  if (filteredProducts.length === 0) return null;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {mainProducts.map((product) => (
+      {filteredProducts.map((product) => (
         <ProductCard key={product.pid} product={product as any} />
       ))}
     </div>

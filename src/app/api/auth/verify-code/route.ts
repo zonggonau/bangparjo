@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import crypto from 'crypto';
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +13,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Cari OTP untuk email ini yang belum expired
+    // Find valid OTP for this email
     const token = await prisma.verificationToken.findFirst({
       where: {
         identifier: email,
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Hapus OTP yang sudah digunakan
+    // Consume the OTP (one-time use)
     await prisma.verificationToken.delete({
       where: {
         identifier_token: {
@@ -38,25 +39,42 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Cari atau buat user (auto-register)
-    let user = await prisma.user.findUnique({
-      where: { email }
-    });
-
+    // Auto-create user if not exists (first login = register)
+    let user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       user = await prisma.user.create({
         data: {
           name: email.split('@')[0],
           email,
           role: 'USER',
-        }
+        },
       });
     }
 
-    // Kembalikan sukses — client-side akan handle login via signIn
+    // ── Issue a one-time OTP session token ─────────────────────────────────
+    // This token is passed as "password" to signIn('credentials') client-side.
+    // auth.ts validates it and consumes it, preventing replay attacks.
+    const sessionToken = `otp_session:${crypto.randomBytes(32).toString('hex')}`;
+    const sessionExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+    // Remove any stale otp_session tokens for this user
+    await prisma.verificationToken.deleteMany({
+      where: { identifier: `otp_session:${email}` },
+    });
+
+    await prisma.verificationToken.create({
+      data: {
+        identifier: `otp_session:${email}`,
+        token: sessionToken,
+        expires: sessionExpires,
+      },
+    });
+
+    // Return the session token to the client — it will use it once via signIn()
     return NextResponse.json({
       success: true,
       email,
+      sessionToken,
     });
   } catch (error) {
     console.error('[VERIFY-CODE] Error:', error);

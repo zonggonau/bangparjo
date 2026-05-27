@@ -405,6 +405,7 @@ export interface CJProduct {
   productUnit?: string;
   productType?: string;
   isActive?: boolean;
+  isCouponProduct?: boolean;
 }
 
 export interface CJVariant {

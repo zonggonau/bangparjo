@@ -4,7 +4,7 @@ import Link from 'next/link';
 export default async function AnalyticsPage() {
   const data = await getDashboardAnalyticsAction();
   
-  const analytics = data.success ? data.data : {
+  const analytics = (data.success && data.data) ? data.data : {
     totalOrders: 0,
     totalRevenue: 0,
     totalCost: 0,

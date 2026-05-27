@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CJShippingMethod, parseProductName, parseProductImage } from '@/lib/cj-utils';
 import { calculateFinalPrice, calculateShippingFee } from '@/lib/pricing';
@@ -34,57 +34,21 @@ function itemKey(pid: string, vid?: string) {
   return `${pid}__${vid || 'novid'}`;
 }
 
-// ── CouponField: standalone component with local input state ──────────────
+// ── CouponField: display only component for auto-applied coupons ──────────────
 function CouponField({
   entry,
-  onApply,
-  onRemove,
 }: {
   entry: CouponEntry;
-  onApply: (code: string) => void;
-  onRemove: () => void;
 }) {
-  const [localCode, setLocalCode] = useState(entry.applied ? entry.applied.code : entry.code);
-
-  // Sync localCode when entry changes (e.g. coupon auto-applied or removed)
-  useEffect(() => {
-    if (!entry.applied) {
-      setLocalCode(entry.code || '');
-    }
-  }, [entry.applied, entry.code]);
-
   if (entry.applied) {
     return (
       <div className="bg-green-50 border border-green-200 rounded-[6px] p-2 flex items-center gap-2">
         <i className="fas fa-tag text-green-600 text-[10px]"></i>
-        <span className="text-[11px] font-bold text-green-700 flex-1 truncate">{entry.applied.code}</span>
-        <button type="button" onClick={onRemove} className="text-green-600 hover:text-green-800 text-[10px] font-bold shrink-0">
-          <i className="fas fa-times"></i>
-        </button>
+        <span className="text-[11px] font-bold text-green-700 flex-1 truncate">{entry.applied.code} Applied</span>
       </div>
     );
   }
-
-  return (
-    <div className="flex gap-1.5">
-      <input
-        type="text"
-        placeholder="Coupon"
-        value={localCode}
-        onChange={e => setLocalCode(e.target.value.toUpperCase())}
-        onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), onApply(localCode))}
-        className="flex-1 min-w-0 px-2 py-1.5 border border-gray-200 rounded-[6px] text-[11px] outline-none focus:border-[#FF6B00] transition-colors"
-      />
-      <button
-        type="button"
-        onClick={() => onApply(localCode)}
-        disabled={entry.loading || !localCode.trim()}
-        className="px-2.5 py-1.5 rounded-[6px] text-[11px] font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-      >
-        {entry.loading ? <i className="fas fa-spinner fa-spin"></i> : 'Apply'}
-      </button>
-    </div>
-  );
+  return null;
 }
 
 function CheckoutContent() {
@@ -112,8 +76,26 @@ function CheckoutContent() {
   const vidParam = searchParams.get('vid');
   const couponParam = searchParams.get('coupon');
   
-  const { items: cartItems, clearCart, isLoaded } = useCart();
-  const { settings } = useSettings();
+  const { items: rawCartItems, clearCart, isLoaded } = useCart();
+  const { settings, activeCoupons } = useSettings();
+
+  const cartItems = useMemo(() => {
+    return rawCartItems.filter(item => {
+      // 1. If it was flagged on addition
+      if ((item as any).isCouponProduct) return false;
+
+      // 2. Or if we can find a SPECIFIC active coupon for it
+      const hasSpecificCoupon = activeCoupons && activeCoupons.some(c => {
+        const now = new Date();
+        const isExpired = c.expiresAt ? new Date(c.expiresAt) <= now : false;
+        const isExhausted = c.maxUses !== null ? c.usedCount >= c.maxUses : false;
+        const isValid = c.isActive && !isExpired && !isExhausted;
+        if (!isValid) return false;
+        return c.products && c.products.some((pr: any) => pr.productCjId === item.pid);
+      });
+      return !hasSpecificCoupon;
+    });
+  }, [rawCartItems, activeCoupons]);
   const [product, setProduct] = useState<any>(null);
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [qty, setQty] = useState(1);
@@ -125,7 +107,7 @@ function CheckoutContent() {
     city: '',
     province: '',
     zip: '',
-    country: 'US',
+    country: '',
   });
   const [loading, setLoading] = useState(false);
   const [shippingMethods, setShippingMethods] = useState<CJShippingMethod[]>([]);
@@ -609,6 +591,7 @@ function CheckoutContent() {
             <div className="flex flex-col gap-1.5 mt-4">
               <label className="text-[13px] font-bold text-gray-500 uppercase tracking-[0.5px]">🌍 Country *</label>
               <select value={formData.country} onChange={e => { setFormData({ ...formData, country: e.target.value }); setCountryTouched(true); }} required className="px-4 py-3 border border-gray-200 rounded-[8px] text-sm outline-none focus:border-[#FF6B00] transition-colors bg-white">
+                <option value="" disabled>Choose country...</option>
                 {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
               </select>
             </div>
@@ -699,7 +682,7 @@ function CheckoutContent() {
                 return (
                   <div key={key} className="pb-4 border-b border-gray-100 last:border-b-0">
                     <div className="flex gap-3">
-                      <img src={item.bigImage || item.productImage} alt={name} className="w-16 h-16 rounded-[8px] object-cover shrink-0 bg-gray-50" />
+                      <img src={item.selectedVariantImage || item.bigImage || item.productImage} alt={name} className="w-16 h-16 rounded-[8px] object-cover shrink-0 bg-gray-50" />
                       <div className="flex-1 min-w-0">
                         <h4 className="text-[13px] font-semibold text-[#1A1A1A] truncate max-w-[180px]">{name}</h4>
                         {item.selectedVariantName && <p className="text-[11px] text-gray-500 mt-0.5">Variant: {item.selectedVariantName}</p>}
@@ -713,15 +696,9 @@ function CheckoutContent() {
                         </div>
                       </div>
                     </div>
-                    {/* Per-product coupon field */}
+                    {/* Per-product auto-applied coupon field */}
                     <div className="mt-2 pl-[4.25rem]">
-                      {entry.error && (
-                        <p className="text-[10px] text-red-500 mb-1 flex items-center gap-1">
-                          <i className="fas fa-exclamation-circle"></i>
-                          {entry.error}
-                        </p>
-                      )}
-                      <CouponField entry={entry} onApply={(code) => handleApplyCoupon(key, code, item.pid)} onRemove={() => handleRemoveCoupon(key)} />
+                      <CouponField entry={entry} />
                     </div>
                   </div>
                 );
@@ -738,7 +715,7 @@ function CheckoutContent() {
                 return (
                   <div key={key} className="pb-4 border-b border-gray-100">
                     <div className="flex gap-3">
-                      <img src={product.bigImage || product.productImage} alt={name} className="w-16 h-16 rounded-[8px] object-cover shrink-0 bg-gray-50" />
+                      <img src={selectedVariant?.variantImage || product.bigImage || product.productImage} alt={name} className="w-16 h-16 rounded-[8px] object-cover shrink-0 bg-gray-50" />
                       <div className="flex-1 min-w-0">
                         <h4 className="text-[13px] font-semibold text-[#1A1A1A] truncate max-w-[180px]">{name}</h4>
                         {selectedVariant && <p className="text-[11px] text-gray-500 mt-0.5">Variant: {selectedVariant.variantNameEn || selectedVariant.variantKey}</p>}
@@ -752,15 +729,9 @@ function CheckoutContent() {
                         </div>
                       </div>
                     </div>
-                    {/* Per-product coupon field */}
+                    {/* Per-product auto-applied coupon field */}
                     <div className="mt-2 pl-[4.25rem]">
-                      {entry.error && (
-                        <p className="text-[10px] text-red-500 mb-1 flex items-center gap-1">
-                          <i className="fas fa-exclamation-circle"></i>
-                          {entry.error}
-                        </p>
-                      )}
-                      <CouponField entry={entry} onApply={(code) => handleApplyCoupon(key, code, product.pid || product.cjId)} onRemove={() => handleRemoveCoupon(key)} />
+                      <CouponField entry={entry} />
                     </div>
                   </div>
                 );

@@ -3,6 +3,7 @@ import ProductCard from '@/components/ProductCard';
 import SearchFilters from '@/components/SearchFilters';
 import { getProductsV2 } from '@/lib/cj-api';
 import { prisma } from '@/lib/db';
+import { getActiveCouponProductIds } from '@/lib/pricing';
 
 export const metadata: Metadata = {
   title: 'Search Products — BangParjo',
@@ -75,6 +76,9 @@ export default async function SearchPage({
     }
   }
 
+  const hiddenPids = await getActiveCouponProductIds();
+  const filteredProducts = products.filter(p => !hiddenPids.has(p.pid));
+
   const totalPages = Math.ceil(total / pageSize);
 
   // Build filter URL helper
@@ -129,7 +133,7 @@ export default async function SearchPage({
         )}
 
         {/* Empty State */}
-        {query && products.length === 0 && !error && (
+        {query && filteredProducts.length === 0 && !error && (
           <div className="text-center py-20">
             <div className="text-6xl mb-4 opacity-30">🔍</div>
             <h3 className="text-xl font-semibold text-[#1A1A1A] mb-2">No products found</h3>
@@ -138,10 +142,10 @@ export default async function SearchPage({
         )}
 
         {/* Products Grid */}
-        {products.length > 0 && (
+        {filteredProducts.length > 0 && (
           <>
             <div className="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {products.map((product: any) => (
+              {filteredProducts.map((product: any) => (
                 <ProductCard key={product.pid || product.spuId} product={product} />
               ))}
             </div>

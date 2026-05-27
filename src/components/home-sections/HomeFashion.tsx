@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getOrSet } from '@/lib/redis';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
+import { getActiveCouponProductIds } from '@/lib/pricing';
 
 const CACHE_TTL = 3600; // 1 hour
 
@@ -61,8 +62,10 @@ async function fetchFashionProducts() {
 
 export default async function HomeFashion() {
   const mainProducts = await getFashionProducts();
+  const hiddenPids = await getActiveCouponProductIds();
+  const filteredProducts = mainProducts.filter((product: any) => !hiddenPids.has(product.pid));
 
-  if (mainProducts.length === 0) return null;
+  if (filteredProducts.length === 0) return null;
 
   return (
     <section className="py-20">
@@ -84,7 +87,7 @@ export default async function HomeFashion() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {mainProducts.map((product) => (
+          {filteredProducts.map((product) => (
             <ProductCard key={product.pid} product={product} />
           ))}
         </div>

@@ -12,9 +12,28 @@ function formatUSD(price: number) {
 
 export default function CartPage() {
   const { items, removeFromCart, updateQuantity, totalItems, isLoaded } = useCart();
-  const { settings } = useSettings();
+  const { settings, activeCoupons } = useSettings();
 
-  const subtotal = items.reduce((acc, item) => {
+  // Filter out products that have active coupons in the database (claimed from blog/ads)
+  const filteredItems = items.filter(item => {
+    // 1. If it was flagged on addition
+    if ((item as any).isCouponProduct) return false;
+
+    // 2. Or if we can find a SPECIFIC active coupon for it
+    const hasSpecificCoupon = activeCoupons && activeCoupons.some(c => {
+      const now = new Date();
+      const isExpired = c.expiresAt ? new Date(c.expiresAt) <= now : false;
+      const isExhausted = c.maxUses !== null ? c.usedCount >= c.maxUses : false;
+      const isValid = c.isActive && !isExpired && !isExhausted;
+      if (!isValid) return false;
+      return c.products && c.products.some((pr: any) => pr.productCjId === item.pid);
+    });
+    return !hasSpecificCoupon;
+  });
+  
+  const filteredTotalItems = filteredItems.reduce((acc, item) => acc + item.quantity, 0);
+
+  const subtotal = filteredItems.reduce((acc, item) => {
     const rawCjPrice = Number(item.sellPrice);
     const price = isNaN(rawCjPrice) ? 0 : calculateFinalPrice(rawCjPrice, settings);
     return acc + price * item.quantity;
@@ -29,7 +48,7 @@ export default function CartPage() {
     </div>
   );
 
-  if (totalItems === 0) {
+  if (filteredTotalItems === 0) {
     return (
       <div className="text-center py-24">
         <div className="max-w-[1400px] mx-auto px-5">
@@ -54,14 +73,15 @@ export default function CartPage() {
 
       <section className="max-w-[1400px] mx-auto px-5">
         <h1 className="text-[32px] font-bold text-[#1A1A1A] mb-8">
-          Shopping Cart <span className="text-base font-normal text-gray-500">({totalItems} items)</span>
+          Shopping Cart <span className="text-base font-normal text-gray-500">({filteredTotalItems} items)</span>
         </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
           <div className="space-y-4">
-            {items.map((item) => {
+            {filteredItems.map((item) => {
               const name = parseProductName(item.productNameEn || item.productName);
-              const img = parseProductImage(item.bigImage || item.productImage);
+              const rawImg = item.selectedVariantImage || item.bigImage || item.productImage;
+              const img = parseProductImage(rawImg);
               const rawCjPrice = Number(item.sellPrice);
               const price = isNaN(rawCjPrice) ? 0 : calculateFinalPrice(rawCjPrice, settings);
 

@@ -89,7 +89,6 @@ export async function getDBStoreSettings(): Promise<StoreSettings> {
         pct: t.pct
       }));
     }
-    settings.freeShippingThreshold = 1000;
     return settings as StoreSettings;
   } catch (error) {
     console.error('Error fetching DB settings:', error);
@@ -105,12 +104,11 @@ export function getStoreSettings(): StoreSettings {
       const parsed = JSON.parse(s);
       if (!parsed.marginTiers) parsed.marginTiers = DEFAULT_SETTINGS.marginTiers;
       const settings = { ...DEFAULT_SETTINGS, ...parsed };
-      settings.freeShippingThreshold = 1000;
       return settings;
     }
-    return { ...DEFAULT_SETTINGS, freeShippingThreshold: 1000 };
+    return { ...DEFAULT_SETTINGS };
   } catch {
-    return { ...DEFAULT_SETTINGS, freeShippingThreshold: 1000 };
+    return { ...DEFAULT_SETTINGS };
   }
 }
 
@@ -140,4 +138,28 @@ export function calculateShippingFee(baseShipping: number, subtotal: number, cus
   }
   return baseShipping + (settings.shippingMarkup || 0);
 }
+
+export async function getActiveCouponProductIds(): Promise<Set<string>> {
+  try {
+    const activeCouponProducts = await prisma.couponProduct.findMany({
+      where: {
+        coupon: {
+          isActive: true,
+          OR: [
+            { expiresAt: null },
+            { expiresAt: { gt: new Date() } }
+          ]
+        }
+      },
+      select: {
+        productCjId: true
+      }
+    });
+    return new Set(activeCouponProducts.map(cp => cp.productCjId));
+  } catch (err) {
+    console.error('Error fetching active coupon product IDs:', err);
+    return new Set<string>();
+  }
+}
+
 

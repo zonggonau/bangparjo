@@ -11,12 +11,13 @@ export interface CartItem extends CJProduct {
   selectedVid?: string;   // CJ variant ID — required by createOrderV2
   selectedSku?: string;   // CJ variant SKU — fallback for createOrderV2
   selectedVariantName?: string; // Descriptive name (e.g. Size: XL, Color: Blue)
+  selectedVariantImage?: string; // Variant image URL
 }
 
 interface CartContextType {
   items: CartItem[];
   isLoaded: boolean;
-  addToCart: (product: CJProduct, variant?: { vid: string; sku: string; name?: string }) => void;
+  addToCart: (product: CJProduct, variant?: { vid: string; sku: string; name?: string; image?: string }, quantity?: number) => void;
   removeFromCart: (pid: string, vid?: string) => void;
   updateQuantity: (pid: string, quantity: number, vid?: string) => void;
   clearCart: () => void;
@@ -87,6 +88,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               productNameEn: dbItem.productNameEn || '',
               productImage: dbItem.productImage || '',
               bigImage: dbItem.bigImage || '',
+              selectedVariantImage: dbItem.bigImage || dbItem.productImage || '',
               sellPrice: dbItem.sellPrice || 0,
               quantity: dbItem.quantity || 1,
               categoryName: dbItem.categoryName || '',
@@ -101,14 +103,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     loadFromDB();
   }, [session?.user?.email, isLoaded]);
 
-  const addToCart = (product: CJProduct, variant?: { vid: string; sku: string; name?: string }) => {
+  const addToCart = (product: CJProduct, variant?: { vid: string; sku: string; name?: string; image?: string }, quantity = 1) => {
     setIsLoaded(true);
     setItems(prev => {
       const existing = prev.find(i => i.pid === product.pid && i.selectedVid === variant?.vid);
       if (existing) {
         return prev.map(i =>
           (i.pid === product.pid && i.selectedVid === variant?.vid)
-            ? { ...i, quantity: i.quantity + 1 }
+            ? { ...i, quantity: i.quantity + quantity }
             : i
         );
       }
@@ -116,10 +118,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         {
           ...product,
-          quantity: 1,
+          quantity: quantity,
           selectedVid: variant?.vid,
           selectedSku: variant?.sku,
           selectedVariantName: variant?.name,
+          selectedVariantImage: variant?.image,
         },
       ];
     });

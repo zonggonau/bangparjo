@@ -47,7 +47,24 @@ export default function ProductCard({ product }: { product: CJProduct & { nowPri
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    addToCart({ ...product, sellPrice: typeof product.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product.sellPrice)) });
+    const getProductActiveCoupon = (productCjId: string) => {
+      if (!activeCoupons) return null;
+      const now = new Date();
+      const specificCoupon = activeCoupons.find(c => {
+        const isExpired = c.expiresAt ? new Date(c.expiresAt) <= now : false;
+        const isExhausted = c.maxUses !== null ? c.usedCount >= c.maxUses : false;
+        const isValid = c.isActive && !isExpired && !isExhausted;
+        if (!isValid) return false;
+        return c.products && c.products.some((pr: any) => pr.productCjId === productCjId);
+      });
+      return specificCoupon || null;
+    };
+    const isCouponProduct = !!getProductActiveCoupon(product.pid);
+    addToCart({ 
+      ...product, 
+      sellPrice: typeof product.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product.sellPrice)),
+      isCouponProduct
+    });
   };
 
   const displayName = parseProductName(product.productNameEn || product.productName);
@@ -68,54 +85,9 @@ export default function ProductCard({ product }: { product: CJProduct & { nowPri
     return null;
   })();
 
-  const getProductActiveCoupon = (productCjId: string) => {
-    if (!activeCoupons) return null;
-    const now = new Date();
-    // 1. Find coupon specifically assigned to this product
-    const specificCoupon = activeCoupons.find(c => {
-      const isExpired = c.expiresAt ? new Date(c.expiresAt) <= now : false;
-      const isExhausted = c.maxUses !== null ? c.usedCount >= c.maxUses : false;
-      const isValid = c.isActive && !isExpired && !isExhausted;
-      if (!isValid) return false;
-      return c.products && c.products.some((pr: any) => pr.productCjId === productCjId);
-    });
-
-    if (specificCoupon) return specificCoupon;
-
-    // 2. Find general active coupon (no products listed, meaning general store-wide)
-    const generalCoupon = activeCoupons.find(c => {
-      const isExpired = c.expiresAt ? new Date(c.expiresAt) <= now : false;
-      const isExhausted = c.maxUses !== null ? c.usedCount >= c.maxUses : false;
-      const isValid = c.isActive && !isExpired && !isExhausted;
-      if (!isValid) return false;
-      return !c.products || c.products.length === 0;
-    });
-
-    return generalCoupon || null;
-  };
-
   const originalCjPrice = typeof product.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product.sellPrice));
   const targetPrice = calculateFinalPrice(originalCjPrice, settings);
-
-  const getInflatedPrice = () => {
-    const activeCoupon = getProductActiveCoupon(product.pid);
-    if (activeCoupon) {
-      if (activeCoupon.type === 'PERCENTAGE') {
-        const pct = activeCoupon.value;
-        if (pct > 0 && pct < 100) {
-          return targetPrice / (1 - pct / 100);
-        }
-      } else if (activeCoupon.type === 'FIXED') {
-        const amount = activeCoupon.value;
-        if (amount > 0) {
-          return targetPrice + amount;
-        }
-      }
-    }
-    return targetPrice;
-  };
-
-  const finalPrice = getInflatedPrice();
+  const finalPrice = targetPrice;
 
   // ── Discount calculation ──────────────────────────────────────────────
   const nowPrice = product.nowPrice ? parseFloat(product.nowPrice) : null;

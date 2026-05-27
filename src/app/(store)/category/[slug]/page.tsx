@@ -5,6 +5,8 @@ import SortSelector from '@/components/SortSelector';
 import { getAppCache, setAppCache } from '@/lib/cache';
 import { getCategoryBySlug as getCategoryBySlugLib, getCategoryHierarchy } from '@/lib/categories';
 import { getProductsV2 } from '@/lib/cj-api';
+import { prisma } from '@/lib/db';
+import { getActiveCouponProductIds } from '@/lib/pricing';
 
 async function getCategoryBySlug(slug: string) {
   const category = await getCategoryBySlugLib(slug);
@@ -139,6 +141,8 @@ export default async function CategoryPage({
   }
 
   const totalPages = Math.ceil(total / 60);
+  const hiddenPids = await getActiveCouponProductIds();
+  const filteredProducts = products.filter(p => !hiddenPids.has(p.pid || p.id));
 
   return (
     <div className="bg-gray-50 min-h-screen py-16">
@@ -206,16 +210,13 @@ export default async function CategoryPage({
               </Link>
             </div>
           )}
-        </header>
-
-        {/* Products Grid - Full Width */}
-        {products.length > 0 ? (
+        </header>        {/* Products Grid - Full Width */}
+        {filteredProducts.length > 0 ? (
           <>
             <div className="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <ProductCard key={product.id || product.pid} product={product} />
               ))}
-
             </div>
 
             {totalPages > 1 && (

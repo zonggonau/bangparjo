@@ -191,7 +191,10 @@ export default function ProductView({ id, initialData, initialError, selectedVid
 
   const getInflatedPrice = () => {
     const activeCoupon = getProductActiveCoupon(product?.pid || id);
-    if (activeCoupon) {
+    const urlCoupon = searchParams.get('coupon')?.toUpperCase();
+
+    // Only inflate if the active coupon's code matches the URL parameter
+    if (activeCoupon && urlCoupon === activeCoupon.code.toUpperCase()) {
       if (activeCoupon.type === 'PERCENTAGE') {
         const pct = activeCoupon.value;
         if (pct > 0 && pct < 100) {
@@ -217,12 +220,16 @@ export default function ProductView({ id, initialData, initialError, selectedVid
 
 
   const handleAddToCart = () => {
-    const variantInfo = selectedVariant ? { vid: selectedVariant.vid, sku: selectedVariant.variantSku, name: selectedVariant.variantNameEn || selectedVariant.variantKey } : undefined;
+    const variantInfo = selectedVariant ? { 
+      vid: selectedVariant.vid, 
+      sku: selectedVariant.variantSku, 
+      name: selectedVariant.variantNameEn || selectedVariant.variantKey,
+      image: selectedVariant.variantImage
+    } : undefined;
     const normalizedPrice = selectedVariant?.variantSellPrice ? selectedVariant.variantSellPrice : (typeof product.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product.sellPrice)));
-    const cartProduct = { ...product, sellPrice: normalizedPrice };
-    for (let i = 0; i < qty; i++) {
-      addToCart(cartProduct, variantInfo);
-    }
+    const isCouponProduct = !!getProductActiveCoupon(product?.pid || id);
+    const cartProduct = { ...product, sellPrice: normalizedPrice, isCouponProduct };
+    addToCart(cartProduct, variantInfo, qty);
   };
 
   if (loading) return <ProductDetailSkeleton />;
@@ -373,7 +380,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                   <i className="fas fa-shopping-bag"></i> Add to Cart
                 </button>
                 <Link 
-                  href={`/checkout?pid=${id}${selectedVariant ? `&vid=${selectedVariant.vid}` : ''}&qty=${qty}`} 
+                  href={`/checkout?pid=${id}${selectedVariant ? `&vid=${selectedVariant.vid}` : ''}&qty=${qty}${searchParams.get('coupon') ? `&coupon=${searchParams.get('coupon')}` : ''}`} 
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px] font-bold text-sm bg-[#1A1A1A] text-white hover:bg-[#333] transition-all duration-200 no-underline"
                 >
                   Buy Now
