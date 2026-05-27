@@ -80,22 +80,8 @@ function CheckoutContent() {
   const { settings, activeCoupons } = useSettings();
 
   const cartItems = useMemo(() => {
-    return rawCartItems.filter(item => {
-      // 1. If it was flagged on addition
-      if ((item as any).isCouponProduct) return false;
-
-      // 2. Or if we can find a SPECIFIC active coupon for it
-      const hasSpecificCoupon = activeCoupons && activeCoupons.some(c => {
-        const now = new Date();
-        const isExpired = c.expiresAt ? new Date(c.expiresAt) <= now : false;
-        const isExhausted = c.maxUses !== null ? c.usedCount >= c.maxUses : false;
-        const isValid = c.isActive && !isExpired && !isExhausted;
-        if (!isValid) return false;
-        return c.products && c.products.some((pr: any) => pr.productCjId === item.pid);
-      });
-      return !hasSpecificCoupon;
-    });
-  }, [rawCartItems, activeCoupons]);
+    return rawCartItems;
+  }, [rawCartItems]);
   const [product, setProduct] = useState<any>(null);
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [qty, setQty] = useState(1);
@@ -689,7 +675,9 @@ function CheckoutContent() {
                           <span className="text-[13px] font-bold text-[#FF6B00]">
                             {discountVal > 0 ? (
                               <><span className="line-through text-gray-400 mr-1">{formatUSD(itemPrice)}</span>{formatUSD(itemDiscounted)}</>
-                            ) : formatUSD(itemPrice)}
+                            ) : (
+                              <><span className="line-through text-gray-400 text-xs mr-1.5">{formatUSD(itemPrice * 1.35)}</span>{formatUSD(itemPrice)}</>
+                            )}
                           </span>
                         </div>
                       </div>
@@ -722,7 +710,9 @@ function CheckoutContent() {
                           <span className="text-[13px] font-bold text-[#FF6B00]">
                             {discountVal > 0 ? (
                               <><span className="line-through text-gray-400 mr-1">{formatUSD(itemPrice)}</span>{formatUSD(itemDiscounted)}</>
-                            ) : formatUSD(itemPrice)}
+                            ) : (
+                              <><span className="line-through text-gray-400 text-xs mr-1.5">{formatUSD(itemPrice * 1.35)}</span>{formatUSD(itemPrice)}</>
+                            )}
                           </span>
                         </div>
                       </div>

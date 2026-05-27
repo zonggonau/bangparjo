@@ -202,7 +202,8 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
       + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#1A1A2E;">' + variantName + '</td>'
       + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#64748b;">' + safeSku + '</td>'
       + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;">' + stockStatus + '</td>'
-      + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;font-weight:700;color:#FF6B35;">$' + getDisplayPrice(v.sellingPrice).toFixed(2) + '</td>'
+      + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;font-weight:700;color:#FF6B35;">$' + getDisplayPrice(v.sellingPrice).toFixed(2) 
+      + ' <span style="font-size:11px;color:#94a3b8;text-decoration:line-through;font-weight:500;margin-left:6px;">$' + (getDisplayPrice(v.sellingPrice) * 1.35).toFixed(2) + '</span></td>'
       + '</tr>';
   }).join('');
 
@@ -682,7 +683,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '</section>\n';
 
   // --- Interactive Checkout Preparation Section ---
-  var initialPrice = firstVariant ? firstVariant.sellingPrice : 0.00;
+  var initialPrice = firstVariant ? getDisplayPrice(firstVariant.sellingPrice) : 0.00;
   var initialComparePrice = initialPrice * 1.5;
 
   var leftColumnHtml = '<div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100%; box-shadow: 0 8px 30px rgba(0,0,0,0.04); min-height: 420px;">\n'
@@ -921,6 +922,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
         sku: v.sku,
         name: [v.color, v.size].filter(Boolean).join(' / ') || 'Default',
         price: getDisplayPrice(v.sellingPrice),
+        baseCost: v.baseCost,
         image: v.image || product.images[0]
       };
     })
@@ -1009,7 +1011,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '    productNameEn: productData.productNameEn,\n'
     + '    productImage: selectedVariant.image,\n'
     + '    bigImage: selectedVariant.image,\n'
-    + '    sellPrice: selectedVariant.price,\n'
+    + '    sellPrice: selectedVariant.baseCost,\n'
     + '    quantity: quantity,\n'
     + '    categoryName: productData.categoryName\n'
     + '  };\n'

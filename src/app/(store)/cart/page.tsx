@@ -14,22 +14,7 @@ export default function CartPage() {
   const { items, removeFromCart, updateQuantity, totalItems, isLoaded } = useCart();
   const { settings, activeCoupons } = useSettings();
 
-  // Filter out products that have active coupons in the database (claimed from blog/ads)
-  const filteredItems = items.filter(item => {
-    // 1. If it was flagged on addition
-    if ((item as any).isCouponProduct) return false;
-
-    // 2. Or if we can find a SPECIFIC active coupon for it
-    const hasSpecificCoupon = activeCoupons && activeCoupons.some(c => {
-      const now = new Date();
-      const isExpired = c.expiresAt ? new Date(c.expiresAt) <= now : false;
-      const isExhausted = c.maxUses !== null ? c.usedCount >= c.maxUses : false;
-      const isValid = c.isActive && !isExpired && !isExhausted;
-      if (!isValid) return false;
-      return c.products && c.products.some((pr: any) => pr.productCjId === item.pid);
-    });
-    return !hasSpecificCoupon;
-  });
+  const filteredItems = items;
   
   const filteredTotalItems = filteredItems.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -98,7 +83,10 @@ export default function CartPage() {
                     {item.selectedVariantName && (
                       <p className="text-[13px] text-gray-500 truncate max-w-[320px]">{item.selectedVariantName}</p>
                     )}
-                    <div className="text-[#FF6B00] font-bold mt-1">{formatUSD(price)}</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[#FF6B00] font-bold">{formatUSD(price)}</span>
+                      <span className="text-xs text-gray-400 line-through font-medium">{formatUSD(price * 1.35)}</span>
+                    </div>
                   </div>
                   <div className="flex flex-col items-end gap-3 shrink-0">
                     <button className="text-sm text-gray-400 hover:text-red-500 transition-colors" onClick={() => removeFromCart(item.pid, item.selectedVid)}>

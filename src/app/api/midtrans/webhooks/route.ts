@@ -4,7 +4,7 @@ import { processFulfillment } from '@/lib/fulfillment';
 import crypto from 'crypto';
 
 /**
- * Midtrans Webhook Handler (Singular URL Support)
+ * Midtrans Webhook Handler (Plural URL Support)
  * Documentation: https://docs.midtrans.com/en/after-payment/http-notification
  */
 export async function POST(req: Request) {
