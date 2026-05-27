@@ -106,8 +106,9 @@ export default function ProductCard({ product }: { product: CJProduct & { nowPri
   // ── Stats & Dummy Data ────────────────────────────────────────────────
   const orderCount = product.listedNum || 0;
   const formattedOrders = orderCount > 0 ? (orderCount >= 1000 ? `${(orderCount / 1000).toFixed(1)}K` : orderCount.toString()) : null;
-  const dummyRating = (4.0 + (product.pid.charCodeAt(0) % 10) / 10).toFixed(1);
-  const dummyReviews = (product.pid.charCodeAt(1) % 500) + 12;
+  const ratingVal = typeof product.pid === 'string' && product.pid.length > 0 ? (4.0 + (product.pid.charCodeAt(0) % 10) / 10) : 4.5;
+  const dummyRating = ratingVal.toFixed(1);
+  const dummyReviews = typeof product.pid === 'string' && product.pid.length > 1 ? (product.pid.charCodeAt(1) % 500) + 12 : 54;
 
   return (
     <Link 
@@ -175,7 +176,7 @@ export default function ProductCard({ product }: { product: CJProduct & { nowPri
         {/* Star Ratings */}
         <div className="flex items-center gap-1.5 mb-2">
           <span className="text-[#FFB800] text-[10px]">
-             {'★'.repeat(Math.round(parseFloat(dummyRating)))}{'☆'.repeat(5 - Math.round(parseFloat(dummyRating)))}
+             {'★'.repeat(Math.max(0, Math.min(5, Math.round(parseFloat(dummyRating) || 5)))).padEnd(5, '☆')}
           </span>
           <span className="text-[11px] text-gray-400 font-medium">({dummyRating} • {dummyReviews} reviews)</span>
         </div>

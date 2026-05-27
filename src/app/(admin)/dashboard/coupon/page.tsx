@@ -20,12 +20,10 @@ export default async function CouponManagementPage({
   });
 
   // Convert Date objects to ISO strings for client component
-  const safeCoupons = coupons.map(c => ({
+  const safeCoupons = JSON.parse(JSON.stringify(coupons)).map((c: any) => ({
     ...c,
-    expiresAt: c.expiresAt ? c.expiresAt.toISOString() : null,
-    createdAt: c.createdAt.toISOString(),
     value: Number(c.value), // Ensure Decimal is converted
-    products: (c.products || []).map(cp => ({
+    products: (c.products || []).map((cp: any) => ({
       productCjId: cp.productCjId
     }))
   }));

@@ -74,6 +74,9 @@ export default async function InventoryPage({
     }))
   }));
 
+  const serializedProducts = JSON.parse(JSON.stringify(products));
+  const serializedCategories = JSON.parse(JSON.stringify(categories));
+
   return (
     <div>
       <div className="mb-10 flex justify-between items-end">
@@ -84,10 +87,10 @@ export default async function InventoryPage({
       </div>
 
       <InventoryList 
-        initialProducts={products} 
+        initialProducts={serializedProducts} 
         total={total} 
         currentPage={page} 
-        categories={categories}
+        categories={serializedCategories}
         currentCategory={categoryId || ''}
         currentSort={sort || 'newest'}
         activeCoupons={serializedCoupons}

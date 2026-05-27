@@ -188,14 +188,32 @@ export default async function Page({
   const cjRes = await getProductDetails(id);
   if (cjRes.success && cjRes.data) {
     const product = cjRes.data;
+    
+    // Parse productImageSet safely (raw array, comma-separated string, or stringified JSON array)
+    const safeImageSet = (() => {
+      const raw = product.productImageSet as any;
+      if (!raw) return [];
+      if (Array.isArray(raw)) return raw;
+      if (typeof raw === 'string') {
+        if (raw.startsWith('[') && raw.endsWith(']')) {
+          try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return parsed;
+          } catch {}
+        }
+        return raw.split(',').map((s: string) => s.trim()).filter(Boolean);
+      }
+      return [];
+    })();
+
     const mappedData = {
       pid: product.pid,
       productName: product.productNameEn || product.productName,
       productNameEn: product.productNameEn || product.productName,
-      description: product.description,
+      description: product.description || '',
       productImage: product.productImage || product.bigImage,
       bigImage: product.bigImage || product.productImage,
-      productImageSet: product.productImageSet || [],
+      productImageSet: safeImageSet,
       categoryName: product.categoryName || 'Imported',
       categoryId: product.categoryId,
       variants: (product.variants || []).map((v: any) => ({

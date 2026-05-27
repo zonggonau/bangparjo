@@ -56,9 +56,11 @@ export default async function OrdersPage({
     }
   }
 
+  const serializedOrders = JSON.parse(JSON.stringify(orders));
+
   return (
     <OrdersClientView 
-      orders={orders} 
+      orders={serializedOrders} 
       currentSource={source} 
       currentStatus={statusFilter} 
       currentSearch={searchQuery}

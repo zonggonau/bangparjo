@@ -14,6 +14,12 @@ import AIChat from '@/components/AIChat';
 import { getProductDetailsAction, cjProxyAction } from '@/lib/actions-catalog';
 import { countries } from '@/lib/countries';
 
+function renderStars(score: any) {
+  const parsed = parseInt(score);
+  const validScore = isNaN(parsed) ? 0 : Math.max(0, Math.min(5, parsed));
+  return '★'.repeat(validScore) + '☆'.repeat(5 - validScore);
+}
+
 export default function ProductView({ id, initialData, initialError, selectedVid }: { id: string, initialData: any, initialError: string | null, selectedVid?: string }) {
   const { addToCart } = useCart();
   const { settings, activeCoupons } = useSettings();
@@ -243,7 +249,12 @@ export default function ProductView({ id, initialData, initialError, selectedVid
   );
 
   const allImages = (() => {
-    const raw = [product.bigImage, ...(product.productImageSet || []), ...(typeof product.productImage === 'string' && product.productImage.startsWith('[') ? (() => { try { return JSON.parse(product.productImage); } catch { return []; } })() : [product.productImage])]
+    const imgSet = Array.isArray(product.productImageSet)
+      ? product.productImageSet
+      : typeof product.productImageSet === 'string'
+      ? product.productImageSet.split(',').map((s: string) => s.trim()).filter(Boolean)
+      : [];
+    const raw = [product.bigImage, ...imgSet, ...(typeof product.productImage === 'string' && product.productImage.startsWith('[') ? (() => { try { return JSON.parse(product.productImage); } catch { return []; } })() : [product.productImage])]
       .map((img: any) => parseProductImage(img))
       .filter((img: string) => img && img !== '/placeholder.png');
     const seen = new Set<string>();
@@ -254,7 +265,10 @@ export default function ProductView({ id, initialData, initialError, selectedVid
   // Use real reviews data for rating display
   const realRatingCount = reviewsTotal || 0;
   const realAvgScore = reviews.length > 0 
-    ? Math.round(reviews.reduce((sum: number, r: any) => sum + parseInt(r.score || '0'), 0) / reviews.length) 
+    ? Math.round(reviews.reduce((sum: number, r: any) => {
+        const score = parseInt(r.score || '0');
+        return sum + (isNaN(score) ? 0 : score);
+      }, 0) / reviews.length) 
     : 0;
   const hasRealReviews = realRatingCount > 0;
 
@@ -297,7 +311,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
               
               {hasRealReviews ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-[#FFB800] text-base sm:text-lg">{'★'.repeat(realAvgScore)}{'☆'.repeat(5 - realAvgScore)}</span>
+                  <span className="text-[#FFB800] text-base sm:text-lg">{renderStars(realAvgScore)}</span>
                   <span className="text-xs sm:text-sm text-gray-500">({realRatingCount} reviews)</span>
                 </div>
               ) : reviewsLoading ? (
@@ -590,7 +604,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                         <div>
                           <span className="text-sm font-semibold text-[#1A1A1A]">{review.commentUser}</span>
                           <span className="text-[#FFB800] text-xs ml-2">
-                            {'★'.repeat(parseInt(review.score || '0'))}{'☆'.repeat(5 - parseInt(review.score || '0'))}
+                            {renderStars(review.score || '0')}
                           </span>
                         </div>
                       </div>
