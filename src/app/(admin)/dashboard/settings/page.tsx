@@ -72,7 +72,7 @@ export default function SettingsPage() {
               className={`px-4 py-2 rounded-[8px] text-sm font-bold transition-all duration-200 ${activeTab === 'logistics' ? 'bg-[#FF6B00] text-white' : 'bg-transparent text-gray-500'}`}
               onClick={() => setActiveTab('logistics')}
             >
-              <i className="fas fa-truck"></i> Logistics
+              <i className="fas fa-truck"></i> Logistics & CJ
             </button>
             <button 
               className={`px-4 py-2 rounded-[8px] text-sm font-bold transition-all duration-200 ${activeTab === 'margins' ? 'bg-[#FF6B00] text-white' : 'bg-transparent text-gray-500'}`}
@@ -118,7 +118,7 @@ export default function SettingsPage() {
                    <option value="USD">USD ($) — International</option>
                    <option value="IDR">IDR (Rp) — Indonesia</option>
                    <option value="EUR">EUR (€) — Europe</option>
-                </select>
+                 </select>
               </div>
               <div className="pt-4 border-t border-[#E2E8F0]">
                 <h4 className="text-[15px] font-black mb-2 text-[#1E293B]">Integrations</h4>
@@ -275,6 +275,22 @@ export default function SettingsPage() {
               <div>
                 <label className={labelClass}>Default Tax Rate (%)</label>
                 <input type="number" className={inputClass} value={draft.taxPct} onChange={e => setDraft({...draft, taxPct: Number(e.target.value)})} />
+              </div>
+              <div className="pt-4 border-t border-[#E2E8F0]">
+                <label className={labelClass}>CJ Dropshipping Fulfillment Payment Type</label>
+                <select 
+                  className={inputClass} 
+                  value={draft.cjPayType ?? 3} 
+                  onChange={e => setDraft({...draft, cjPayType: Number(e.target.value)})}
+                >
+                  <option value={3}>Type 3: Manual Payment (Create Unpaid Order on CJ - Recommended)</option>
+                  <option value={2}>Type 2: Balance Payment (Auto-Deduct from CJ Wallet balance)</option>
+                </select>
+                <p className="text-[11px] text-gray-400 mt-2 font-medium">
+                  <strong>Type 3 (Manual Payment):</strong> Pesanan dibuat di akun CJ Anda tetapi belum dibayar (status Awaiting Payment). Anda harus masuk ke dashboard CJ Dropshipping untuk membayar secara manual dengan kartu kredit/debit, PayPal, dll.
+                  <br className="mt-1" />
+                  <strong>Type 2 (Balance Payment):</strong> Pesanan langsung dibayar otomatis memotong saldo Wallet akun CJ Anda. <em>Catatan: Memerlukan saldo wallet CJ yang cukup. Jika saldo kosong ($0), proses pengiriman order akan gagal/error.</em>
+                </p>
               </div>
             </div>
           )}
