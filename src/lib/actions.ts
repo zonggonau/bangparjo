@@ -624,10 +624,10 @@ export async function getShippingRatesAction(data: { products?: any[], country?:
       ? productsParam.map(p => ({ 
           sku: p.sku || p.vid || '', 
           quantity: p.quantity || 1, 
-          weight: p.weight || 200, 
+          weight: p.weight || 500, 
           price: subtotal > 0 ? subtotal / productsParam.length : 10 
         })).filter(p => p.sku)
-      : (sku ? [{ sku, quantity, weight: weight || 200, price: subtotal / quantity || 10 }] : []);
+      : (sku ? [{ sku, quantity, weight: weight || 500, price: subtotal / quantity || 10 }] : []);
 
     if (skuList.length > 0) {
       const skuRes = await getShippingFeeBySku({

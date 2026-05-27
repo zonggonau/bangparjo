@@ -291,6 +291,13 @@ function CheckoutContent() {
 
       const buildActionData = () => {
         if (isCartCheckout) {
+          // Hitung subtotal berdasarkan harga markup toko, bukan harga mentah CJ
+          const retailSubtotal = cartItems.reduce((acc, item) => {
+            const rawPrice = Number(item.sellPrice) || 0;
+            const retailPrice = calculateFinalPrice(rawPrice, settings);
+            return acc + (retailPrice * item.quantity);
+          }, 0);
+          
           return {
             products: cartItems.map(item => ({
               sku: item.selectedSku || item.selectedVid || item.pid,
@@ -298,15 +305,19 @@ function CheckoutContent() {
               quantity: item.quantity
             })),
             country: formData.country,
-            subtotal: cartItems.reduce((acc, item) => acc + Number(item.sellPrice) * item.quantity, 0)
+            subtotal: retailSubtotal
           };
         }
+        
+        // Single product checkout
+        const variantCjPrice = selectedVariant?.variantSellPrice || product?.sellPrice || 0;
+        const retailSinglePrice = calculateFinalPrice(Number(variantCjPrice), settings);
         return {
           sku: selectedVariant?.variantSku || selectedVariant?.vid || product?.productSku,
           vid: selectedVariant?.vid || selectedVariant?.variantSku || product?.productSku,
           quantity: qty,
           country: formData.country,
-          subtotal: subtotal
+          subtotal: retailSinglePrice * qty
         };
       };
 
@@ -491,8 +502,9 @@ function CheckoutContent() {
     ? cartItems.reduce((acc, item) => acc + getCartItemInflatedPrice(item) * item.quantity, 0)
     : variantPrice * qty;
 
+  // logisticPrice dari server action sudah merupakan harga akhir (termasuk markup)
   const finalShippingCost = selectedShipping 
-    ? calculateShippingFee(selectedShipping.logisticPrice || 0, cartSubtotal, settings)
+    ? (selectedShipping.logisticPrice || 0)
     : 0;
   
   const subtotal = cartSubtotal;
@@ -598,9 +610,9 @@ function CheckoutContent() {
                       <div className="flex justify-between items-center mb-1">
                         <span className="font-bold text-[15px] text-[#1A1A1A]">{method.logisticName}</span>
                         <span className="font-extrabold text-[#FF6B00]">
-                          { calculateShippingFee(method.logisticPrice, cartSubtotal, settings) === 0
+                          { method.logisticPrice === 0
                             ? <span className="text-green-600">FREE</span> 
-                            : formatUSD(calculateShippingFee(method.logisticPrice, cartSubtotal, settings)) }
+                            : formatUSD(method.logisticPrice) }
                         </span>
                       </div>
                       <span className="text-[13px] text-gray-500">⏱ {method.logisticAging}{method.logisticAging && !method.logisticAging.includes('days') ? ' days' : ''} delivery</span>

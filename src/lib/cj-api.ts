@@ -637,14 +637,14 @@ export async function getShippingFeeBySku(params: {
   const reqDTOS = [{
     srcAreaCode: params.startCountryCode || 'CN',
     destAreaCode: params.endCountryCode,
-    weight: params.products.reduce((sum, p) => sum + (p.weight || 200) * p.quantity, 0),
+    weight: params.products.reduce((sum, p) => sum + (p.weight || 500) * p.quantity, 0),
     volume: 0.001,
     totalGoodsAmount: params.products.reduce((sum, p) => sum + (p.price || 10) * p.quantity, 0),
     productProp: ['COMMON'],
     freightTrialSkuList: params.products.map(p => ({
       sku: p.sku,
       skuQuantity: p.quantity,
-      skuWeight: p.weight || 200,
+      skuWeight: p.weight || 500,
     })),
     skuList: params.products.map(p => p.sku),
     platforms: ['API'],
