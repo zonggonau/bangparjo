@@ -35,7 +35,11 @@ export function SettingsProvider({
       if (res.success && res.data) {
         setSettings(res.data);
         if (typeof window !== 'undefined') {
-          localStorage.setItem('admin_settings', JSON.stringify(res.data));
+          try {
+            localStorage.setItem('admin_settings', JSON.stringify(res.data));
+          } catch (e) {
+            console.error('Failed to save settings to localStorage:', e);
+          }
         }
       }
 

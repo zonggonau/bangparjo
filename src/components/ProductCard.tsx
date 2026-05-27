@@ -15,34 +15,42 @@ export default function ProductCard({ product }: { product: CJProduct & { nowPri
   const { addToCart } = useCart();
 
   useEffect(() => {
-    const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-    setIsFavorite(favs.some((f: any) => (typeof f === 'string' ? f === product.pid : f.pid === product.pid)));
+    try {
+      const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+      setIsFavorite(favs.some((f: any) => (typeof f === 'string' ? f === product.pid : f.pid === product.pid)));
+    } catch (e) {
+      console.error('Failed to read favorites from localStorage:', e);
+    }
   }, [product.pid]);
 
   const toggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
-    const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-    let nextFavs;
-    const isCurrentlyFav = favs.some((f: any) => (typeof f === 'string' ? f === product.pid : f.pid === product.pid));
+    try {
+      const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+      let nextFavs;
+      const isCurrentlyFav = favs.some((f: any) => (typeof f === 'string' ? f === product.pid : f.pid === product.pid));
 
-    if (!isCurrentlyFav) {
-      const favProduct = {
-        pid: product.pid,
-        productName: product.productName,
-        productNameEn: product.productNameEn,
-        bigImage: product.bigImage,
-        productImage: product.productImage,
-        sellPrice: product.sellPrice,
-        categoryName: product.categoryName
-      };
-      nextFavs = [...favs, favProduct];
-    } else {
-      nextFavs = favs.filter((f: any) => (typeof f === 'string' ? f !== product.pid : f.pid !== product.pid));
+      if (!isCurrentlyFav) {
+        const favProduct = {
+          pid: product.pid,
+          productName: product.productName,
+          productNameEn: product.productNameEn,
+          bigImage: product.bigImage,
+          productImage: product.productImage,
+          sellPrice: product.sellPrice,
+          categoryName: product.categoryName
+        };
+        nextFavs = [...favs, favProduct];
+      } else {
+        nextFavs = favs.filter((f: any) => (typeof f === 'string' ? f !== product.pid : f.pid !== product.pid));
+      }
+
+      localStorage.setItem('favorites', JSON.stringify(nextFavs));
+      setIsFavorite(!isCurrentlyFav);
+      window.dispatchEvent(new Event('favoritesUpdated'));
+    } catch (e) {
+      console.error('Failed to toggle favorite in localStorage:', e);
     }
-
-    localStorage.setItem('favorites', JSON.stringify(nextFavs));
-    setIsFavorite(!isCurrentlyFav);
-    window.dispatchEvent(new Event('favoritesUpdated'));
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {

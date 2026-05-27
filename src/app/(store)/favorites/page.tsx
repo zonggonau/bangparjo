@@ -79,7 +79,11 @@ export default function FavoritesPage() {
             categoryName: item.categoryName || '',
           }));
           setFavorites(dbItems);
-          localStorage.setItem('favorites', JSON.stringify(dbItems));
+          try {
+            localStorage.setItem('favorites', JSON.stringify(dbItems));
+          } catch (e) {
+            console.error('Failed to save favorites to localStorage from DB:', e);
+          }
         }
       } catch (e) {
         console.error('Wishlist load from DB failed:', e);

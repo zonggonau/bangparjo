@@ -6,12 +6,9 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import CartCounter from './CartCounter';
 import FavoriteCounter from './FavoriteCounter';
-
-import { useSession } from 'next-auth/react';
 import { getCategoryMenuAction } from '@/lib/actions-catalog';
 
 export default function Navbar() {
-  const { data: session } = useSession();
   const pathname = usePathname();
   const [isMobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
