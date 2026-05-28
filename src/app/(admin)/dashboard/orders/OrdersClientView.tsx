@@ -10,6 +10,7 @@ function StatusBadge({ status }: { status: string }) {
   let badgeClass = 'bg-gray-100 text-gray-600';
   if (['PAID', 'FULFILLED', 'COMPLETED', 'DELIVERED'].includes(s)) badgeClass = 'bg-[#D1FAE5] text-[#065F46]';
   if (['SHIPPED'].includes(s)) badgeClass = 'bg-[#DBEAFE] text-[#1E40AF]';
+  if (['FULFILLING', 'PROCESSING'].includes(s)) badgeClass = 'bg-[#FEF08A] text-[#854D0E]';
   if (['UNPAID', 'PENDING'].includes(s)) badgeClass = 'bg-[#FFEDD5] text-[#9A3412]';
   if (['CANCELLED', 'FAILED'].includes(s)) badgeClass = 'bg-[#FEE2E2] text-[#991B1B]';
 
@@ -96,7 +97,7 @@ export default function OrdersClientView({ orders, currentSource, currentStatus,
     }
   };
 
-  const STATUSES = ['ALL', 'UNPAID', 'PAID', 'SHIPPED', 'COMPLETED', 'CANCELLED'];
+  const STATUSES = ['ALL', 'UNPAID', 'PAID', 'FULFILLING', 'SHIPPED', 'COMPLETED', 'CANCELLED'];
 
   const exportCSV = () => {
     const headers = ['Order ID', 'Customer', 'Email', 'Amount', 'Status', 'Tracking', 'Date'];
