@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { fulfillAdminOrderAction, syncAdminOrderAction, markOrderAsPaidAction } from '@/lib/actions-admin-orders';
+import { toast } from 'react-hot-toast';
 
 function StatusBadge({ status }: { status: string }) {
   const s = (status || 'PENDING').toUpperCase();
@@ -50,13 +51,13 @@ export default function OrdersClientView({ orders, currentSource, currentStatus,
     try {
       const data = await fulfillAdminOrderAction(orderNum) as any;
       if (data.success) { 
-        alert('Fulfillment sequence initialized successfully.'); 
+        toast.success('Fulfillment sequence initialized successfully.'); 
         router.refresh();
       } else {
-        alert('Sequence failure: ' + (data.error || data.message));
+        toast.error('Sequence failure: ' + (data.error || data.message));
       }
     } catch (e: any) { 
-      alert('Critical error: ' + e.message); 
+      toast.error('Critical error: ' + e.message); 
     } finally { 
       setBusy(null); 
     }
@@ -67,13 +68,13 @@ export default function OrdersClientView({ orders, currentSource, currentStatus,
     try {
       const data = await syncAdminOrderAction(orderId);
       if (data.success) { 
-        alert('Status synchronization complete: ' + data.status); 
+        toast.success('Status synchronization complete: ' + data.status); 
         router.refresh();
       } else {
-        alert('Sync failure: ' + data.error);
+        toast.error('Sync failure: ' + data.error);
       }
     } catch (e: any) { 
-      alert('Critical error: ' + e.message); 
+      toast.error('Critical error: ' + e.message); 
     } finally { 
       setBusy(null); 
     }
@@ -85,13 +86,13 @@ export default function OrdersClientView({ orders, currentSource, currentStatus,
     try {
       const data = await markOrderAsPaidAction(orderId) as any;
       if (data.success) {
-        alert('Order marked as PAID successfully.');
+        toast.success('Order marked as PAID successfully.');
         router.refresh();
       } else {
-        alert('Failed: ' + (data.error || 'Unknown error'));
+        toast.error('Failed: ' + (data.error || 'Unknown error'));
       }
     } catch (e: any) {
-      alert('Critical error: ' + e.message);
+      toast.error('Critical error: ' + e.message);
     } finally {
       setBusy(null);
     }
