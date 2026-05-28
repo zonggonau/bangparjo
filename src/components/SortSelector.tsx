@@ -13,23 +13,33 @@ export default function SortSelector({ currentSort, className }: SortSelectorPro
 
   const handleSortChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set('sort', value);
+    if (value && value !== 'default') {
+      params.set('sort', value);
+    } else {
+      params.delete('sort');
+    }
     // Reset to page 1 when sort changes
     params.set('page', '1');
     router.push(`?${params.toString()}`);
   };
 
+  const currentVal = searchParams.get('sort') || 'default';
+
   return (
     <select
       name="sort"
       id="sort"
-      defaultValue={currentSort}
+      value={currentVal}
       className={className}
       onChange={(e) => handleSortChange(e.target.value)}
     >
-      <option value="0">Default (All)</option>
-      <option value="2">Hot & Trending</option>
-      <option value="3">New Arrivals</option>
+      <option value="default">Best Match</option>
+      <option value="newest">Newest Arrivals</option>
+      <option value="oldest">Oldest</option>
+      <option value="price-desc">Price: High to Low</option>
+      <option value="price-asc">Price: Low to High</option>
+      <option value="listed-desc">Most Popular (Listed)</option>
+      <option value="inventory-desc">Highest Inventory</option>
     </select>
   );
 }

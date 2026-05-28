@@ -74,7 +74,20 @@ export default async function CategoryPage({
   const pageNum = parseInt(sParams.page || '1');
   const minPrice = sParams.minPrice ? parseFloat(sParams.minPrice) : undefined;
   const maxPrice = sParams.maxPrice ? parseFloat(sParams.maxPrice) : undefined;
-  const sort = sParams.sort ? parseInt(sParams.sort) : 0; 
+  const sortParam = sParams.sort || 'default';
+  
+  let orderBy: number | undefined = undefined;
+  let sortDir: 'desc' | 'asc' | undefined = undefined;
+
+  switch (sortParam) {
+    case 'newest': orderBy = 3; sortDir = 'desc'; break;
+    case 'oldest': orderBy = 3; sortDir = 'asc'; break;
+    case 'price-desc': orderBy = 2; sortDir = 'desc'; break;
+    case 'price-asc': orderBy = 2; sortDir = 'asc'; break;
+    case 'listed-desc': orderBy = 1; sortDir = 'desc'; break;
+    case 'inventory-desc': orderBy = 4; sortDir = 'desc'; break;
+    default: orderBy = 0; break;
+  }
 
   const category = await getCategoryBySlug(slug);
 
@@ -90,7 +103,7 @@ export default async function CategoryPage({
   let products: any[] = [];
   let total = 0;
 
-  const cacheKey = `cat_api_products_${category.id}_p${pageNum}_s${sort}_min${minPrice || 0}_max${maxPrice || 0}`;
+  const cacheKey = `cat_api_products_${category.id}_p${pageNum}_s${sortParam}_min${minPrice || 0}_max${maxPrice || 0}`;
 
   try {
     const cachedData = await getAppCache<{ products: any[], total: number }>(cacheKey);
@@ -104,7 +117,8 @@ export default async function CategoryPage({
         size: 60,
         startSellPrice: minPrice,
         endSellPrice: maxPrice,
-        orderBy: sort > 0 ? sort : undefined,
+        orderBy: orderBy,
+        sort: sortDir,
         features: ['enable_description'],
       });
       
@@ -180,7 +194,7 @@ export default async function CategoryPage({
             
             <div className="flex items-center gap-3 shrink-0">
               <label htmlFor="sort" className="text-[11px] font-extrabold uppercase text-gray-400 hidden sm:block">Sort By:</label>
-              <SortSelector currentSort={sort} />
+              <SortSelector currentSort={orderBy || 0} />
             </div>
           </div>
 
