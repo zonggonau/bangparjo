@@ -213,14 +213,39 @@ export default function AdminOrderDetail() {
               <div className="px-8 py-5 border-b border-[#E2E8F0]">
                 <div className="flex items-center gap-2">
                   <i className="fas fa-globe text-[#FF6B00]"></i>
-                  <h3 className="text-lg font-extrabold text-[#1E293B]">CJ Order Detail</h3>
+                  <h3 className="text-lg font-extrabold text-[#1E293B]">CJ Order Summary</h3>
                   <span className="ml-2 text-xs text-[#64748B]">(#{order.cjOrderId})</span>
                 </div>
               </div>
-              <div className="p-8">
-                <pre className="bg-[#0F172A] text-[#38BDF8] rounded-[12px] p-5 text-xs font-mono max-h-[400px] overflow-auto leading-[1.6]">
-                  {JSON.stringify(cjOrder, null, 2)}
-                </pre>
+              <div className="p-8 space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.05em]">CJ Order Status</p>
+                    <p className="font-bold text-[#1E293B] mt-1"><StatusBadge status={cjOrder.status || cjOrder.orderStatus || 'N/A'} /></p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.05em]">Logistics Provider</p>
+                    <p className="font-bold text-[#1E293B] mt-1">{cjOrder.logisticName || cjOrder.logisticsName || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.05em]">Tracking Number</p>
+                    <p className="font-bold text-[#1E293B] mt-1">{cjOrder.trackingNumber || cjOrder.trackNumber || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.05em]">Total Amount</p>
+                    <p className="font-bold text-[#1E293B] mt-1">{formatUSD(cjOrder.ORDER_AMOUNT || cjOrder.totalAmount || cjOrder.orderAmount)}</p>
+                  </div>
+                </div>
+
+                <details className="mt-4 border border-[#E2E8F0] rounded-[10px] overflow-hidden group">
+                  <summary className="px-4 py-3 bg-[#F8FAFC] text-xs font-bold text-[#64748B] cursor-pointer hover:bg-[#F1F5F9] transition-colors flex items-center justify-between">
+                    <span>View Raw Payload Data</span>
+                    <i className="fas fa-chevron-down group-open:rotate-180 transition-transform"></i>
+                  </summary>
+                  <pre className="bg-[#0F172A] text-[#38BDF8] p-5 text-xs font-mono max-h-[300px] overflow-auto leading-[1.6]">
+                    {JSON.stringify(cjOrder, null, 2)}
+                  </pre>
+                </details>
               </div>
             </div>
           ) : null}
@@ -290,13 +315,38 @@ export default function AdminOrderDetail() {
           {order.orderData && (
             <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-sm overflow-hidden">
               <div className="px-6 py-5 border-b border-[#E2E8F0] flex items-center gap-2">
-                <i className="fas fa-database text-[#FF6B00]"></i>
-                <h3 className="font-extrabold text-[#1E293B]">Raw Payload</h3>
+                <i className="fas fa-file-invoice text-[#FF6B00]"></i>
+                <h3 className="font-extrabold text-[#1E293B]">Fulfillment Details</h3>
               </div>
-              <div className="p-6">
-                <pre className="bg-[#F8FAFC] text-[#475569] rounded-[10px] p-4 text-[11px] font-mono max-h-[300px] overflow-auto leading-[1.6] border border-[#E2E8F0]">
-                  {JSON.stringify(order.orderData, null, 2)}
-                </pre>
+              <div className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.05em]">Logistics Method</p>
+                    <p className="font-bold text-[#1E293B] mt-1">{order.orderData.logisticName || 'Default'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.05em]">Origin Country</p>
+                    <p className="font-bold text-[#1E293B] mt-1">{order.orderData.fromCountryCode || 'CN'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.05em]">IOSS Configuration</p>
+                    <p className="font-bold text-[#1E293B] mt-1">
+                      {order.orderData.iossType === 1 ? "1 - Don't use IOSS" : 
+                       order.orderData.iossType === 3 ? "3 - Use CJ IOSS" : 
+                       order.orderData.iossType || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+
+                <details className="mt-4 border border-[#E2E8F0] rounded-[10px] overflow-hidden group">
+                  <summary className="px-4 py-3 bg-[#F8FAFC] text-xs font-bold text-[#64748B] cursor-pointer hover:bg-[#F1F5F9] transition-colors flex items-center justify-between">
+                    <span>View Raw JSON Data</span>
+                    <i className="fas fa-chevron-down group-open:rotate-180 transition-transform"></i>
+                  </summary>
+                  <pre className="bg-[#F8FAFC] text-[#475569] p-4 text-[11px] font-mono max-h-[300px] overflow-auto leading-[1.6]">
+                    {JSON.stringify(order.orderData, null, 2)}
+                  </pre>
+                </details>
               </div>
             </div>
           )}
