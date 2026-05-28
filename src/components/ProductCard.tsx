@@ -113,7 +113,7 @@ export default function ProductCard({ product }: { product: CJProduct & { nowPri
   return (
     <Link 
       href={productUrl} 
-      className="group block bg-white border border-[#E5E5E5] rounded-[12px] overflow-hidden transition-all duration-300 relative no-underline text-inherit cursor-pointer hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:-translate-y-1 hover:border-transparent"
+      className="group block bg-white border border-[#E5E5E5]  overflow-hidden transition-all duration-300 relative no-underline text-inherit cursor-pointer hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:-translate-y-1 hover:border-transparent"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
