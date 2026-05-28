@@ -32,6 +32,11 @@ export default function OrdersClientView({ orders, currentSource, currentStatus,
   const searchParams = useSearchParams();
   const [busy, setBusy] = useState<string | null>(null);
   const [localSearch, setLocalSearch] = useState(currentSearch);
+  const [confirmModal, setConfirmModal] = useState<{
+    type: 'fulfill' | 'markPaid';
+    orderNum: string;
+    orderId: string;
+  } | null>(null);
 
   const updateFilters = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -45,9 +50,13 @@ export default function OrdersClientView({ orders, currentSource, currentStatus,
     updateFilters('search', localSearch);
   };
 
-  const handleFulfill = async (orderNum: string) => {
-    if (!confirm(`Initialize fulfillment sequence for order ${orderNum} to CJ terminal?`)) return;
+  const handleFulfill = (orderNum: string, orderId: string) => {
+    setConfirmModal({ type: 'fulfill', orderNum, orderId });
+  };
+  
+  const executeFulfill = async (orderNum: string) => {
     setBusy(orderNum);
+    setConfirmModal(null);
     try {
       const data = await fulfillAdminOrderAction(orderNum) as any;
       if (data.success) { 
@@ -80,9 +89,13 @@ export default function OrdersClientView({ orders, currentSource, currentStatus,
     }
   };
 
-  const handleMarkAsPaid = async (orderId: string, orderNum: string) => {
-    if (!confirm(`Manually mark order #${orderNum} as PAID? Use this only if payment was confirmed outside the system.`)) return;
+  const handleMarkAsPaid = (orderId: string, orderNum: string) => {
+    setConfirmModal({ type: 'markPaid', orderNum, orderId });
+  };
+
+  const executeMarkAsPaid = async (orderId: string) => {
     setBusy(orderId);
+    setConfirmModal(null);
     try {
       const data = await markOrderAsPaidAction(orderId) as any;
       if (data.success) {
@@ -256,7 +269,7 @@ export default function OrdersClientView({ orders, currentSource, currentStatus,
                       <td className="px-5 py-3.5">
                         <div className="flex gap-2 justify-end">
                           {currentSource === 'LOCAL' && (o.status || '').toUpperCase() === 'PAID' && !o.cjOrderId && (
-                            <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-sm font-semibold bg-[#FF6B00] text-white hover:bg-[#E65100] transition-all duration-200" disabled={isBusy} onClick={() => handleFulfill(orderId)} title="Fulfill to CJ">
+                            <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-sm font-semibold bg-[#FF6B00] text-white hover:bg-[#E65100] transition-all duration-200" disabled={isBusy} onClick={() => handleFulfill(o.orderNum, orderId)} title="Fulfill to CJ">
                               <i className={`fas fa-check-circle ${isBusy ? 'fa-spin' : ''}`}></i>
                             </button>
                           )}
@@ -285,6 +298,37 @@ export default function OrdersClientView({ orders, currentSource, currentStatus,
           </table>
         </div>
       </div>
+      
+      {/* Real React Modal for Confirmation */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+          <div className="max-w-sm w-full bg-white shadow-2xl rounded-[16px] pointer-events-auto flex flex-col overflow-hidden animate-slide-up-fade">
+            <div className="p-5 flex gap-4">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${confirmModal.type === 'fulfill' ? 'bg-orange-100 text-orange-500' : 'bg-emerald-100 text-emerald-600'}`}>
+                <i className={`fas ${confirmModal.type === 'fulfill' ? 'fa-paper-plane' : 'fa-credit-card'}`}></i>
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900">{confirmModal.type === 'fulfill' ? 'Fulfill Order?' : 'Mark as Paid?'}</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {confirmModal.type === 'fulfill' 
+                    ? <span>Send order <b>#{confirmModal.orderNum}</b> to CJ terminal for fulfillment.</span>
+                    : <span>Manually mark order <b>#{confirmModal.orderNum}</b> as PAID. Use this only if payment was confirmed outside the system.</span>
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="flex border-t border-gray-100 bg-gray-50">
+              <button onClick={() => setConfirmModal(null)} className="flex-1 px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors border-r border-gray-100">Cancel</button>
+              <button 
+                onClick={() => confirmModal.type === 'fulfill' ? executeFulfill(confirmModal.orderNum) : executeMarkAsPaid(confirmModal.orderId)} 
+                className={`flex-1 px-4 py-3 text-sm font-bold transition-colors ${confirmModal.type === 'fulfill' ? 'text-orange-600 hover:bg-orange-50' : 'text-emerald-600 hover:bg-emerald-50'}`}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
