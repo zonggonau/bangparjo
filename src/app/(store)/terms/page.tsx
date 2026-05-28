@@ -55,7 +55,7 @@ export default function TermsPage() {
               </div>
               <h2 className="text-xl font-bold text-[#1A1A1A] m-0">4. Global Logistics</h2>
             </div>
-            <p className="text-gray-500 leading-relaxed">Logistics timeframes are algorithmic estimates and not absolute guarantees. We are not liable for delays triggered by customs authority, geo-spatial disruptions, or carrier failure. Operational duties or local terminal taxes remain the sole responsibility of the recipient.</p>
+            <p className="text-gray-500 leading-relaxed">Logistics timeframes are algorithmic estimates and not absolute guarantees. We are not liable for delays triggered by customs authority, geo-spatial disruptions, or carrier failure. All global packages are dispatched via <strong>Delivered Duty Unpaid (DDU)</strong> logic. Operational duties, local import clearance, or terminal taxes remain the sole responsibility of the recipient/customer in their destination country.</p>
           </section>
 
           <section>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getAdminOrdersAction, fulfillAdminOrderAction, syncAdminOrderAction } from '@/lib/actions-admin-orders';
+import { toast } from 'react-hot-toast';
 
 function formatUSD(price: number | string | null | undefined) {
   const p = typeof price === 'string' ? parseFloat(price) : (price || 0);
@@ -29,6 +30,11 @@ export default function AdminOrderDetail() {
   const [loading, setLoading] = useState(true);
   const [cjLoading, setCjLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{
+    type: 'fulfill' | 'sync';
+    orderId: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!orderNum) return;
@@ -55,21 +61,40 @@ export default function AdminOrderDetail() {
       .finally(() => setCjLoading(false));
   }, [order?.cjOrderId]);
 
-  const handleFulfill = async () => {
-    if (!confirm(`Submit order ${orderNum} to CJ for fulfillment?`)) return;
+  const executeFulfill = async () => {
+    setBusy(true);
+    setConfirmModal(null);
     try {
       const data = await fulfillAdminOrderAction(orderNum) as any;
-      alert(data.success ? 'Fulfillment initiated!' : 'Error: ' + (data.error || data.message));
-      if (data.success) window.location.reload();
-    } catch (e: any) { alert('Error: ' + e.message); }
+      if (data.success) {
+        toast.success('Fulfillment initiated!');
+        window.location.reload();
+      } else {
+        toast.error('Error: ' + (data.error || data.message));
+      }
+    } catch (e: any) { 
+      toast.error('Error: ' + e.message); 
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleSync = async () => {
+  const executeSync = async () => {
+    setBusy(true);
+    setConfirmModal(null);
     try {
       const data = await syncAdminOrderAction(order.id);
-      alert(data.success ? 'Status synced: ' + data.status : 'Sync error: ' + data.error);
-      if (data.success) window.location.reload();
-    } catch (e: any) { alert('Error: ' + e.message); }
+      if (data.success) {
+        toast.success('Status synced: ' + data.status);
+        window.location.reload();
+      } else {
+        toast.error('Sync error: ' + data.error);
+      }
+    } catch (e: any) { 
+      toast.error('Error: ' + e.message); 
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (loading) {
@@ -108,13 +133,13 @@ export default function AdminOrderDetail() {
           </div>
           <div className="flex gap-3">
             {order.status === 'PAID' && !order.cjOrderId && (
-              <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-bold bg-[#FF6B00] text-white hover:bg-[#E65100] transition-all duration-200" onClick={handleFulfill}>
-                <i className="fas fa-check-circle"></i> Fulfill to CJ
+              <button disabled={busy} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-bold bg-[#FF6B00] text-white hover:bg-[#E65100] transition-all duration-200" onClick={() => setConfirmModal({ type: 'fulfill', orderId: order.id })}>
+                <i className={`fas fa-check-circle ${busy ? 'fa-spin' : ''}`}></i> Fulfill to CJ
               </button>
             )}
             {(order.cjOrderId || order.status === 'UNPAID') && (
-              <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-bold border border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200" onClick={handleSync}>
-                <i className="fas fa-sync"></i> Sync Status
+              <button disabled={busy} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-bold border border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200" onClick={() => setConfirmModal({ type: 'sync', orderId: order.id })}>
+                <i className={`fas fa-sync ${busy ? 'fa-spin' : ''}`}></i> Sync Status
               </button>
             )}
           </div>
@@ -277,6 +302,37 @@ export default function AdminOrderDetail() {
           )}
         </div>
       </div>
+
+      {/* Real React Modal for Confirmation */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+          <div className="max-w-sm w-full bg-white shadow-2xl rounded-[16px] pointer-events-auto flex flex-col overflow-hidden animate-slide-up-fade">
+            <div className="p-5 flex gap-4">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${confirmModal.type === 'fulfill' ? 'bg-orange-100 text-orange-500' : 'bg-emerald-100 text-emerald-600'}`}>
+                <i className={`fas ${confirmModal.type === 'fulfill' ? 'fa-paper-plane' : 'fa-sync'}`}></i>
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900">{confirmModal.type === 'fulfill' ? 'Fulfill Order?' : 'Sync Status?'}</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {confirmModal.type === 'fulfill' 
+                    ? <span>Submit order <b>#{orderNum.slice(0, 8)}...</b> to CJ terminal for fulfillment.</span>
+                    : <span>Synchronize current status from CJ.</span>
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="flex border-t border-gray-100 bg-gray-50">
+              <button onClick={() => setConfirmModal(null)} className="flex-1 px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors border-r border-gray-100">Cancel</button>
+              <button 
+                onClick={() => confirmModal.type === 'fulfill' ? executeFulfill() : executeSync()} 
+                className={`flex-1 px-4 py-3 text-sm font-bold transition-colors ${confirmModal.type === 'fulfill' ? 'text-orange-600 hover:bg-orange-50' : 'text-emerald-600 hover:bg-emerald-50'}`}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

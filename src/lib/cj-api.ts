@@ -754,6 +754,7 @@ export async function createOrder(orderData: {
       logisticName: restData.logisticName || 'CJPacket Ordinary',
       platform: 'Api',
       ...restData,
+      iossOption: (restData as any).iossOption || 1, // Fix CJ Europe IOSS error
       payType: restData.payType || 3, // Default to 3 if not provided
       shopLogisticsType: restData.shopLogisticsType || 2, // Default to 2 (Seller Logistics)
     }),

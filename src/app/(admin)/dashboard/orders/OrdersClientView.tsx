@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { fulfillAdminOrderAction, syncAdminOrderAction, markOrderAsPaidAction } from '@/lib/actions-admin-orders';
 import { toast } from 'react-hot-toast';
@@ -225,7 +226,12 @@ export default function OrdersClientView({ orders, currentSource, currentStatus,
                     <tr key={o.id || orderId} className="border-b border-[#F1F5F9] hover:bg-[#FAFBFE] transition-all duration-200">
                       <td className="px-5 py-3.5">
                         <div className="flex flex-col">
-                          <span className="font-extrabold text-[#1E293B]">#{orderId.slice(0, 12)}...</span>
+                          <Link 
+                            href={`/dashboard/orders/${orderId}`} 
+                            className="font-extrabold text-[#1E293B] hover:text-[#FF6B00] transition-colors cursor-pointer"
+                          >
+                            #{orderId.slice(0, 12)}...
+                          </Link>
                           {currentSource === 'LOCAL' && o.checkoutToken && (
                              <span className="text-[10px] text-green-600 font-bold">
                                <i className="fas fa-shield-alt"></i> Secure Session
