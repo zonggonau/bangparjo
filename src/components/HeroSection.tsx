@@ -198,8 +198,8 @@ export default function HeroSection({ products = [] }: HeroSectionProps) {
               </div>
 
               {/* Floating badges */}
-              <div className="absolute top-4 -right-2 sm:right-[-16px] bg-white rounded-[12px] p-3 sm:p-4 shadow-[0_8px_30px_rgba(0,0,0,0.12)] flex items-center gap-2.5 sm:gap-3 animate-[slideIn_0.6s_ease-out]">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#FFF3E8] flex items-center justify-center text-[20px] sm:text-[24px]">
+              <div className="absolute top-4 -right-2 sm:right-[-16px] bg-white/140 backdrop-blur-[20px] rounded-[12px] p-3 sm:p-4 shadow-[0_8px_30px_rgba(0,0,0,0.12)] flex items-center gap-2.5 sm:gap-3 animate-[slideIn_0.6s_ease-out] z-20 border border-white/40">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#FFF3E8]/80 flex items-center justify-center text-[20px] sm:text-[24px]">
                   ✈️
                 </div>
                 <div>
@@ -207,7 +207,7 @@ export default function HeroSection({ products = [] }: HeroSectionProps) {
                   <p className="text-[11px] sm:text-[13px] text-[#22C55E] font-semibold">Fast Delivery</p>
                 </div>
               </div>
-              <div className="absolute -bottom-3 left-[10%] bg-white rounded-[50px] px-4 sm:px-5 py-2 shadow-[0_4px_12px_rgba(0,0,0,0.1)] text-[12px] sm:text-[14px] tracking-[2px] animate-[slideIn_0.8s_ease-out]">
+              <div className="absolute -bottom-3 left-[10%] bg-white/80 backdrop-blur-md rounded-[50px] px-4 sm:px-5 py-2 shadow-[0_4px_12px_rgba(0,0,0,0.1)] text-[12px] sm:text-[14px] tracking-[2px] animate-[slideIn_0.8s_ease-out] z-20 border border-white/40">
                 🇺🇸 🇬🇧 🇩🇪 🇫🇷 🇯🇵 🇦🇺 +194
               </div>
             </div>
