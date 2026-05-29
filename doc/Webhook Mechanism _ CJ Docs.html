@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Webhook Mechanism | CJ Docs</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" href="https://frontend.cjdropshipping.com/config-resource/cj/favicon.ico">
+    <link rel="shortcut icon" href="https://frontend.cjdropshipping.com/config-resource/cj/favicon.ico">
+    <meta name="description" content="CJ API enables developers to access CJ system.">
+    <meta name="keywords" content="aliexpress dropshipping api,autods non api,oberlo api,aliexpress api dropshipping,api dropshipping,aliexpress api for dropshipping,cjdropshipping api,amazon dropshipping api,dropshipping api integration,oberlo chrome extension aliexpress">
+    <meta name="googlebot" content="NOODP">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://frontend.cjdropshipping.com/config-resource/cj/share1200x900.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="900">
+    <meta property="og:title" content="CJdropshipping API - How To Connect Your Store To CJdropshipping">
+    <meta property="og:description" content="CJdropshipping API, link your store to CJdropshipping, import dropshipping products, Also includes AliExpress dropshipping API, AliExpress API for dropshipping, Amazon dropshipping API.">
+    <meta property="og:url" content="https://developers.cjdropshipping.com/">
+    <meta property="twitter:card" content="summary">
+    <meta property="twitter:type" content="article">
+    <meta property="twitter:domain" content="developers.cjdropshipping.com">
+    <meta property="twitter:image" content="https://frontend.cjdropshipping.com/config-resource/cj/share1200x900.jpg">
+    <meta property="twitter:title" content="CJdropshipping API - How To Connect Your Store To CJdropshipping">
+    <meta property="twitter:description" content="CJdropshipping API, link your store to CJdropshipping, import dropshipping products, Also includes AliExpress dropshipping API, AliExpress API for dropshipping, Amazon dropshipping API.">
+    <meta property="twitter:url" content="https://developers.cjdropshipping.com/">
+    <meta property="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="preload" href="/assets/css/0.styles.94fac48d.css" as="style"><link rel="preload" href="/assets/js/app.929674c4.js" as="script"><link rel="preload" href="/assets/js/2.b4e2210f.js" as="script"><link rel="preload" href="/assets/js/1.d082965a.js" as="script"><link rel="preload" href="/assets/js/60.ca354842.js" as="script"><link rel="prefetch" href="/assets/js/10.57318f89.js"><link rel="prefetch" href="/assets/js/100.3e28a9f0.js"><link rel="prefetch" href="/assets/js/101.39a76499.js"><link rel="prefetch" href="/assets/js/11.9681b6ca.js"><link rel="prefetch" href="/assets/js/12.13e31f8d.js"><link rel="prefetch" href="/assets/js/13.e047031b.js"><link rel="prefetch" href="/assets/js/14.57d26efa.js"><link rel="prefetch" href="/assets/js/15.9cf7a76b.js"><link rel="prefetch" href="/assets/js/16.059bb88b.js"><link rel="prefetch" href="/assets/js/17.7805196f.js"><link rel="prefetch" href="/assets/js/18.c21204d2.js"><link rel="prefetch" href="/assets/js/19.b14d6aaa.js"><link rel="prefetch" href="/assets/js/20.e511a287.js"><link rel="prefetch" href="/assets/js/21.39fdd88c.js"><link rel="prefetch" href="/assets/js/22.1ee8fd4a.js"><link rel="prefetch" href="/assets/js/23.79bd8fe4.js"><link rel="prefetch" href="/assets/js/24.e1d75f2b.js"><link rel="prefetch" href="/assets/js/25.57483ff9.js"><link rel="prefetch" href="/assets/js/26.56482a71.js"><link rel="prefetch" href="/assets/js/27.526c7fe7.js"><link rel="prefetch" href="/assets/js/28.c547f780.js"><link rel="prefetch" href="/assets/js/29.1935eaa0.js"><link rel="prefetch" href="/assets/js/3.03fd7651.js"><link rel="prefetch" href="/assets/js/30.1185a68b.js"><link rel="prefetch" href="/assets/js/31.1f0763fc.js"><link rel="prefetch" href="/assets/js/32.16cb6368.js"><link rel="prefetch" href="/assets/js/33.161cd6fb.js"><link rel="prefetch" href="/assets/js/34.ed87b653.js"><link rel="prefetch" href="/assets/js/35.1e3786eb.js"><link rel="prefetch" href="/assets/js/36.82de4642.js"><link rel="prefetch" href="/assets/js/37.44723442.js"><link rel="prefetch" href="/assets/js/38.52749d31.js"><link rel="prefetch" href="/assets/js/39.2160e6f4.js"><link rel="prefetch" href="/assets/js/4.b2e44605.js"><link rel="prefetch" href="/assets/js/40.e9cc0480.js"><link rel="prefetch" href="/assets/js/41.82c41017.js"><link rel="prefetch" href="/assets/js/42.95fd1677.js"><link rel="prefetch" href="/assets/js/43.e9dead52.js"><link rel="prefetch" href="/assets/js/44.e0ecc4c1.js"><link rel="prefetch" href="/assets/js/45.6e8954ed.js"><link rel="prefetch" href="/assets/js/46.e6b44734.js"><link rel="prefetch" href="/assets/js/47.e57cd20d.js"><link rel="prefetch" href="/assets/js/48.3ab7ecc1.js"><link rel="prefetch" href="/assets/js/49.7c765cba.js"><link rel="prefetch" href="/assets/js/5.e7984c8e.js"><link rel="prefetch" href="/assets/js/50.88605760.js"><link rel="prefetch" href="/assets/js/51.b95117ce.js"><link rel="prefetch" href="/assets/js/52.be5f4d1c.js"><link rel="prefetch" href="/assets/js/53.b6e8ed12.js"><link rel="prefetch" href="/assets/js/54.d6df21c0.js"><link rel="prefetch" href="/assets/js/55.fcf133b6.js"><link rel="prefetch" href="/assets/js/56.f35edbec.js"><link rel="prefetch" href="/assets/js/57.2ff10605.js"><link rel="prefetch" href="/assets/js/58.6921224f.js"><link rel="prefetch" href="/assets/js/59.62d84a9d.js"><link rel="prefetch" href="/assets/js/6.e833795e.js"><link rel="prefetch" href="/assets/js/61.6f9a48a6.js"><link rel="prefetch" href="/assets/js/62.c122b850.js"><link rel="prefetch" href="/assets/js/63.0dc89063.js"><link rel="prefetch" href="/assets/js/64.f2483ab7.js"><link rel="prefetch" href="/assets/js/65.79a5a61a.js"><link rel="prefetch" href="/assets/js/66.3ad59e75.js"><link rel="prefetch" href="/assets/js/67.8bbfd580.js"><link rel="prefetch" href="/assets/js/68.146a8912.js"><link rel="prefetch" href="/assets/js/69.a0d4d2e2.js"><link rel="prefetch" href="/assets/js/7.8fb8f8fb.js"><link rel="prefetch" href="/assets/js/70.1b899d06.js"><link rel="prefetch" href="/assets/js/71.521c619d.js"><link rel="prefetch" href="/assets/js/72.aacf0ae3.js"><link rel="prefetch" href="/assets/js/73.566de254.js"><link rel="prefetch" href="/assets/js/74.40afad97.js"><link rel="prefetch" href="/assets/js/75.c815f4c8.js"><link rel="prefetch" href="/assets/js/76.8b03670e.js"><link rel="prefetch" href="/assets/js/77.af8a06b7.js"><link rel="prefetch" href="/assets/js/78.633b6aa9.js"><link rel="prefetch" href="/assets/js/79.9ae33614.js"><link rel="prefetch" href="/assets/js/80.9a1c6709.js"><link rel="prefetch" href="/assets/js/81.41aa178e.js"><link rel="prefetch" href="/assets/js/82.38d7f91b.js"><link rel="prefetch" href="/assets/js/83.3c7b417e.js"><link rel="prefetch" href="/assets/js/84.580dee56.js"><link rel="prefetch" href="/assets/js/85.f09e5d6d.js"><link rel="prefetch" href="/assets/js/86.0864b7fe.js"><link rel="prefetch" href="/assets/js/87.4ff9c429.js"><link rel="prefetch" href="/assets/js/88.1b803e8b.js"><link rel="prefetch" href="/assets/js/89.d77f6bb2.js"><link rel="prefetch" href="/assets/js/90.76cf816f.js"><link rel="prefetch" href="/assets/js/91.5e550fbf.js"><link rel="prefetch" href="/assets/js/92.9f2ae1af.js"><link rel="prefetch" href="/assets/js/93.80baa67e.js"><link rel="prefetch" href="/assets/js/94.a485ef6c.js"><link rel="prefetch" href="/assets/js/95.0cf54396.js"><link rel="prefetch" href="/assets/js/96.2c36e973.js"><link rel="prefetch" href="/assets/js/97.a14440a3.js"><link rel="prefetch" href="/assets/js/98.248abb84.js"><link rel="prefetch" href="/assets/js/99.a5ee64b2.js"><link rel="prefetch" href="/assets/js/vendors~docsearch.cc0fc371.js">
+    <link rel="stylesheet" href="/assets/css/0.styles.94fac48d.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/en/" class="home-link router-link-active"><img src="/images/logo.png" alt="CJ Docs" class="logo"> <span class="site-name can-hide">CJ Docs</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/en/summary/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><a href="/en/api/introduction.html" class="nav-link">
+  API
+</a></div><div class="nav-item"><a href="/en/publication/notice.html" class="nav-link">
+  Notice
+</a></div><div class="nav-item"><a href="/en/about.html" class="nav-link">
+  Contact
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Select language" class="dropdown-title"><span class="title">Languages</span> <span class="arrow down"></span></button> <button type="button" aria-label="Select language" class="mobile-dropdown-title"><span class="title">Languages</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/en/api/start/webhook.html" aria-current="page" class="nav-link router-link-exact-active router-link-active">
+  English
+</a></li><li class="dropdown-item"><!----> <a href="/zh/api/start/webhook.html" class="nav-link">
+  简体中文
+</a></li></ul></div></div> <!----></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/en/summary/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><a href="/en/api/introduction.html" class="nav-link">
+  API
+</a></div><div class="nav-item"><a href="/en/publication/notice.html" class="nav-link">
+  Notice
+</a></div><div class="nav-item"><a href="/en/about.html" class="nav-link">
+  Contact
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Select language" class="dropdown-title"><span class="title">Languages</span> <span class="arrow down"></span></button> <button type="button" aria-label="Select language" class="mobile-dropdown-title"><span class="title">Languages</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/en/api/start/webhook.html" aria-current="page" class="nav-link router-link-exact-active router-link-active">
+  English
+</a></li><li class="dropdown-item"><!----> <a href="/zh/api/start/webhook.html" class="nav-link">
+  简体中文
+</a></li></ul></div></div> <!----></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span></span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/en/api/introduction.html" class="sidebar-link">Introduction</a></li><li><section class="sidebar-group is-sub-group depth-1"><a href="/en/api/start" class="sidebar-heading clickable router-link-active open"><span>Start</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/en/api/start/development.html" class="sidebar-link">Development</a></li><li><a href="/en/api/start/token.html" class="sidebar-link">Get Access-token</a></li><li><a href="/en/api/start/utils.html" class="sidebar-link">Practical Tool</a></li><li><a href="/en/api/start/Orders-Synchronization-Processing.html" class="sidebar-link">Orders Synchronization Processing</a></li><li><a href="/en/api/start/Products-Synchronization-Processing.html" class="sidebar-link">Products Synchronization Processing</a></li><li><a href="/en/api/start/webhook.html" aria-current="page" class="active sidebar-link">Webhook</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/en/api/start/webhook.html#introduction" class="sidebar-link">Introduction</a></li><li class="sidebar-sub-header"><a href="/en/api/start/webhook.html#setup-procedure" class="sidebar-link">Setup Procedure</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/en/api/start/webhook.html#webhook-configuration-requirements" class="sidebar-link">Webhook Configuration Requirements</a></li></ul></li><li class="sidebar-sub-header"><a href="/en/api/start/webhook.html#list-of-topics" class="sidebar-link">List of topics</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/en/api/start/webhook.html#product-message-product" class="sidebar-link">Product Message: PRODUCT</a></li><li class="sidebar-sub-header"><a href="/en/api/start/webhook.html#stock-message" class="sidebar-link">Stock Message</a></li><li class="sidebar-sub-header"><a href="/en/api/start/webhook.html#order-message" class="sidebar-link">Order message</a></li><li class="sidebar-sub-header"><a href="/en/api/start/webhook.html#logistics-message" class="sidebar-link">Logistics message</a></li></ul></li><li class="sidebar-sub-header"><a href="/en/api/start/webhook.html#listening-example" class="sidebar-link">Listening example</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/en/api/start/webhook.html#example" class="sidebar-link">Example</a></li></ul></li></ul></li><li><a href="/en/api/start/sandbox.html" class="sidebar-link">Sandbox</a></li><li><a href="/en/api/start/limit.html" class="sidebar-link">Interface Call Restrictions</a></li></ul></section></li><li><a href="/en/api/api2/mcp.html" class="sidebar-link">MCP Integration</a></li><li><section class="sidebar-group is-sub-group depth-1"><a href="/en/api/api2/" class="sidebar-heading clickable"><span>API</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><section class="sidebar-group is-sub-group depth-2"><p class="sidebar-heading open"><span>Standard</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/en/api/api2/standard/definition.html" class="sidebar-link">Interface Definition</a></li><li><a href="/en/api/api2/standard/field.html" class="sidebar-link">Interface Field Definition</a></li><li><a href="/en/api/api2/standard/ps-code.html" class="sidebar-link">Appendix 1：Global Error Codes</a></li><li><a href="/en/api/api2/standard/ps-country.html" class="sidebar-link">Appendix 2：Country Code</a></li><li><a href="/en/api/api2/standard/ps-Platforms.html" class="sidebar-link">Appendix 3：Platforms</a></li></ul></section></li><li><section class="sidebar-group is-sub-group depth-2"><p class="sidebar-heading"><span>Interface</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/en/api/api2/api/auth.html" class="sidebar-link">1 Authentication</a></li><li><a href="/en/api/api2/api/setting.html" class="sidebar-link">2 Setting</a></li><li><a href="/en/api/api2/api/product.html" class="sidebar-link">3 Product</a></li><li><a href="/en/api/api2/api/storage.html" class="sidebar-link">4 Storage</a></li><li><a href="/en/api/api2/api/shopping.html" class="sidebar-link">5 Shopping</a></li><li><a href="/en/api/api2/api/logistic.html" class="sidebar-link">6 Logistic</a></li><li><a href="/en/api/api2/api/dispute.html" class="sidebar-link">7 Dispute</a></li><li><a href="/en/api/api2/api/webhook.html" class="sidebar-link">8 Webhook</a></li><li><a href="/en/api/api2/api/shop.html" class="sidebar-link">9 Shop</a></li></ul></section></li></ul></section></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="webhook-mechanism"><a href="#webhook-mechanism" class="header-anchor">#</a> Webhook Mechanism</h1> <h2 id="introduction"><a href="#introduction" class="header-anchor">#</a> Introduction</h2> <p>Product details including addition, deletion &amp; modification of variants.</p> <h2 id="setup-procedure"><a href="#setup-procedure" class="header-anchor">#</a> Setup Procedure</h2> <ul><li>1）Set up message monitoring and reference.<a href="/en/api/api2/api/webhook.html">webhook</a></li> <li>2）Set up client monitoring interface, example as below(Java).</li> <li>3）Test monitoring.</li></ul> <h3 id="webhook-configuration-requirements"><a href="#webhook-configuration-requirements" class="header-anchor">#</a> Webhook Configuration Requirements</h3> <h4 id="_1-protocol-requirements"><a href="#_1-protocol-requirements" class="header-anchor">#</a> 1. Protocol Requirements</h4> <ul><li><strong>Supported Protocols</strong>: HTTPS</li> <li><strong>Encryption</strong>: TLS 1.2 or TLS 1.3 recommended for secure transmission</li> <li><strong>Request Method</strong>: POST</li> <li><strong>Content Type</strong>: <code>Content-Type: application/json</code></li></ul> <h4 id="_2-response-specifications"><a href="#_2-response-specifications" class="header-anchor">#</a> 2. Response Specifications</h4> <ul><li><strong>Success Status Code</strong>: <code>200 OK</code></li> <li><strong>Timeout</strong>: Response must be returned within <strong>3 seconds</strong><br>
+(Avoid long-running or complex business logic to ensure prompt response)</li></ul> <h2 id="list-of-topics"><a href="#list-of-topics" class="header-anchor">#</a> List of topics</h2> <h3 id="product-message-product"><a href="#product-message-product" class="header-anchor">#</a> Product Message: <strong>PRODUCT</strong></h3> <h4 id="occurs-when-a-product-is-created-or-updated"><a href="#occurs-when-a-product-is-created-or-updated" class="header-anchor">#</a> Occurs when a product is created or updated.</h4> <ul><li>Sample Payload</li></ul> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;messageId&quot;: &quot;ca72a4834cd14b9588e88ce206f614a0&quot;,
+    &quot;type&quot;: &quot;PRODUCT&quot;,
+    &quot;messageType&quot;: &quot;UPDATE&quot;,
+    &quot;params&quot;: {
+        &quot;categoryId&quot;: null,
+        &quot;categoryName&quot;: null,
+        &quot;pid&quot;: &quot;1424608189734850560&quot;,
+        &quot;productDescription&quot;: &quot;xxxxxx&quot;,
+        &quot;productImage&quot;: null,
+        &quot;productName&quot;: null,
+        &quot;productNameEn&quot;: null,
+        &quot;productProperty1&quot;: null,
+        &quot;productProperty2&quot;: null,
+        &quot;productProperty3&quot;: null,
+        &quot;productSellPrice&quot;: null,
+        &quot;productSku&quot;: null,
+        &quot;productStatus&quot;: null,
+        &quot;fields&quot; : [
+            &quot;productDescription&quot;
+        ]
+    }
+}
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>messageId</td> <td>Message Id</td> <td>string</td> <td>Y</td> <td>200</td> <td>Message Id</td></tr> <tr><td>type</td> <td>Data Type</td> <td>string</td> <td>Y</td> <td>20</td> <td>PRODUCT</td></tr> <tr><td>messageType</td> <td>Message type</td> <td>string</td> <td>Y</td> <td>15</td> <td>INSERT、UPDATE、DELETE</td></tr> <tr><td>params</td> <td></td> <td>object</td> <td>Y</td> <td>5</td> <td></td></tr> <tr><td>- categoryId</td> <td>category Id</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- categoryName</td> <td>category Name</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- pid</td> <td>product id</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- productDescription</td> <td>product description</td> <td>string</td> <td>Y</td> <td>2000</td> <td></td></tr> <tr><td>- productImage</td> <td>product image</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- productName</td> <td>product name</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- productNameEn</td> <td>product name(english)</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- productProperty1</td> <td>product property</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- productProperty2</td> <td>product property</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- productProperty3</td> <td>product property</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- productSellPrice</td> <td>product sell price</td> <td>double</td> <td>Y</td> <td>20</td> <td></td></tr> <tr><td>- productSku</td> <td>product sku</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- productStatus</td> <td>product status</td> <td>int</td> <td>Y</td> <td>5</td> <td>status:2-Off sale, 3-On Sale</td></tr> <tr><td>- fields</td> <td>fields list</td> <td>list</td> <td>Y</td> <td>5</td> <td></td></tr></tbody></table> <p>Product Status</p> <table><thead><tr><th>ProductStatus</th> <th>Description</th></tr></thead> <tbody><tr><td>2</td> <td>Off sale</td></tr> <tr><td>3</td> <td>On Sale</td></tr></tbody></table> <h4 id="inbound-message-for-variant"><a href="#inbound-message-for-variant" class="header-anchor">#</a> Inbound message for Variant</h4> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;messageId&quot;: &quot;7cceede817dc47ed9748328b64353c5c&quot;,
+    &quot;type&quot;: &quot;VARIANT&quot;,
+    &quot;messageType&quot;: &quot;UPDATE&quot;,
+    &quot;params&quot;: {
+        &quot;vid&quot;: &quot;1424608152007086080&quot;,
+        &quot;variantName&quot;: null,
+        &quot;variantWeight&quot;: null,
+        &quot;variantLength&quot;: null,
+        &quot;variantWidth&quot;: null,
+        &quot;variantHeight&quot;: null,
+        &quot;variantImage&quot;: null,
+        &quot;variantSku&quot;: null,
+        &quot;variantKey&quot;: null,
+        &quot;variantSellPrice&quot;: null,
+        &quot;variantStatus&quot;: null,
+        &quot;variantValue1&quot;: null,
+        &quot;variantValue2&quot;: null,
+        &quot;variantValue3&quot;: null,
+        &quot;fields&quot; : [
+            &quot;variantLength&quot;
+        ],
+    }
+}
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>messageId</td> <td>Message id</td> <td>string</td> <td>Y</td> <td>50</td> <td>Message Id</td></tr> <tr><td>type</td> <td>Data Type</td> <td>string</td> <td>Y</td> <td>20</td> <td>VARIANT</td></tr> <tr><td>messageType</td> <td>Message Type</td> <td>string</td> <td>Y</td> <td>15</td> <td>INSERT、UPDATE、DELETE</td></tr> <tr><td>params</td> <td></td> <td>object</td> <td>Y</td> <td></td> <td></td></tr> <tr><td>- vid</td> <td>variant Id</td> <td>string</td> <td>Y</td> <td>50</td> <td></td></tr> <tr><td>- variantName</td> <td>variant name</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- variantWeight</td> <td>variant weight, unit:g</td> <td>int</td> <td>Y</td> <td></td> <td></td></tr> <tr><td>- variantLength</td> <td>variant length, unit:mm</td> <td>int</td> <td>Y</td> <td></td> <td></td></tr> <tr><td>- variantWidth</td> <td>variant width, unit:mm</td> <td>int</td> <td>Y</td> <td></td> <td></td></tr> <tr><td>- variantHeight</td> <td>variant height, unit:mm</td> <td>int</td> <td>Y</td> <td></td> <td></td></tr> <tr><td>- variantImage</td> <td>variant image</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- variantSku</td> <td>variant sku</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- variantKey</td> <td>variant key</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- variantSellPrice</td> <td>variant sell price, USD</td> <td>double</td> <td>Y</td> <td></td> <td></td></tr> <tr><td>- variantStatus</td> <td>variant status</td> <td>int</td> <td>Y</td> <td>5</td> <td></td></tr> <tr><td>- variantValue1</td> <td>variant value1</td> <td>string</td> <td>Y</td> <td>100</td> <td></td></tr> <tr><td>- variantValue2</td> <td>variant value2</td> <td>string</td> <td>Y</td> <td>100</td> <td></td></tr> <tr><td>- variantValue3</td> <td>variant value3</td> <td>string</td> <td>Y</td> <td>100</td> <td></td></tr> <tr><td>- fields</td> <td>fields list</td> <td>list</td> <td>Y</td> <td>5</td> <td></td></tr></tbody></table> <p>Variant Status</p> <table><thead><tr><th>variantStatus</th> <th>Description</th></tr></thead> <tbody><tr><td>0</td> <td>Off sale</td></tr> <tr><td>1</td> <td>On sale</td></tr></tbody></table> <h3 id="stock-message"><a href="#stock-message" class="header-anchor">#</a> Stock Message</h3> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;messageId&quot;: &quot;ca72a4834cd14b9588e88ce206f614a0&quot;,
+    &quot;type&quot;: &quot;STOCK&quot;,
+    &quot;messageType&quot;: &quot;UPDATE&quot;,
+    &quot;params&quot;: {
+        &quot;1424608152007086080&quot;: [
+            {
+                &quot;vid&quot;: &quot;1424608152007086080&quot;,
+                &quot;areaId&quot;: &quot;2&quot;,
+                &quot;areaEn&quot;: &quot;US Warehouse&quot;,
+                &quot;countryCode&quot;: &quot;US&quot;,
+                &quot;storageNum&quot;: 12
+            }
+        ],
+        &quot;AE7DB9BC-4290-4C85-B8A6-F8957F3DB053&quot;: [
+            {
+                &quot;vid&quot;: &quot;AE7DB9BC-4290-4C85-B8A6-F8957F3DB053&quot;,
+                &quot;areaId&quot;: &quot;2&quot;,
+                &quot;areaEn&quot;: &quot;US Warehouse&quot;,
+                &quot;countryCode&quot;: &quot;US&quot;,
+                &quot;storageNum&quot;: 1
+            }
+        ]
+    }
+}
+</code></pre></div><h3 id="order-message"><a href="#order-message" class="header-anchor">#</a> Order message</h3> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;messageId&quot;: &quot;7cceede817dc47ed9748328b64353c5c&quot;,
+    &quot;type&quot;: &quot;ORDER&quot;,
+    &quot;messageType&quot;: &quot;UPDATE&quot;,
+    &quot;params&quot;: {
+        &quot;orderNumber&quot;: &quot;api_52f268d40b8d460e82c0683955e63cc9&quot;,
+        &quot;cjOrderId&quot;: &quot;210823100016290555&quot;,
+        &quot;orderStatus&quot;: &quot;CREATED&quot;,
+        &quot;logisticName&quot;: &quot;CJPacket Ordinary&quot;,
+        &quot;trackNumber&quot;: null,
+        &quot;createDate&quot;: &quot;2021-08-23 11:31:45&quot;,
+        &quot;updateDate&quot;: &quot;2021-08-23 11:31:45&quot;,
+        &quot;payDate&quot;: null,
+        &quot;deliveryDate&quot;: null,
+        &quot;completeDate&quot;: null,
+        &quot;orderItems&quot;: [
+            &quot;vid&quot;: &quot;1392053744945991680&quot;,
+			&quot;quantity&quot;: 1,
+			&quot;sellPrice&quot;: 0.57,
+            &quot;lineItemId&quot;: &quot;2505170958390976500&quot;,
+            &quot;storeLineItemId&quot;: &quot;16045188153625&quot;,
+            &quot;productionOrderStatus&quot;: 1,
+            &quot;abnormalType&quot;: [
+                6,
+                9
+            ]
+        ]
+    }
+}
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>messageId</td> <td>Message id</td> <td>string</td> <td>Y</td> <td>50</td> <td>Message Id</td></tr> <tr><td>type</td> <td>Data Type</td> <td>string</td> <td>Y</td> <td>20</td> <td>ORDER</td></tr> <tr><td>messageType</td> <td>Message Type</td> <td>string</td> <td>Y</td> <td>15</td> <td>INSERT、UPDATE、DELETE、ORDER_CONNNECTED: This type requires special attention：The product has been re-associated in the CJ system, and the order status has been updated from incomplete to complete. At this point, The actual CJ order id is returned in this message.</td></tr> <tr><td>params</td> <td></td> <td>object</td> <td>Y</td> <td></td> <td></td></tr> <tr><td>- cjOrderId</td> <td>CJ order id</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- orderNum</td> <td>Customer order number</td> <td>string</td> <td>Y</td> <td>200</td> <td>Will be deprecated, please use orderNumber instead</td></tr> <tr><td>- orderNumber</td> <td>Customer order number</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- orderStatus</td> <td>CJ order status</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- logisticName</td> <td>logistic name</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- trackNumber</td> <td>track number</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- trackingUrl</td> <td>tracking URL</td> <td>string</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>- updateDate</td> <td>update date</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- createDate</td> <td>create date</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- payDate</td> <td>pay date</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- deliveryDate</td> <td>delivery date</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- completeDate</td> <td>complete date</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>- orderItems</td> <td>order item list</td> <td>List</td> <td></td> <td></td> <td></td></tr> <tr><td>-- vid</td> <td>Variant Id</td> <td>string</td> <td>200</td> <td></td> <td></td></tr> <tr><td>-- quantity</td> <td>quantity</td> <td>int</td> <td>20</td> <td></td> <td></td></tr> <tr><td>-- sellPrice</td> <td>Sell Price</td> <td>BigDecimal</td> <td>（18，2）</td> <td>unit：$（USA）</td> <td></td></tr> <tr><td>-- storeLineItemId</td> <td>The lineItemId of your store order</td> <td>string</td> <td>125</td> <td></td> <td></td></tr> <tr><td>-- lineItemId</td> <td>Unique ID of the order item in CJ</td> <td>string</td> <td>50</td> <td></td> <td></td></tr> <tr><td>-- productionOrderStatus</td> <td>Production Status</td> <td>Number</td> <td>1</td> <td>1=Pending Order, 2=Pending Production, 3=In Production, 4=Production Completed, 5=Production Abnormality</td> <td></td></tr> <tr><td>-- abnormalType</td> <td>Abnormal Reason</td> <td>int[]</td> <td></td> <td>6= Image link error, 9= Production drawings don't match the renderings, 10=   Missing hanging ring, 11= Mismatch between die-cutting diagram and printing diagram, 12= uneven edges, 13= letters not connected, 14= Missing order images</td> <td></td></tr></tbody></table> <h4 id="order-splitting-message"><a href="#order-splitting-message" class="header-anchor">#</a> Order splitting message</h4> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;messageId&quot;: &quot;7cceede817dc47ed9748328b64353c5c&quot;,
+    &quot;type&quot;: &quot;ORDERSPLIT&quot;,
+    &quot;messageType&quot;: &quot;UPDATE&quot;,
+    &quot;params&quot;: {
+        &quot;originalOrderId&quot;: &quot;original order id&quot;,
+        &quot;splitOrderList&quot;: [
+            {
+                &quot;createAt&quot;:1673490845706,
+                &quot;orderCode&quot;:&quot;SD1613355441583259648-2&quot;,
+                &quot;orderStatus&quot;:300,
+                &quot;productList&quot;:[
+                {
+                    &quot;sku&quot;:&quot;CJNSSYLY01043-Claret-S&quot;,
+                    &quot;vid&quot;:&quot;2547992D-CEE1-4BFD-99AC-9E30354F771F&quot;,
+                    &quot;quantity&quot;:1,
+                    &quot;productCode&quot;:&quot;1613355657229205504&quot;
+                },
+                {
+                    &quot;sku&quot;:&quot;CJJSAQXF00016-Orange&quot;,
+                    &quot;vid&quot;:&quot;A9C95BCB-D824-4AA1-A389-E86F3CCB10EF&quot;,
+                    &quot;quantity&quot;:1,
+                    &quot;productCode&quot;:&quot;1613355657229205506&quot;
+                },
+                {
+                    &quot;sku&quot;:&quot;CJNSSYCS03214-Photo Color-XXL&quot;,
+                    &quot;vid&quot;:&quot;E5FED43E-F9DE-483F-ADCE-8C95D3380315&quot;,
+                    &quot;quantity&quot;:1,
+                    &quot;productCode&quot;:&quot;1613355657229205507&quot;
+                }
+                ]
+            },
+            {
+                &quot;createAt&quot;:1673490845706,
+                &quot;orderCode&quot;:&quot;SD1613355441583259648-1&quot;,
+                &quot;orderStatus&quot;:300,
+                &quot;productList&quot;:[
+                    {
+                        &quot;sku&quot;:&quot;CJNSSYLY01043-White-M&quot;,
+                        &quot;vid&quot;:&quot;0550DFC6-7FF7-4662-AE7D-B4DF0E4EB24A&quot;,
+                        &quot;quantity&quot;:1,
+                        &quot;productCode&quot;:&quot;1613355657229205505&quot;
+                    }
+                ]
+            }
+        ],
+        &quot;orderSplitTime&quot;: &quot;拆单时间&quot;
+    }
+}
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>messageId</td> <td>Message id</td> <td>string</td> <td>Y</td> <td>50</td> <td>Message Id</td></tr> <tr><td>type</td> <td>Data Type</td> <td>string</td> <td>Y</td> <td>20</td> <td>ORDERSPLIT</td></tr> <tr><td>messageType</td> <td>Message Type</td> <td>string</td> <td>Y</td> <td>15</td> <td>INSERT、UPDATE、DELETE</td></tr> <tr><td>params</td> <td></td> <td>Object</td> <td>Y</td> <td></td> <td></td></tr> <tr><td>- originalOrderId</td> <td>Original CJ order id</td> <td>string</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>- orderSplitTime</td> <td>Order Split Date</td> <td>string</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>- splitOrderList</td> <td>Order List</td> <td>Order[]</td> <td>N</td> <td></td> <td></td></tr> <tr><td>- - orderCode</td> <td>CJ order id</td> <td>string</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>- - createAt</td> <td>Create date</td> <td>string</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>- - orderStatus</td> <td>Order status</td> <td>int</td> <td>N</td> <td>11</td> <td></td></tr> <tr><td>- - productList</td> <td>Product Information List</td> <td>Product[]</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>- - - productCode</td> <td>product code</td> <td>string</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>- - - vid</td> <td>Variant id</td> <td>string</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>- - - quantity</td> <td>Quantity</td> <td>int</td> <td>N</td> <td>10</td> <td></td></tr> <tr><td>- - - sku</td> <td>Sku</td> <td>string</td> <td>N</td> <td>50</td> <td></td></tr></tbody></table> <h4 id="source-product-creation-result"><a href="#source-product-creation-result" class="header-anchor">#</a> Source product creation result</h4> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;messageId&quot;: &quot;7cceede817dc47ed9748328b64353c5c&quot;,
+    &quot;type&quot;: &quot;SOURCINGCREATE&quot;,
+    &quot;messageType&quot;: &quot;UPDATE&quot;,
+    &quot;params&quot;: {
+        &quot;cjProductId&quot;:&quot;0550DFC6-7FF7-4662-AE7D-B4DF0E4EB24A&quot;,
+        &quot;cjVariantId&quot;:&quot;0550DFC6-7FF7-4662-AE7D-B4DF0E4EB24A&quot;,
+        &quot;cjVariantSku&quot;:&quot;CJ123582565212&quot;,
+        &quot;cjSourcingId&quot;:&quot;125522&quot;,
+        &quot;status&quot;: &quot;completed&quot;,
+        &quot;failReason&quot;:&quot;&quot;,
+        &quot;createDate&quot;: &quot;2023-02-07 00:00:00&quot;
+    }
+}
+</code></pre></div><table><thead><tr><th>返回字段</th> <th>字段意思</th> <th>字段类型</th> <th>Required</th> <th>长度</th> <th>备注</th></tr></thead> <tbody><tr><td>messageId</td> <td>Message id</td> <td>string</td> <td>Y</td> <td>50</td> <td>Message Id</td></tr> <tr><td>type</td> <td>Data Type</td> <td>string</td> <td>Y</td> <td>20</td> <td>ORDERSPLIT</td></tr> <tr><td>messageType</td> <td>Message Type</td> <td>string</td> <td>Y</td> <td>15</td> <td>INSERT、UPDATE、DELETE</td></tr> <tr><td>params</td> <td></td> <td>Object</td> <td>Y</td> <td></td> <td></td></tr> <tr><td>- cjProductId</td> <td>CJ product id</td> <td>string</td> <td>N</td> <td>100</td> <td></td></tr> <tr><td>- cjVariantId</td> <td>CJ variant id</td> <td>string</td> <td>N</td> <td>100</td> <td></td></tr> <tr><td>- cjVariantSku</td> <td>CJ variant sku</td> <td>string</td> <td>N</td> <td>50</td> <td></td></tr> <tr><td>- cjSourcingId</td> <td>CJ sourcing Id</td> <td>string</td> <td>N</td> <td>50</td> <td></td></tr> <tr><td>- status</td> <td>status</td> <td>string</td> <td>N</td> <td>20</td> <td></td></tr> <tr><td>- failReason</td> <td>fail reason</td> <td>string</td> <td>N</td> <td>20</td> <td></td></tr> <tr><td>- createDate</td> <td>create date</td> <td>String</td> <td>N</td> <td>50</td> <td></td></tr></tbody></table> <h3 id="logistics-message"><a href="#logistics-message" class="header-anchor">#</a> Logistics message</h3> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;messageId&quot;: &quot;7cceede817dc47ed9748328b64353c5c&quot;,
+    &quot;type&quot;: &quot;LOGISTIC&quot;,
+    &quot;messageType&quot;: &quot;UPDATE&quot;,
+    &quot;openId&quot;: 12312,
+     &quot;params&quot;: {
+        &quot;orderId&quot;: &quot;210823100016290555&quot;,
+        &quot;storeOrderNumbers&quot;: [&quot;orderNum1&quot;],
+        &quot;logisticName&quot;: &quot;CJPacket Ordinary&quot;,
+        &quot;trackingNumber&quot;: &quot;number12345678&quot;,
+        &quot;trackingStatus&quot;: 12,
+        &quot;logisticsTrackEvents&quot;: &quot;[{\&quot;status\&quot;:12,\&quot;activity\&quot;:\&quot; Delivered, PO Box\&quot;,\&quot;location\&quot;:\&quot; NENANA,AK 99760\&quot;,\&quot;eventTime\&quot;:\&quot;2024-01-18 07:59:22\&quot;,\&quot;statusDesc\&quot;:\&quot;Delivered\&quot;,\&quot;thirdActivity\&quot;:\&quot;Delivered, PO Box\&quot;,\&quot;thirdLocation\&quot;:\&quot;NENANA,AK 99760\&quot;,\&quot;thirdEventTime\&quot;:\&quot;2024-01-18 07:59:22\&quot;}]&quot;
+    }
+}
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>messageId</td> <td>Message Id</td> <td>string</td> <td>Y</td> <td>200</td> <td>Message Id</td></tr> <tr><td>type</td> <td>Data Type</td> <td>string</td> <td>Y</td> <td>200</td> <td>LOGISTIC</td></tr> <tr><td>messageType</td> <td>Message Type</td> <td>string</td> <td>Y</td> <td>15</td> <td>INSERT、UPDATE、DELETE</td></tr> <tr><td>params</td> <td></td> <td>object</td> <td>Y</td> <td></td> <td></td></tr> <tr><td>- orderId</td> <td>CJ order id</td> <td>string</td> <td>Y</td> <td>200</td> <td>210823100016290555</td></tr> <tr><td>- storeOrderNumbers</td> <td>Store order ids</td> <td>string[]</td> <td>Y</td> <td>200</td> <td>[&quot;orderNum1&quot;]</td></tr> <tr><td>- logisticName</td> <td>logistic name</td> <td>string</td> <td>Y</td> <td>200</td> <td>CJPacket Ordinary</td></tr> <tr><td>- trackingNumber</td> <td>tracking number</td> <td>string</td> <td>Y</td> <td>200</td> <td>number12345678</td></tr> <tr><td>- trackingUrl</td> <td>tracking URL</td> <td>string</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>- trackingStatus</td> <td>tracking status</td> <td>int</td> <td>Y</td> <td>20</td> <td>0=No tracking information available at the moment, 1=Warehouse Shipped Out, 2=Forwarder Warehouse Received, 3=Forwarder Return Initiated, 4=Forwarder Shipment Dispatched, 5=First-Leg International Transit, 6=Arrived at Destination Country, 7=Customs Clearance Initiated, 8=Customs Clearance Completed, 9=Last-Mile Pickup, 10=Out For Delivery, 11=Ready For Pickup, 12=Delivered, 13=Delivery Failed / Exception, 14=Return</td></tr> <tr><td>- logisticsTrackEvents</td> <td>logistics track events</td> <td>string</td> <td>Y</td> <td>200</td> <td>[{&quot;status&quot;:12,&quot;activity&quot;:&quot; Delivered, PO Box&quot;,&quot;location&quot;:&quot; NENANA,AK 99760&quot;,&quot;eventTime&quot;:&quot;2024-01-18 07:59:22&quot;,&quot;statusDesc&quot;:&quot;Delivered&quot;,&quot;thirdActivity&quot;:&quot;Delivered, PO Box&quot;,&quot;thirdLocation&quot;:&quot;NENANA,AK 99760&quot;,&quot;thirdEventTime&quot;:&quot;2024-01-18 07:59:22&quot;}]</td></tr></tbody></table> <h2 id="listening-example"><a href="#listening-example" class="header-anchor">#</a> Listening example</h2> <h3 id="example"><a href="#example" class="header-anchor">#</a> Example</h3> <div class="language- extra-class"><pre class="language-text"><code>package com.cj.cn.controller;
+
+import com.alibaba.fastjson.JSON;
+import com.cj.cn.constant.callback.domain.CallbackParams;
+import com.cj.cn.util.result.Result;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * CJ Webhook Listening Example
+ *
+ * @author : kay
+ */
+@RestController
+@RequestMapping(&quot;/webhookListener&quot;)
+@Slf4j
+public class TestController {
+
+    @PostMapping(&quot;/productMessage&quot;)
+    public Result productMessage(@RequestBody @Validated CallbackParams query) {
+        log.info(&quot;product message:{}&quot;, JSON.toJSONString(query));
+        return Result.success(Boolean.TRUE);
+    }
+}
+</code></pre></div><div class="language- extra-class"><pre class="language-text"><code>package com.cj.cn.constant.callback.domain;
+
+import lombok.Data;
+
+/**
+ * @author : kay
+ */
+@Data
+public class CallbackParams {
+    private String messageId;
+    private String type;
+    private Object params;
+}
+</code></pre></div><div class="language- extra-class"><pre class="language-text"><code>package com.cj.cn.constant.callback.domain;
+
+import lombok.Getter;
+import org.springframework.util.StringUtils;
+
+/**
+ * @author : kay
+ */
+@Getter
+public enum CallbackBusinessTypeEnum {
+    PRODUCT,
+    VARIANT,
+    STOCK;
+
+    public static CallbackBusinessTypeEnum create(String name) {
+        if (!StringUtils.isEmpty(name)) {
+            for (CallbackBusinessTypeEnum typeEnum: CallbackBusinessTypeEnum.values()) {
+                if (typeEnum.name().equals(name.toUpperCase())) {
+                    return typeEnum;
+                }
+            }
+        }
+        return null;
+    }
+}
+</code></pre></div></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/en/api/start/Products-Synchronization-Processing.html" class="prev">
+        Products Synchronization Processing
+      </a></span> <span class="next"><a href="/en/api/start/sandbox.html">
+        Sandbox
+      </a>
+      →
+    </span></p></div> </main></div><div class="global-ui"><!----></div></div>
+    <script src="/assets/js/app.929674c4.js" defer></script><script src="/assets/js/2.b4e2210f.js" defer></script><script src="/assets/js/1.d082965a.js" defer></script><script src="/assets/js/60.ca354842.js" defer></script>
+  </body>
+</html>

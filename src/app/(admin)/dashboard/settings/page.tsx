@@ -18,6 +18,62 @@ export default function SettingsPage() {
   const [accSaving, setAccSaving] = useState(false);
   const [accForm, setAccForm] = useState({ currentPassword: '', newEmail: '', newPassword: '', confirmPassword: '' });
   const { data: session } = useSession();
+  const [webhookBaseUrl, setWebhookBaseUrl] = useState('');
+  const [webhookEvents, setWebhookEvents] = useState({
+    product: true,
+    stock: true,
+    order: true,
+    logistics: true
+  });
+
+  useEffect(() => {
+    if (currentSettings) {
+      const dbUrl = (currentSettings as any).CJ_WEBHOOK_URL || '';
+      if (dbUrl) {
+        setWebhookBaseUrl(dbUrl.replace(/\/api\/cj-webhook$/, ''));
+      }
+      const dbEvents = (currentSettings as any).CJ_WEBHOOK_EVENTS;
+      if (Array.isArray(dbEvents)) {
+        setWebhookEvents({
+          product: dbEvents.includes('product'),
+          stock: dbEvents.includes('stock'),
+          order: dbEvents.includes('order'),
+          logistics: dbEvents.includes('logistics'),
+        });
+      }
+    }
+  }, [currentSettings]);
+
+  const handleRegisterWebhook = async () => {
+    setSaving(true);
+    setMessage('');
+    try {
+      const { registerCJWebhookAction } = await import('@/lib/actions-admin');
+      const finalBaseUrl = webhookBaseUrl.trim() || window.location.origin;
+      
+      if (!finalBaseUrl.startsWith('https://') && !finalBaseUrl.includes('localhost') && !finalBaseUrl.includes('127.0.0.1')) {
+        if (!finalBaseUrl.startsWith('http://')) {
+          setMessage('❌ Webhook base URL must start with https://');
+          setSaving(false);
+          return;
+        }
+      }
+
+      const res = await registerCJWebhookAction(finalBaseUrl, webhookEvents);
+      if (res.success) {
+        await refreshSettings();
+        setMessage('✅ Webhook registered successfully');
+        setTimeout(() => setMessage(''), 3000);
+      } else {
+        setMessage(`❌ Registration failed: ${res.message}`);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setMessage(`❌ System error: ${err.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   useEffect(() => {
     setDraft(currentSettings);
@@ -119,35 +175,6 @@ export default function SettingsPage() {
                    <option value="IDR">IDR (Rp) — Indonesia</option>
                    <option value="EUR">EUR (€) — Europe</option>
                  </select>
-              </div>
-              <div className="pt-4 border-t border-[#E2E8F0]">
-                <h4 className="text-[15px] font-black mb-2 text-[#1E293B]">Integrations</h4>
-                <p className="text-xs text-gray-500 mb-4">Register your store's webhook URL with CJ Dropshipping to receive real-time updates for products, stock, and orders.</p>
-                <button
-                  className="px-4 py-2 bg-blue-50 text-blue-600 border border-blue-200 rounded-[8px] text-sm font-bold hover:bg-blue-100 transition-all duration-200 disabled:opacity-50"
-                  disabled={saving}
-                  onClick={async () => {
-                    setSaving(true);
-                    setMessage('');
-                    try {
-                      // Dynamically import the action
-                      const { registerCJWebhookAction } = await import('@/lib/actions-admin');
-                      const baseUrl = window.location.origin;
-                      const res = await registerCJWebhookAction(baseUrl);
-                      if (res.success) {
-                        setMessage(`✅ ${res.message}`);
-                      } else {
-                        setMessage(`❌ ${res.message}`);
-                      }
-                    } catch (err: any) {
-                      setMessage(`❌ System error: ${err.message}`);
-                    } finally {
-                      setSaving(false);
-                    }
-                  }}
-                >
-                  <i className="fas fa-plug"></i> Register CJ Webhook
-                </button>
               </div>
             </div>
           )}
@@ -291,6 +318,139 @@ export default function SettingsPage() {
                   <br className="mt-1" />
                   <strong>Type 2 (Balance Payment):</strong> Pesanan langsung dibayar otomatis memotong saldo Wallet akun CJ Anda. <em>Catatan: Memerlukan saldo wallet CJ yang cukup. Jika saldo kosong ($0), proses pengiriman order akan gagal/error.</em>
                 </p>
+              </div>
+
+              <div className="pt-6 border-t border-[#E2E8F0] mt-6">
+                <h4 className="text-[15px] font-black mb-2 text-[#1E293B]">CJ Dropshipping Webhook Integration</h4>
+                <p className="text-xs text-gray-500 mb-5">
+                  Configure a secure public HTTPS callback URL to sync products, inventory updates, order status, and carrier tracking information in real-time.
+                </p>
+
+                <div className="bg-gray-50 p-6 rounded-[12px] border border-[#E2E8F0] space-y-5">
+                  {/* Status Badge */}
+                  <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+                    <span className="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Webhook Status</span>
+                    {(currentSettings as any)?.CJ_WEBHOOK_REGISTERED_AT ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-[#D1FAE5] text-[#065F46] border border-[#A7F3D0]">
+                        <i className="fas fa-check-circle"></i> Active & Registered
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]">
+                        <i className="fas fa-exclamation-circle"></i> Unregistered
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Registered Info */}
+                  {(currentSettings as any)?.CJ_WEBHOOK_REGISTERED_AT && (
+                    <div className="text-xs space-y-1.5">
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-gray-400">Registered Callback URL:</span>
+                        <span className="font-mono text-gray-700 font-semibold">{(currentSettings as any).CJ_WEBHOOK_URL}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-gray-400">Last Registration Date:</span>
+                        <span className="text-gray-700 font-bold">
+                          {new Date((currentSettings as any).CJ_WEBHOOK_REGISTERED_AT).toLocaleString('en-US', {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Base URL Input */}
+                  <div>
+                    <label className={labelClass}>Public Webhook Base URL</label>
+                    <input
+                      type="url"
+                      className={inputClass}
+                      value={webhookBaseUrl}
+                      onChange={(e) => setWebhookBaseUrl(e.target.value)}
+                      placeholder={typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}
+                    />
+                    <p className="text-[11px] text-gray-400 mt-2 font-medium">
+                      Specify your public HTTPS URL (e.g. ngrok URL `https://abcdef.ngrok-free.app` during development or production store domain). Do not use localhost.
+                    </p>
+                  </div>
+
+                  {/* Subscriptions */}
+                  <div>
+                    <label className={labelClass}>Event Subscriptions</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                      <label className="flex items-center gap-3 p-3 bg-white rounded-[8px] border border-[#E2E8F0] cursor-pointer hover:bg-gray-50 transition-all select-none">
+                        <input
+                          type="checkbox"
+                          className="accent-[#FF6B00] w-4 h-4 rounded"
+                          checked={webhookEvents.product}
+                          onChange={(e) => setWebhookEvents({ ...webhookEvents, product: e.target.checked })}
+                        />
+                        <div>
+                          <p className="text-xs font-bold text-[#1E293B]">Product Event Sync</p>
+                          <p className="text-[10px] text-gray-400">Sync off-sale status and variations</p>
+                        </div>
+                      </label>
+
+                      <label className="flex items-center gap-3 p-3 bg-white rounded-[8px] border border-[#E2E8F0] cursor-pointer hover:bg-gray-50 transition-all select-none">
+                        <input
+                          type="checkbox"
+                          className="accent-[#FF6B00] w-4 h-4 rounded"
+                          checked={webhookEvents.stock}
+                          onChange={(e) => setWebhookEvents({ ...webhookEvents, stock: e.target.checked })}
+                        />
+                        <div>
+                          <p className="text-xs font-bold text-[#1E293B]">Stock Quantity Sync</p>
+                          <p className="text-[10px] text-gray-400">Sync real-time warehouse inventory</p>
+                        </div>
+                      </label>
+
+                      <label className="flex items-center gap-3 p-3 bg-white rounded-[8px] border border-[#E2E8F0] cursor-pointer hover:bg-gray-50 transition-all select-none">
+                        <input
+                          type="checkbox"
+                          className="accent-[#FF6B00] w-4 h-4 rounded"
+                          checked={webhookEvents.order}
+                          onChange={(e) => setWebhookEvents({ ...webhookEvents, order: e.target.checked })}
+                        />
+                        <div>
+                          <p className="text-xs font-bold text-[#1E293B]">Order Fulfillment Sync</p>
+                          <p className="text-[10px] text-gray-400">Sync dispatch & status updates</p>
+                        </div>
+                      </label>
+
+                      <label className="flex items-center gap-3 p-3 bg-white rounded-[8px] border border-[#E2E8F0] cursor-pointer hover:bg-gray-50 transition-all select-none">
+                        <input
+                          type="checkbox"
+                          className="accent-[#FF6B00] w-4 h-4 rounded"
+                          checked={webhookEvents.logistics}
+                          onChange={(e) => setWebhookEvents({ ...webhookEvents, logistics: e.target.checked })}
+                        />
+                        <div>
+                          <p className="text-xs font-bold text-[#1E293B]">Logistics Tracking Sync</p>
+                          <p className="text-[10px] text-gray-400">Sync tracking numbers to customers</p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      className="px-5 py-2.5 bg-blue-50 text-blue-600 border border-blue-200 rounded-[8px] text-sm font-bold hover:bg-blue-100 transition-all duration-200 disabled:opacity-50 inline-flex items-center gap-2"
+                      disabled={saving}
+                      onClick={handleRegisterWebhook}
+                    >
+                      {saving ? (
+                        <>
+                          <i className="fas fa-spinner fa-spin"></i> Registering...
+                        </>
+                      ) : (
+                        <>
+                          <i className="fas fa-plug"></i> Register CJ Webhook Callback
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}

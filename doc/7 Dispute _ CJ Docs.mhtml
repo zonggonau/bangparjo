@@ -1,22 +1,21 @@
 From: <Saved by Blink>
 Snapshot-Content-Location: https://developers.cjdropshipping.cn/en/api/api2/api/dispute.html#_1-select-the-list-of-disputed-products-get
 Subject: 7 Dispute | CJ Docs
-Date: Mon, 4 May 2026 23:37:04 +0900
+Date: Thu, 28 May 2026 20:14:16 +0900
 MIME-Version: 1.0
 Content-Type: multipart/related;
 	type="text/html";
-	boundary="----MultipartBoundary--1NGJcFVN1qP2qpbBjAkrQMkLm7mQ9CivMq1mGsZeCP----"
+	boundary="----MultipartBoundary--3mR1kXzr3i1W77Imyhl7iF1mPpNCKHmBVa4RNqdRLj----"
 
 
-------MultipartBoundary--1NGJcFVN1qP2qpbBjAkrQMkLm7mQ9CivMq1mGsZeCP----
+------MultipartBoundary--3mR1kXzr3i1W77Imyhl7iF1mPpNCKHmBVa4RNqdRLj----
 Content-Type: text/html
-Content-ID: <frame-BA63174D4EA3C2EC3715B90AAA00D1BE@mhtml.blink>
+Content-ID: <frame-FD5A629197E243F0DF2C981E868972A4@mhtml.blink>
 Content-Transfer-Encoding: quoted-printable
 Content-Location: https://developers.cjdropshipping.cn/en/api/api2/api/dispute.html#_1-select-the-list-of-disputed-products-get
 
-<!DOCTYPE html><html lang=3D"en-US" class=3D" " data-jetski-tab-id=3D"error=
-"><head><meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3DU=
-TF-8">
+<!DOCTYPE html><html lang=3D"en-US" class=3D" "><head><meta http-equiv=3D"C=
+ontent-Type" content=3D"text/html; charset=3DUTF-8">
    =20
    =20
     <title>7 Dispute | CJ Docs</title>
@@ -45,130 +44,137 @@ esource/cj/favicon.ico">
    =20
    =20
     <link rel=3D"preload" href=3D"https://developers.cjdropshipping.cn/asse=
-ts/css/0.styles.00fe7cb9.css" as=3D"style"><link rel=3D"preload" href=3D"ht=
-tps://developers.cjdropshipping.cn/assets/js/app.0b19ee84.js" as=3D"script"=
+ts/css/0.styles.94fac48d.css" as=3D"style"><link rel=3D"preload" href=3D"ht=
+tps://developers.cjdropshipping.cn/assets/js/app.929674c4.js" as=3D"script"=
 ><link rel=3D"preload" href=3D"https://developers.cjdropshipping.cn/assets/=
-js/2.c692bfdb.js" as=3D"script"><link rel=3D"preload" href=3D"https://devel=
-opers.cjdropshipping.cn/assets/js/1.af814996.js" as=3D"script"><link rel=3D=
-"preload" href=3D"https://developers.cjdropshipping.cn/assets/js/38.fc3869f=
-c.js" as=3D"script"><link rel=3D"prefetch" href=3D"https://developers.cjdro=
-pshipping.cn/assets/js/10.21d77110.js"><link rel=3D"prefetch" href=3D"https=
-://developers.cjdropshipping.cn/assets/js/11.52bd7480.js"><link rel=3D"pref=
-etch" href=3D"https://developers.cjdropshipping.cn/assets/js/12.5d1b28ba.js=
-"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/asset=
-s/js/13.145f30af.js"><link rel=3D"prefetch" href=3D"https://developers.cjdr=
-opshipping.cn/assets/js/14.d5eb5bb0.js"><link rel=3D"prefetch" href=3D"http=
-s://developers.cjdropshipping.cn/assets/js/15.2f272700.js"><link rel=3D"pre=
-fetch" href=3D"https://developers.cjdropshipping.cn/assets/js/16.97c2c4a8.j=
-s"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/asse=
-ts/js/17.50f4a103.js"><link rel=3D"prefetch" href=3D"https://developers.cjd=
-ropshipping.cn/assets/js/18.04f82676.js"><link rel=3D"prefetch" href=3D"htt=
-ps://developers.cjdropshipping.cn/assets/js/19.d0969a6e.js"><link rel=3D"pr=
-efetch" href=3D"https://developers.cjdropshipping.cn/assets/js/20.073b23fa.=
+js/2.b4e2210f.js" as=3D"script"><link rel=3D"preload" href=3D"https://devel=
+opers.cjdropshipping.cn/assets/js/1.d082965a.js" as=3D"script"><link rel=3D=
+"preload" href=3D"https://developers.cjdropshipping.cn/assets/js/53.b6e8ed1=
+2.js" as=3D"script"><link rel=3D"prefetch" href=3D"https://developers.cjdro=
+pshipping.cn/assets/js/10.57318f89.js"><link rel=3D"prefetch" href=3D"https=
+://developers.cjdropshipping.cn/assets/js/100.3e28a9f0.js"><link rel=3D"pre=
+fetch" href=3D"https://developers.cjdropshipping.cn/assets/js/101.39a76499.=
 js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/ass=
-ets/js/21.d7a23fcc.js"><link rel=3D"prefetch" href=3D"https://developers.cj=
-dropshipping.cn/assets/js/22.6799b1e2.js"><link rel=3D"prefetch" href=3D"ht=
-tps://developers.cjdropshipping.cn/assets/js/23.721a8a61.js"><link rel=3D"p=
-refetch" href=3D"https://developers.cjdropshipping.cn/assets/js/24.6bc56bdd=
+ets/js/11.9681b6ca.js"><link rel=3D"prefetch" href=3D"https://developers.cj=
+dropshipping.cn/assets/js/12.13e31f8d.js"><link rel=3D"prefetch" href=3D"ht=
+tps://developers.cjdropshipping.cn/assets/js/13.e047031b.js"><link rel=3D"p=
+refetch" href=3D"https://developers.cjdropshipping.cn/assets/js/14.57d26efa=
 .js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/as=
-sets/js/25.5473b482.js"><link rel=3D"prefetch" href=3D"https://developers.c=
-jdropshipping.cn/assets/js/26.688a96b8.js"><link rel=3D"prefetch" href=3D"h=
-ttps://developers.cjdropshipping.cn/assets/js/27.498c756b.js"><link rel=3D"=
-prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/28.5430d18=
-e.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/a=
-ssets/js/29.4451d8fd.js"><link rel=3D"prefetch" href=3D"https://developers.=
-cjdropshipping.cn/assets/js/3.20fb58e2.js"><link rel=3D"prefetch" href=3D"h=
-ttps://developers.cjdropshipping.cn/assets/js/30.54f5f7e9.js"><link rel=3D"=
-prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/31.a880638=
-7.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/a=
-ssets/js/32.4a3180b5.js"><link rel=3D"prefetch" href=3D"https://developers.=
-cjdropshipping.cn/assets/js/33.c8ff2f49.js"><link rel=3D"prefetch" href=3D"=
-https://developers.cjdropshipping.cn/assets/js/34.47b23fe8.js"><link rel=3D=
-"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/35.cc928d=
-4c.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/=
-assets/js/36.b211ab6d.js"><link rel=3D"prefetch" href=3D"https://developers=
-.cjdropshipping.cn/assets/js/37.25aa8e9b.js"><link rel=3D"prefetch" href=3D=
-"https://developers.cjdropshipping.cn/assets/js/39.77383543.js"><link rel=
-=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/4.7d30=
-1cb1.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.c=
-n/assets/js/40.9da08c6d.js"><link rel=3D"prefetch" href=3D"https://develope=
-rs.cjdropshipping.cn/assets/js/41.72a76955.js"><link rel=3D"prefetch" href=
-=3D"https://developers.cjdropshipping.cn/assets/js/42.9580eccb.js"><link re=
-l=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/43.ea=
-424ba5.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping=
-.cn/assets/js/44.211dbdf3.js"><link rel=3D"prefetch" href=3D"https://develo=
-pers.cjdropshipping.cn/assets/js/45.3c40c863.js"><link rel=3D"prefetch" hre=
-f=3D"https://developers.cjdropshipping.cn/assets/js/46.adc5a278.js"><link r=
-el=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/47.7=
-d1b3a26.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshippin=
-g.cn/assets/js/48.043d13a7.js"><link rel=3D"prefetch" href=3D"https://devel=
-opers.cjdropshipping.cn/assets/js/49.229d719b.js"><link rel=3D"prefetch" hr=
-ef=3D"https://developers.cjdropshipping.cn/assets/js/5.4827d378.js"><link r=
-el=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/50.0=
-83d7001.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshippin=
-g.cn/assets/js/51.8d9a5979.js"><link rel=3D"prefetch" href=3D"https://devel=
-opers.cjdropshipping.cn/assets/js/52.7cd96973.js"><link rel=3D"prefetch" hr=
-ef=3D"https://developers.cjdropshipping.cn/assets/js/53.577f464c.js"><link =
-rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/54.=
-37813279.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshippi=
-ng.cn/assets/js/55.23ca27d9.js"><link rel=3D"prefetch" href=3D"https://deve=
-lopers.cjdropshipping.cn/assets/js/56.626fdd5e.js"><link rel=3D"prefetch" h=
-ref=3D"https://developers.cjdropshipping.cn/assets/js/57.814d1a4b.js"><link=
- rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/58=
-.1c903753.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipp=
-ing.cn/assets/js/59.6163e7f6.js"><link rel=3D"prefetch" href=3D"https://dev=
-elopers.cjdropshipping.cn/assets/js/6.58b5d337.js"><link rel=3D"prefetch" h=
-ref=3D"https://developers.cjdropshipping.cn/assets/js/60.65b679af.js"><link=
- rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/61=
-.669d9160.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipp=
-ing.cn/assets/js/62.04e33404.js"><link rel=3D"prefetch" href=3D"https://dev=
-elopers.cjdropshipping.cn/assets/js/63.b3260aff.js"><link rel=3D"prefetch" =
-href=3D"https://developers.cjdropshipping.cn/assets/js/64.58b0670a.js"><lin=
-k rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/6=
-5.5cff75cc.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropship=
-ping.cn/assets/js/66.290c9759.js"><link rel=3D"prefetch" href=3D"https://de=
-velopers.cjdropshipping.cn/assets/js/67.5210eeba.js"><link rel=3D"prefetch"=
- href=3D"https://developers.cjdropshipping.cn/assets/js/68.83258bc6.js"><li=
+sets/js/15.9cf7a76b.js"><link rel=3D"prefetch" href=3D"https://developers.c=
+jdropshipping.cn/assets/js/16.059bb88b.js"><link rel=3D"prefetch" href=3D"h=
+ttps://developers.cjdropshipping.cn/assets/js/17.7805196f.js"><link rel=3D"=
+prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/18.c21204d=
+2.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/a=
+ssets/js/19.b14d6aaa.js"><link rel=3D"prefetch" href=3D"https://developers.=
+cjdropshipping.cn/assets/js/20.e511a287.js"><link rel=3D"prefetch" href=3D"=
+https://developers.cjdropshipping.cn/assets/js/21.39fdd88c.js"><link rel=3D=
+"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/22.1ee8fd=
+4a.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/=
+assets/js/23.79bd8fe4.js"><link rel=3D"prefetch" href=3D"https://developers=
+.cjdropshipping.cn/assets/js/24.e1d75f2b.js"><link rel=3D"prefetch" href=3D=
+"https://developers.cjdropshipping.cn/assets/js/25.57483ff9.js"><link rel=
+=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/26.564=
+82a71.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.=
+cn/assets/js/27.526c7fe7.js"><link rel=3D"prefetch" href=3D"https://develop=
+ers.cjdropshipping.cn/assets/js/28.c547f780.js"><link rel=3D"prefetch" href=
+=3D"https://developers.cjdropshipping.cn/assets/js/29.1935eaa0.js"><link re=
+l=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/3.03f=
+d7651.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.=
+cn/assets/js/30.1185a68b.js"><link rel=3D"prefetch" href=3D"https://develop=
+ers.cjdropshipping.cn/assets/js/31.1f0763fc.js"><link rel=3D"prefetch" href=
+=3D"https://developers.cjdropshipping.cn/assets/js/32.16cb6368.js"><link re=
+l=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/33.16=
+1cd6fb.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping=
+.cn/assets/js/34.ed87b653.js"><link rel=3D"prefetch" href=3D"https://develo=
+pers.cjdropshipping.cn/assets/js/35.1e3786eb.js"><link rel=3D"prefetch" hre=
+f=3D"https://developers.cjdropshipping.cn/assets/js/36.82de4642.js"><link r=
+el=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/37.4=
+4723442.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshippin=
+g.cn/assets/js/38.52749d31.js"><link rel=3D"prefetch" href=3D"https://devel=
+opers.cjdropshipping.cn/assets/js/39.2160e6f4.js"><link rel=3D"prefetch" hr=
+ef=3D"https://developers.cjdropshipping.cn/assets/js/4.b2e44605.js"><link r=
+el=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/40.e=
+9cc0480.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshippin=
+g.cn/assets/js/41.82c41017.js"><link rel=3D"prefetch" href=3D"https://devel=
+opers.cjdropshipping.cn/assets/js/42.95fd1677.js"><link rel=3D"prefetch" hr=
+ef=3D"https://developers.cjdropshipping.cn/assets/js/43.e9dead52.js"><link =
+rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/44.=
+e0ecc4c1.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshippi=
+ng.cn/assets/js/45.6e8954ed.js"><link rel=3D"prefetch" href=3D"https://deve=
+lopers.cjdropshipping.cn/assets/js/46.e6b44734.js"><link rel=3D"prefetch" h=
+ref=3D"https://developers.cjdropshipping.cn/assets/js/47.e57cd20d.js"><link=
+ rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/48=
+.3ab7ecc1.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipp=
+ing.cn/assets/js/49.7c765cba.js"><link rel=3D"prefetch" href=3D"https://dev=
+elopers.cjdropshipping.cn/assets/js/5.e7984c8e.js"><link rel=3D"prefetch" h=
+ref=3D"https://developers.cjdropshipping.cn/assets/js/50.88605760.js"><link=
+ rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/51=
+.b95117ce.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipp=
+ing.cn/assets/js/52.be5f4d1c.js"><link rel=3D"prefetch" href=3D"https://dev=
+elopers.cjdropshipping.cn/assets/js/54.d6df21c0.js"><link rel=3D"prefetch" =
+href=3D"https://developers.cjdropshipping.cn/assets/js/55.fcf133b6.js"><lin=
+k rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/5=
+6.f35edbec.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropship=
+ping.cn/assets/js/57.2ff10605.js"><link rel=3D"prefetch" href=3D"https://de=
+velopers.cjdropshipping.cn/assets/js/58.6921224f.js"><link rel=3D"prefetch"=
+ href=3D"https://developers.cjdropshipping.cn/assets/js/59.62d84a9d.js"><li=
 nk rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/=
-69.678c409b.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshi=
-pping.cn/assets/js/7.affad021.js"><link rel=3D"prefetch" href=3D"https://de=
-velopers.cjdropshipping.cn/assets/js/70.81784ccc.js"><link rel=3D"prefetch"=
- href=3D"https://developers.cjdropshipping.cn/assets/js/71.e7ab7525.js"><li=
+6.e833795e.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropship=
+ping.cn/assets/js/60.ca354842.js"><link rel=3D"prefetch" href=3D"https://de=
+velopers.cjdropshipping.cn/assets/js/61.6f9a48a6.js"><link rel=3D"prefetch"=
+ href=3D"https://developers.cjdropshipping.cn/assets/js/62.c122b850.js"><li=
 nk rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/=
-72.56ddcbe4.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshi=
-pping.cn/assets/js/73.b64ffbbe.js"><link rel=3D"prefetch" href=3D"https://d=
-evelopers.cjdropshipping.cn/assets/js/74.4f4d1233.js"><link rel=3D"prefetch=
-" href=3D"https://developers.cjdropshipping.cn/assets/js/75.72341cbf.js"><l=
+63.0dc89063.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshi=
+pping.cn/assets/js/64.f2483ab7.js"><link rel=3D"prefetch" href=3D"https://d=
+evelopers.cjdropshipping.cn/assets/js/65.79a5a61a.js"><link rel=3D"prefetch=
+" href=3D"https://developers.cjdropshipping.cn/assets/js/66.3ad59e75.js"><l=
 ink rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js=
-/76.dd96a2fd.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropsh=
-ipping.cn/assets/js/77.fe1d42c8.js"><link rel=3D"prefetch" href=3D"https://=
-developers.cjdropshipping.cn/assets/js/78.45c5be6a.js"><link rel=3D"prefetc=
-h" href=3D"https://developers.cjdropshipping.cn/assets/js/79.6b91ec19.js"><=
+/67.8bbfd580.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropsh=
+ipping.cn/assets/js/68.146a8912.js"><link rel=3D"prefetch" href=3D"https://=
+developers.cjdropshipping.cn/assets/js/69.a0d4d2e2.js"><link rel=3D"prefetc=
+h" href=3D"https://developers.cjdropshipping.cn/assets/js/7.8fb8f8fb.js"><l=
+ink rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js=
+/70.1b899d06.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropsh=
+ipping.cn/assets/js/71.521c619d.js"><link rel=3D"prefetch" href=3D"https://=
+developers.cjdropshipping.cn/assets/js/72.aacf0ae3.js"><link rel=3D"prefetc=
+h" href=3D"https://developers.cjdropshipping.cn/assets/js/73.566de254.js"><=
 link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/j=
-s/80.307b4f21.js"><link rel=3D"prefetch" href=3D"https://developers.cjdrops=
-hipping.cn/assets/js/81.f5186465.js"><link rel=3D"prefetch" href=3D"https:/=
-/developers.cjdropshipping.cn/assets/js/82.d352ee9e.js"><link rel=3D"prefet=
-ch" href=3D"https://developers.cjdropshipping.cn/assets/js/83.77417760.js">=
+s/74.40afad97.js"><link rel=3D"prefetch" href=3D"https://developers.cjdrops=
+hipping.cn/assets/js/75.c815f4c8.js"><link rel=3D"prefetch" href=3D"https:/=
+/developers.cjdropshipping.cn/assets/js/76.8b03670e.js"><link rel=3D"prefet=
+ch" href=3D"https://developers.cjdropshipping.cn/assets/js/77.af8a06b7.js">=
 <link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/=
-js/84.b91f2961.js"><link rel=3D"prefetch" href=3D"https://developers.cjdrop=
-shipping.cn/assets/js/85.3f72804a.js"><link rel=3D"prefetch" href=3D"https:=
-//developers.cjdropshipping.cn/assets/js/86.cfaac135.js"><link rel=3D"prefe=
-tch" href=3D"https://developers.cjdropshipping.cn/assets/js/87.931ae264.js"=
+js/78.633b6aa9.js"><link rel=3D"prefetch" href=3D"https://developers.cjdrop=
+shipping.cn/assets/js/79.9ae33614.js"><link rel=3D"prefetch" href=3D"https:=
+//developers.cjdropshipping.cn/assets/js/80.9a1c6709.js"><link rel=3D"prefe=
+tch" href=3D"https://developers.cjdropshipping.cn/assets/js/81.41aa178e.js"=
 ><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets=
-/js/88.af39a032.js"><link rel=3D"prefetch" href=3D"https://developers.cjdro=
-pshipping.cn/assets/js/89.fdf2d532.js"><link rel=3D"prefetch" href=3D"https=
-://developers.cjdropshipping.cn/assets/js/90.4fffbd6b.js"><link rel=3D"pref=
-etch" href=3D"https://developers.cjdropshipping.cn/assets/js/91.0599e738.js=
+/js/82.38d7f91b.js"><link rel=3D"prefetch" href=3D"https://developers.cjdro=
+pshipping.cn/assets/js/83.3c7b417e.js"><link rel=3D"prefetch" href=3D"https=
+://developers.cjdropshipping.cn/assets/js/84.580dee56.js"><link rel=3D"pref=
+etch" href=3D"https://developers.cjdropshipping.cn/assets/js/85.f09e5d6d.js=
 "><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/asset=
-s/js/92.dde39e3f.js"><link rel=3D"prefetch" href=3D"https://developers.cjdr=
-opshipping.cn/assets/js/93.6e1b0410.js"><link rel=3D"prefetch" href=3D"http=
-s://developers.cjdropshipping.cn/assets/js/94.3d13a981.js"><link rel=3D"pre=
-fetch" href=3D"https://developers.cjdropshipping.cn/assets/js/95.b4f4d80e.j=
+s/js/86.0864b7fe.js"><link rel=3D"prefetch" href=3D"https://developers.cjdr=
+opshipping.cn/assets/js/87.4ff9c429.js"><link rel=3D"prefetch" href=3D"http=
+s://developers.cjdropshipping.cn/assets/js/88.1b803e8b.js"><link rel=3D"pre=
+fetch" href=3D"https://developers.cjdropshipping.cn/assets/js/89.d77f6bb2.j=
 s"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/asse=
-ts/js/96.7f7279f0.js"><link rel=3D"prefetch" href=3D"https://developers.cjd=
-ropshipping.cn/assets/js/vendors~docsearch.82899547.js">
+ts/js/90.76cf816f.js"><link rel=3D"prefetch" href=3D"https://developers.cjd=
+ropshipping.cn/assets/js/91.5e550fbf.js"><link rel=3D"prefetch" href=3D"htt=
+ps://developers.cjdropshipping.cn/assets/js/92.9f2ae1af.js"><link rel=3D"pr=
+efetch" href=3D"https://developers.cjdropshipping.cn/assets/js/93.80baa67e.=
+js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/ass=
+ets/js/94.a485ef6c.js"><link rel=3D"prefetch" href=3D"https://developers.cj=
+dropshipping.cn/assets/js/95.0cf54396.js"><link rel=3D"prefetch" href=3D"ht=
+tps://developers.cjdropshipping.cn/assets/js/96.2c36e973.js"><link rel=3D"p=
+refetch" href=3D"https://developers.cjdropshipping.cn/assets/js/97.a14440a3=
+.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/as=
+sets/js/98.248abb84.js"><link rel=3D"prefetch" href=3D"https://developers.c=
+jdropshipping.cn/assets/js/99.a5ee64b2.js"><link rel=3D"prefetch" href=3D"h=
+ttps://developers.cjdropshipping.cn/assets/js/vendors~docsearch.cc0fc371.js=
+">
     <link rel=3D"stylesheet" href=3D"https://developers.cjdropshipping.cn/a=
-ssets/css/0.styles.00fe7cb9.css">
+ssets/css/0.styles.94fac48d.css">
   <meta name=3D"description" content=3D"CJ API enables developers to access=
  CJ system."><meta name=3D"keywords" content=3D"aliexpress&nbsp;dropshippin=
 g&nbsp;api,autods&nbsp;non&nbsp;api,oberlo&nbsp;api,aliexpress&nbsp;api&nbs=
@@ -209,7 +215,7 @@ H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373=
 ss=3D"home-link router-link-active"><img src=3D"https://developers.cjdropsh=
 ipping.cn/images/logo.png" alt=3D"CJ Docs" class=3D"logo"> <span class=3D"s=
 ite-name can-hide">CJ Docs</span></a> <div class=3D"links" style=3D"max-wid=
-th: 1784px;"><div class=3D"search-box"><input aria-label=3D"Search" autocom=
+th: 1799px;"><div class=3D"search-box"><input aria-label=3D"Search" autocom=
 plete=3D"off" spellcheck=3D"false" value=3D"" class=3D"" placeholder=3D""> =
 <!----></div> <nav class=3D"nav-links can-hide"><div class=3D"nav-item"><a =
 href=3D"https://developers.cjdropshipping.cn/en/summary/" class=3D"nav-link=
@@ -286,72 +292,76 @@ en/api/start/webhook.html" class=3D"sidebar-link">Webhook</a></li><li><a hr=
 ef=3D"https://developers.cjdropshipping.cn/en/api/start/sandbox.html" class=
 =3D"sidebar-link">Sandbox</a></li><li><a href=3D"https://developers.cjdrops=
 hipping.cn/en/api/start/limit.html" class=3D"sidebar-link">Interface Call R=
-estrictions</a></li></ul></section></li><li><section class=3D"sidebar-group=
- is-sub-group depth-1"><a href=3D"https://developers.cjdropshipping.cn/en/a=
-pi/api2/" class=3D"sidebar-heading clickable router-link-active open"><span=
->API</span> <!----></a> <ul class=3D"sidebar-links sidebar-group-items"><li=
-><section class=3D"sidebar-group is-sub-group depth-2"><p class=3D"sidebar-=
-heading"><span>Standard</span> <!----></p> <ul class=3D"sidebar-links sideb=
-ar-group-items"><li><a href=3D"https://developers.cjdropshipping.cn/en/api/=
-api2/standard/definition.html" class=3D"sidebar-link">Interface Definition<=
-/a></li><li><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/sta=
-ndard/field.html" class=3D"sidebar-link">Interface Field Definition</a></li=
-><li><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/standard/p=
-s-code.html" class=3D"sidebar-link">Appendix 1=EF=BC=9AGlobal Error Codes</=
-a></li><li><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/stan=
-dard/ps-country.html" class=3D"sidebar-link">Appendix 2=EF=BC=9ACountry Cod=
-e</a></li><li><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/s=
-tandard/ps-Platforms.html" class=3D"sidebar-link">Appendix 3=EF=BC=9APlatfo=
-rms</a></li></ul></section></li><li><section class=3D"sidebar-group is-sub-=
-group depth-2"><p class=3D"sidebar-heading open"><span>Interface</span> <!-=
----></p> <ul class=3D"sidebar-links sidebar-group-items"><li><a href=3D"htt=
-ps://developers.cjdropshipping.cn/en/api/api2/api/auth.html" class=3D"sideb=
-ar-link">1 Authentication</a></li><li><a href=3D"https://developers.cjdrops=
-hipping.cn/en/api/api2/api/setting.html" class=3D"sidebar-link">2 Setting</=
+estrictions</a></li></ul></section></li><li><a href=3D"https://developers.c=
+jdropshipping.cn/en/api/api2/mcp.html" class=3D"sidebar-link">MCP Integrati=
+on</a></li><li><section class=3D"sidebar-group is-sub-group depth-1"><a hre=
+f=3D"https://developers.cjdropshipping.cn/en/api/api2/" class=3D"sidebar-he=
+ading clickable router-link-active open"><span>API</span> <!----></a> <ul c=
+lass=3D"sidebar-links sidebar-group-items"><li><section class=3D"sidebar-gr=
+oup is-sub-group depth-2"><p class=3D"sidebar-heading"><span>Standard</span=
+> <!----></p> <ul class=3D"sidebar-links sidebar-group-items"><li><a href=
+=3D"https://developers.cjdropshipping.cn/en/api/api2/standard/definition.ht=
+ml" class=3D"sidebar-link">Interface Definition</a></li><li><a href=3D"http=
+s://developers.cjdropshipping.cn/en/api/api2/standard/field.html" class=3D"=
+sidebar-link">Interface Field Definition</a></li><li><a href=3D"https://dev=
+elopers.cjdropshipping.cn/en/api/api2/standard/ps-code.html" class=3D"sideb=
+ar-link">Appendix 1=EF=BC=9AGlobal Error Codes</a></li><li><a href=3D"https=
+://developers.cjdropshipping.cn/en/api/api2/standard/ps-country.html" class=
+=3D"sidebar-link">Appendix 2=EF=BC=9ACountry Code</a></li><li><a href=3D"ht=
+tps://developers.cjdropshipping.cn/en/api/api2/standard/ps-Platforms.html" =
+class=3D"sidebar-link">Appendix 3=EF=BC=9APlatforms</a></li></ul></section>=
+</li><li><section class=3D"sidebar-group is-sub-group depth-2"><p class=3D"=
+sidebar-heading open"><span>Interface</span> <!----></p> <ul class=3D"sideb=
+ar-links sidebar-group-items"><li><a href=3D"https://developers.cjdropshipp=
+ing.cn/en/api/api2/api/auth.html" class=3D"sidebar-link">1 Authentication</=
 a></li><li><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api/=
-product.html" class=3D"sidebar-link">3 Product</a></li><li><a href=3D"https=
-://developers.cjdropshipping.cn/en/api/api2/api/storage.html" class=3D"side=
-bar-link">4 Storage</a></li><li><a href=3D"https://developers.cjdropshippin=
-g.cn/en/api/api2/api/shopping.html" class=3D"sidebar-link">5 Shopping</a></=
-li><li><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api/logi=
-stic.html" class=3D"sidebar-link">6 Logistic</a></li><li><a href=3D"https:/=
-/developers.cjdropshipping.cn/en/api/api2/api/dispute.html" class=3D"active=
- sidebar-link" aria-current=3D"page">7 Dispute</a><ul class=3D"sidebar-sub-=
-headers"><li class=3D"sidebar-sub-header"><a href=3D"https://developers.cjd=
-ropshipping.cn/en/api/api2/api/dispute.html#_1-select-the-list-of-disputed-=
-products-get" class=3D"active sidebar-link" aria-current=3D"page">1 Select =
-the list of disputed products=EF=BC=88GET=EF=BC=89</a></li><li class=3D"sid=
-ebar-sub-header"><a href=3D"https://developers.cjdropshipping.cn/en/api/api=
-2/api/dispute.html#_2-confirm-the-dispute-post" class=3D"sidebar-link">2 Co=
-nfirm the dispute=EF=BC=88POST=EF=BC=89</a></li><li class=3D"sidebar-sub-he=
-ader"><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api/dispu=
-te.html#_3-create-dispute-post" class=3D"sidebar-link">3 Create dispute=EF=
-=BC=88POST=EF=BC=89</a></li><li class=3D"sidebar-sub-header"><a href=3D"htt=
-ps://developers.cjdropshipping.cn/en/api/api2/api/dispute.html#_4-cancel-di=
-spute-post" class=3D"sidebar-link">4 Cancel dispute=EF=BC=88POST=EF=BC=89</=
-a></li><li class=3D"sidebar-sub-header"><a href=3D"https://developers.cjdro=
-pshipping.cn/en/api/api2/api/dispute.html#_5-query-the-list-of-disputes-get=
-" class=3D"sidebar-link">5 Query the list of disputes=EF=BC=88GET=EF=BC=89<=
-/a></li><li class=3D"sidebar-sub-header"><a href=3D"https://developers.cjdr=
-opshipping.cn/en/api/api2/api/dispute.html#_6-get-dispute-detail-get" class=
-=3D"sidebar-link">6 Get dispute detail=EF=BC=88GET=EF=BC=89</a></li></ul></=
-li><li><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api/webh=
-ook.html" class=3D"sidebar-link">8 Webhook</a></li></ul></section></li></ul=
-></section></li></ul></section></li></ul> </aside> <main class=3D"page"> <d=
-iv class=3D"theme-default-content content__default"><h1 id=3D"_7-dispute"><=
-a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api/dispute.html=
-#_7-dispute" class=3D"header-anchor">#</a> 7 Dispute</h1> <h2 id=3D"_1-sele=
-ct-the-list-of-disputed-products-get"><a href=3D"https://developers.cjdrops=
-hipping.cn/en/api/api2/api/dispute.html#_1-select-the-list-of-disputed-prod=
-ucts-get" class=3D"header-anchor">#</a> 1 Select the list of disputed produ=
-cts=EF=BC=88GET=EF=BC=89</h2> <h4 id=3D"url"><a href=3D"https://developers.=
-cjdropshipping.cn/en/api/api2/api/dispute.html#url" class=3D"header-anchor"=
->#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/disputes=
-/disputeProducts</p> <h4 id=3D"curl"><a href=3D"https://developers.cjdropsh=
-ipping.cn/en/api/api2/api/dispute.html#curl" class=3D"header-anchor">#</a> =
-CURL</h4> <div class=3D"language- extra-class"><pre class=3D"language-text"=
-><code>curl --location --request GET 'https://developers.cjdropshipping.com=
-/api2.0/v1/disputes/disputeProducts?orderId=3DCJPKL7160102171YQ' \
+setting.html" class=3D"sidebar-link">2 Setting</a></li><li><a href=3D"https=
+://developers.cjdropshipping.cn/en/api/api2/api/product.html" class=3D"side=
+bar-link">3 Product</a></li><li><a href=3D"https://developers.cjdropshippin=
+g.cn/en/api/api2/api/storage.html" class=3D"sidebar-link">4 Storage</a></li=
+><li><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api/shoppi=
+ng.html" class=3D"sidebar-link">5 Shopping</a></li><li><a href=3D"https://d=
+evelopers.cjdropshipping.cn/en/api/api2/api/logistic.html" class=3D"sidebar=
+-link">6 Logistic</a></li><li><a href=3D"https://developers.cjdropshipping.=
+cn/en/api/api2/api/dispute.html" class=3D"active sidebar-link" aria-current=
+=3D"page">7 Dispute</a><ul class=3D"sidebar-sub-headers"><li class=3D"sideb=
+ar-sub-header"><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/=
+api/dispute.html#_1-select-the-list-of-disputed-products-get" class=3D"acti=
+ve sidebar-link" aria-current=3D"page">1 Select the list of disputed produc=
+ts=EF=BC=88GET=EF=BC=89</a></li><li class=3D"sidebar-sub-header"><a href=3D=
+"https://developers.cjdropshipping.cn/en/api/api2/api/dispute.html#_2-confi=
+rm-the-dispute-post" class=3D"sidebar-link">2 Confirm the dispute=EF=BC=88P=
+OST=EF=BC=89</a></li><li class=3D"sidebar-sub-header"><a href=3D"https://de=
+velopers.cjdropshipping.cn/en/api/api2/api/dispute.html#_3-create-dispute-p=
+ost" class=3D"sidebar-link">3 Create dispute=EF=BC=88POST=EF=BC=89</a></li>=
+<li class=3D"sidebar-sub-header"><a href=3D"https://developers.cjdropshippi=
+ng.cn/en/api/api2/api/dispute.html#_4-cancel-dispute-post" class=3D"sidebar=
+-link">4 Cancel dispute=EF=BC=88POST=EF=BC=89</a></li><li class=3D"sidebar-=
+sub-header"><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api=
+/dispute.html#_5-query-the-list-of-disputes-get" class=3D"sidebar-link">5 Q=
+uery the list of disputes=EF=BC=88GET=EF=BC=89</a></li><li class=3D"sidebar=
+-sub-header"><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/ap=
+i/dispute.html#_6-get-dispute-detail-get" class=3D"sidebar-link">6 Get disp=
+ute detail=EF=BC=88GET=EF=BC=89</a></li></ul></li><li><a href=3D"https://de=
+velopers.cjdropshipping.cn/en/api/api2/api/webhook.html" class=3D"sidebar-l=
+ink">8 Webhook</a></li><li><a href=3D"https://developers.cjdropshipping.cn/=
+en/api/api2/api/shop.html" class=3D"sidebar-link">9 Shop</a></li></ul></sec=
+tion></li></ul></section></li></ul></section></li></ul> </aside> <main clas=
+s=3D"page"> <div class=3D"theme-default-content content__default"><h1 id=3D=
+"_7-dispute"><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/ap=
+i/dispute.html#_7-dispute" class=3D"header-anchor">#</a> 7 Dispute</h1> <h2=
+ id=3D"_1-select-the-list-of-disputed-products-get"><a href=3D"https://deve=
+lopers.cjdropshipping.cn/en/api/api2/api/dispute.html#_1-select-the-list-of=
+-disputed-products-get" class=3D"header-anchor">#</a> 1 Select the list of =
+disputed products=EF=BC=88GET=EF=BC=89</h2> <h4 id=3D"url"><a href=3D"https=
+://developers.cjdropshipping.cn/en/api/api2/api/dispute.html#url" class=3D"=
+header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2=
+.0/v1/disputes/disputeProducts</p> <h4 id=3D"curl"><a href=3D"https://devel=
+opers.cjdropshipping.cn/en/api/api2/api/dispute.html#curl" class=3D"header-=
+anchor">#</a> CURL</h4> <div class=3D"language- extra-class"><pre class=3D"=
+language-text"><code>curl --location --request GET 'https://developers.cjdr=
+opshipping.com/api2.0/v1/disputes/disputeProducts?orderId=3DCJPKL7160102171=
+YQ' \
                 --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=
 '
 </code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th>=
@@ -969,8 +979,8 @@ div>
    =20
  =20
 
-</body></html>
-------MultipartBoundary--1NGJcFVN1qP2qpbBjAkrQMkLm7mQ9CivMq1mGsZeCP----
+<div class=3D"mermaidTooltip" style=3D"opacity: 0;"></div></body></html>
+------MultipartBoundary--3mR1kXzr3i1W77Imyhl7iF1mPpNCKHmBVa4RNqdRLj----
 Content-Type: image/png
 Content-Transfer-Encoding: base64
 Content-Location: https://developers.cjdropshipping.cn/images/logo.png
@@ -1589,7 +1599,7 @@ l/8PsBaiYYedaHH/l2j9wJfwDc6RvnRpiyECXLmvm8OCwREcwRH+J0UNzGZpUUP6RX1psm9wEnq/
 NBs9np2NC4eDcPKXrrgQGS4Y8K1IPBWMrCR/FGRXkvvD0b1Wn1y4V0pF4K3x8Aw4jaAGh1Cv008I
 rh8Hd0GZs9NETAYK8nhHYAfgOoIjOML1hf8XYAALiSMs1BkFxwAAAABJRU5ErkJggg==
 
-------MultipartBoundary--1NGJcFVN1qP2qpbBjAkrQMkLm7mQ9CivMq1mGsZeCP----
+------MultipartBoundary--3mR1kXzr3i1W77Imyhl7iF1mPpNCKHmBVa4RNqdRLj----
 Content-Type: image/svg+xml
 Content-Transfer-Encoding: quoted-printable
 Content-Location: https://developers.cjdropshipping.cn/assets/img/search.83621669.svg
@@ -1598,10 +1608,10 @@ Content-Location: https://developers.cjdropshipping.cn/assets/img/search.8362166
 000/svg" width=3D"12" height=3D"13"><g stroke-width=3D"2" stroke=3D"#aaa" f=
 ill=3D"none"><path d=3D"M11.29 11.71l-4-4"/><circle cx=3D"5" cy=3D"5" r=3D"=
 4"/></g></svg>=0A
-------MultipartBoundary--1NGJcFVN1qP2qpbBjAkrQMkLm7mQ9CivMq1mGsZeCP----
+------MultipartBoundary--3mR1kXzr3i1W77Imyhl7iF1mPpNCKHmBVa4RNqdRLj----
 Content-Type: text/css
 Content-Transfer-Encoding: quoted-printable
-Content-Location: https://developers.cjdropshipping.cn/assets/css/0.styles.00fe7cb9.css
+Content-Location: https://developers.cjdropshipping.cn/assets/css/0.styles.94fac48d.css
 
 @charset "utf-8";
 
@@ -1998,6 +2008,18 @@ ul li a { color: rgb(44, 62, 80); }
 table td, th { text-align: left !important; }
 
 ul li a:hover { color: rgb(249, 148, 41); }
+
+.cj-mermaid-diagram { margin: 1.2rem 0px; padding: 1rem; overflow-x: auto; =
+text-align: center; background: rgb(255, 255, 255); border: 1px solid rgb(2=
+34, 236, 239); border-radius: 6px; }
+
+.cj-mermaid-diagram svg { max-width: 100%; height: auto; }
+
+.cj-mermaid-api-link text { cursor: pointer; text-decoration: underline; fi=
+ll: rgb(3, 102, 214) !important; }
+
+.cj-mermaid-error { color: rgb(204, 0, 0); text-align: left; white-space: p=
+re-wrap; }
 
 #nprogress { pointer-events: none; }
 
@@ -2938,4 +2960,4 @@ ight: 1.7; font-weight: 700; }
 er-link-active::after { top: calc(-2px + 1rem); }
   .sidebar > .sidebar-links { padding: 1rem 0px; }
 }
-------MultipartBoundary--1NGJcFVN1qP2qpbBjAkrQMkLm7mQ9CivMq1mGsZeCP------
+------MultipartBoundary--3mR1kXzr3i1W77Imyhl7iF1mPpNCKHmBVa4RNqdRLj------

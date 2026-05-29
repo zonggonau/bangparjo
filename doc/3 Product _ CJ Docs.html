@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>3 Product | CJ Docs</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" href="https://frontend.cjdropshipping.com/config-resource/cj/favicon.ico">
+    <link rel="shortcut icon" href="https://frontend.cjdropshipping.com/config-resource/cj/favicon.ico">
+    <meta name="description" content="CJ API enables developers to access CJ system.">
+    <meta name="keywords" content="aliexpress dropshipping api,autods non api,oberlo api,aliexpress api dropshipping,api dropshipping,aliexpress api for dropshipping,cjdropshipping api,amazon dropshipping api,dropshipping api integration,oberlo chrome extension aliexpress">
+    <meta name="googlebot" content="NOODP">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://frontend.cjdropshipping.com/config-resource/cj/share1200x900.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="900">
+    <meta property="og:title" content="CJdropshipping API - How To Connect Your Store To CJdropshipping">
+    <meta property="og:description" content="CJdropshipping API, link your store to CJdropshipping, import dropshipping products, Also includes AliExpress dropshipping API, AliExpress API for dropshipping, Amazon dropshipping API.">
+    <meta property="og:url" content="https://developers.cjdropshipping.com/">
+    <meta property="twitter:card" content="summary">
+    <meta property="twitter:type" content="article">
+    <meta property="twitter:domain" content="developers.cjdropshipping.com">
+    <meta property="twitter:image" content="https://frontend.cjdropshipping.com/config-resource/cj/share1200x900.jpg">
+    <meta property="twitter:title" content="CJdropshipping API - How To Connect Your Store To CJdropshipping">
+    <meta property="twitter:description" content="CJdropshipping API, link your store to CJdropshipping, import dropshipping products, Also includes AliExpress dropshipping API, AliExpress API for dropshipping, Amazon dropshipping API.">
+    <meta property="twitter:url" content="https://developers.cjdropshipping.com/">
+    <meta property="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="preload" href="/assets/css/0.styles.94fac48d.css" as="style"><link rel="preload" href="/assets/js/app.929674c4.js" as="script"><link rel="preload" href="/assets/js/2.b4e2210f.js" as="script"><link rel="preload" href="/assets/js/1.d082965a.js" as="script"><link rel="preload" href="/assets/js/37.44723442.js" as="script"><link rel="prefetch" href="/assets/js/10.57318f89.js"><link rel="prefetch" href="/assets/js/100.3e28a9f0.js"><link rel="prefetch" href="/assets/js/101.39a76499.js"><link rel="prefetch" href="/assets/js/11.9681b6ca.js"><link rel="prefetch" href="/assets/js/12.13e31f8d.js"><link rel="prefetch" href="/assets/js/13.e047031b.js"><link rel="prefetch" href="/assets/js/14.57d26efa.js"><link rel="prefetch" href="/assets/js/15.9cf7a76b.js"><link rel="prefetch" href="/assets/js/16.059bb88b.js"><link rel="prefetch" href="/assets/js/17.7805196f.js"><link rel="prefetch" href="/assets/js/18.c21204d2.js"><link rel="prefetch" href="/assets/js/19.b14d6aaa.js"><link rel="prefetch" href="/assets/js/20.e511a287.js"><link rel="prefetch" href="/assets/js/21.39fdd88c.js"><link rel="prefetch" href="/assets/js/22.1ee8fd4a.js"><link rel="prefetch" href="/assets/js/23.79bd8fe4.js"><link rel="prefetch" href="/assets/js/24.e1d75f2b.js"><link rel="prefetch" href="/assets/js/25.57483ff9.js"><link rel="prefetch" href="/assets/js/26.56482a71.js"><link rel="prefetch" href="/assets/js/27.526c7fe7.js"><link rel="prefetch" href="/assets/js/28.c547f780.js"><link rel="prefetch" href="/assets/js/29.1935eaa0.js"><link rel="prefetch" href="/assets/js/3.03fd7651.js"><link rel="prefetch" href="/assets/js/30.1185a68b.js"><link rel="prefetch" href="/assets/js/31.1f0763fc.js"><link rel="prefetch" href="/assets/js/32.16cb6368.js"><link rel="prefetch" href="/assets/js/33.161cd6fb.js"><link rel="prefetch" href="/assets/js/34.ed87b653.js"><link rel="prefetch" href="/assets/js/35.1e3786eb.js"><link rel="prefetch" href="/assets/js/36.82de4642.js"><link rel="prefetch" href="/assets/js/38.52749d31.js"><link rel="prefetch" href="/assets/js/39.2160e6f4.js"><link rel="prefetch" href="/assets/js/4.b2e44605.js"><link rel="prefetch" href="/assets/js/40.e9cc0480.js"><link rel="prefetch" href="/assets/js/41.82c41017.js"><link rel="prefetch" href="/assets/js/42.95fd1677.js"><link rel="prefetch" href="/assets/js/43.e9dead52.js"><link rel="prefetch" href="/assets/js/44.e0ecc4c1.js"><link rel="prefetch" href="/assets/js/45.6e8954ed.js"><link rel="prefetch" href="/assets/js/46.e6b44734.js"><link rel="prefetch" href="/assets/js/47.e57cd20d.js"><link rel="prefetch" href="/assets/js/48.3ab7ecc1.js"><link rel="prefetch" href="/assets/js/49.7c765cba.js"><link rel="prefetch" href="/assets/js/5.e7984c8e.js"><link rel="prefetch" href="/assets/js/50.88605760.js"><link rel="prefetch" href="/assets/js/51.b95117ce.js"><link rel="prefetch" href="/assets/js/52.be5f4d1c.js"><link rel="prefetch" href="/assets/js/53.b6e8ed12.js"><link rel="prefetch" href="/assets/js/54.d6df21c0.js"><link rel="prefetch" href="/assets/js/55.fcf133b6.js"><link rel="prefetch" href="/assets/js/56.f35edbec.js"><link rel="prefetch" href="/assets/js/57.2ff10605.js"><link rel="prefetch" href="/assets/js/58.6921224f.js"><link rel="prefetch" href="/assets/js/59.62d84a9d.js"><link rel="prefetch" href="/assets/js/6.e833795e.js"><link rel="prefetch" href="/assets/js/60.ca354842.js"><link rel="prefetch" href="/assets/js/61.6f9a48a6.js"><link rel="prefetch" href="/assets/js/62.c122b850.js"><link rel="prefetch" href="/assets/js/63.0dc89063.js"><link rel="prefetch" href="/assets/js/64.f2483ab7.js"><link rel="prefetch" href="/assets/js/65.79a5a61a.js"><link rel="prefetch" href="/assets/js/66.3ad59e75.js"><link rel="prefetch" href="/assets/js/67.8bbfd580.js"><link rel="prefetch" href="/assets/js/68.146a8912.js"><link rel="prefetch" href="/assets/js/69.a0d4d2e2.js"><link rel="prefetch" href="/assets/js/7.8fb8f8fb.js"><link rel="prefetch" href="/assets/js/70.1b899d06.js"><link rel="prefetch" href="/assets/js/71.521c619d.js"><link rel="prefetch" href="/assets/js/72.aacf0ae3.js"><link rel="prefetch" href="/assets/js/73.566de254.js"><link rel="prefetch" href="/assets/js/74.40afad97.js"><link rel="prefetch" href="/assets/js/75.c815f4c8.js"><link rel="prefetch" href="/assets/js/76.8b03670e.js"><link rel="prefetch" href="/assets/js/77.af8a06b7.js"><link rel="prefetch" href="/assets/js/78.633b6aa9.js"><link rel="prefetch" href="/assets/js/79.9ae33614.js"><link rel="prefetch" href="/assets/js/80.9a1c6709.js"><link rel="prefetch" href="/assets/js/81.41aa178e.js"><link rel="prefetch" href="/assets/js/82.38d7f91b.js"><link rel="prefetch" href="/assets/js/83.3c7b417e.js"><link rel="prefetch" href="/assets/js/84.580dee56.js"><link rel="prefetch" href="/assets/js/85.f09e5d6d.js"><link rel="prefetch" href="/assets/js/86.0864b7fe.js"><link rel="prefetch" href="/assets/js/87.4ff9c429.js"><link rel="prefetch" href="/assets/js/88.1b803e8b.js"><link rel="prefetch" href="/assets/js/89.d77f6bb2.js"><link rel="prefetch" href="/assets/js/90.76cf816f.js"><link rel="prefetch" href="/assets/js/91.5e550fbf.js"><link rel="prefetch" href="/assets/js/92.9f2ae1af.js"><link rel="prefetch" href="/assets/js/93.80baa67e.js"><link rel="prefetch" href="/assets/js/94.a485ef6c.js"><link rel="prefetch" href="/assets/js/95.0cf54396.js"><link rel="prefetch" href="/assets/js/96.2c36e973.js"><link rel="prefetch" href="/assets/js/97.a14440a3.js"><link rel="prefetch" href="/assets/js/98.248abb84.js"><link rel="prefetch" href="/assets/js/99.a5ee64b2.js"><link rel="prefetch" href="/assets/js/vendors~docsearch.cc0fc371.js">
+    <link rel="stylesheet" href="/assets/css/0.styles.94fac48d.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/en/" class="home-link router-link-active"><img src="/images/logo.png" alt="CJ Docs" class="logo"> <span class="site-name can-hide">CJ Docs</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/en/summary/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><a href="/en/api/introduction.html" class="nav-link">
+  API
+</a></div><div class="nav-item"><a href="/en/publication/notice.html" class="nav-link">
+  Notice
+</a></div><div class="nav-item"><a href="/en/about.html" class="nav-link">
+  Contact
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Select language" class="dropdown-title"><span class="title">Languages</span> <span class="arrow down"></span></button> <button type="button" aria-label="Select language" class="mobile-dropdown-title"><span class="title">Languages</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/en/api/api2/api/product.html" aria-current="page" class="nav-link router-link-exact-active router-link-active">
+  English
+</a></li><li class="dropdown-item"><!----> <a href="/zh/api/api2/api/product.html" class="nav-link">
+  简体中文
+</a></li></ul></div></div> <!----></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/en/summary/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><a href="/en/api/introduction.html" class="nav-link">
+  API
+</a></div><div class="nav-item"><a href="/en/publication/notice.html" class="nav-link">
+  Notice
+</a></div><div class="nav-item"><a href="/en/about.html" class="nav-link">
+  Contact
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Select language" class="dropdown-title"><span class="title">Languages</span> <span class="arrow down"></span></button> <button type="button" aria-label="Select language" class="mobile-dropdown-title"><span class="title">Languages</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/en/api/api2/api/product.html" aria-current="page" class="nav-link router-link-exact-active router-link-active">
+  English
+</a></li><li class="dropdown-item"><!----> <a href="/zh/api/api2/api/product.html" class="nav-link">
+  简体中文
+</a></li></ul></div></div> <!----></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span></span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/en/api/introduction.html" class="sidebar-link">Introduction</a></li><li><section class="sidebar-group is-sub-group depth-1"><a href="/en/api/start" class="sidebar-heading clickable"><span>Start</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/en/api/start/development.html" class="sidebar-link">Development</a></li><li><a href="/en/api/start/token.html" class="sidebar-link">Get Access-token</a></li><li><a href="/en/api/start/utils.html" class="sidebar-link">Practical Tool</a></li><li><a href="/en/api/start/Orders-Synchronization-Processing.html" class="sidebar-link">Orders Synchronization Processing</a></li><li><a href="/en/api/start/Products-Synchronization-Processing.html" class="sidebar-link">Products Synchronization Processing</a></li><li><a href="/en/api/start/webhook.html" class="sidebar-link">Webhook</a></li><li><a href="/en/api/start/sandbox.html" class="sidebar-link">Sandbox</a></li><li><a href="/en/api/start/limit.html" class="sidebar-link">Interface Call Restrictions</a></li></ul></section></li><li><a href="/en/api/api2/mcp.html" class="sidebar-link">MCP Integration</a></li><li><section class="sidebar-group is-sub-group depth-1"><a href="/en/api/api2/" class="sidebar-heading clickable router-link-active open"><span>API</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><section class="sidebar-group is-sub-group depth-2"><p class="sidebar-heading"><span>Standard</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/en/api/api2/standard/definition.html" class="sidebar-link">Interface Definition</a></li><li><a href="/en/api/api2/standard/field.html" class="sidebar-link">Interface Field Definition</a></li><li><a href="/en/api/api2/standard/ps-code.html" class="sidebar-link">Appendix 1：Global Error Codes</a></li><li><a href="/en/api/api2/standard/ps-country.html" class="sidebar-link">Appendix 2：Country Code</a></li><li><a href="/en/api/api2/standard/ps-Platforms.html" class="sidebar-link">Appendix 3：Platforms</a></li></ul></section></li><li><section class="sidebar-group is-sub-group depth-2"><p class="sidebar-heading open"><span>Interface</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/en/api/api2/api/auth.html" class="sidebar-link">1 Authentication</a></li><li><a href="/en/api/api2/api/setting.html" class="sidebar-link">2 Setting</a></li><li><a href="/en/api/api2/api/product.html" aria-current="page" class="active sidebar-link">3 Product</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_1-products" class="sidebar-link">1 Products</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_1-1-category-list-get" class="sidebar-link">1.1 Category List(GET)</a></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_1-2-product-list-v2-get" class="sidebar-link">1.2 Product List V2(GET)</a></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_1-3-global-warehouse-list-get" class="sidebar-link">1.3 Global Warehouse List(GET)</a></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_1-4-product-list-get" class="sidebar-link">1.4 Product List(GET)</a></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_1-5-product-details-get" class="sidebar-link">1.5 Product Details(GET)</a></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_1-6-add-to-my-product-post" class="sidebar-link">1.6 Add to My Product (POST)</a></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_1-7-my-product-list-get" class="sidebar-link">1.7 My Product List(GET)</a></li></ul></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_2-variant" class="sidebar-link">2 Variant</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_2-1-inquiry-of-all-variants-get" class="sidebar-link">2.1 Inquiry Of All Variants (GET)</a></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_2-2-variant-id-inquiry-get" class="sidebar-link">2.2 Variant Id Inquiry (GET)</a></li></ul></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_3-inventory" class="sidebar-link">3 Inventory</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_3-1-inventory-inquiry-get" class="sidebar-link">3.1 Inventory Inquiry(GET)</a></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_3-2-query-inventory-by-sku-get" class="sidebar-link">3.2 Query Inventory by SKU (GET)</a></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_3-3-query-inventory-by-product-id-get" class="sidebar-link">3.3 Query inventory by product ID (GET)</a></li></ul></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_4-product-reviews" class="sidebar-link">4 Product Reviews</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_4-1-inquiry-reviews-get" class="sidebar-link">4.1 Inquiry Reviews (GET)</a></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_4-2-inquiry-reviews-get" class="sidebar-link">4.2 Inquiry Reviews (GET)</a></li></ul></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_5-sourcing" class="sidebar-link">5 Sourcing</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_5-1-create-sourcing-post" class="sidebar-link">5.1 Create Sourcing (POST)</a></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_5-2-query-sourcing-post" class="sidebar-link">5.2 Query Sourcing(POST)</a></li></ul></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_6-product-connection" class="sidebar-link">6 Product Connection</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_6-1-query-product-connection-list-get" class="sidebar-link">6.1 Query Product Connection List (GET)</a></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_6-2-create-product-connection-post" class="sidebar-link">6.2 Create Product Connection (POST)</a></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_6-3-disconnect-product-delete" class="sidebar-link">6.3 Disconnect Product (DELETE)</a></li></ul></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_7-video" class="sidebar-link">7 Video</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_7-1-query-product-videos-post" class="sidebar-link">7.1 Query Product Videos (POST)</a></li></ul></li><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_8-image-search" class="sidebar-link">8 Image Search</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/en/api/api2/api/product.html#_8-1-query-products-by-image-post" class="sidebar-link">8.1 Query Products By Image (POST)</a></li></ul></li></ul></li><li><a href="/en/api/api2/api/storage.html" class="sidebar-link">4 Storage</a></li><li><a href="/en/api/api2/api/shopping.html" class="sidebar-link">5 Shopping</a></li><li><a href="/en/api/api2/api/logistic.html" class="sidebar-link">6 Logistic</a></li><li><a href="/en/api/api2/api/dispute.html" class="sidebar-link">7 Dispute</a></li><li><a href="/en/api/api2/api/webhook.html" class="sidebar-link">8 Webhook</a></li><li><a href="/en/api/api2/api/shop.html" class="sidebar-link">9 Shop</a></li></ul></section></li></ul></section></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="_3-product"><a href="#_3-product" class="header-anchor">#</a> 3 Product</h1> <h2 id="_1-products"><a href="#_1-products" class="header-anchor">#</a> 1 Products</h2> <h3 id="_1-1-category-list-get"><a href="#_1-1-category-list-get" class="header-anchor">#</a> 1.1 Category List(GET)</h3> <p>Get product categories from CJ.</p> <h4 id="url"><a href="#url" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/getCategory</p> <h4 id="curl"><a href="#curl" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request GET 'https://developers.cjdropshipping.com/api2.0/v1/product/getCategory' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre></div><h4 id="return"><a href="#return" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 200,
+    &quot;result&quot;: true,
+    &quot;message&quot;: &quot;Success&quot;,
+    &quot;data&quot;: [
+        {
+            &quot;categoryFirstName&quot;: &quot;Computer &amp; Office&quot;,
+            &quot;categoryFirstList&quot;: [
+                {
+                    &quot;categorySecondName&quot;: &quot;Office Electronics&quot;,
+                    &quot;categorySecondList&quot;: [
+                        {
+                            &quot;categoryId&quot;: &quot;2252588B-72E3-4397-8C92-7D9967161084&quot;,
+                            &quot;categoryName&quot;: &quot;Office &amp; School Supplies&quot;
+                        },
+                    ]...
+                }
+            ]    
+        }
+    ],
+    &quot;requestId&quot;: &quot;ae543fd1-cdd7-4a61-974a-1340fea678c6&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>categoryFirstName</td> <td>First level category name</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>categoryFirstList</td> <td>First level category list</td> <td>Array</td> <td>-</td> <td></td></tr> <tr><td>categorySecondName</td> <td>Second level category name</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>categorySecondList</td> <td>Second level category list</td> <td>Array</td> <td>-</td> <td></td></tr> <tr><td>categoryId</td> <td>Third level category ID</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>categoryName</td> <td>Third level category name</td> <td>string</td> <td>200</td> <td></td></tr></tbody></table> <p>error</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 1600100,
+    &quot;result&quot;: false,
+    &quot;message&quot;: &quot;Param error&quot;,
+    &quot;data&quot;: null,
+    &quot;requestId&quot;: &quot;323fda9d-3c94-41dc-a944-5cc1b8baf5b1&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</td> <td>error code</td> <td>int</td> <td>20</td> <td><a href="/en/api/api2/standard/ps-code.html">Reference error code</a></td></tr> <tr><td>result</td> <td>Whether or not the return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>message</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>return data</td> <td>object</td> <td></td> <td>interface data return</td></tr> <tr><td>requestId</td> <td>requestId</td> <td>string</td> <td>48</td> <td>Flag request for logging errors</td></tr></tbody></table> <h3 id="_1-2-product-list-v2-get"><a href="#_1-2-product-list-v2-get" class="header-anchor">#</a> 1.2 Product List V2(GET)</h3> <p>Get all available products from CJ with criteria inquiry supported. V2 version uses elasticsearch search engine for higher performance product search capabilities.</p> <p>Note:</p> <ol><li>Supports keyword search</li> <li>Supports multiple filter conditions such as price range, category, country, etc.</li> <li>Supports sorting functionality</li> <li>Through the features parameter, you can selectively return product details and category information</li> <li>page minimum value 1, maximum value 1000; size minimum value 1, maximum value 100</li></ol> <h4 id="url-2"><a href="#url-2" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/listV2</p> <h4 id="curl-2"><a href="#curl-2" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request GET 'https://developers.cjdropshipping.com/api2.0/v1/product/listV2?page=1&amp;size=20&amp;keyWord=hoodie' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>keyWord</td> <td>Search keyword</td> <td>string</td> <td>N</td> <td>200</td> <td>Product name or SKU keyword search</td></tr> <tr><td>page</td> <td>Page number</td> <td>int</td> <td>N</td> <td>20</td> <td>Default 1, minimum 1, maximum 1000</td></tr> <tr><td>size</td> <td>Quantity of results on each page</td> <td>int</td> <td>N</td> <td>20</td> <td>Default 10, minimum 1, maximum 100</td></tr> <tr><td>categoryId</td> <td>Category ID</td> <td>string</td> <td>N</td> <td>200</td> <td>Filter products by third level category ID</td></tr> <tr><td>lv2categoryList</td> <td>Second level category ID list</td> <td>array</td> <td>N</td> <td></td> <td>Filter products by second level category ID list</td></tr> <tr><td>lv3categoryList</td> <td>Third level category ID list</td> <td>array</td> <td>N</td> <td></td> <td>Filter products by third level category ID list</td></tr> <tr><td>countryCode</td> <td>Country code</td> <td>string</td> <td>N</td> <td>200</td> <td>Format: CN,US,GB,FR etc., filter products with inventory in specified countries</td></tr> <tr><td>startSellPrice</td> <td>Start sell price</td> <td>decimal</td> <td>N</td> <td></td> <td>Price filter start value</td></tr> <tr><td>endSellPrice</td> <td>End sell price</td> <td>decimal</td> <td>N</td> <td></td> <td>Price filter end value</td></tr> <tr><td>addMarkStatus</td> <td>Is free shipping</td> <td>int</td> <td>N</td> <td>1</td> <td>0-not free shipping, 1-free shipping</td></tr> <tr><td>productType</td> <td>Product type</td> <td>int</td> <td>N</td> <td>15</td> <td>4-Supplier product, 10-Video product, 11-Non-video product</td></tr> <tr><td>productFlag</td> <td>Product flag</td> <td>int</td> <td>N</td> <td>1</td> <td>0-Trending products, 1-New products, 2-Video products, 3-Slow-moving products</td></tr> <tr><td>startWarehouseInventory</td> <td>Start warehouse inventory</td> <td>int</td> <td>N</td> <td></td> <td>Filter products with inventory greater than or equal to this value</td></tr> <tr><td>endWarehouseInventory</td> <td>End warehouse inventory</td> <td>int</td> <td>N</td> <td></td> <td>Filter products with inventory less than or equal to this value</td></tr> <tr><td>verifiedWarehouse</td> <td>Verified warehouse type</td> <td>int</td> <td>N</td> <td>1</td> <td>null/0-All(default), 1-Verified inventory, 2-Unverified inventory</td></tr> <tr><td>timeStart</td> <td>Listing time filter start</td> <td>long</td> <td>N</td> <td></td> <td>Listing start time timestamp (milliseconds)</td></tr> <tr><td>timeEnd</td> <td>Listing time filter end</td> <td>long</td> <td>N</td> <td></td> <td>Listing end time timestamp (milliseconds)</td></tr> <tr><td>zonePlatform</td> <td>Zone platform suggestion</td> <td>string</td> <td>N</td> <td>200</td> <td>Such as: shopify,ebay,amazon,tiktok,etsy etc.</td></tr> <tr><td>isWarehouse</td> <td>Is global warehouse search</td> <td>boolean</td> <td>N</td> <td>1</td> <td>true-yes, false-no</td></tr> <tr><td>sort</td> <td>Sort direction</td> <td>string</td> <td>N</td> <td>4</td> <td>desc-descending(default) / asc-ascending</td></tr> <tr><td>orderBy</td> <td>Sort field</td> <td>int</td> <td>N</td> <td>20</td> <td>0=best match(default); 1=listing count; 2=sell price; 3=create time; 4=inventory</td></tr> <tr><td>features</td> <td>Features list</td> <td>array</td> <td>N</td> <td>200</td> <td>Supported values: enable_description(return product details), enable_category(return product category information), enable_combine(return combine product info), enable_video(return video IDs)</td></tr> <tr><td>supplierId</td> <td>Supplier ID</td> <td>string</td> <td>N</td> <td>200</td> <td>Filter products by supplier ID</td></tr> <tr><td>hasCertification</td> <td>Has certification</td> <td>int</td> <td>N</td> <td>1</td> <td>0-No, 1-Yes</td></tr> <tr><td>isSelfPickup</td> <td>Is self pickup</td> <td>int</td> <td>N</td> <td>1</td> <td>0-No, 1-Yes</td></tr> <tr><td>customization</td> <td>Is customization product</td> <td>int</td> <td>N</td> <td>1</td> <td>0-No, 1-Yes</td></tr></tbody></table> <h4 id="return-2"><a href="#return-2" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 200,
+    &quot;result&quot;: true,
+    &quot;message&quot;: &quot;Success&quot;,
+    &quot;data&quot;: {
+        &quot;pageSize&quot;: 20,
+        &quot;pageNumber&quot;: 1,
+        &quot;totalRecords&quot;: 1000,
+        &quot;totalPages&quot;: 50,
+        &quot;content&quot;: [
+            {
+                &quot;productList&quot;: [
+                    {
+                        &quot;id&quot;: &quot;04A22450-67F0-4617-A132-E7AE7F8963B0&quot;,
+                        &quot;nameEn&quot;: &quot;Personalized Belly-baring Cat Ear Hoody Coat&quot;,
+                        &quot;sku&quot;: &quot;CJNSSYWY01847&quot;,
+                        &quot;spu&quot;: &quot;CJNSSYWY01847&quot;,
+                        &quot;bigImage&quot;: &quot;https://cc-west-usa.oss-us-west-1.aliyuncs.com/20210129/2167381084610.png&quot;,
+                        &quot;sellPrice&quot;: &quot;11.85&quot;,
+                        &quot;nowPrice&quot;: &quot;9.50&quot;,
+                        &quot;listedNum&quot;: 100,
+                        &quot;categoryId&quot;: &quot;5E656DFB-9BAE-44DD-A755-40AFA2E0E686&quot;,
+                        &quot;threeCategoryName&quot;: &quot;Hoodies &amp; Sweatshirts&quot;,
+                        &quot;twoCategoryId&quot;: &quot;5E656DFB-9BAE-44DD-A755-40AFA2E0E685&quot;,
+                        &quot;twoCategoryName&quot;: &quot;Tops &amp; Sets&quot;,
+                        &quot;oneCategoryId&quot;: &quot;5E656DFB-9BAE-44DD-A755-40AFA2E0E684&quot;,
+                        &quot;oneCategoryName&quot;: &quot;Women's Clothing&quot;,
+                        &quot;addMarkStatus&quot;: 1,
+                        &quot;isVideo&quot;: 0,
+                        &quot;videoList&quot;: [],
+                        &quot;productType&quot;: &quot;ORDINARY_PRODUCT&quot;,
+                        &quot;supplierName&quot;: &quot;&quot;,
+                        &quot;createAt&quot;: 1609228800000,
+                        &quot;warehouseInventoryNum&quot;: 500,
+                        &quot;totalVerifiedInventory&quot;: 500,
+                        &quot;totalUnVerifiedInventory&quot;: 0,
+                        &quot;verifiedWarehouse&quot;: 1,
+                        &quot;customization&quot;: 0,
+                        &quot;hasCECertification&quot;: 0,
+                        &quot;isCollect&quot;: 0,
+                        &quot;myProduct&quot;: false,
+                        &quot;discountPrice&quot;: &quot;9.50&quot;,
+                        &quot;discountPriceRate&quot;: &quot;20&quot;,
+                        &quot;description&quot;: &quot;Product description...&quot;,
+                        &quot;deliveryCycle&quot;: &quot;3-5&quot;,
+                        &quot;saleStatus&quot;: &quot;3&quot;,
+                        &quot;authorityStatus&quot;: &quot;1&quot;,
+                        &quot;isPersonalized&quot;: 0
+                    }
+                ],
+                &quot;relatedCategoryList&quot;: [
+                    {
+                        &quot;categoryId&quot;: &quot;xxx&quot;,
+                        &quot;categoryName&quot;: &quot;Hoodies&quot;
+                    }
+                ],
+                &quot;keyWord&quot;: &quot;hoodie&quot;,
+                &quot;keyWordOld&quot;: &quot;hoodie&quot;
+            }
+        ]
+    },
+    &quot;requestId&quot;: &quot;f95cd31d-3907-47ce-ac1a-dfdee4315960&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>pageSize</td> <td>Page size</td> <td>long</td> <td>20</td> <td>Number of products per page</td></tr> <tr><td>pageNumber</td> <td>Current page number</td> <td>long</td> <td>20</td> <td>Current requested page number, starts from 1</td></tr> <tr><td>totalRecords</td> <td>Total records</td> <td>long</td> <td>20</td> <td>Total number of products matching criteria, Maximum value: 6000.</td></tr> <tr><td>totalPages</td> <td>Total pages</td> <td>long</td> <td>20</td> <td>Total pages</td></tr> <tr><td>content</td> <td>Content list</td> <td>array</td> <td></td> <td>Product data list</td></tr></tbody></table> <p><strong>CjProductInfoSearchV2DTO object in content:</strong></p> <table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>productList</td> <td>Product list</td> <td>Product[]</td> <td></td> <td>Product information array</td></tr> <tr><td>relatedCategoryList</td> <td>Related category list</td> <td>array</td> <td></td> <td>Related categories matched by search keyword list</td></tr> <tr><td>keyWord</td> <td>Search keyword</td> <td>string</td> <td>200</td> <td>Actual search keyword used</td></tr> <tr><td>keyWordOld</td> <td>Original search keyword</td> <td>string</td> <td>200</td> <td>Original search keyword entered by user</td></tr></tbody></table> <p><strong>Product object in productList:</strong></p> <table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>id</td> <td>Product ID</td> <td>string</td> <td>200</td> <td>Unique product identifier</td></tr> <tr><td>nameEn</td> <td>Product name (English)</td> <td>string</td> <td>200</td> <td>Product English name</td></tr> <tr><td>sku</td> <td>Product SPU</td> <td>string</td> <td>200</td> <td>Product SPU code</td></tr> <tr><td>spu</td> <td>Product SPU</td> <td>string</td> <td>200</td> <td>Product SPU code</td></tr> <tr><td>bigImage</td> <td>Product main image</td> <td>string</td> <td>200</td> <td>Product main image URL</td></tr> <tr><td>sellPrice</td> <td>Sell price</td> <td>string</td> <td>20</td> <td>Product sell price, unit: USD</td></tr> <tr><td>nowPrice</td> <td>Discount price</td> <td>string</td> <td>20</td> <td>Product discount price</td></tr> <tr><td>discountPrice</td> <td>Best discount price</td> <td>string</td> <td>20</td> <td>Best discount price</td></tr> <tr><td>discountPriceRate</td> <td>Discount rate</td> <td>string</td> <td>20</td> <td>Discount percentage</td></tr> <tr><td>listedNum</td> <td>Listed number</td> <td>int</td> <td>20</td> <td>Number of times this product is listed on the platform</td></tr> <tr><td>isCollect</td> <td>Is collected</td> <td>int</td> <td>1</td> <td>0-not collected, 1-collected</td></tr> <tr><td>categoryId</td> <td>Third level category ID</td> <td>string</td> <td>200</td> <td>Product third level category ID</td></tr> <tr><td>threeCategoryName</td> <td>Third level category name</td> <td>string</td> <td>200</td> <td>Third level category name (returned only when features contains enable_category)</td></tr> <tr><td>twoCategoryId</td> <td>Second level category ID</td> <td>string</td> <td>200</td> <td>Product second level category ID</td></tr> <tr><td>twoCategoryName</td> <td>Second level category name</td> <td>string</td> <td>200</td> <td>Second level category name (returned only when features contains enable_category)</td></tr> <tr><td>oneCategoryId</td> <td>First level category ID</td> <td>string</td> <td>200</td> <td>Product first level category ID</td></tr> <tr><td>oneCategoryName</td> <td>First level category name</td> <td>string</td> <td>200</td> <td>First level category name (returned only when features contains enable_category)</td></tr> <tr><td>addMarkStatus</td> <td>Is free shipping</td> <td>int</td> <td>1</td> <td>0-not free shipping, 1-free shipping</td></tr> <tr><td>isVideo</td> <td>Has video</td> <td>int</td> <td>1</td> <td>0-no video, 1-has video</td></tr> <tr><td>videoList</td> <td>Video ID list</td> <td>array</td> <td></td> <td>Product video ID collection (returned only when features contains enable_video)</td></tr> <tr><td>productType</td> <td>Product type</td> <td>string</td> <td>20</td> <td>Product type code</td></tr> <tr><td>supplierName</td> <td>Supplier name</td> <td>string</td> <td>200</td> <td>Product supplier name</td></tr> <tr><td>createAt</td> <td>Create time</td> <td>long</td> <td>20</td> <td>Product create timestamp (milliseconds)</td></tr> <tr><td>setRecommendedTime</td> <td>Recommended time</td> <td>long</td> <td>20</td> <td>Set recommended timestamp</td></tr> <tr><td>warehouseInventoryNum</td> <td>Warehouse inventory number</td> <td>long</td> <td>20</td> <td>Total inventory number</td></tr> <tr><td>totalVerifiedInventory</td> <td>Total verified inventory</td> <td>int</td> <td>20</td> <td>Total verified inventory</td></tr> <tr><td>totalUnVerifiedInventory</td> <td>Total unverified inventory</td> <td>int</td> <td>20</td> <td>Total unverified inventory</td></tr> <tr><td>verifiedWarehouse</td> <td>Verified warehouse identifier</td> <td>int</td> <td>1</td> <td>1-Verified inventory, 2-Unverified inventory</td></tr> <tr><td>customization</td> <td>Is customization product</td> <td>int</td> <td>1</td> <td>0-No, 1-Yes</td></tr> <tr><td>isPersonalized</td> <td>Is personalized customization</td> <td>int</td> <td>1</td> <td>0-No, 1-Yes</td></tr> <tr><td>hasCECertification</td> <td>Has CE certification</td> <td>int</td> <td>1</td> <td>0-No, 1-Yes</td></tr> <tr><td>myProduct</td> <td>Is added to my products</td> <td>boolean</td> <td>1</td> <td>true-added, false-not added</td></tr> <tr><td>description</td> <td>Product description</td> <td>string</td> <td>2000</td> <td>Detailed product description (returned only when features contains enable_description)</td></tr> <tr><td>deliveryCycle</td> <td>Delivery cycle</td> <td>string</td> <td>20</td> <td>Product delivery cycle in days</td></tr> <tr><td>saleStatus</td> <td>Sale status</td> <td>string</td> <td>2</td> <td>Fixed at 3, indicating that the product is in on sale state，3-On Sale</td></tr> <tr><td>authorityStatus</td> <td>User visible permission</td> <td>string</td> <td>1</td> <td>0-private visible, 1-all visible</td></tr> <tr><td>autStatus</td> <td>Product visibility</td> <td>string</td> <td>1</td> <td>Product visibility status</td></tr> <tr><td>isAut</td> <td>Is permanent private</td> <td>string</td> <td>1</td> <td>0-not permanent private, 1-permanent private</td></tr> <tr><td>isList</td> <td>Is listed</td> <td>int</td> <td>1</td> <td>0-not listed, 1-listed</td></tr> <tr><td>syncListedProductStatus</td> <td>Listing status</td> <td>string</td> <td>1</td> <td>0-pending, 1-listing, 2-failed, 3-success, 4-cancelled</td></tr> <tr><td>isAd</td> <td>Is advertisement product</td> <td>int</td> <td>1</td> <td>0-not ad, 1-ad product</td></tr> <tr><td>activityId</td> <td>Advertisement product ID</td> <td>string</td> <td>200</td> <td>Advertisement activity ID</td></tr> <tr><td>directMinOrderNum</td> <td>Minimum order quantity</td> <td>string</td> <td>20</td> <td>Minimum order quantity</td></tr> <tr><td>zoneRecommendJson</td> <td>Zone recommend list</td> <td>set</td> <td></td> <td>Zone recommend tag collection</td></tr> <tr><td>inventoryInfo</td> <td>Warehouse inventory info</td> <td>string</td> <td></td> <td>Warehouse inventory details JSON</td></tr> <tr><td>variantKeyEn</td> <td>Variant property</td> <td>string</td> <td>200</td> <td>Variant property English description</td></tr> <tr><td>variantInventories</td> <td>Variant inventory info</td> <td>string</td> <td></td> <td>Variant inventory details JSON</td></tr> <tr><td>propertyKey</td> <td>Product logistics property key</td> <td>string</td> <td>200</td> <td>Product logistics property keywords</td></tr></tbody></table> <p>Error</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 1600100,
+    &quot;result&quot;: false,
+    &quot;message&quot;: &quot;Param error&quot;,
+    &quot;data&quot;: null,
+    &quot;requestId&quot;: &quot;323fda9d-3c94-41dc-a944-5cc1b8baf5b1&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</td> <td>Error code</td> <td>int</td> <td>20</td> <td><a href="/en/api/api2/standard/ps-code.html">Reference error code</a></td></tr> <tr><td>result</td> <td>Whether or not the return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>message</td> <td>Return message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>Return data</td> <td>object</td> <td></td> <td>Business data</td></tr> <tr><td>requestId</td> <td>Request ID</td> <td>string</td> <td>48</td> <td>Flag request for logging errors</td></tr></tbody></table> <h3 id="_1-3-global-warehouse-list-get"><a href="#_1-3-global-warehouse-list-get" class="header-anchor">#</a> 1.3 Global Warehouse List(GET)</h3> <p>Get the list of all available global warehouses.</p> <h4 id="url-3"><a href="#url-3" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/globalWarehouseList</p> <h4 id="curl-3"><a href="#curl-3" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request GET 'https://developers.cjdropshipping.com/api2.0/v1/product/globalWarehouseList' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre></div><h4 id="request-parameters"><a href="#request-parameters" class="header-anchor">#</a> Request Parameters</h4> <p>No parameters required</p> <h4 id="return-3"><a href="#return-3" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 200,
+    &quot;success&quot;: true,
+    &quot;message&quot;: &quot;Success&quot;,
+    &quot;data&quot;: [
+        {
+            &quot;areaCn&quot;: &quot;中国仓&quot;,
+            &quot;areaEn&quot;: &quot;China Warehouse&quot;,
+            &quot;areaId&quot;: 1,
+            &quot;countryCode&quot;: &quot;CN&quot;,
+            &quot;nameEn&quot;: &quot;China&quot;,
+            &quot;valueEn&quot;: &quot;CN&quot;,
+            &quot;disabled&quot;: false,
+            &quot;zh&quot;: &quot;中国仓&quot;,
+            &quot;en&quot;: &quot;China Warehouse&quot;,
+            &quot;de&quot;: &quot;China-Lager&quot;,
+            &quot;fr&quot;: &quot;Entrepôt Chine&quot;,
+            &quot;th&quot;: &quot;คลังสินค้าจีน&quot;,
+            &quot;id&quot;: &quot;1&quot;
+        },
+        {
+            &quot;areaCn&quot;: &quot;美国仓&quot;,
+            &quot;areaEn&quot;: &quot;US Warehouse&quot;,
+            &quot;areaId&quot;: 2,
+            &quot;countryCode&quot;: &quot;US&quot;,
+            &quot;nameEn&quot;: &quot;United States&quot;,
+            &quot;valueEn&quot;: &quot;US&quot;,
+            &quot;disabled&quot;: false,
+            &quot;zh&quot;: &quot;美国仓&quot;,
+            &quot;en&quot;: &quot;US Warehouse&quot;,
+            &quot;de&quot;: &quot;US-Lager&quot;,
+            &quot;fr&quot;: &quot;Entrepôt américain&quot;,
+            &quot;th&quot;: &quot;คลังสินค้าสหรัฐ&quot;,
+            &quot;id&quot;: &quot;2&quot;
+        }
+    ],
+    &quot;requestId&quot;: &quot;ae543fd1-cdd7-4a61-974a-1340fea678c6&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>areaCn</td> <td>Warehouse name (CN)</td> <td>string</td> <td>200</td> <td>Chinese name of the warehouse</td></tr> <tr><td>areaEn</td> <td>Warehouse name (EN)</td> <td>string</td> <td>200</td> <td>English name of the warehouse</td></tr> <tr><td>areaId</td> <td>Warehouse ID</td> <td>int</td> <td>20</td> <td>Unique warehouse identifier</td></tr> <tr><td>countryCode</td> <td>Country code</td> <td>string</td> <td>10</td> <td>ISO country code, e.g., CN, US, GB</td></tr> <tr><td>nameEn</td> <td>Country name (EN)</td> <td>string</td> <td>200</td> <td>English name of the country</td></tr> <tr><td>valueEn</td> <td>Warehouse code</td> <td>string</td> <td>10</td> <td>Warehouse code value, usually matches country code</td></tr> <tr><td>disabled</td> <td>Is disabled</td> <td>boolean</td> <td>1</td> <td>true-disabled, false-available</td></tr> <tr><td>zh</td> <td>Chinese name</td> <td>string</td> <td>200</td> <td>Multi-language support - Chinese</td></tr> <tr><td>en</td> <td>English name</td> <td>string</td> <td>200</td> <td>Multi-language support - English</td></tr> <tr><td>de</td> <td>German name</td> <td>string</td> <td>200</td> <td>Multi-language support - German</td></tr> <tr><td>fr</td> <td>French name</td> <td>string</td> <td>200</td> <td>Multi-language support - French</td></tr> <tr><td>th</td> <td>Thai name</td> <td>string</td> <td>200</td> <td>Multi-language support - Thai</td></tr> <tr><td>id</td> <td>Warehouse string ID</td> <td>string</td> <td>20</td> <td>String format of warehouse ID</td></tr></tbody></table> <p>error</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 1600100,
+    &quot;result&quot;: false,
+    &quot;message&quot;: &quot;Param error&quot;,
+    &quot;data&quot;: null,
+    &quot;requestId&quot;: &quot;323fda9d-3c94-41dc-a944-5cc1b8baf5b1&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</td> <td>Error code</td> <td>int</td> <td>20</td> <td><a href="/en/api/api2/standard/ps-code.html">Reference error code</a></td></tr> <tr><td>result</td> <td>Whether or not the return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>message</td> <td>Return message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>Return data</td> <td>object</td> <td></td> <td>Business data</td></tr> <tr><td>requestId</td> <td>Request ID</td> <td>string</td> <td>48</td> <td>Flag request for logging errors</td></tr></tbody></table> <h3 id="_1-4-product-list-get"><a href="#_1-4-product-list-get" class="header-anchor">#</a> 1.4 Product List(GET)</h3> <p>Get all available products from CJ, criteria inquiry supported. 20 results for each page, fixed.</p> <p>Note:</p> <ol><li>Maximum return of 200 data per page.</li> <li>Free users or v1 users are limited to a maximum of 1000 requests per day.(2024-09-30 update)</li> <li>One IP is limited to a maximum of three users.(2024-09-30 update)</li> <li>Query the product list and add &quot;deliveryTime&quot; field (hours). The values are 24, 48, 72, or null (2024-11-15 update)</li></ol> <h4 id="url-4"><a href="#url-4" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/list</p> <h4 id="curl-4"><a href="#curl-4" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request GET 'https://developers.cjdropshipping.com/api2.0/v1/product/list' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>pageNum</td> <td>Page number</td> <td>int</td> <td>N</td> <td>20</td> <td>Default 1, specifies the page number of the product list to retrieve</td></tr> <tr><td>pageSize</td> <td>Quantity of results on each page</td> <td>int</td> <td>N</td> <td>20</td> <td>Default 20, number of products returned per page, maximum 200</td></tr> <tr><td>categoryId</td> <td>category id</td> <td>string</td> <td>N</td> <td>200</td> <td>Inquiry criteria, filter products by category ID</td></tr> <tr><td>pid</td> <td>Product id</td> <td>string</td> <td>N</td> <td>200</td> <td>Filter products by unique product identifier</td></tr> <tr><td>productSku</td> <td>Product sku</td> <td>string</td> <td>N</td> <td>200</td> <td>Filter products by SKU</td></tr> <tr><td>productName</td> <td>Product name</td> <td>string</td> <td>N</td> <td>200</td> <td>Fuzzy match by product Chinese name</td></tr> <tr><td>productNameEn</td> <td>Product name(en)</td> <td>string</td> <td>N</td> <td>200</td> <td>Fuzzy match by product English name</td></tr> <tr><td>productType</td> <td>Product type</td> <td>string</td> <td>N</td> <td>200</td> <td>Optional values: ORDINARY_PRODUCT, SUPPLIER_PRODUCT - Returns all types if not provided</td></tr> <tr><td>countryCode</td> <td>countryCode</td> <td>string</td> <td>N</td> <td>200</td> <td>Example: CN, US - Filter products with inventory in specified countries</td></tr> <tr><td>deliveryTime</td> <td>Delivery Time (hours)</td> <td>string</td> <td>N</td> <td>200</td> <td>Optional values: 24 (ships within 24 hours), 48 (ships within 48 hours), 72 (ships within 72 hours) - Returns only products meeting the specified delivery time</td></tr> <tr><td>verifiedWarehouse</td> <td>Verified Inventory Type</td> <td>number</td> <td>N</td> <td>1</td> <td>Optional values: 1 (Verified), 2 (Unverified) - Not passing values means not restricting queries based on that type</td></tr> <tr><td>startInventory</td> <td>the minimum inventory</td> <td>number</td> <td>N</td> <td></td> <td>eg: 2, filter products with inventory greater than or equal to this value</td></tr> <tr><td>endInventory</td> <td>the highest inventory</td> <td>number</td> <td>N</td> <td></td> <td>eg: 10, filter products with inventory less than or equal to this value</td></tr> <tr><td>createTimeFrom</td> <td>create time(start)</td> <td>string</td> <td>N</td> <td>200</td> <td>format: yyyy-MM-dd hh:mm:ss, filter products created after this time</td></tr> <tr><td>createTimeTo</td> <td>create time(end)</td> <td>string</td> <td>N</td> <td>200</td> <td>format: yyyy-MM-dd hh:mm:ss, filter products created before this time</td></tr> <tr><td>brandOpenId</td> <td>brand id</td> <td>long</td> <td>N</td> <td>200</td> <td>Inquiry criteria, filter by brand ID</td></tr> <tr><td>minPrice</td> <td>minimum price</td> <td>number</td> <td>N</td> <td>200</td> <td>Example: 1.0 - Filter products with price greater than or equal to this value</td></tr> <tr><td>maxPrice</td> <td>maximum price</td> <td>number</td> <td>N</td> <td>200</td> <td>Example: 2.5 - Filter products with price less than or equal to this value</td></tr> <tr><td>searchType</td> <td>Search Type</td> <td>number</td> <td>N</td> <td>5</td> <td>Optional values: 0 (All products), 2 (Trending Products), 21 (Trending Products View More) - Default is 0</td></tr> <tr><td>minListedNum</td> <td>Minimum Listed Num</td> <td>number</td> <td>N</td> <td>10</td> <td>Example: 1 - Returns products with listing count greater than or equal to this value</td></tr> <tr><td>maxListedNum</td> <td>Maximum Listed Num</td> <td>number</td> <td>N</td> <td>10</td> <td>Example: 10 - Returns products with listing count less than or equal to this value</td></tr> <tr><td>sort</td> <td>Sort Type</td> <td>string</td> <td>N</td> <td>4</td> <td>Optional values: desc (descending order), asc (ascending order) - Default: desc</td></tr> <tr><td>orderBy</td> <td>Sort field</td> <td>string</td> <td>N</td> <td>20</td> <td>Optional values: createAt (sort by creation time), listedNum (sort by listing count) - Default: createAt</td></tr> <tr><td>isSelfPickup</td> <td>Does the product support self pickup</td> <td>number</td> <td>N</td> <td>1</td> <td>Optional values: 1 (supported), 0 (not supported)</td></tr> <tr><td>supplierId</td> <td>Supplier Id</td> <td>string</td> <td>N</td> <td>40</td> <td>Filter products by supplier ID</td></tr> <tr><td>isFreeShipping</td> <td>Is Free Shipping?</td> <td>int</td> <td>N</td> <td>1</td> <td>Optional values: 0 (not free), 1 (free shipping)</td></tr> <tr><td>customizationVersion</td> <td>Customization Version</td> <td>int</td> <td>N</td> <td>1</td> <td>Optional values: 1 (Platform Customized Version V1), 2 (Platform Customized Version V2), 3 (Customer Customized Version V1), 4 (Customer Customized Version V2), 5 (POD 3.0 Platform Customized) - Filter POD products by customization version</td></tr></tbody></table> <h4 id="return-4"><a href="#return-4" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+     &quot;code&quot;: 200,
+     &quot;result&quot;: true,
+     &quot;message&quot;: &quot;Success&quot;,
+     &quot;data&quot;: {
+         &quot;pageNum&quot;: 1,
+         &quot;pageSize&quot;: 20,
+         &quot;total&quot;: 1,
+         &quot;list&quot;: [
+             {
+                 &quot;pid&quot;: &quot;04A22450-67F0-4617-A132-E7AE7F8963B0&quot;,
+                 &quot;productName&quot;: &quot;[\&quot;猫耳朵卫衣\&quot;,\&quot;定制卫衣\&quot;,\&quot;个性化定制\&quot;]&quot;,
+                 &quot;productNameEn&quot;: &quot;Personalized Belly-baring Cat Ear Hoody Coat&quot;,
+                 &quot;productSku&quot;: &quot;CJNSSYWY01847&quot;,
+                 &quot;productImage&quot;: &quot;https://cc-west-usa.oss-us-west-1.aliyuncs.com/20210129/2167381084610.png&quot;,
+                 &quot;productWeight&quot;: 0,
+                 &quot;productType&quot;: null,
+                 &quot;productUnit&quot;: &quot;unit(s)&quot;,
+                 &quot;sellPrice&quot;: 11.85,
+                 &quot;categoryId&quot;: &quot;5E656DFB-9BAE-44DD-A755-40AFA2E0E686&quot;,
+                 &quot;categoryName&quot;: &quot;Women's Clothing / Tops &amp; Sets / Hoodies &amp; Sweatshirts&quot;,
+                 &quot;remark&quot;: &quot;&quot;,
+                 &quot;createTime&quot;: null,
+                 &quot;customizationVersion&quot;: 1
+             }
+         ]
+     },
+     &quot;requestId&quot;: &quot;f95cd31d-3907-47ce-ac1a-dfdee4315960&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>pageNum</td> <td>Page number</td> <td>int</td> <td>20</td> <td>Current page number</td></tr> <tr><td>pageSize</td> <td>Quantity of results on each page</td> <td>int</td> <td>20</td> <td>Number of products per page</td></tr> <tr><td>total</td> <td>Total quantity of results</td> <td>int</td> <td>20</td> <td>Total number of products matching criteria</td></tr> <tr><td>list</td> <td>Product list</td> <td>Product[]</td> <td></td> <td>List of product data</td></tr> <tr><td>pid</td> <td>Product ID</td> <td>string</td> <td>200</td> <td>Unique product identifier</td></tr> <tr><td>productName</td> <td>Product name</td> <td>string</td> <td>200</td> <td>Product Chinese name, may be a JSON array string with multiple names</td></tr> <tr><td>productNameEn</td> <td>Product name(EN)</td> <td>string</td> <td>200</td> <td>Product English name</td></tr> <tr><td>productSku</td> <td>Product sku</td> <td>string</td> <td>200</td> <td>Product SKU code</td></tr> <tr><td>productImage</td> <td>Product image</td> <td>string</td> <td>200</td> <td>Product main image URL</td></tr> <tr><td>productWeight</td> <td>Product weight</td> <td>int</td> <td>200</td> <td>Unit: g</td></tr> <tr><td>productType</td> <td>Product type</td> <td>byte</td> <td>200</td> <td>Product type code</td></tr> <tr><td>productUnit</td> <td>Product unit</td> <td>string</td> <td>48</td> <td>Product selling unit</td></tr> <tr><td>categoryId</td> <td>Category id</td> <td>string</td> <td>200</td> <td>Product category ID</td></tr> <tr><td>categoryName</td> <td>Category name</td> <td>string</td> <td>200</td> <td>Product category name</td></tr> <tr><td>remark</td> <td>Remark</td> <td>string</td> <td>200</td> <td>Product remark information</td></tr> <tr><td>addMarkStatus</td> <td>Is shipping free? (Deprecated, please use isFreeShipping)</td> <td>int</td> <td>1</td> <td>0=Not free shipping, 1=free shipping</td></tr> <tr><td>isFreeShipping</td> <td>Is shipping free?</td> <td>boolean</td> <td>1</td> <td>true for free shipping, false for paid shipping</td></tr> <tr><td>listedNum</td> <td>Listed number</td> <td>int</td> <td>200</td> <td>Number of listings for this product on the platform</td></tr> <tr><td>supplierName</td> <td>Supplier name</td> <td>string</td> <td>200</td> <td>Product supplier name</td></tr> <tr><td>supplierId</td> <td>Supplier id</td> <td>string</td> <td>200</td> <td>Product supplier ID</td></tr> <tr><td>sellPrice</td> <td>Sell price</td> <td>decimal</td> <td>-</td> <td>Product selling price</td></tr> <tr><td>createTime</td> <td>Create time</td> <td>string</td> <td>-</td> <td>Product creation time on the platform</td></tr> <tr><td>isVideo</td> <td>Has video</td> <td>int</td> <td>1</td> <td>1 means includes video, 0 means no video</td></tr> <tr><td>saleStatus</td> <td>Sale status</td> <td>int</td> <td>20</td> <td>3 means approved for sale</td></tr> <tr><td>customizationVersion</td> <td>Customization Version</td> <td>int</td> <td>1</td> <td>Custom product version number</td></tr></tbody></table> <p>Error</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 1600100,
+    &quot;result&quot;: false,
+    &quot;message&quot;: &quot;Param error&quot;,
+    &quot;data&quot;: null,
+    &quot;requestId&quot;: &quot;323fda9d-3c94-41dc-a944-5cc1b8baf5b1&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</td> <td>error code</td> <td>int</td> <td>20</td> <td><a href="/en/api/api2/standard/ps-code.html">Reference error code</a></td></tr> <tr><td>result</td> <td>Whether or not the return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>message</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>return data</td> <td>object</td> <td></td> <td>interface data return</td></tr> <tr><td>requestId</td> <td>requestId</td> <td>string</td> <td>48</td> <td>Flag request for logging errors</td></tr></tbody></table> <h3 id="_1-5-product-details-get"><a href="#_1-5-product-details-get" class="header-anchor">#</a> 1.5 Product Details(GET)</h3> <h4 id="url-5"><a href="#url-5" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/query</p> <h4 id="curl-5"><a href="#curl-5" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request GET 'https://developers.cjdropshipping.com/api2.0/v1/product/query?pid=000B9312-456A-4D31-94BD-B083E2A198E8' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>pid</td> <td>Product id</td> <td>string</td> <td>Choose one of pid, productSku, variantSku</td> <td>200</td> <td>Inquiry criteria, unique product identifier</td></tr> <tr><td>productSku</td> <td>Product sku</td> <td>string</td> <td>Choose one of pid, productSku, variantSku</td> <td>200</td> <td>Inquiry criteria, product SPU code</td></tr> <tr><td>variantSku</td> <td>variant sku</td> <td>string</td> <td>Choose one of pid, productSku, variantSku</td> <td>200</td> <td>Inquiry criteria, variant SKU code</td></tr> <tr><td>features</td> <td>features</td> <td>List</td> <td>N</td> <td>200</td> <td>Optional values: enable_combine (includes combination variants, returns combination product info when passed), enable_video (includes videos, returns product video info when passed)</td></tr> <tr><td>countryCode</td> <td>Country Code</td> <td>string</td> <td>N</td> <td>2</td> <td>Country code such as CN, US - Only returns variants with inventory in that country, no restriction if not passed</td></tr></tbody></table> <h4 id="return-5"><a href="#return-5" class="header-anchor">#</a> Return</h4> <p>Success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 200,
+    &quot;result&quot;: true,
+    &quot;message&quot;: &quot;Success&quot;,
+    &quot;data&quot;: {
+        &quot;pid&quot;: &quot;000B9312-456A-4D31-94BD-B083E2A198E8&quot;,
+        &quot;productName&quot;: &quot;[\&quot;攀爬车 拖斗车 \&quot;,\&quot;攀爬车 \&quot;,\&quot;拖斗车 \&quot;]&quot;,
+        &quot;productNameEn&quot;: &quot;Small trailer model&quot;,
+        &quot;productSku&quot;: &quot;CJJJJTJT05843&quot;,
+        &quot;bigImage&quot;: &quot;https://cf.cjdropshipping.com/quick/product/c1f9aae8-2b96-4ca7-9a67-1441d9596e3d.jpg&quot;,
+        &quot;productImageSet&quot;: [&quot;https://cf.cjdropshipping.com/quick/product/c1f9aae8-2b96-4ca7-9a67-1441d9596e3d.jpg&quot;,&quot;https://cf.cjdropshipping.com/quick/product/a7657750-4318-47e8-875f-b6220ac35354.jpg&quot;],
+        &quot;productWeight&quot;: &quot;1500.0&quot;,
+        &quot;productUnit&quot;: &quot;unit(s)&quot;,
+        &quot;productType&quot;: &quot;ORDINARY_PRODUCT&quot;,
+        &quot;categoryId&quot;: &quot;87CF251F-8D11-4DE0-A154-9694D9858EB3&quot;,
+        &quot;categoryName&quot;: &quot;Home &amp; Garden, Furniture / Home Storage / Home Office Storage&quot;,
+        &quot;entryCode&quot;: &quot;8712008900&quot;,
+        &quot;entryName&quot;: &quot;模型&quot;,
+        &quot;entryNameEn&quot;: &quot;model&quot;,
+        &quot;materialName&quot;: &quot;[\&quot;\&quot;,\&quot;金属\&quot;]&quot;,
+        &quot;materialNameEn&quot;: &quot;[\&quot;\&quot;,\&quot;metal\&quot;]&quot;,
+        &quot;materialKey&quot;: &quot;[\&quot;METAL\&quot;]&quot;,
+        &quot;packingWeight&quot;: &quot;1580.0&quot;,
+        &quot;packingName&quot;: &quot;[\&quot;\&quot;,\&quot;塑料袋\&quot;]&quot;,
+        &quot;packingNameEn&quot;: &quot;[\&quot;\&quot;,\&quot;plastic_bag\&quot;]&quot;,
+        &quot;packingKey&quot;: &quot;[\&quot;PLASTIC_BAG\&quot;]&quot;,
+        &quot;productKey&quot;: &quot;[\&quot;颜色\&quot;]&quot;,
+        &quot;productKeyEn&quot;: &quot;Color&quot;,
+        &quot;productPro&quot;: &quot;[\&quot;普货\&quot;]&quot;,
+        &quot;productProSet&quot;: [&quot;普货&quot;],
+        &quot;productProEn&quot;: &quot;[\&quot;COMMON\&quot;]&quot;,
+        &quot;productProEnSet&quot;: [&quot;COMMON&quot;],
+        &quot;sellPrice&quot;: 58.09,
+        &quot;description&quot;: &quot;....&quot;,
+        &quot;suggestSellPrice&quot;: &quot;0.97-4.08&quot;,
+        &quot;listedNum&quot;: 392,
+        &quot;status&quot;: &quot;3&quot;,
+        &quot;supplierName&quot;: &quot;&quot;,
+        &quot;supplierId&quot;: &quot;&quot;,
+        &quot;customizationVersion&quot;: 1,
+        &quot;customizationJson1&quot;: &quot;&quot;,
+        &quot;customizationJson2&quot;: &quot;&quot;,
+        &quot;customizationJson3&quot;: &quot;&quot;,
+        &quot;customizationJson4&quot;: &quot;&quot;,
+        &quot;variants&quot;: [
+            {
+                &quot;vid&quot;: &quot;D4057F56-3F09-4541-8461-9D76D014846D&quot;,
+                &quot;pid&quot;: &quot;000B9312-456A-4D31-94BD-B083E2A198E8&quot;,
+                &quot;variantName&quot;: null,
+                &quot;variantNameEn&quot;: &quot;Small trailer model Black&quot;,
+                &quot;variantSku&quot;: &quot;CJJJJTJT05843-Black&quot;,
+                &quot;variantUnit&quot;: null,
+                &quot;variantKey&quot;: &quot;Black-XXL&quot;,
+                &quot;variantLength&quot;: 300,
+                &quot;variantWidth&quot;: 200,
+                &quot;variantHeight&quot;: 100,
+                &quot;variantVolume&quot;: 6000000,
+                &quot;variantWeight&quot;: 1580.00,
+                &quot;variantSellPrice&quot;: 58.09,
+                &quot;createTime&quot;: &quot;2019-12-31T11:14:12.000+00:00&quot;
+                &quot;variantStandard&quot;: &quot;long=110,width=110,height=30&quot;,
+                &quot;variantSugSellPrice&quot;: 0.97
+                &quot;combineVariants&quot;:[{}],
+                &quot;inventories&quot;: [
+                    {
+                        &quot;countryCode&quot;: &quot;CN&quot;,
+                        &quot;totalInventory&quot;: 12912,
+                        &quot;cjInventory&quot;: 0,
+                        &quot;factoryInventory&quot;: 12912,
+                        &quot;verifiedWarehouse&quot;: 2,
+                        &quot;stock&quot;: [
+                            {
+                                &quot;stockId&quot;: &quot;{6709CCD7-0DC7-43B1-B310-17AB499E9B0A}&quot;,
+                                &quot;inventory&quot;: 0,
+                                &quot;factoryInventory&quot;: 12912
+                            }
+                        ]
+                    }
+                ]
+            }...
+        ],
+        &quot;createrTime&quot;: &quot;2019-12-24T01:06:37+08:00&quot;
+    },
+    &quot;requestId&quot;: &quot;d8dc0b6d-0ed8-4e19-8f63-3f207ac39832&quot;
+}
+</code></pre></div><p>Product</p> <table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>pid</td> <td>Product ID</td> <td>string</td> <td>200</td> <td>Unique product identifier</td></tr> <tr><td>productName</td> <td>Product name</td> <td>string</td> <td>20</td> <td>Product Chinese name, in JSON array format</td></tr> <tr><td>productNameEn</td> <td>Product name(EN)</td> <td>string</td> <td>200</td> <td>Product English name</td></tr> <tr><td>productSku</td> <td>Product sku</td> <td>string</td> <td>200</td> <td>Product SKU,eg: CJJJJTJT05843</td></tr> <tr><td>bigImage</td> <td>Product Main Image</td> <td>string</td> <td>200</td> <td>Product main image URL</td></tr> <tr><td>productImageSet</td> <td>Product Images</td> <td>string[]</td> <td>200</td> <td>eg: [&quot;https://cf.cjdropshipping.com/quick/product/c1f9aae8-2b96-4ca7-9a67-1441d9596e3d.jpg&quot;,&quot;https://cf.cjdropshipping.com/quick/product/a7657750-4318-47e8-875f-b6220ac35354.jpg&quot;]</td></tr> <tr><td>productWeight</td> <td>Product weight</td> <td>int</td> <td>200</td> <td>Unit: g</td></tr> <tr><td>productType</td> <td>Product type</td> <td>int</td> <td>200</td> <td><a href="/en/api/api2/api/product.html#product-type">Product type</a></td></tr> <tr><td>productUnit</td> <td>Product unit</td> <td>string</td> <td>48</td> <td>Product selling unit</td></tr> <tr><td>categoryId</td> <td>Category id</td> <td>string</td> <td>200</td> <td>Product category ID</td></tr> <tr><td>categoryName</td> <td>Category name</td> <td>string</td> <td>200</td> <td>Category name, third-level category, concatenated by &gt;, example: Home &amp; Garden, Furniture &gt; Home Storage &gt; Home Office Storage</td></tr> <tr><td>entryCode</td> <td>HS code</td> <td>string</td> <td>200</td> <td>Product customs code</td></tr> <tr><td>entryName</td> <td>Customs name</td> <td>string</td> <td>200</td> <td>Product customs Chinese name</td></tr> <tr><td>entryNameEn</td> <td>Customs name (EN)</td> <td>string</td> <td>200</td> <td>Product customs English name</td></tr> <tr><td>materialNameSet</td> <td>Material(ZH)</td> <td>string[]</td> <td>200</td> <td>Product material Chinese name, eg: [&quot;玻璃&quot;]</td></tr> <tr><td>materialNameEnSet</td> <td>Material (EN)</td> <td>string[]</td> <td>200</td> <td>Product material English name, eg: [&quot;Glass&quot;]</td></tr> <tr><td>packingWeight</td> <td>Package weight</td> <td>string</td> <td>200</td> <td>Unit: g, total weight including packaging,eg:444.00-3884.00</td></tr> <tr><td>packingNameSet</td> <td>Package name</td> <td>string[]</td> <td>200</td> <td>Packaging material Chinese name, eg: [&quot;plastic_bag&quot;]</td></tr> <tr><td>packingNameEnSet</td> <td>Package name (EN)</td> <td>string[]</td> <td>200</td> <td>Packaging material English name, eg: [&quot;Plastic bags&quot;]</td></tr> <tr><td>productKeySet</td> <td>Product Options(ZH)</td> <td>string[]</td> <td>200</td> <td>Product Options keywords, eg: [&quot;Color&quot;,&quot;Size&quot;]</td></tr> <tr><td>productKeyEn</td> <td>Product Options (EN)</td> <td>string</td> <td>200</td> <td>Product Options, multiple options, joined by -, eg: Color-Size</td></tr> <tr><td>productProSet</td> <td>Product logistics attributes(Chinese)</td> <td>string[]</td> <td></td> <td>Chinese description of product logistics attributes</td></tr> <tr><td>productProEnSet</td> <td>Product logistics attributes(English)</td> <td>string[]</td> <td></td> <td>English description of product logistics attributes</td></tr> <tr><td>addMarkStatus</td> <td>Is Free Shipping?</td> <td>int</td> <td>1</td> <td>0=not Free, 1=Free</td></tr> <tr><td>description</td> <td>Description</td> <td>string</td> <td>200</td> <td>Detailed product description</td></tr> <tr><td>sellPrice</td> <td>Sell price</td> <td>string</td> <td>200</td> <td>Product selling price</td></tr> <tr><td>createTime</td> <td>Create time</td> <td>string</td> <td>200</td> <td>Product creation time on the platform</td></tr> <tr><td>productVideo</td> <td>Product video ID list</td> <td>string[]</td> <td>200</td> <td>If the product contains videos and features are passed in enable_video, it will return</td></tr> <tr><td>status</td> <td>status</td> <td>string</td> <td>20</td> <td>3 means approved for sale</td></tr> <tr><td>suggestSellPrice</td> <td>suggest sell price</td> <td>string</td> <td>20</td> <td>Suggested retail price range</td></tr> <tr><td>listedNum</td> <td>listed number</td> <td>int</td> <td>20</td> <td>Number of listings for this product</td></tr> <tr><td>supplierName</td> <td>supplier name</td> <td>string</td> <td>20</td> <td>Product supplier name</td></tr> <tr><td>supplierId</td> <td>supplier Id</td> <td>string</td> <td>20</td> <td>Product supplier ID</td></tr> <tr><td>customizationVersion</td> <td>customization version</td> <td>int</td> <td>20</td> <td>Custom product version number</td></tr> <tr><td>customizationJson1</td> <td>customization json</td> <td>string</td> <td>200</td> <td>Custom information JSON data 1</td></tr> <tr><td>customizationJson2</td> <td>customization json</td> <td>string</td> <td>200</td> <td>Custom information JSON data 2</td></tr> <tr><td>customizationJson3</td> <td>customization json</td> <td>string</td> <td>200</td> <td>Custom information JSON data 3</td></tr> <tr><td>customizationJson4</td> <td>customization json</td> <td>string</td> <td>200</td> <td>Custom information JSON data 4</td></tr> <tr><td>variants</td> <td>Variants</td> <td>Variant[]</td> <td></td> <td>List of product variants</td></tr></tbody></table> <p>Variant</p> <table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>vid</td> <td>Variant Id</td> <td>string</td> <td>200</td> <td>Unique variant identifier</td></tr> <tr><td>pid</td> <td>Product Id</td> <td>string</td> <td>20</td> <td>Parent product identifier</td></tr> <tr><td>variantName</td> <td>Variant Name</td> <td>string</td> <td>200</td> <td>Variant Chinese name</td></tr> <tr><td>variantNameEn</td> <td>Variant Name(en)</td> <td>string</td> <td>200</td> <td>Variant English name</td></tr> <tr><td>variantSku</td> <td>Variant SKU</td> <td>string</td> <td>200</td> <td>Variant SKU code</td></tr> <tr><td>variantImage</td> <td>Variant Image</td> <td>string</td> <td>200</td> <td>Variant image URL</td></tr> <tr><td>variantStandard</td> <td>Variant Standard</td> <td>string</td> <td>200</td> <td>Variant specification description</td></tr> <tr><td>variantUnit</td> <td>Variant Unit</td> <td>string</td> <td>200</td> <td>Variant selling unit</td></tr> <tr><td>variantKey</td> <td>Variant Options</td> <td>string</td> <td>200</td> <td>Variant Options, multiple options, joined by -, eg: Black-XXL</td></tr> <tr><td>variantLength</td> <td>Variant Length</td> <td>int</td> <td>200</td> <td>Unit: mm</td></tr> <tr><td>variantWidth</td> <td>Variant Width</td> <td>int</td> <td>200</td> <td>Unit: mm</td></tr> <tr><td>variantHeight</td> <td>Variant Height</td> <td>int</td> <td>200</td> <td>Unit: mm</td></tr> <tr><td>variantVolume</td> <td>Variant Volume</td> <td>int</td> <td>200</td> <td>Unit: mm³</td></tr> <tr><td>variantWeight</td> <td>Variant Weight</td> <td>double</td> <td>200</td> <td>Unit: g</td></tr> <tr><td>variantSellPrice</td> <td>Variant SellPrice</td> <td>double</td> <td>200</td> <td>unit: $ (USD)</td></tr> <tr><td>variantSugSellPrice</td> <td>Variant Suggest SellPrice</td> <td>double</td> <td>200</td> <td>unit: $ (USD)</td></tr> <tr><td>createTime</td> <td>Vreater Time</td> <td>string</td> <td>200</td> <td>Variant creation time</td></tr> <tr><td>combineNum</td> <td>number of Combine Variants</td> <td>int</td> <td></td> <td>Number of sub-variants in combined products</td></tr> <tr><td>combineVariants</td> <td>Combine Variants</td> <td>Variant[]</td> <td>200</td> <td>List of sub-variants for combined products</td></tr></tbody></table> <p>Error</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 1600100,
+    &quot;result&quot;: false,
+    &quot;message&quot;: &quot;Param error&quot;,
+    &quot;data&quot;: null,
+    &quot;requestId&quot;: &quot;323fda9d-3c94-41dc-a944-5cc1b8baf5b1&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</td> <td>error code</td> <td>int</td> <td>20</td> <td><a href="/en/api/api2/standard/ps-code.html">Reference error code</a></td></tr> <tr><td>result</td> <td>Whether or not the return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>message</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>return data</td> <td>object</td> <td></td> <td>interface data return</td></tr> <tr><td>requestId</td> <td>requestId</td> <td>string</td> <td>48</td> <td>Flag request for logging errors</td></tr></tbody></table> <h3 id="_1-6-add-to-my-product-post"><a href="#_1-6-add-to-my-product-post" class="header-anchor">#</a> 1.6 Add to My Product (POST)</h3> <h4 id="url-6"><a href="#url-6" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/addToMyProduct</p> <h4 id="curl-6"><a href="#curl-6" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location 'http://localhost:8081/api2.0/v1/product/addToMyProduct' \
+--header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+--header 'Content-Type: application/json' \
+--data '{
+    &quot;productId&quot;: &quot;1658748072937136128&quot;
+}'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>productId</td> <td>CJ product id</td> <td>string</td> <td>Y</td> <td>100</td> <td></td></tr></tbody></table> <h4 id="return-6"><a href="#return-6" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 200,
+    &quot;result&quot;: true,
+    &quot;message&quot;: &quot;Success&quot;,
+    &quot;data&quot;: true,
+    &quot;requestId&quot;: &quot;a7d4d01b1eed4db9ac2cc1ab7903c98c&quot;,
+    &quot;success&quot;: true
+}
+</code></pre></div><p>error</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 1600000,
+    &quot;result&quot;: false,
+    &quot;message&quot;: &quot;The product has been added to My Products.&quot;,
+    &quot;data&quot;: null,
+    &quot;requestId&quot;: &quot;b626475ff68242c3abfea562f9d4f899&quot;,
+    &quot;success&quot;: false
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</td> <td>error code</td> <td>int</td> <td>20</td> <td><a href="/en/api/api2/standard/ps-code.html">Reference error code</a></td></tr> <tr><td>result</td> <td>Whether or not the return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>message</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>return data</td> <td>object</td> <td></td> <td>interface data return</td></tr> <tr><td>requestId</td> <td>requestId</td> <td>string</td> <td>48</td> <td>Flag request for logging errors</td></tr></tbody></table> <h3 id="_1-7-my-product-list-get"><a href="#_1-7-my-product-list-get" class="header-anchor">#</a> 1.7 My Product List(GET)</h3> <h4 id="url-7"><a href="#url-7" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/myProduct/query</p> <h4 id="curl-7"><a href="#curl-7" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request GET 'https://developers.cjdropshipping.com/api2.0/v1/product/myProduct/query?keyword=CJWJWJYZ02543' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>keyword</td> <td>sku/spu/product name</td> <td>string</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>categoryId</td> <td>category id</td> <td>string</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>startAt</td> <td>start time</td> <td>string</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>endAt</td> <td>ent time</td> <td>string</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>isListed</td> <td>isListed</td> <td>int</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>visiable</td> <td>visiable</td> <td>int</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>hasPacked</td> <td>hasPacked</td> <td>int</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>hasVirPacked</td> <td>hasVirPacked</td> <td>int</td> <td>N</td> <td>200</td> <td></td></tr></tbody></table> <h4 id="return-7"><a href="#return-7" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 200,
+    &quot;result&quot;: true,
+    &quot;message&quot;: &quot;Success&quot;,
+    &quot;data&quot;: {
+        &quot;pageSize&quot;: 10,
+        &quot;pageNumber&quot;: 1,
+        &quot;totalRecords&quot;: 536,
+        &quot;totalPages&quot;: 54,
+        &quot;content&quot;: [
+            {
+                &quot;productId&quot;: &quot;01118E21-A8B9-45CE-A16C-75232FB8A14A&quot;,
+                &quot;packWeight&quot;: &quot;530.0&quot;,
+                &quot;weight&quot;: &quot;480.0&quot;,
+                &quot;productType&quot;: &quot;0&quot;,
+                &quot;propertyKeyList&quot;: [
+                    &quot;COMMON&quot;
+                ],
+                &quot;bigImage&quot;: &quot;https://cf.cjdropshipping.com/15926688/9714688036284.jpg&quot;,
+                &quot;nameEn&quot;: &quot;3D wooden three-dimensional puzzle&quot;,
+                &quot;sku&quot;: &quot;CJWJWJJM00719&quot;,
+                &quot;hasPacked&quot;: 0,
+                &quot;sellPrice&quot;: &quot;2.4&quot;,
+                &quot;discountPrice&quot;: null,
+                &quot;discountPriceRate&quot;: null,
+                &quot;defaultArea&quot;: &quot;China Warehouse&quot;,
+                &quot;shopMethod&quot;: &quot;CAI NIAO&quot;,
+                &quot;trialFreight&quot;: &quot;0&quot;,
+                &quot;totalPrice&quot;: &quot;2.40&quot;,
+                &quot;listedShopNum&quot;: &quot;0&quot;,
+                &quot;vid&quot;: &quot;7986724D-7214-4B4B-A184-493E7BD78F47&quot;,
+                &quot;areaId&quot;: &quot;1&quot;,
+                &quot;areaCountryCode&quot;: &quot;CN&quot;,
+                &quot;freightDiscount&quot;: &quot;0&quot;,
+                 &quot;createAt&quot;: 1743218214000,
+                &quot;lengthList&quot;: [
+                    335,
+                    335
+                ],
+                &quot;heightList&quot;: [
+                    200,
+                    200
+                ],
+                &quot;widthList&quot;: [
+                    225,
+                    225
+                ],
+                &quot;volumeList&quot;: [
+                    15075000,
+                    15075000
+                ],
+                &quot;hasVirPacked&quot;: 1
+            }
+        ]
+    },
+    &quot;requestId&quot;: &quot;b0f251412bd0446cb56ba5988706d964&quot;,
+    &quot;success&quot;: true
+}
+</code></pre></div><p>product</p> <table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>productId</td> <td>Product ID</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>productName</td> <td>Product name</td> <td>list</td> <td>20</td> <td></td></tr> <tr><td>nameEn</td> <td>Product name(EN)</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>sku</td> <td>Product sku</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>bigImage</td> <td>Product image</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>totalPrice</td> <td>Product weight</td> <td>double</td> <td>200</td> <td>unit: $ (USD)</td></tr> <tr><td>productType</td> <td>Product type</td> <td>byte</td> <td>200</td> <td></td></tr> <tr><td>listedShopNum</td> <td>listed Shop Num</td> <td>string</td> <td>48</td> <td></td></tr> <tr><td>createAt</td> <td>Added Time</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>trialFreight</td> <td>trial Freight</td> <td>string</td> <td>200</td> <td></td></tr></tbody></table> <p>error</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 1600100,
+    &quot;result&quot;: false,
+    &quot;message&quot;: &quot;Param error&quot;,
+    &quot;data&quot;: null,
+    &quot;requestId&quot;: &quot;323fda9d-3c94-41dc-a944-5cc1b8baf5b1&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</td> <td>error code</td> <td>int</td> <td>20</td> <td><a href="/en/api/api2/standard/ps-code.html">Reference error code</a></td></tr> <tr><td>result</td> <td>Whether or not the return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>message</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>return data</td> <td>object</td> <td></td> <td>interface data return</td></tr> <tr><td>requestId</td> <td>requestId</td> <td>string</td> <td>48</td> <td>Flag request for logging errors</td></tr></tbody></table> <h2 id="_2-variant"><a href="#_2-variant" class="header-anchor">#</a> 2 Variant</h2> <h3 id="_2-1-inquiry-of-all-variants-get"><a href="#_2-1-inquiry-of-all-variants-get" class="header-anchor">#</a> 2.1 Inquiry Of All Variants (GET)</h3> <h4 id="url-8"><a href="#url-8" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/variant/query</p> <h4 id="curl-8"><a href="#curl-8" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request GET 'https://developers.cjdropshipping.com/api2.0/v1/product/variant/query?pid=00006BC5-E1F5-4C65-BE2B-3FE0956DA21C' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>pid</td> <td>Product id</td> <td>string</td> <td>Choose one of three</td> <td>200</td> <td>Inquiry criteria</td></tr> <tr><td>productSku</td> <td>Product sku</td> <td>string</td> <td>Choose one of three</td> <td>200</td> <td>Inquiry criteria</td></tr> <tr><td>variantSku</td> <td>variant sku</td> <td>string</td> <td>Choose one of three</td> <td>200</td> <td>Inquiry criteria</td></tr> <tr><td>countryCode</td> <td>Country Code</td> <td>string</td> <td>N</td> <td>2</td> <td>If the parameter has a value, only variants with inventory in that country will be returned. If no value is passed, inventory will not be restricted</td></tr></tbody></table> <h4 id="return-8"><a href="#return-8" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 200,
+    &quot;result&quot;: true,
+    &quot;message&quot;: &quot;Success&quot;,
+    &quot;data&quot;: [
+        {
+            &quot;vid&quot;: &quot;1D72A20A-D113-4FAB-B4BA-6FE1A6A14A3A&quot;,
+            &quot;pid&quot;: &quot;77501FB4-7146-452E-9889-CDF41697E5CF&quot;,
+            &quot;variantName&quot;: null,
+            &quot;variantNameEn&quot;: &quot;Wwerwieurieowursdklfjskldjfklsdjfksljfklsdjfkldsjfksdjfksljfksdlfsfdfgf XS&quot;,
+            &quot;variantSku&quot;: &quot;CJJSBGBG01517-XS&quot;,
+            &quot;variantStandard&quot;: &quot;long=5,width=5,height=5&quot;,
+            &quot;variantUnit&quot;: null,
+            &quot;variantKey&quot;: &quot;Black-XXL&quot;,
+            &quot;variantLength&quot;: 5,
+            &quot;variantWidth&quot;: 5,
+            &quot;variantHeight&quot;: 5,
+            &quot;variantVolume&quot;: 27,
+            &quot;variantWeight&quot;: 3.00,
+            &quot;variantSellPrice&quot;: 3.00,
+            &quot;createTime&quot;: null
+        }
+    ],
+    &quot;requestId&quot;: &quot;00765963-35d0-4a6a-b5cf-aa6731793b10&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>vid</td> <td>Variant ID</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>pid</td> <td>Product ID</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>variantName</td> <td>Variant name</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>variantNameEn</td> <td>Variant name (EN)</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>variantImage</td> <td>Variant image</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>variantSku</td> <td>Variant sku</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>variantUnit</td> <td>Variant unit</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>variantProperty</td> <td>Variant property</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>variantKey</td> <td>Variant Options</td> <td>string</td> <td>200</td> <td>Variant Options, multiple options, joined by -, eg: Black-XXL</td></tr> <tr><td>variantLength</td> <td>Variant length</td> <td>int</td> <td>200</td> <td>Unit: mm</td></tr> <tr><td>variantWidth</td> <td>Variant width</td> <td>int</td> <td>200</td> <td>Unit: mm</td></tr> <tr><td>variantHeight</td> <td>Variant height</td> <td>int</td> <td>200</td> <td>Unit: mm</td></tr> <tr><td>variantVolume</td> <td>Variant volume</td> <td>int</td> <td>200</td> <td>Unit: mm³</td></tr> <tr><td>variantWeight</td> <td>Variant weight</td> <td>int</td> <td>200</td> <td>Unit: g</td></tr> <tr><td>variantSellPrice</td> <td>Variant sell price</td> <td>BigDecimal</td> <td>200</td> <td>Unit: $ (USD)</td></tr> <tr><td>createTime</td> <td>Create time</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>variantStandard</td> <td>variant standard</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>variantSugSellPrice</td> <td>variant suggest sell price</td> <td>BigDecimal</td> <td>200</td> <td>Unit: $ (USD)</td></tr></tbody></table> <p>error</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 1600100,
+    &quot;result&quot;: false,
+    &quot;message&quot;: &quot;Param error&quot;,
+    &quot;data&quot;: null,
+    &quot;requestId&quot;: &quot;323fda9d-3c94-41dc-a944-5cc1b8baf5b1&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</td> <td>error code</td> <td>int</td> <td>20</td> <td><a href="/en/api/api2/standard/ps-code.html">Reference error code</a></td></tr> <tr><td>result</td> <td>Whether or not the return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>message</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>return data</td> <td>object</td> <td></td> <td>interface data return</td></tr> <tr><td>requestId</td> <td>requestId</td> <td>string</td> <td>48</td> <td>Flag request for logging errors</td></tr></tbody></table> <h3 id="_2-2-variant-id-inquiry-get"><a href="#_2-2-variant-id-inquiry-get" class="header-anchor">#</a> 2.2 Variant Id Inquiry (GET)</h3> <h4 id="url-9"><a href="#url-9" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/variant/queryByVid</p> <h4 id="curl-9"><a href="#curl-9" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request GET 'https://developers.cjdropshipping.com/api2.0/v1/product/variant/queryByVid?vid=1371342252697325568' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>vid</td> <td>Variant ID</td> <td>string</td> <td>Y</td> <td>200</td> <td>Inquiry criteria</td></tr> <tr><td>features</td> <td>features</td> <td>string</td> <td>N</td> <td>200</td> <td>enable_inventory (includes inventory, returns variant inventory info (include storage id) when passed)</td></tr></tbody></table> <h4 id="return-9"><a href="#return-9" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 200,
+    &quot;result&quot;: true,
+    &quot;message&quot;: &quot;Success&quot;,
+    &quot;data&quot;: {
+        &quot;vid&quot;: &quot;1371342252697325568&quot;,
+        &quot;pid&quot;: &quot;00006BC5-E1F5-4C65-BE2B-3FE0956DA21C&quot;,
+        &quot;variantName&quot;: null,
+        &quot;variantNameEn&quot;: &quot;a-Baby pacifier chain test1 Grey&quot;,
+        &quot;variantSku&quot;: &quot;CJJSBGDY00002-Grey&quot;,
+        &quot;variantUnit&quot;: null,
+        &quot;variantKey&quot;: &quot;Black-XXL&quot;,
+        &quot;variantLength&quot;: 3,
+        &quot;variantWidth&quot;: 3,
+        &quot;variantHeight&quot;: 3,
+        &quot;variantVolume&quot;: 27,
+        &quot;variantWeight&quot;: 3.00,
+        &quot;variantSellPrice&quot;: 3.00,
+        &quot;createTime&quot;: &quot;2021-03-15T14:07:26.000+00:00&quot;,
+        &quot;inventories&quot;: [
+            {
+                &quot;countryCode&quot;: &quot;CN&quot;,
+                &quot;totalInventory&quot;: 11092,
+                &quot;cjInventory&quot;: 0,
+                &quot;factoryInventory&quot;: 11092,
+                &quot;verifiedWarehouse&quot;: 2,
+                &quot;stock&quot;: [
+                    {
+                        &quot;stockId&quot;: &quot;{6709CCD7-0DC7-43B1-B310-17AB499E9B0A}&quot;,
+                        &quot;inventory&quot;: 0,
+                        &quot;factoryInventory&quot;: 11092
+                    }
+                ]
+            }
+        ]
+    },
+    &quot;requestId&quot;: &quot;9b86a5e2-40c3-492c-92b2-4634fa4c4a21&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>vid</td> <td>Variant id</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>pid</td> <td>Product id</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>variantName</td> <td>Variant name</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>variantNameEn</td> <td>Variant name (EN)</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>variantImage</td> <td>Variant image</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>variantSku</td> <td>Variant sku</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>variantUnit</td> <td>Variant unit</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>variantKey</td> <td>Variant Options</td> <td>string</td> <td>200</td> <td>Variant Options, multiple options, joined by -, eg: Black-XXL</td></tr> <tr><td>variantLength</td> <td>Variant length</td> <td>int</td> <td>200</td> <td>Unit: mm</td></tr> <tr><td>variantWidth</td> <td>Variant width</td> <td>int</td> <td>200</td> <td>Unit: mm</td></tr> <tr><td>variantHeight</td> <td>Variant height</td> <td>int</td> <td>200</td> <td>Unit: mm</td></tr> <tr><td>variantVolume</td> <td>Variant volume</td> <td>int</td> <td>200</td> <td>Unit: mm³</td></tr> <tr><td>variantWeight</td> <td>Variant weight</td> <td>int</td> <td>200</td> <td>Unit: g</td></tr> <tr><td>variantSellPrice</td> <td>Variant sell price</td> <td>BigDecimal</td> <td>200</td> <td>Unit: $ (USD)</td></tr> <tr><td>createTime</td> <td>Create time</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>variantStandard</td> <td>Variant standard</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>inventories</td> <td>Variant inventory</td> <td>Inventory[]</td> <td>200</td> <td>List of variant inventory (include storage id)</td></tr> <tr><td>- countryCode</td> <td>inventory country code</td> <td>string</td> <td>200</td> <td>Two-letter code of the country where the warehouse is located.for example:US</td></tr> <tr><td>- totalInventory</td> <td>total inventory number</td> <td>integer</td> <td>200</td> <td></td></tr> <tr><td>- cjInventory</td> <td>Inventory management in CJ warehouse</td> <td>integer</td> <td>200</td> <td></td></tr> <tr><td>- factoryInventory</td> <td>Inventory management in factory</td> <td>integer</td> <td>200</td> <td></td></tr> <tr><td>- verifiedWarehouse</td> <td>Verified Inventory type</td> <td>string</td> <td>200</td> <td>1: verified, 2: unverified</td></tr> <tr><td>- stock</td> <td>Sub warehouse inventory info</td> <td>Stock[]</td> <td>200</td> <td></td></tr> <tr><td>-- stockId</td> <td>Sub warehouse ID</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>-- inventory</td> <td>Sub warehouse Inventory management in CJ warehouse</td> <td>integer</td> <td>200</td> <td></td></tr> <tr><td>-- factoryInventory</td> <td>Sub warehouse Inventory management in factory</td> <td>integer</td> <td>200</td> <td></td></tr></tbody></table> <p>error</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 1600100,
+    &quot;result&quot;: false,
+    &quot;message&quot;: &quot;Param error&quot;,
+    &quot;data&quot;: null,
+    &quot;requestId&quot;: &quot;323fda9d-3c94-41dc-a944-5cc1b8baf5b1&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</td> <td>error code</td> <td>int</td> <td>20</td> <td><a href="/en/api/api2/standard/ps-code.html">Reference error code</a></td></tr> <tr><td>result</td> <td>Whether or not the return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>message</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>return data</td> <td>object</td> <td></td> <td>interface data return</td></tr> <tr><td>requestId</td> <td>requestId</td> <td>string</td> <td>48</td> <td>Flag request for logging errors</td></tr></tbody></table> <h2 id="_3-inventory"><a href="#_3-inventory" class="header-anchor">#</a> 3 Inventory</h2> <h3 id="_3-1-inventory-inquiry-get"><a href="#_3-1-inventory-inquiry-get" class="header-anchor">#</a> 3.1 Inventory Inquiry(GET)</h3> <h4 id="url-10"><a href="#url-10" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/stock/queryByVid?vid=7874B45D-E971-4DC8-8F59-40530B0F6B77</p> <h4 id="curl-10"><a href="#curl-10" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request GET 'https://developers.cjdropshipping.com/api2.0/v1/product/stock/queryByVid?vid=7874B45D-E971-4DC8-8F59-40530B0F6B77' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>vid</td> <td>Variant id</td> <td>string</td> <td>Y</td> <td>200</td> <td>Unique variant identifier</td></tr></tbody></table> <h4 id="return-10"><a href="#return-10" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 200,
+    &quot;result&quot;: true,
+    &quot;message&quot;: &quot;Success&quot;,
+    &quot;data&quot;: [
+        {
+            &quot;vid&quot;: &quot;7874B45D-E971-4DC8-8F59-40530B0F6B77&quot;,
+            &quot;areaId&quot;: &quot;1&quot;,
+            &quot;areaEn&quot;: &quot;China Warehouse&quot;,
+            &quot;countryCode&quot;: &quot;CN&quot;,
+            &quot;storageNum&quot;: 10877,
+            &quot;totalInventoryNum&quot;: 10877,
+            &quot;cjInventoryNum&quot;: 700,
+            &quot;factoryInventoryNum&quot;: 10177,
+            &quot;stock&quot;: [
+                {
+                    &quot;stockId&quot;: &quot;{6709CCD7-0DC7-43B1-B310-17AB499E9B0A}&quot;,
+                    &quot;inventory&quot;: 0,
+                    &quot;factoryInventory&quot;: 11092
+                }
+            ]
+        }...
+    ],
+    &quot;requestId&quot;: &quot;bcde45ac-da31-4fc7-a05e-e3b23a1e6694&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>vid</td> <td>Variant id</td> <td>bigint</td> <td>200</td> <td>Unique variant identifier</td></tr> <tr><td>areaId</td> <td>Warehouse id</td> <td>int</td> <td>20</td> <td>Warehouse area ID</td></tr> <tr><td>areaEn</td> <td>Warehouse name</td> <td>string</td> <td>200</td> <td>Warehouse area name</td></tr> <tr><td>countryCode</td> <td>Country code(EN)</td> <td>string</td> <td>20</td> <td>Country code where warehouse is located</td></tr> <tr><td>storageNum</td> <td>total inventory number, please use totalInventoryNum</td> <td>int</td> <td>20</td> <td>Deprecated, please use totalInventoryNum</td></tr> <tr><td>totalInventoryNum</td> <td>total inventory number</td> <td>int</td> <td>20</td> <td>Total inventory quantity of this variant in the warehouse</td></tr> <tr><td>cjInventoryNum</td> <td>Inventory management in CJ warehouse</td> <td>int</td> <td>20</td> <td>Inventory quantity managed directly by CJ</td></tr> <tr><td>factoryInventoryNum</td> <td>Inventory management in factory</td> <td>int</td> <td>20</td> <td>Inventory quantity managed by the factory</td></tr> <tr><td>stock</td> <td>Sub warehouse inventory info</td> <td>Stock[]</td> <td>200</td> <td></td></tr> <tr><td>-- stockId</td> <td>Sub warehouse ID</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>-- inventory</td> <td>Sub warehouse Inventory management in CJ warehouse</td> <td>integer</td> <td>200</td> <td></td></tr> <tr><td>-- factoryInventory</td> <td>Sub warehouse Inventory management in factory</td> <td>integer</td> <td>200</td> <td></td></tr></tbody></table> <p>error</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 1600100,
+    &quot;result&quot;: false,
+    &quot;message&quot;: &quot;Param error&quot;,
+    &quot;data&quot;: null,
+    &quot;requestId&quot;: &quot;323fda9d-3c94-41dc-a944-5cc1b8baf5b1&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</td> <td>error code</td> <td>int</td> <td>20</td> <td><a href="/en/api/api2/standard/ps-code.html">Reference error code</a></td></tr> <tr><td>result</td> <td>Whether or not the return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>message</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>return data</td> <td>object</td> <td></td> <td>interface data return</td></tr> <tr><td>requestId</td> <td>requestId</td> <td>string</td> <td>48</td> <td>Flag request for logging errors</td></tr></tbody></table> <h3 id="_3-2-query-inventory-by-sku-get"><a href="#_3-2-query-inventory-by-sku-get" class="header-anchor">#</a> 3.2 Query Inventory by SKU (GET)</h3> <h4 id="url-11"><a href="#url-11" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/stock/queryBySku?sku=CJDS2012593</p> <h4 id="curl-11"><a href="#curl-11" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request GET 'https://developers.cjdropshipping.com/api2.0/v1/product/stock/queryBySku?sku=CJDS2012593' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>sku</td> <td>SKU or SPU</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr></tbody></table> <h4 id="return-11"><a href="#return-11" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 200,
+    &quot;result&quot;: true,
+    &quot;message&quot;: &quot;Success&quot;,
+    &quot;data&quot;: [
+        {
+            &quot;areaEn&quot;: &quot;China Warehouse&quot;,
+            &quot;areaId&quot;: 1,
+            &quot;countryCode&quot;: &quot;CN&quot;,
+            &quot;totalInventoryNum&quot;: 777566,
+            &quot;cjInventoryNum&quot;: 0,
+            &quot;factoryInventoryNum&quot;: 777566,
+            &quot;countryNameEn&quot;: &quot;China&quot;,
+            &quot;stock&quot;: null
+        },
+        {
+            &quot;areaEn&quot;: &quot;US Warehouse&quot;,
+            &quot;areaId&quot;: 2,
+            &quot;countryCode&quot;: &quot;US&quot;,
+            &quot;totalInventoryNum&quot;: 36,
+            &quot;cjInventoryNum&quot;: 36,
+            &quot;factoryInventoryNum&quot;: 0,
+            &quot;countryNameEn&quot;: &quot;United States of America (the)&quot;,
+            &quot;stock&quot;: null
+        }
+    ],
+    &quot;requestId&quot;: &quot;dd4c7d122df24b80a094a4aba073724f&quot;,
+    &quot;success&quot;: true
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>areaId</td> <td>Warehouse id</td> <td>int</td> <td>20</td> <td></td></tr> <tr><td>areaEn</td> <td>Warehouse name</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>countryCode</td> <td>Country code(EN)</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>countryNameEn</td> <td>Country name</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>totalInventoryNum</td> <td>total inventory number</td> <td>int</td> <td>20</td> <td></td></tr> <tr><td>cjInventoryNum</td> <td>Inventory management in CJ warehouse</td> <td>int</td> <td>20</td> <td></td></tr> <tr><td>factoryInventoryNum</td> <td>Inventory management in factory</td> <td>int</td> <td>20</td> <td></td></tr> <tr><td>stock</td> <td>Sub warehouse inventory info</td> <td>Stock[]</td> <td>200</td> <td>May return <code>null</code></td></tr> <tr><td>-- stockId</td> <td>Sub warehouse ID</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>-- inventory</td> <td>Sub warehouse Inventory management in CJ warehouse</td> <td>integer</td> <td>200</td> <td></td></tr> <tr><td>-- factoryInventory</td> <td>Sub warehouse Inventory management in factory</td> <td>integer</td> <td>200</td> <td></td></tr></tbody></table> <p>error</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 1600100,
+    &quot;result&quot;: false,
+    &quot;message&quot;: &quot;Param error&quot;,
+    &quot;data&quot;: null,
+    &quot;requestId&quot;: &quot;323fda9d-3c94-41dc-a944-5cc1b8baf5b1&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</td> <td>error code</td> <td>int</td> <td>20</td> <td><a href="/en/api/api2/standard/ps-code.html">Reference error code</a></td></tr> <tr><td>result</td> <td>Whether or not the return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>message</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>return data</td> <td>object</td> <td></td> <td>interface data return</td></tr> <tr><td>requestId</td> <td>requestId</td> <td>string</td> <td>48</td> <td>Flag request for logging errors</td></tr></tbody></table> <h3 id="_3-3-query-inventory-by-product-id-get"><a href="#_3-3-query-inventory-by-product-id-get" class="header-anchor">#</a> 3.3 Query inventory by product ID (GET)</h3> <h4 id="url-12"><a href="#url-12" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/stock/getInventoryByPid?pid=1444929719182168064</p> <h4 id="curl-12"><a href="#curl-12" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request GET 'https://developers.cjdropshipping.com/api2.0/v1/product/stock/getInventoryByPid?pid=1444929719182168064' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>pid</td> <td>Product Id</td> <td>string</td> <td>Y</td> <td>40</td> <td></td></tr></tbody></table> <h4 id="return-12"><a href="#return-12" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;success&quot;: true,
+    &quot;code&quot;: 200,
+    &quot;message&quot;: &quot;&quot;,
+    &quot;data&quot;: {
+        &quot;inventories&quot;: [
+            {
+                &quot;areaEn&quot;: &quot;US Warehouse&quot;,
+                &quot;areaId&quot;: 2,
+                &quot;countryCode&quot;: &quot;US&quot;,
+                &quot;totalInventoryNum&quot;: 264,
+                &quot;cjInventoryNum&quot;: 264,
+                &quot;factoryInventoryNum&quot;: 0,
+                &quot;countryNameEn&quot;: &quot;US Warehouse&quot;,
+                &quot;stock&quot;: null
+            }
+        ],
+        &quot;variantInventories&quot;: [
+            {
+                &quot;vid&quot;: &quot;1796078021431009280&quot;,
+                &quot;inventory&quot;: [
+                    {
+                        &quot;countryCode&quot;: &quot;CN&quot;,
+                        &quot;totalInventory&quot;: 10044,
+                        &quot;cjInventory&quot;: 0,
+                        &quot;factoryInventory&quot;: 10044,
+                        &quot;verifiedWarehouse&quot;: 2,
+                        &quot;stock&quot;: [
+                            {
+                                &quot;stockId&quot;: &quot;{6709CCD7-0DC7-43B1-B310-17AB499E9B0A}&quot;,
+                                &quot;inventory&quot;: 0,
+                                &quot;factoryInventory&quot;: 11092
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    &quot;requestId&quot;: &quot;cb927bfa8400421e923a55f81eaafce0&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</td> <td>error code</td> <td>int</td> <td>20</td> <td><a href="/en/api/api2/standard/ps-code.html">Reference error code</a></td></tr> <tr><td>message</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>Product Inventory Object</td> <td>object</td> <td></td> <td></td></tr> <tr><td>- inventories</td> <td>product inventory list</td> <td>list</td> <td></td> <td></td></tr> <tr><td>-- areaEn</td> <td>Warehouse Name</td> <td>string</td> <td>20</td> <td>China Warehouse</td></tr> <tr><td>-- areaId</td> <td>Warehouse id</td> <td>int</td> <td>1</td> <td>1</td></tr> <tr><td>-- countryCode</td> <td>Country Code</td> <td>string</td> <td>2</td> <td>CN</td></tr> <tr><td>-- totalInventoryNum</td> <td>total inventory number</td> <td>int</td> <td>20</td> <td></td></tr> <tr><td>-- cjInventoryNum</td> <td>Inventory management in CJ warehouse</td> <td>int</td> <td>20</td> <td></td></tr> <tr><td>-- factoryInventoryNum</td> <td>Inventory management in factory</td> <td>int</td> <td>20</td> <td></td></tr> <tr><td>-- countryNameEn</td> <td>Country Name</td> <td>string</td> <td>200</td> <td>China Warehouse</td></tr> <tr><td>-- stock</td> <td>Sub warehouse inventory info</td> <td>list</td> <td></td> <td>May return <code>null</code></td></tr> <tr><td>--- stockId</td> <td>Sub warehouse ID</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>--- inventory</td> <td>Sub warehouse Inventory in CJ warehouse</td> <td>integer</td> <td>200</td> <td></td></tr> <tr><td>--- factoryInventory</td> <td>Sub warehouse Inventory in factory</td> <td>integer</td> <td>200</td> <td></td></tr> <tr><td>- variantInventories</td> <td>variant inventory list</td> <td>list</td> <td></td> <td></td></tr> <tr><td>-- vid</td> <td>variant id</td> <td>string</td> <td>20</td> <td>China Warehouse</td></tr> <tr><td>-- inventory</td> <td>inventory list</td> <td>list</td> <td></td> <td>1</td></tr> <tr><td>--- countryCode</td> <td>Country Code</td> <td>string</td> <td>2</td> <td>CN</td></tr> <tr><td>--- totalInventory</td> <td>total inventory number</td> <td>int</td> <td>20</td> <td>Actual API field name: <code>totalInventory</code></td></tr> <tr><td>--- cjInventory</td> <td>Inventory management in CJ warehouse</td> <td>int</td> <td>20</td> <td>Actual API field name: <code>cjInventory</code></td></tr> <tr><td>--- factoryInventory</td> <td>Inventory management in factory</td> <td>int</td> <td>20</td> <td>Actual API field name: <code>factoryInventory</code></td></tr> <tr><td>--- verifiedWarehouse</td> <td>Verified Inventory type</td> <td>int</td> <td>200</td> <td>1: verified, 2: unverified</td></tr> <tr><td>--- stock</td> <td>Sub warehouse inventory info</td> <td>Stock[]</td> <td>200</td> <td></td></tr> <tr><td>---- stockId</td> <td>Sub warehouse ID</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>---- inventory</td> <td>Sub warehouse Inventory management in CJ warehouse</td> <td>integer</td> <td>200</td> <td></td></tr> <tr><td>---- factoryInventory</td> <td>Sub warehouse Inventory management in factory</td> <td>integer</td> <td>200</td> <td></td></tr> <tr><td>requestId</td> <td>requestId</td> <td>string</td> <td>48</td> <td>Flag request for logging errors</td></tr></tbody></table> <h2 id="_4-product-reviews"><a href="#_4-product-reviews" class="header-anchor">#</a> 4 Product Reviews</h2> <h3 id="_4-1-inquiry-reviews-get"><a href="#_4-1-inquiry-reviews-get" class="header-anchor">#</a> 4.1 Inquiry Reviews (GET)</h3> <h4 id="url-13"><a href="#url-13" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/comments</p> <blockquote><p>Will be deprecated on June 1, 2024, Please use the new
+api <a href="/en/api/api2/api/product.html#_4-2-inquiry-reviews-get">Inquiry Reviews</a></p></blockquote> <h4 id="curl-13"><a href="#curl-13" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request GET 'https://developers.cjdropshipping.com/api2.0/v1/product/comments?pid=7874B45D-E971-4DC8-8F59-40530B0F6B77' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>pid</td> <td>Product id</td> <td>string</td> <td>Y</td> <td>200</td> <td>Inquiry criteria</td></tr> <tr><td>score</td> <td>score</td> <td>integer</td> <td>N</td> <td>20</td> <td>Inquiry criteria</td></tr> <tr><td>pageNum</td> <td>page number</td> <td>int</td> <td>N</td> <td>20</td> <td>default: 1</td></tr> <tr><td>pageSize</td> <td>page size</td> <td>int</td> <td>N</td> <td>20</td> <td>default: 20</td></tr></tbody></table> <h4 id="return-13"><a href="#return-13" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;success&quot;: true,
+    &quot;code&quot;: 0,
+    &quot;message&quot;: null,
+    &quot;data&quot;: {
+        &quot;pageNum&quot;: &quot;1&quot;,
+        &quot;pageSize&quot;: &quot;1&quot;,
+        &quot;total&quot;: &quot;285&quot;,
+        &quot;list&quot;: [
+            {
+                &quot;commentId&quot;: 1536993287524069376,
+                &quot;pid&quot;: &quot;1534092419615174656&quot;,
+                &quot;comment&quot;: &quot;excelente estado, llegó en una semana, cumple con lo descrito.\nBuena calidad de audio.&quot;,
+                &quot;commentDate&quot;: &quot;2022-06-13T00:00:00+08:00&quot;,
+                &quot;commentUser&quot;: &quot;F***o&quot;,
+                &quot;score&quot;: &quot;5&quot;,
+                &quot;commentUrls&quot;: [
+                    &quot;https://cc-west-usa.oss-us-west-1.aliyuncs.com/comment/additional/0001/image/2022-06-15/1126211e-ca15-45ed-95f2-880567ebba37.jpg&quot;,
+                    &quot;https://cc-west-usa.oss-us-west-1.aliyuncs.com/comment/additional/0001/image/2022-06-15/291ab894-068f-4f4e-b01f-57df72902f58.jpg&quot;
+                ],
+                &quot;countryCode&quot;: &quot;MX&quot;,
+                &quot;flagIconUrl&quot;: &quot;https://cc-west-usa.oss-us-west-1.aliyuncs.com/national-flags/phone/US.png&quot;
+            }
+        ],
+    &quot;requestId&quot;: &quot;bcde45ac-da31-4fc7-a05e-e3b23a1e6694&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>pid</td> <td>Product id</td> <td>String</td> <td>200</td> <td></td></tr> <tr><td>commentId</td> <td>Comment id</td> <td>long</td> <td>20</td> <td></td></tr> <tr><td>comment</td> <td>Comment</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>commentUrls</td> <td>Comment url</td> <td>string[]</td> <td>200</td> <td></td></tr> <tr><td>commentUser</td> <td>Comment user</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>score</td> <td>score</td> <td>int</td> <td>20</td> <td></td></tr> <tr><td>countryCode</td> <td>Country code</td> <td>string</td> <td>20</td> <td></td></tr> <tr><td>commentDate</td> <td>Comment date</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>flagIconUrl</td> <td>FlagIcon url</td> <td>string</td> <td>200</td> <td></td></tr></tbody></table> <p>error</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 1600100,
+    &quot;result&quot;: false,
+    &quot;message&quot;: &quot;Param error&quot;,
+    &quot;data&quot;: null,
+    &quot;requestId&quot;: &quot;323fda9d-3c94-41dc-a944-5cc1b8baf5b1&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</td> <td>error code</td> <td>int</td> <td>20</td> <td><a href="/en/api/api2/standard/ps-code.html">Reference error code</a></td></tr> <tr><td>result</td> <td>Whether or not the return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>message</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>return data</td> <td>object</td> <td></td> <td>interface data return</td></tr> <tr><td>requestId</td> <td>requestId</td> <td>string</td> <td>48</td> <td>Flag request for logging errors</td></tr></tbody></table> <h3 id="_4-2-inquiry-reviews-get"><a href="#_4-2-inquiry-reviews-get" class="header-anchor">#</a> 4.2 Inquiry Reviews (GET)</h3> <h4 id="url-14"><a href="#url-14" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/productComments</p> <h4 id="curl-14"><a href="#curl-14" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request GET 'https://developers.cjdropshipping.com/api2.0/v1/product/productComments?pid=7874B45D-E971-4DC8-8F59-40530B0F6B77' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>pid</td> <td>Product id</td> <td>string</td> <td>Y</td> <td>200</td> <td>Inquiry criteria</td></tr> <tr><td>score</td> <td>score</td> <td>integer</td> <td>N</td> <td>20</td> <td>Inquiry criteria</td></tr> <tr><td>pageNum</td> <td>page number</td> <td>int</td> <td>N</td> <td>20</td> <td>default: 1</td></tr> <tr><td>pageSize</td> <td>page size</td> <td>int</td> <td>N</td> <td>20</td> <td>default: 20</td></tr></tbody></table> <h4 id="return-14"><a href="#return-14" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;success&quot;: true,
+    &quot;code&quot;: 0,
+    &quot;message&quot;: null,
+    &quot;data&quot;: {
+        &quot;pageNum&quot;: &quot;1&quot;,
+        &quot;pageSize&quot;: &quot;1&quot;,
+        &quot;total&quot;: &quot;285&quot;,
+        &quot;list&quot;: [
+            {
+                &quot;commentId&quot;: 1536993287524069376,
+                &quot;pid&quot;: &quot;1534092419615174656&quot;,
+                &quot;comment&quot;: &quot;excelente estado, llegó en una semana, cumple con lo descrito.\nBuena calidad de audio.&quot;,
+                &quot;commentDate&quot;: &quot;2022-06-13T00:00:00+08:00&quot;,
+                &quot;commentUser&quot;: &quot;F***o&quot;,
+                &quot;score&quot;: &quot;5&quot;,
+                &quot;commentUrls&quot;: [
+                    &quot;https://cc-west-usa.oss-us-west-1.aliyuncs.com/comment/additional/0001/image/2022-06-15/1126211e-ca15-45ed-95f2-880567ebba37.jpg&quot;,
+                    &quot;https://cc-west-usa.oss-us-west-1.aliyuncs.com/comment/additional/0001/image/2022-06-15/291ab894-068f-4f4e-b01f-57df72902f58.jpg&quot;
+                ],
+                &quot;countryCode&quot;: &quot;MX&quot;,
+                &quot;flagIconUrl&quot;: &quot;https://cc-west-usa.oss-us-west-1.aliyuncs.com/national-flags/phone/US.png&quot;
+            }
+        ],
+    &quot;requestId&quot;: &quot;bcde45ac-da31-4fc7-a05e-e3b23a1e6694&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>pid</td> <td>Product id</td> <td>String</td> <td>200</td> <td></td></tr> <tr><td>commentId</td> <td>Comment id</td> <td>long</td> <td>20</td> <td></td></tr> <tr><td>comment</td> <td>Comment</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>commentUrls</td> <td>Comment url</td> <td>string[]</td> <td>200</td> <td></td></tr> <tr><td>commentUser</td> <td>Comment user</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>score</td> <td>score</td> <td>int</td> <td>20</td> <td></td></tr> <tr><td>countryCode</td> <td>Country code</td> <td>string</td> <td>20</td> <td></td></tr> <tr><td>commentDate</td> <td>Comment date</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>flagIconUrl</td> <td>FlagIcon url</td> <td>string</td> <td>200</td> <td></td></tr></tbody></table> <p>error</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 1600100,
+    &quot;result&quot;: false,
+    &quot;message&quot;: &quot;Param error&quot;,
+    &quot;data&quot;: null,
+    &quot;requestId&quot;: &quot;323fda9d-3c94-41dc-a944-5cc1b8baf5b1&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</td> <td>error code</td> <td>int</td> <td>20</td> <td><a href="/en/api/api2/standard/ps-code.html">Reference error code</a></td></tr> <tr><td>result</td> <td>Whether or not the return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>message</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>return data</td> <td>object</td> <td></td> <td>interface data return</td></tr> <tr><td>requestId</td> <td>requestId</td> <td>string</td> <td>48</td> <td>Flag request for logging errors</td></tr></tbody></table> <h2 id="_5-sourcing"><a href="#_5-sourcing" class="header-anchor">#</a> 5 Sourcing</h2> <h3 id="_5-1-create-sourcing-post"><a href="#_5-1-create-sourcing-post" class="header-anchor">#</a> 5.1 Create Sourcing (POST)</h3> <h4 id="url-15"><a href="#url-15" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/sourcing/create</p> <h4 id="curl-15"><a href="#curl-15" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request POST 'https://developers.cjdropshipping.com/api2.0/v1/product/sourcing/create' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                --header 'Content-Type: application/json' \
+                --data-raw '{
+                    &quot;thirdProductId&quot;: &quot;&quot;,
+                    &quot;thirdVariantId&quot;: &quot;&quot;,
+                    &quot;thirdProductSku&quot;: &quot;&quot;,
+                    &quot;productName&quot;: &quot;&quot;,
+                    &quot;productImage&quot;: &quot;&quot;,
+                    &quot;productUrl&quot;: &quot;&quot;,
+                    &quot;remark&quot;: &quot;&quot;,
+                    &quot;price&quot;: &quot;&quot;
+                }'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>thirdProductId</td> <td>third product id</td> <td>string</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>thirdVariantId</td> <td>third variant id</td> <td>string</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>thirdProductSku</td> <td>third product sku</td> <td>string</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>productName</td> <td>product name</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>productImage</td> <td>product image</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>productUrl</td> <td>product url</td> <td>string</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>remark</td> <td>remark</td> <td>string</td> <td>N</td> <td>200</td> <td></td></tr> <tr><td>price</td> <td>price</td> <td>BigDecimal</td> <td>200</td> <td>Unit: $ (USD)</td> <td></td></tr></tbody></table> <h4 id="return-15"><a href="#return-15" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;success&quot;: true,
+    &quot;code&quot;: 0,
+    &quot;message&quot;: null,
+    &quot;data&quot;: {
+        &quot;cjSourcingId&quot;: &quot;285&quot;,
+        &quot;result&quot;：&quot;success&quot;,
+     }
+    &quot;requestId&quot;: &quot;bcde45ac-da31-4fc7-a05e-e3b23a1e6694&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>cjSourcingId</td> <td>CJ sourcing id</td> <td>string</td> <td>50</td> <td></td></tr> <tr><td>result</td> <td>search results</td> <td>string</td> <td>20</td> <td></td></tr></tbody></table> <p>error</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 1600100,
+    &quot;result&quot;: false,
+    &quot;message&quot;: &quot;Param error&quot;,
+    &quot;data&quot;: null,
+    &quot;requestId&quot;: &quot;323fda9d-3c94-41dc-a944-5cc1b8baf5b1&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</td> <td>error code</td> <td>int</td> <td>20</td> <td><a href="/en/api/api2/standard/ps-code.html">Reference error code</a></td></tr> <tr><td>result</td> <td>Whether or not the return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>message</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>return data</td> <td>object</td> <td></td> <td>interface data return</td></tr> <tr><td>requestId</td> <td>requestId</td> <td>string</td> <td>48</td> <td>Flag request for logging errors</td></tr></tbody></table> <h3 id="_5-2-query-sourcing-post"><a href="#_5-2-query-sourcing-post" class="header-anchor">#</a> 5.2 Query Sourcing(POST)</h3> <h4 id="url-16"><a href="#url-16" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/sourcing/query</p> <h4 id="curl-16"><a href="#curl-16" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request POST 'https://developers.cjdropshipping.com/api2.0/v1/product/sourcing/query' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                --header 'Content-Type: application/json' \
+                --data-raw '{
+                    &quot;sourceIds&quot;: []
+                }'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>sourceIds</td> <td>CJ sourcing id</td> <td>string[]</td> <td>Y</td> <td>200</td> <td></td></tr></tbody></table> <h4 id="return-16"><a href="#return-16" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;success&quot;: true,
+    &quot;code&quot;: 0,
+    &quot;message&quot;: null,
+    &quot;data&quot;: {
+        &quot;sourceId&quot;: &quot;285&quot;,
+        &quot;sourceNumber&quot;：&quot;223333&quot;,
+        &quot;productId&quot;: &quot;3324343434&quot;,
+        &quot;variantId&quot;：&quot;4545456&quot;,
+        &quot;shopId&quot;: &quot;285&quot;,
+        &quot;shopName&quot;：&quot;aaaaaaa&quot;,
+        &quot;sourceStatus&quot;: &quot;5&quot;,
+        &quot;sourceStatusStr&quot;：&quot;搜品失败&quot;,
+        &quot;cjProductId&quot;: &quot;285&quot;,
+        &quot;cjVariantSku&quot;：&quot;CJ287690900&quot;,
+     }
+    &quot;requestId&quot;: &quot;bcde45ac-da31-4fc7-a05e-e3b23a1e6694&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>sourceId</td> <td>CJ sourcing id</td> <td>string</td> <td>50</td> <td></td></tr> <tr><td>sourceNumber</td> <td>Search short code</td> <td>string</td> <td>20</td> <td></td></tr> <tr><td>productId</td> <td>product id</td> <td>string</td> <td>50</td> <td></td></tr> <tr><td>variantId</td> <td>variant id</td> <td>string</td> <td>50</td> <td></td></tr> <tr><td>shopId</td> <td>shop id</td> <td>string</td> <td>50</td> <td></td></tr> <tr><td>shopName</td> <td>shop name</td> <td>string</td> <td>50</td> <td></td></tr> <tr><td>sourceStatus</td> <td>status</td> <td>string</td> <td>10</td> <td></td></tr> <tr><td>sourceStatusStr</td> <td>status (chinese)</td> <td>string</td> <td>50</td> <td></td></tr> <tr><td>cjProductId</td> <td>CJ product id</td> <td>string</td> <td>50</td> <td></td></tr> <tr><td>cjVariantSku</td> <td>CJ variant sku</td> <td>string</td> <td>50</td> <td></td></tr></tbody></table> <p>error</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 1600100,
+    &quot;result&quot;: false,
+    &quot;message&quot;: &quot;Param error&quot;,
+    &quot;data&quot;: null,
+    &quot;requestId&quot;: &quot;323fda9d-3c94-41dc-a944-5cc1b8baf5b1&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</td> <td>error code</td> <td>int</td> <td>20</td> <td><a href="/en/api/api2/standard/ps-code.html">Reference error code</a></td></tr> <tr><td>result</td> <td>Whether or not the return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>message</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>return data</td> <td>object</td> <td></td> <td>interface data return</td></tr> <tr><td>requestId</td> <td>requestId</td> <td>string</td> <td>48</td> <td>Flag request for logging errors</td></tr></tbody></table> <h5 id="product-type"><a href="#product-type" class="header-anchor">#</a> Product Type</h5> <table><thead><tr><th>Product Type</th> <th>Code</th> <th>Description</th></tr></thead> <tbody><tr><td>ORDINARY_PRODUCT</td> <td>0</td> <td>Ordinary products， managed by CJ for inventory management</td></tr> <tr><td>SERVICE_PRODUCT</td> <td>1</td> <td>Service products, If you need to transfer your own goods to CJ warehouse and CJ provides warehousing services, we will mark it as a service item.</td></tr> <tr><td>PACKAGING_PRODUCT</td> <td>3</td> <td>Packaging products are used for packaging when shipped from the warehouse. They do not support separate shipping and need to be shipped together with other goods.</td></tr> <tr><td>SUPPLIER_PRODUCT</td> <td>4</td> <td>Supplier products, It is a merchant that collaborates with CJ to manage inventory of goods.</td></tr> <tr><td>SUPPLIER_SHIPPED_PRODUCT</td> <td>5</td> <td>Supplier products, managed and shipped by supplier management.</td></tr></tbody></table> <h5 id="product-status"><a href="#product-status" class="header-anchor">#</a> Product Status</h5> <table><thead><tr><th>Status Code</th> <th>Description</th></tr></thead> <tbody><tr><td>3</td> <td>On Sale</td></tr></tbody></table> <h5 id="customization-version"><a href="#customization-version" class="header-anchor">#</a> Customization Version</h5> <table><thead><tr><th>Customization Version</th> <th>remark</th></tr></thead> <tbody><tr><td>0</td> <td>Non-POD products</td></tr> <tr><td>1</td> <td>Platform Customized Version V1</td></tr> <tr><td>2</td> <td>Platform Customized Version V2</td></tr> <tr><td>3</td> <td>Customer Customized Version V1</td></tr> <tr><td>4</td> <td>Customer Customized Version V2</td></tr> <tr><td>5</td> <td>POD 3.0 Platform Customized</td></tr></tbody></table> <h2 id="_6-product-connection"><a href="#_6-product-connection" class="header-anchor">#</a> 6 Product Connection</h2> <p>Product Connection binds a CJ product/variant to a platform (shop) product/variant. Once bound, orders placed on the shop can be automatically matched to the corresponding CJ product for fulfilment.</p> <h3 id="_6-1-query-product-connection-list-get"><a href="#_6-1-query-product-connection-list-get" class="header-anchor">#</a> 6.1 Query Product Connection List (GET)</h3> <p>Query existing product connection records under the current account. Supports filtering by shop, platform product, platform variant.</p> <h4 id="url-17"><a href="#url-17" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/conn/connection</p> <h4 id="curl-17"><a href="#curl-17" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request GET 'https://developers.cjdropshipping.com/api2.0/v1/product/conn/connection?shopId=xxx&amp;platformProductId=yyy&amp;page=1&amp;pageSize=10' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre></div><h4 id="request-parameters-2"><a href="#request-parameters-2" class="header-anchor">#</a> Request Parameters</h4> <table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>shopId</td> <td>Shop Id</td> <td>string</td> <td>N</td> <td>40</td> <td>If omitted, the API shop bound to account is used, <a href="/en/api/api2/api/shop.html#_1-1-get-shop-list-get">Shops</a></td></tr> <tr><td>platformProductId</td> <td>Platform Product Id</td> <td>string</td> <td>N</td> <td>100</td> <td></td></tr> <tr><td>platformVariantId</td> <td>Platform Variant Id</td> <td>string</td> <td>N</td> <td>100</td> <td></td></tr> <tr><td>page</td> <td>Current page</td> <td>int</td> <td>N</td> <td>-</td> <td>Default 1</td></tr> <tr><td>pageSize</td> <td>Page size</td> <td>int</td> <td>N</td> <td>-</td> <td>Default 10, max 100</td></tr></tbody></table> <h4 id="return-17"><a href="#return-17" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 200,
+    &quot;result&quot;: true,
+    &quot;message&quot;: &quot;Success&quot;,
+    &quot;data&quot;: {
+        &quot;total&quot;: 1,
+        &quot;list&quot;: [
+            {
+                &quot;shopId&quot;: &quot;xxx&quot;,
+                &quot;platformProductId&quot;: &quot;yyy&quot;,
+                &quot;platformVariantId&quot;: &quot;zzz&quot;,
+                &quot;cjProductId&quot;: &quot;1424608189734850560&quot;,
+                &quot;cjVariantId&quot;: &quot;1424608152007086080&quot;,
+                &quot;defaultArea&quot;: 1,
+                &quot;logistics&quot;: &quot;PacketPlus&quot;,
+                &quot;sourceCountryCode&quot;: &quot;CN&quot;,
+                &quot;sourceCountry&quot;: &quot;China&quot;,
+                &quot;targetCountryCode&quot;: &quot;US&quot;,
+                &quot;targetCountry&quot;: &quot;United States&quot;
+            }
+        ]
+    },
+    &quot;requestId&quot;: &quot;ae543fd1-cdd7-4a61-974a-1340fea678c6&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>total</td> <td>Total count</td> <td>int</td> <td>20</td> <td></td></tr> <tr><td>list</td> <td>Connection list</td> <td>list</td> <td>-</td> <td></td></tr> <tr><td>- shopId</td> <td>Shop Id</td> <td>string</td> <td>40</td> <td></td></tr> <tr><td>- platformProductId</td> <td>Platform Product Id</td> <td>string</td> <td>100</td> <td></td></tr> <tr><td>- platformVariantId</td> <td>Platform Variant Id</td> <td>string</td> <td>100</td> <td></td></tr> <tr><td>- cjProductId</td> <td>CJ Product Id</td> <td>string</td> <td>50</td> <td></td></tr> <tr><td>- cjVariantId</td> <td>CJ Variant Id</td> <td>string</td> <td>50</td> <td></td></tr> <tr><td>- defaultArea</td> <td>Default area</td> <td>int</td> <td>5</td> <td></td></tr> <tr><td>- logistics</td> <td>Logistics method</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>- sourceCountryCode</td> <td>Source country code</td> <td>string</td> <td>20</td> <td></td></tr> <tr><td>- sourceCountry</td> <td>Source country</td> <td>string</td> <td>100</td> <td></td></tr> <tr><td>- targetCountryCode</td> <td>Target country code</td> <td>string</td> <td>20</td> <td></td></tr> <tr><td>- targetCountry</td> <td>Target country</td> <td>string</td> <td>100</td> <td></td></tr></tbody></table> <h3 id="_6-2-create-product-connection-post"><a href="#_6-2-create-product-connection-post" class="header-anchor">#</a> 6.2 Create Product Connection (POST)</h3> <p>Bind one CJ product (with one or more variants) to a platform product (with the corresponding variants).</p> <h4 id="url-18"><a href="#url-18" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/conn/connection</p> <h4 id="curl-18"><a href="#curl-18" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request POST 'https://developers.cjdropshipping.com/api2.0/v1/product/conn/connection' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+                --header 'Content-Type: application/json' \
+                --data-raw '{
+                    &quot;shopId&quot;: &quot;xxx&quot;,
+                    &quot;defaultArea&quot;: 1,
+                    &quot;logistics&quot;: &quot;PacketPlus&quot;,
+                    &quot;cjProductId&quot;: &quot;1424608189734850560&quot;,
+                    &quot;platformProductId&quot;: &quot;yyy&quot;,
+                    &quot;sourceCountryCode&quot;: &quot;CN&quot;,
+                    &quot;sourceCountry&quot;: &quot;China&quot;,
+                    &quot;targetCountryCode&quot;: &quot;US&quot;,
+                    &quot;targetCountry&quot;: &quot;United States&quot;,
+                    &quot;variantList&quot;: [
+                        {
+                            &quot;cjVariantId&quot;: &quot;1424608152007086080&quot;,
+                            &quot;platformVariantId&quot;: &quot;v_001&quot;
+                        }
+                    ]
+                }'
+</code></pre></div><h4 id="rate-limit"><a href="#rate-limit" class="header-anchor">#</a> Rate Limit</h4> <h4 id="request-parameters-3"><a href="#request-parameters-3" class="header-anchor">#</a> Request Parameters</h4> <table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>shopId</td> <td>Shop Id</td> <td>string</td> <td>N</td> <td>50</td> <td>If omitted, the API shop bound to account is used, <a href="/en/api/api2/api/shop.html#_1-1-get-shop-list-get">Shops</a></td></tr> <tr><td>defaultArea</td> <td>Default area</td> <td>int</td> <td>Y</td> <td>5</td> <td></td></tr> <tr><td>logistics</td> <td>Logistics method</td> <td>string</td> <td>Y</td> <td>200</td> <td></td></tr> <tr><td>cjProductId</td> <td>CJ Product Id</td> <td>string</td> <td>Y</td> <td>50</td> <td></td></tr> <tr><td>platformProductId</td> <td>Platform Product Id</td> <td>string</td> <td>Y</td> <td>100</td> <td></td></tr> <tr><td>sourceCountryCode</td> <td>Source country code</td> <td>string</td> <td>N</td> <td>20</td> <td></td></tr> <tr><td>sourceCountry</td> <td>Source country</td> <td>string</td> <td>N</td> <td>100</td> <td></td></tr> <tr><td>targetCountryCode</td> <td>Target country code</td> <td>string</td> <td>N</td> <td>20</td> <td></td></tr> <tr><td>targetCountry</td> <td>Target country</td> <td>string</td> <td>N</td> <td>100</td> <td></td></tr> <tr><td>variantList</td> <td>Variant list</td> <td>list</td> <td>Y</td> <td>-</td> <td>At least one variant</td></tr> <tr><td>- cjVariantId</td> <td>CJ Variant Id</td> <td>string</td> <td>Y</td> <td>50</td> <td></td></tr> <tr><td>- platformVariantId</td> <td>Platform Variant Id</td> <td>string</td> <td>Y</td> <td>100</td> <td></td></tr></tbody></table> <h4 id="return-18"><a href="#return-18" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 200,
+    &quot;result&quot;: true,
+    &quot;message&quot;: &quot;Success&quot;,
+    &quot;data&quot;: true,
+    &quot;requestId&quot;: &quot;ae543fd1-cdd7-4a61-974a-1340fea678c6&quot;
+}
+</code></pre></div><h3 id="_6-3-disconnect-product-delete"><a href="#_6-3-disconnect-product-delete" class="header-anchor">#</a> 6.3 Disconnect Product (DELETE)</h3> <p>Remove an existing connection by platform product Id (optionally restricted to a single platform variant).</p> <h4 id="url-19"><a href="#url-19" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/conn/connection</p> <h4 id="curl-19"><a href="#curl-19" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location --request DELETE 'https://developers.cjdropshipping.com/api2.0/v1/product/conn/connection?shopId=xxx&amp;platformProductId=yyy&amp;platformVariantId=zzz' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre></div><h4 id="request-parameters-4"><a href="#request-parameters-4" class="header-anchor">#</a> Request Parameters</h4> <table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>shopId</td> <td>Shop Id</td> <td>string</td> <td>N</td> <td>50</td> <td>If omitted, the API shop bound to account is used, <a href="/en/api/api2/api/shop.html#_1-1-get-shop-list-get">Shops</a></td></tr> <tr><td>platformProductId</td> <td>Platform Product Id</td> <td>string</td> <td>Y</td> <td>100</td> <td></td></tr> <tr><td>platformVariantId</td> <td>Platform Variant Id</td> <td>string</td> <td>N</td> <td>100</td> <td>If empty, all variant connections under that platform product are removed</td></tr></tbody></table> <h4 id="return-19"><a href="#return-19" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 200,
+    &quot;result&quot;: true,
+    &quot;message&quot;: &quot;Success&quot;,
+    &quot;data&quot;: true,
+    &quot;requestId&quot;: &quot;ae543fd1-cdd7-4a61-974a-1340fea678c6&quot;
+}
+</code></pre></div><h2 id="_7-video"><a href="#_7-video" class="header-anchor">#</a> 7 Video</h2> <h3 id="_7-1-query-product-videos-post"><a href="#_7-1-query-product-videos-post" class="header-anchor">#</a> 7.1 Query Product Videos (POST)</h3> <div class="custom-block warning"><p class="custom-block-title">Note</p> <p>It is recommended that customers cache videos on their own servers instead of using CJ video URLs directly for end users. Heavy direct usage of CJ video playback URLs may affect service stability and could be rate-limited.</p></div> <div class="custom-block danger"><p class="custom-block-title">Important</p> <p>When downloading videos, you <strong>must</strong> include a <code>Referer</code> header with the value <code>https://developers.cjdropshipping.com/</code> in your request, otherwise the video server will reject the request.</p></div> <p>Example:</p> <div class="language- extra-class"><pre class="language-text"><code>curl -H &quot;Referer: https://developers.cjdropshipping.com&quot; -O &quot;https://download-only-api.cjdropshipping.com/xxxxxx/video.mp4&quot;
+</code></pre></div><h4 id="url-20"><a href="#url-20" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/queryVideosByProductId</p> <h4 id="curl-20"><a href="#curl-20" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location 'https://developers.cjdropshipping.com/api2.0/v1/product/queryVideosByProductId' \
+--header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+--header 'Content-Type: application/json' \
+--data '{
+    &quot;productId&quot;: &quot;1658748072937136128&quot;
+}'
+</code></pre></div><h4 id="request-parameters-5"><a href="#request-parameters-5" class="header-anchor">#</a> Request Parameters</h4> <table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>productId</td> <td>CJ Product Id</td> <td>string</td> <td>Y</td> <td>100</td> <td></td></tr></tbody></table> <h4 id="return-20"><a href="#return-20" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+    <span class="token property">&quot;success&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;code&quot;</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;message&quot;</span><span class="token operator">:</span> <span class="token string">&quot;success&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;data&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">{</span>
+            <span class="token property">&quot;id&quot;</span><span class="token operator">:</span> <span class="token string">&quot;abc39e6946dc4aa6b53f1813b53cfcb1&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;locProductId&quot;</span><span class="token operator">:</span> <span class="token string">&quot;1964955178105954305&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;videoName&quot;</span><span class="token operator">:</span> <span class="token string">&quot;123&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;videoState&quot;</span><span class="token operator">:</span> <span class="token string">&quot;ON_STATE&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;videoUrl&quot;</span><span class="token operator">:</span> <span class="token string">&quot;https://download-only-api.cjdropshipping.com/abc39e6946dc4aa6b53f1813b53cfcb1/xxxx.mp4&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;videoNumber&quot;</span><span class="token operator">:</span> <span class="token null keyword">null</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;notCopyrightPrice&quot;</span><span class="token operator">:</span> <span class="token string">&quot;&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;copyrightPrice&quot;</span><span class="token operator">:</span> <span class="token string">&quot;&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;copyright&quot;</span><span class="token operator">:</span> <span class="token string">&quot;1&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;isFree&quot;</span><span class="token operator">:</span> <span class="token string">&quot;1&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;videoId&quot;</span><span class="token operator">:</span> <span class="token string">&quot;abc39e6946dc4aa6b53f1813b53cfcb1&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;videoSize&quot;</span><span class="token operator">:</span> <span class="token string">&quot;4689615&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;coverURL&quot;</span><span class="token operator">:</span> <span class="token string">&quot;https://download-only-api.cjdropshipping.com/abc39e6946dc4aa6b53f1813b53cfcb1/snapshots/xxx.jpg&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;duration&quot;</span><span class="token operator">:</span> <span class="token number">39.521</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;unit&quot;</span><span class="token operator">:</span> <span class="token string">&quot;MB&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;flag&quot;</span><span class="token operator">:</span> <span class="token string">&quot;0&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;isBuy&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;payType&quot;</span><span class="token operator">:</span> <span class="token null keyword">null</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;playCount&quot;</span><span class="token operator">:</span> <span class="token number">6543</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;collectCount&quot;</span><span class="token operator">:</span> <span class="token number">26</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;downloadCount&quot;</span><span class="token operator">:</span> <span class="token number">46</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;showCount&quot;</span><span class="token operator">:</span> <span class="token number">734</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;shareNum&quot;</span><span class="token operator">:</span> <span class="token number">12</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;likeNum&quot;</span><span class="token operator">:</span> <span class="token number">19</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;commentCount&quot;</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;buyCount&quot;</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;videoType&quot;</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;copyrightBuyType&quot;</span><span class="token operator">:</span> <span class="token number">4</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;orderNum&quot;</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;videoByOut&quot;</span><span class="token operator">:</span> <span class="token null keyword">null</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;width&quot;</span><span class="token operator">:</span> <span class="token number">960</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;height&quot;</span><span class="token operator">:</span> <span class="token number">540</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;openIn&quot;</span><span class="token operator">:</span> <span class="token null keyword">null</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;requestId&quot;</span><span class="token operator">:</span> <span class="token string">&quot;6106699663484b45829410eb75b5a4b3&quot;</span>
+<span class="token punctuation">}</span>
+</code></pre></div><p>error</p> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+    <span class="token property">&quot;success&quot;</span><span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;code&quot;</span><span class="token operator">:</span> <span class="token number">1600100</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;message&quot;</span><span class="token operator">:</span> <span class="token string">&quot;productId must be not empty&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;data&quot;</span><span class="token operator">:</span> <span class="token null keyword">null</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;requestId&quot;</span><span class="token operator">:</span> <span class="token string">&quot;ae543fd1-cdd7-4a61-974a-1340fea678c6&quot;</span>
+<span class="token punctuation">}</span>
+</code></pre></div><h4 id="response-parameters"><a href="#response-parameters" class="header-anchor">#</a> Response Parameters</h4> <table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>success</td> <td>Success Flag</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>code</td> <td>Error Code</td> <td>int</td> <td>20</td> <td>0 on success, <a href="/en/api/api2/standard/ps-code.html">Error Code Reference</a></td></tr> <tr><td>message</td> <td>Response Message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>Video List</td> <td>array</td> <td></td> <td>Business data</td></tr> <tr><td>requestId</td> <td>Request Id</td> <td>string</td> <td>48</td> <td>For log error tracking</td></tr></tbody></table> <h4 id="data-field-description"><a href="#data-field-description" class="header-anchor">#</a> data Field Description</h4> <table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Note</th></tr></thead> <tbody><tr><td>id</td> <td>Video Id</td> <td>string</td> <td></td></tr> <tr><td>locProductId</td> <td>Product Id</td> <td>string</td> <td></td></tr> <tr><td>videoName</td> <td>Video Name</td> <td>string</td> <td></td></tr> <tr><td>videoState</td> <td>Video Status</td> <td>string</td> <td>ON_STATE: Listed, DOWN_STATE: Unlisted, DELETE_STATE: Deleted</td></tr> <tr><td>videoUrl</td> <td>Video URL</td> <td>string</td> <td></td></tr> <tr><td>videoNumber</td> <td>Video Number</td> <td>string</td> <td></td></tr> <tr><td>notCopyrightPrice</td> <td>Temporary Use Price</td> <td>string</td> <td></td></tr> <tr><td>copyrightPrice</td> <td>Permanent Use Price</td> <td>string</td> <td></td></tr> <tr><td>copyright</td> <td>Copyright</td> <td>string</td> <td></td></tr> <tr><td>isFree</td> <td>Is Free</td> <td>string</td> <td>0: Paid, 1: Free</td></tr> <tr><td>videoId</td> <td>Cloud Video ID</td> <td>string</td> <td></td></tr> <tr><td>videoSize</td> <td>Video Size</td> <td>string</td> <td></td></tr> <tr><td>coverURL</td> <td>Cover Image</td> <td>string</td> <td></td></tr> <tr><td>duration</td> <td>Duration</td> <td>float</td> <td></td></tr> <tr><td>unit</td> <td>Size Unit</td> <td>string</td> <td>M, kb</td></tr> <tr><td>flag</td> <td>Flag</td> <td>string</td> <td></td></tr> <tr><td>isBuy</td> <td>Is Purchased</td> <td>boolean</td> <td></td></tr> <tr><td>payType</td> <td>Copyright Purchase Type</td> <td>string</td> <td>0: Permanent, 1: Partial</td></tr> <tr><td>playCount</td> <td>Play Count</td> <td>integer</td> <td></td></tr> <tr><td>collectCount</td> <td>Collect Count</td> <td>integer</td> <td></td></tr> <tr><td>downloadCount</td> <td>Download Count</td> <td>integer</td> <td></td></tr> <tr><td>showCount</td> <td>Impression Count</td> <td>integer</td> <td></td></tr> <tr><td>shareNum</td> <td>Share Count</td> <td>integer</td> <td></td></tr> <tr><td>likeNum</td> <td>Like Count</td> <td>integer</td> <td></td></tr> <tr><td>commentCount</td> <td>Comment Count</td> <td>integer</td> <td></td></tr> <tr><td>buyCount</td> <td>Purchase Count</td> <td>integer</td> <td></td></tr> <tr><td>videoType</td> <td>Video Type</td> <td>integer</td> <td>0: Unboxing, 1: Marketing, 2: Review</td></tr> <tr><td>copyrightBuyType</td> <td>Copyright Purchase Status</td> <td>integer</td> <td>1: Not Purchased/Free, 2: Permanent, 3: Partial, 4: Both</td></tr> <tr><td>orderNum</td> <td>Sort Order</td> <td>integer</td> <td></td></tr> <tr><td>videoByOut</td> <td>Is Bought Out</td> <td>boolean</td> <td>true: Bought Out, false: Not Bought Out</td></tr> <tr><td>width</td> <td>Width</td> <td>long</td> <td>Pixels</td></tr> <tr><td>height</td> <td>Height</td> <td>long</td> <td>Pixels</td></tr> <tr><td>openIn</td> <td>Days Until Free</td> <td>integer</td> <td></td></tr></tbody></table> <h2 id="_8-image-search"><a href="#_8-image-search" class="header-anchor">#</a> 8 Image Search</h2> <h3 id="_8-1-query-products-by-image-post"><a href="#_8-1-query-products-by-image-post" class="header-anchor">#</a> 8.1 Query Products By Image (POST)</h3> <p>Search for visually similar products in the CJ product catalog by providing an image URL. Only returns products with saleStatus=3 (approved/on sale).</p> <ul><li><strong>Authentication:</strong> Required (CJ-Access-Token in header)</li> <li><strong>Whitelist Restriction:</strong> Only whitelisted users may call this API</li></ul> <h4 id="url-21"><a href="#url-21" class="header-anchor">#</a> URL</h4> <p>https://developers.cjdropshipping.com/api2.0/v1/product/queryProductsByImage</p> <h4 id="curl-21"><a href="#curl-21" class="header-anchor">#</a> CURL</h4> <div class="language- extra-class"><pre class="language-text"><code>curl --location 'https://developers.cjdropshipping.com/api2.0/v1/product/queryProductsByImage' \
+     --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+     --header 'Content-Type: application/json' \
+     --data '{&quot;imageUrl&quot;:&quot;https://example.com/sample-product.jpg&quot;}'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th> <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>imageUrl</td> <td>Image URL</td> <td>string</td> <td>Y</td> <td>500</td> <td>Product image URL to search</td></tr></tbody></table> <h4 id="return-21"><a href="#return-21" class="header-anchor">#</a> Return</h4> <p>success</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 200,
+    &quot;result&quot;: true,
+    &quot;message&quot;: &quot;Success&quot;,
+    &quot;data&quot;: [
+        {
+            &quot;id&quot;: &quot;2503130846171622700&quot;,
+            &quot;bigImage&quot;: &quot;https://oss-cf.cjdropshipping.com/product/2025/07/07/08/a3f0d6db.jpg&quot;,
+            &quot;category&quot;: &quot;Women's Clothing &gt; Tops &amp; Sets &gt; Lady Dresses&quot;,
+            &quot;categoryId&quot;: &quot;D2432903-0D4E-4787-886F-D3D9DA7890D9&quot;,
+            &quot;description&quot;: &quot;&lt;p&gt;&lt;b&gt;Overview:&lt;/b&gt;...&lt;/p&gt;&quot;,
+            &quot;image&quot;: &quot;[\&quot;https://oss-cf.cjdropshipping.com/product/...\&quot;]&quot;,
+            &quot;inventory&quot;: null,
+            &quot;material&quot;: &quot;[\&quot;布料\&quot;]&quot;,
+            &quot;materialEn&quot;: &quot;[\&quot;Cloth\&quot;]&quot;,
+            &quot;materialKey&quot;: &quot;[\&quot;FABRIC\&quot;]&quot;,
+            &quot;name&quot;: &quot;[\&quot;连衣裙礼服\&quot;]&quot;,
+            &quot;nameEn&quot;: &quot;Women's Backless Ruffles Irregular Dress&quot;,
+            &quot;packWeight&quot;: &quot;250.00-320.00&quot;,
+            &quot;packing&quot;: &quot;[\&quot;塑料袋\&quot;]&quot;,
+            &quot;packingEn&quot;: &quot;[\&quot;Plastic bags\&quot;]&quot;,
+            &quot;packingKey&quot;: &quot;[\&quot;PLASTIC_BAG\&quot;]&quot;,
+            &quot;property&quot;: &quot;[\&quot;服装\&quot;]&quot;,
+            &quot;propertyEn&quot;: &quot;[\&quot;Clothes\&quot;]&quot;,
+            &quot;propertyKey&quot;: &quot;[\&quot;Clothes\&quot;]&quot;,
+            &quot;saleStatus&quot;: &quot;3&quot;,
+            &quot;sellPrice&quot;: &quot;8.13-8.62&quot;,
+            &quot;sku&quot;: &quot;CJLY2326436&quot;,
+            &quot;unit&quot;: null,
+            &quot;variantKey&quot;: &quot;[\&quot;颜色\&quot;,\&quot;尺码\&quot;]&quot;,
+            &quot;variantKeyEn&quot;: &quot;[\&quot;Color\&quot;,\&quot;Size\&quot;]&quot;,
+            &quot;weight&quot;: &quot;230.00-300.00&quot;,
+            &quot;addMarkStatus&quot;: 0,
+            &quot;productType&quot;: &quot;0&quot;,
+            &quot;listedNum&quot;: 622,
+            &quot;createAt&quot;: 1741855577000
+        }
+    ],
+    &quot;requestId&quot;: &quot;a3189ad0a02e493fb4d2f422207b31e0&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>id</td> <td>Product ID</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>bigImage</td> <td>Product display image URL</td> <td>string</td> <td>500</td> <td></td></tr> <tr><td>category</td> <td>Product category path</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>categoryId</td> <td>Category ID</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>description</td> <td>Product description (HTML)</td> <td>string</td> <td>-</td> <td>Rich text, may contain size charts and images</td></tr> <tr><td>image</td> <td>Product image URL list</td> <td>string</td> <td>-</td> <td>JSON array string</td></tr> <tr><td>inventory</td> <td>Total inventory</td> <td>string</td> <td>200</td> <td>May be null</td></tr> <tr><td>material</td> <td>Material (Chinese)</td> <td>string</td> <td>200</td> <td>JSON array</td></tr> <tr><td>materialEn</td> <td>Material (English)</td> <td>string</td> <td>200</td> <td>JSON array</td></tr> <tr><td>materialKey</td> <td>Material Key</td> <td>string</td> <td>200</td> <td>JSON array</td></tr> <tr><td>name</td> <td>Product name (Chinese)</td> <td>string</td> <td>-</td> <td>JSON array string</td></tr> <tr><td>nameEn</td> <td>Product name (English)</td> <td>string</td> <td>500</td> <td></td></tr> <tr><td>packWeight</td> <td>Package weight (grams)</td> <td>string</td> <td>200</td> <td>May be a range, e.g. &quot;250.00-320.00&quot;</td></tr> <tr><td>packing</td> <td>Packing (Chinese)</td> <td>string</td> <td>200</td> <td>JSON array</td></tr> <tr><td>packingEn</td> <td>Packing (English)</td> <td>string</td> <td>200</td> <td>JSON array</td></tr> <tr><td>packingKey</td> <td>Packing Key</td> <td>string</td> <td>200</td> <td>JSON array</td></tr> <tr><td>property</td> <td>Logistics property (Chinese)</td> <td>string</td> <td>200</td> <td>JSON array</td></tr> <tr><td>propertyEn</td> <td>Logistics property (English)</td> <td>string</td> <td>200</td> <td>JSON array</td></tr> <tr><td>propertyKey</td> <td>Logistics property Key</td> <td>string</td> <td>200</td> <td>JSON array</td></tr> <tr><td>saleStatus</td> <td>Sale status</td> <td>string</td> <td>10</td> <td>3 = Approved (on sale). This API only returns saleStatus=3 products</td></tr> <tr><td>sellPrice</td> <td>Sell price (USD)</td> <td>string</td> <td>200</td> <td>Single price or range, e.g. &quot;8.13-8.62&quot;</td></tr> <tr><td>sku</td> <td>Product SKU</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>unit</td> <td>Sales unit</td> <td>string</td> <td>200</td> <td>e.g. &quot;pcs&quot;, &quot;set&quot;. May be null</td></tr> <tr><td>variantKey</td> <td>Variant dimension names (Chinese)</td> <td>string</td> <td>200</td> <td>e.g. &quot;[&quot;颜色&quot;,&quot;尺码&quot;]&quot;</td></tr> <tr><td>variantKeyEn</td> <td>Variant dimension names (English)</td> <td>string</td> <td>200</td> <td>e.g. &quot;[&quot;Color&quot;,&quot;Size&quot;]&quot;</td></tr> <tr><td>weight</td> <td>Product weight (grams)</td> <td>string</td> <td>200</td> <td>May be a range</td></tr> <tr><td>addMarkStatus</td> <td>Free shipping flag</td> <td>int</td> <td>1</td> <td>0: No, 1: Yes</td></tr> <tr><td>productType</td> <td>Product type</td> <td>string</td> <td>10</td> <td>0: Normal, 1: Service, 3: Packaging, 4: Supplier, 5: Supplier-shipped</td></tr> <tr><td>listedNum</td> <td>Total listing count</td> <td>int</td> <td>20</td> <td></td></tr> <tr><td>createAt</td> <td>Product creation time</td> <td>long</td> <td>-</td> <td>Timestamp in milliseconds</td></tr></tbody></table> <p>error</p> <div class="language- extra-class"><pre class="language-text"><code>{
+    &quot;code&quot;: 401,
+    &quot;result&quot;: false,
+    &quot;message&quot;: &quot;Unauthorized&quot;,
+    &quot;data&quot;: null,
+    &quot;requestId&quot;: &quot;a1b2c3d4-e5f6-7890-abcd-ef1234567890&quot;
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</td> <td>error code</td> <td>int</td> <td>20</td> <td><a href="/en/api/api2/standard/ps-code.html">Reference error code</a></td></tr> <tr><td>result</td> <td>Whether or not the return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>message</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></tr> <tr><td>data</td> <td>return data</td> <td>object</td> <td></td> <td>interface data return</td></tr> <tr><td>requestId</td> <td>requestId</td> <td>string</td> <td>48</td> <td>Flag request for logging errors</td></tr></tbody></table> <h4 id="error-codes"><a href="#error-codes" class="header-anchor">#</a> Error Codes</h4> <table><thead><tr><th>Code</th> <th>Meaning</th> <th>Suggestion</th></tr></thead> <tbody><tr><td>200</td> <td>Success</td> <td>Process returned data normally</td></tr> <tr><td>401</td> <td>Auth failed (not whitelisted or invalid token)</td> <td>Check image search permission or refresh token</td></tr> <tr><td>402</td> <td>QPS limit reached</td> <td>Retry later, implement client-side throttling</td></tr> <tr><td>406</td> <td>Request too frequent</td> <td>Wait and retry</td></tr> <tr><td>429</td> <td>Rate limit triggered (30/s per app)</td> <td>Reduce call frequency</td></tr></tbody></table></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/en/api/api2/api/setting.html" class="prev">
+        2 Setting
+      </a></span> <span class="next"><a href="/en/api/api2/api/storage.html">
+        4 Storage
+      </a>
+      →
+    </span></p></div> </main></div><div class="global-ui"><!----></div></div>
+    <script src="/assets/js/app.929674c4.js" defer></script><script src="/assets/js/2.b4e2210f.js" defer></script><script src="/assets/js/1.d082965a.js" defer></script><script src="/assets/js/37.44723442.js" defer></script>
+  </body>
+</html>

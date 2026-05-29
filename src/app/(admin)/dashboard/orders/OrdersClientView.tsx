@@ -23,11 +23,20 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export default function OrdersClientView({ orders, currentSource, currentStatus, currentSearch }: { 
+export default function OrdersClientView({ 
+  orders, 
+  currentSource, 
+  currentStatus, 
+  currentSearch,
+  total = 0,
+  currentPage = 1
+}: { 
   orders: any[], 
   currentSource: string,
   currentStatus: string,
-  currentSearch: string
+  currentSearch: string,
+  total?: number,
+  currentPage?: number
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -43,6 +52,12 @@ export default function OrdersClientView({ orders, currentSource, currentStatus,
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
     else params.delete(key);
+    
+    // Reset page to 1 whenever a filter (other than page) is updated
+    if (key !== 'page') {
+      params.delete('page');
+    }
+    
     router.push(`/dashboard/orders?${params.toString()}`);
   };
 
@@ -304,6 +319,27 @@ export default function OrdersClientView({ orders, currentSource, currentStatus,
           </table>
         </div>
       </div>
+      
+      {/* Pagination */}
+      {Math.ceil(total / 10) > 1 && (
+        <div className="flex justify-center gap-3 mt-8">
+          <button 
+            className="px-4 py-2 rounded-[10px] text-sm font-bold border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200 disabled:opacity-30" 
+            disabled={currentPage <= 1} 
+            onClick={() => updateFilters('page', String(currentPage - 1))}
+          >
+            <i className="fas fa-chevron-left"></i> Prev
+          </button>
+          <span className="px-4 py-2 text-sm font-bold text-[#1E293B]">Page {currentPage} of {Math.ceil(total / 10)}</span>
+          <button 
+            className="px-4 py-2 rounded-[10px] text-sm font-bold border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200 disabled:opacity-30" 
+            disabled={currentPage >= Math.ceil(total / 10)} 
+            onClick={() => updateFilters('page', String(currentPage + 1))}
+          >
+            Next <i className="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      )}
       
       {/* Real React Modal for Confirmation */}
       {confirmModal && (

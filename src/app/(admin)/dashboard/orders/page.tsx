@@ -57,7 +57,15 @@ export default async function OrdersPage({
     }
   }
 
-  const serializedOrders = JSON.parse(JSON.stringify(orders));
+  const currentPage = Number(resolvedSearchParams.page as string) || 1;
+  const pageSize = 10;
+  const total = orders.length;
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedOrders = orders.slice(startIndex, endIndex);
+
+  const serializedOrders = JSON.parse(JSON.stringify(paginatedOrders));
 
   return (
     <OrdersClientView 
@@ -65,6 +73,8 @@ export default async function OrdersPage({
       currentSource={source} 
       currentStatus={statusFilter} 
       currentSearch={searchQuery}
+      total={total}
+      currentPage={currentPage}
     />
   );
 }
