@@ -118,7 +118,7 @@ export async function startCategoryImport(cjId: string) {
 
   // Start background task (floating promise)
   (async () => {
-    console.log(`📦 Starting background import for category ${cjId}`);
+    console.log(`Starting background import for category ${cjId}`);
     try {
       let page = 1;
       let hasMore = true;
@@ -127,25 +127,24 @@ export async function startCategoryImport(cjId: string) {
         // Check if status was manually stopped
         const state = await prisma.autoImportState.findUnique({ where: { id: "default" } });
         if (state?.status !== "RUNNING" || state?.currentCategory !== cjId) {
-          console.log(`⏹️ Import stopped or category changed for ${cjId}`);
+          console.log(`Import stopped or category changed for ${cjId}`);
           break;
         }
-          page++;
-          // Update state to next page
-          await prisma.autoImportState.update({
-            where: { id: "default" },
-            data: { currentPage: page }
-          });
-        }
+        page++;
+        // Update state to next page
+        await prisma.autoImportState.update({
+          where: { id: "default" },
+          data: { currentPage: page }
+        });
       }
 
-      console.log(`✅ Import finished for category ${cjId}`);
+      console.log(`Import finished for category ${cjId}`);
       await prisma.autoImportState.update({
         where: { id: "default" },
         data: { status: "IDLE", currentCategory: null }
       });
     } catch (err) {
-      console.error(`❌ Background import error:`, err);
+      console.error(`Background import error:`, err);
       await prisma.autoImportState.update({
         where: { id: "default" },
         data: { status: "ERROR" }
