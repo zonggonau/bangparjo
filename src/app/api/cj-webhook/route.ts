@@ -36,16 +36,44 @@ export async function POST(req: Request) {
     params = body?.params || {};
     messageId = body?.messageId || '';
   } catch {
-    // CJ may send a validation POST with no body or non-JSON content.
+    // CJ sends a validation POST to verify the callback URL.
     // Return 200 OK immediately to pass URL validation.
     return NextResponse.json({ success: true, message: 'Webhook endpoint is active' });
   }
 
+  // ── Respond 200 OK immediately (CJ requires response within 3 seconds) ──
+  // Process webhook logic asynchronously after sending response.
+  const response = NextResponse.json({ success: true, messageId });
+
+  // Fire-and-forget: process webhook in background
+  processWebhook(type, messageType, params, body, messageId).catch((err) => {
+    console.error('❌ [CJ WEBHOOK BACKGROUND ERROR]:', err);
+  });
+
+  return response;
+}
+
+/**
+ * Process webhook event asynchronously.
+ * This runs after the 200 OK response is sent to CJ,
+ * so any database delays or errors won't affect URL validation.
+ */
+async function processWebhook(
+  type: string,
+  messageType: string,
+  params: any,
+  body: any,
+  messageId: string
+) {
   try {
-    // 1. Log webhook
-    await prisma.webhookLog.create({
-      data: { eventType: type, payload: body },
-    });
+    // 1. Log webhook (fire-and-forget, don't block on failure)
+    try {
+      await prisma.webhookLog.create({
+        data: { eventType: type, payload: body },
+      });
+    } catch (logErr) {
+      console.warn('[CJ WEBHOOK] Logging failed (table may not exist yet):', logErr);
+    }
 
     console.log(`🔔 [CJ WEBHOOK]: ${type}`, params);
 
@@ -67,16 +95,13 @@ export async function POST(req: Request) {
       default:
         console.warn(`[CJ WEBHOOK]: Unhandled type: ${type}`);
     }
-
-    return NextResponse.json({ success: true, messageId });
   } catch (error: any) {
-    console.error('❌ [CJ WEBHOOK ERROR]:', error);
+    console.error('❌ [CJ WEBHOOK PROCESSING ERROR]:', error);
     try {
       await prisma.webhookLog.create({
         data: { eventType: type, payload: body, error: error.message, processed: false },
       });
     } catch {}
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 
