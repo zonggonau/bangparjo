@@ -23,8 +23,23 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { type, messageType, params, messageId } = body;
+  let body: any = {};
+  let type = '';
+  let messageType = '';
+  let params: any = {};
+  let messageId = '';
+
+  try {
+    body = await req.json();
+    type = body?.type || '';
+    messageType = body?.messageType || '';
+    params = body?.params || {};
+    messageId = body?.messageId || '';
+  } catch {
+    // CJ may send a validation POST with no body or non-JSON content.
+    // Return 200 OK immediately to pass URL validation.
+    return NextResponse.json({ success: true, message: 'Webhook endpoint is active' });
+  }
 
   try {
     // 1. Log webhook
