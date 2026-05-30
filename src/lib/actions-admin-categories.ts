@@ -2,6 +2,7 @@
 
 import { prisma } from './db';
 import { revalidatePath } from 'next/cache';
+import { startCategoryImport } from './sync-logic';
 
 export async function getCategoriesAction() {
   try {
@@ -62,6 +63,30 @@ export async function deleteCategoryAction(id: string) {
     return { success: true };
   } catch (error: any) {
     console.error('deleteCategoryAction error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function startImportCategoryAction(cjId: string) {
+  if (!cjId) return { success: false, error: 'Category CJ ID is required.' };
+  
+  try {
+    await startCategoryImport(cjId);
+    return { success: true };
+  } catch (error: any) {
+    console.error('startImportCategoryAction error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getImportProgressAction() {
+  try {
+    const state = await prisma.autoImportState.findUnique({
+      where: { id: "default" }
+    });
+    return { success: true, data: state };
+  } catch (error: any) {
+    console.error('getImportProgressAction error:', error);
     return { success: false, error: error.message };
   }
 }

@@ -107,3 +107,49 @@ export async function syncTrendingProducts(maxPages = 1) {
   }
   return imported;
 }
+
+export async function startCategoryImport(cjId: string) {
+  // Set state to RUNNING
+  await prisma.autoImportState.upsert({
+    where: { id: "default" },
+    update: { currentCategory: cjId, currentPage: 1, status: "RUNNING", updatedAt: new Date() },
+    create: { id: "default", currentCategory: cjId, currentPage: 1, status: "RUNNING" }
+  });
+
+  // Start background task (floating promise)
+  (async () => {
+    console.log(`📦 Starting background import for category ${cjId}`);
+    try {
+      let page = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        // Check if status was manually stopped
+        const state = await prisma.autoImportState.findUnique({ where: { id: "default" } });
+        if (state?.status !== "RUNNING" || state?.currentCategory !== cjId) {
+          console.log(`⏹️ Import stopped or category changed for ${cjId}`);
+          break;
+        }
+          page++;
+          // Update state to next page
+          await prisma.autoImportState.update({
+            where: { id: "default" },
+            data: { currentPage: page }
+          });
+        }
+      }
+
+      console.log(`✅ Import finished for category ${cjId}`);
+      await prisma.autoImportState.update({
+        where: { id: "default" },
+        data: { status: "IDLE", currentCategory: null }
+      });
+    } catch (err) {
+      console.error(`❌ Background import error:`, err);
+      await prisma.autoImportState.update({
+        where: { id: "default" },
+        data: { status: "ERROR" }
+      });
+    }
+  })(); // fire and forget
+}

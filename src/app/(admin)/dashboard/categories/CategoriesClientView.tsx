@@ -1,37 +1,59 @@
 'use client';
 
-import { useState } from 'react';
-import { createCategoryAction, updateCategoryAction, deleteCategoryAction } from '@/lib/actions-admin-categories';
+import { useState, useEffect } from 'react';
+import { createCategoryAction, startImportCategoryAction, getImportProgressAction } from '@/lib/actions-admin-categories';
 import { useRouter } from 'next/navigation';
 
 export default function CategoriesClientView({ categories }: { categories: any[] }) {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  
   const [form, setForm] = useState({ name: '', slug: '', cjId: '' });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  
+  const [importState, setImportState] = useState<any>(null);
+
+  // Poll for import progress
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    const checkProgress = async () => {
+      const res = await getImportProgressAction();
+      if (res.success && res.data) {
+        setImportState(res.data);
+      }
+    };
+    
+    checkProgress();
+    interval = setInterval(checkProgress, 3000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const openNew = () => {
-    setEditingId(null);
     setForm({ name: '', slug: '', cjId: '' });
     setError('');
     setShowModal(true);
   };
 
-  const openEdit = (cat: any) => {
-    setEditingId(cat.id);
-    setForm({ name: cat.name, slug: cat.slug, cjId: cat.cjId || '' });
-    setError('');
-    setShowModal(true);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this category?')) return;
-    const res = await deleteCategoryAction(id);
-    if (res.success) router.refresh();
-    else alert(res.error);
+  const handleImport = async (cjId: string) => {
+    if (!cjId) {
+      alert('This category does not have a CJ ID set.');
+      return;
+    }
+    if (importState?.status === 'RUNNING') {
+      alert('Another import is currently running. Please wait.');
+      return;
+    }
+    if (!confirm('This will import all products for this category in the background. Continue?')) return;
+    
+    const res = await startImportCategoryAction(cjId);
+    if (res.success) {
+      // Optimistic update
+      setImportState({ status: 'RUNNING', currentCategory: cjId, currentPage: 1 });
+    } else {
+      alert(res.error || 'Failed to start import');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,9 +61,7 @@ export default function CategoriesClientView({ categories }: { categories: any[]
     setSubmitting(true);
     setError('');
     
-    const res = editingId 
-      ? await updateCategoryAction(editingId, form)
-      : await createCategoryAction(form);
+    const res = await createCategoryAction(form);
       
     if (res.success) {
       setShowModal(false);
@@ -64,13 +84,29 @@ export default function CategoriesClientView({ categories }: { categories: any[]
         </button>
       </div>
 
+      {importState?.status === 'RUNNING' && (
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-[12px] mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <i className="fas fa-spinner fa-spin text-blue-500 text-xl"></i>
+            <div>
+              <h4 className="font-bold text-blue-800 text-sm">Background Import Running</h4>
+              <p className="text-blue-600 text-xs mt-1">
+                Currently fetching page {importState.currentPage} for Category CJ ID: <strong>{importState.currentCategory}</strong>
+              </p>
+            </div>
+          </div>
+          <div className="text-blue-500 font-bold text-xs uppercase tracking-wider bg-blue-100 px-3 py-1.5 rounded-full">
+            In Progress
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-[#F8FAFC]">
                 <th className="text-left px-8 py-[18px] text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.1em]">Name</th>
-                <th className="text-left px-8 py-[18px] text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.1em]">Slug</th>
                 <th className="text-left px-8 py-[18px] text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.1em]">CJ ID</th>
                 <th className="text-left px-8 py-[18px] text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.1em]">Products</th>
                 <th className="text-right px-8 py-[18px] text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.1em]">Actions</th>
@@ -78,23 +114,33 @@ export default function CategoriesClientView({ categories }: { categories: any[]
             </thead>
             <tbody>
               {categories.length === 0 ? (
-                <tr><td colSpan={5} className="text-center py-20 text-[#64748B] font-bold">No categories found.</td></tr>
-              ) : categories.map((cat: any) => (
-                <tr key={cat.id} className="border-b border-[#F1F5F9] hover:bg-[#FAFBFE] transition-all duration-200">
-                  <td className="px-8 py-5 text-sm font-bold text-[#1E293B]">{cat.name}</td>
-                  <td className="px-8 py-5 text-sm text-[#64748B]">{cat.slug}</td>
-                  <td className="px-8 py-5 text-sm text-[#64748B]">{cat.cjId || '-'}</td>
-                  <td className="px-8 py-5 text-sm font-bold text-[#1E293B]">{cat._count?.products || 0}</td>
-                  <td className="px-8 py-5 text-right">
-                    <button onClick={() => openEdit(cat)} className="p-2 rounded-[8px] text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-all mr-2" title="Edit">
-                      <i className="fas fa-edit"></i>
-                    </button>
-                    <button onClick={() => handleDelete(cat.id)} className="p-2 rounded-[8px] text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all" title="Delete">
-                      <i className="fas fa-trash-alt"></i>
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                <tr><td colSpan={4} className="text-center py-20 text-[#64748B] font-bold">No categories found.</td></tr>
+              ) : categories.map((cat: any) => {
+                const isThisImporting = importState?.status === 'RUNNING' && importState?.currentCategory === cat.cjId;
+                
+                return (
+                  <tr key={cat.id} className="border-b border-[#F1F5F9] hover:bg-[#FAFBFE] transition-all duration-200">
+                    <td className="px-8 py-5 text-sm font-bold text-[#1E293B]">{cat.name}</td>
+                    <td className="px-8 py-5 text-sm font-mono text-[#64748B] bg-gray-50 rounded px-2">{cat.cjId || '-'}</td>
+                    <td className="px-8 py-5 text-sm font-bold text-[#1E293B]">{cat._count?.products || 0}</td>
+                    <td className="px-8 py-5 text-right">
+                      {isThisImporting ? (
+                        <span className="text-blue-500 text-xs font-bold flex items-center justify-end gap-2">
+                          <i className="fas fa-circle-notch fa-spin"></i> Importing...
+                        </span>
+                      ) : (
+                        <button 
+                          onClick={() => handleImport(cat.cjId)} 
+                          className="px-3 py-1.5 rounded-[8px] text-xs font-bold text-white bg-[#10B981] hover:bg-[#059669] transition-all shadow-sm flex items-center gap-2 ml-auto"
+                          title="Import all products from this category"
+                        >
+                          <i className="fas fa-download"></i> Import
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -104,7 +150,7 @@ export default function CategoriesClientView({ categories }: { categories: any[]
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-              <h3 className="text-xl font-bold text-gray-800">{editingId ? 'Edit Category' : 'New Category'}</h3>
+              <h3 className="text-xl font-bold text-gray-800">New Category</h3>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
                 <i className="fas fa-times text-xl"></i>
               </button>
@@ -121,7 +167,7 @@ export default function CategoriesClientView({ categories }: { categories: any[]
                     setForm({ 
                       ...form, 
                       name: e.target.value,
-                      slug: editingId ? form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+                      slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
                     });
                   }}
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#FF6B00] outline-none"
@@ -129,25 +175,15 @@ export default function CategoriesClientView({ categories }: { categories: any[]
                 />
               </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-bold text-gray-700 mb-2">Slug</label>
-                <input
-                  type="text"
-                  value={form.slug}
-                  onChange={e => setForm({ ...form, slug: e.target.value })}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#FF6B00] outline-none"
-                  required
-                />
-              </div>
-
               <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2">CJ Category ID (Optional)</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">CJ Category ID (Required for Import)</label>
                 <input
                   type="text"
                   value={form.cjId}
                   onChange={e => setForm({ ...form, cjId: e.target.value })}
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#FF6B00] outline-none"
                   placeholder="e.g. 5f4e3c2b1a"
+                  required
                 />
               </div>
 

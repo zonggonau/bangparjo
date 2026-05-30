@@ -10,41 +10,29 @@ const NAV_GROUPS = [
     label: 'Overview',
     items: [
       { id: 'overview',  label: 'Dashboard',  icon: 'fas fa-chart-line', path: '/dashboard' },
-      { id: 'analytics', label: 'Analytics',  icon: 'fas fa-chart-pie',  path: '/dashboard/analytics' },
     ],
   },
   {
-    label: 'Commerce',
+    label: 'Store Management',
     items: [
       { id: 'orders',     label: 'Orders',      icon: 'fas fa-shopping-cart', path: '/dashboard/orders' },
-      { id: 'myproducts', label: 'My Products', icon: 'fas fa-star',         path: '/dashboard/myproducts' },
-      { id: 'categories', label: 'Categories',  icon: 'fas fa-tags',         path: '/dashboard/categories' },
       { id: 'inventory',  label: 'Inventory',   icon: 'fas fa-box',          path: '/dashboard/inventory' },
-      { id: 'importer',   label: 'Importer',    icon: 'fas fa-download',     path: '/dashboard/importer' },
+      { id: 'categories', label: 'Categories',  icon: 'fas fa-tags',         path: '/dashboard/categories' },
       { id: 'disputes',   label: 'Disputes',    icon: 'fas fa-gavel',        path: '/dashboard/disputes' },
     ],
   },
   {
-    label: 'Operations',
+    label: 'Content & Marketing',
     items: [
-      { id: 'warehouse', label: 'Warehouses', icon: 'fas fa-warehouse', path: '/dashboard/warehouse' },
-      { id: 'support',   label: 'Support',    icon: 'fas fa-headset',   path: '/dashboard/support' },
-    ],
-  },
-  {
-    label: 'Content',
-    items: [
-      { id: 'blog',  label: 'Blog',  icon: 'fas fa-blog',         path: '/dashboard/blog' },
-      { id: 'about', label: 'About', icon: 'fas fa-info-circle',   path: '/dashboard/about' },
+      { id: 'blog',        label: 'Blog',        icon: 'fas fa-blog',         path: '/dashboard/blog' },
+      { id: 'about',       label: 'About Page',  icon: 'fas fa-info-circle',   path: '/dashboard/about' },
+      { id: 'subscribers', label: 'Subscribers', icon: 'fas fa-users',        path: '/dashboard/subscribers' },
     ],
   },
   {
     label: 'System',
     items: [
-      { id: 'subscribers',  label: 'Audience & CRM', icon: 'fas fa-users',    path: '/dashboard/subscribers' },
-      { id: 'storefront',   label: 'Storefront',    icon: 'fas fa-desktop',   path: '/dashboard/storefront' },
-      { id: 'webhooks',     label: 'Webhooks',      icon: 'fas fa-bell',      path: '/dashboard/webhooks/settings' },
-      { id: 'webhook-logs', label: 'Webhook Logs',  icon: 'fas fa-file-alt',  path: '/dashboard/webhooks' },
+      { id: 'webhook-logs', label: 'Webhooks Logs', icon: 'fas fa-exchange-alt',  path: '/dashboard/webhooks' },
       { id: 'settings',     label: 'Settings',      icon: 'fas fa-cog',       path: '/dashboard/settings' },
     ],
   },
