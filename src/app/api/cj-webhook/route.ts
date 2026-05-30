@@ -12,6 +12,16 @@ import { sendWhatsAppOrderNotification } from '@/lib/social-poster';
  * Register this URL in CJ dashboard:
  *   https://yourstore.com/api/cj-webhook
  */
+
+/**
+ * GET handler — Required for CJ webhook URL validation.
+ * CJ's webhook/set API performs a URL reachability check before accepting
+ * the callback URL. This handler returns 200 OK to pass validation.
+ */
+export async function GET() {
+  return NextResponse.json({ success: true, message: 'Webhook endpoint is active' });
+}
+
 export async function POST(req: Request) {
   const body = await req.json();
   const { type, messageType, params, messageId } = body;

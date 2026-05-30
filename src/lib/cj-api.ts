@@ -864,16 +864,33 @@ export interface WebhookSetting {
   callbackUrls: string[];
 }
 
+/**
+ * Set webhook configuration via CJ Auth API base URL.
+ * NOTE: This endpoint uses AUTH_BASE_URL (developers.cjdropshipping.com)
+ * instead of the regular API BASE_URL (api.cjdropshipping.com).
+ * We use direct fetch here because cjFetch() strips /api2.0 prefix
+ * and routes to the wrong base URL.
+ */
 export async function setWebhook(params: {
   product: WebhookSetting;
   stock: WebhookSetting;
   order: WebhookSetting;
   logistics: WebhookSetting;
 }) {
-  return cjFetch<any>('/api2.0/v1/webhook/set', {
+  const token = await getAccessTokenServer();
+  const url = `${AUTH_BASE_URL}/api2.0/v1/webhook/set`;
+
+  const response = await fetch(url, {
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'CJ-Access-Token': token,
+    },
     body: JSON.stringify(params),
   });
+
+  const data = await response.json();
+  return data;
 }
 
 // ── Variant APIs ──────────────────────────────────────────────────────────

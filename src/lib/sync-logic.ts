@@ -122,6 +122,7 @@ export async function startCategoryImport(cjId: string) {
     try {
       let page = 1;
       let hasMore = true;
+      let imported = 0;
 
       while (hasMore) {
         // Check if status was manually stopped
@@ -130,16 +131,61 @@ export async function startCategoryImport(cjId: string) {
           console.log(`⏹️ Import stopped or category changed for ${cjId}`);
           break;
         }
-          page++;
-          // Update state to next page
-          await prisma.autoImportState.update({
-            where: { id: "default" },
-            data: { currentPage: page }
-          });
+
+        // Fetch products by category from CJ API
+        const res = await getProducts({ pageNum: page, pageSize: 20, categoryId: cjId });
+        if (!res.success || !res.data?.list?.length) {
+          hasMore = false;
+          break;
         }
+
+        for (const p of res.data.list) {
+          try {
+            await sleep(DELAY_MS);
+            const detail = await getProductDetails(p.pid);
+            if (!detail.success || !detail.data) continue;
+
+            const d = detail.data;
+
+            // Import product only — no variants
+            await prisma.product.upsert({
+              where: { cjId: d.pid },
+              update: {
+                name: d.productNameEn || d.productName,
+                description: d.description || '',
+                images: d.productImageSet && d.productImageSet.length > 0 ? d.productImageSet : [d.productImage],
+                variantCount: d.variants?.length || 0,
+                totalStock: d.variants?.reduce((a: number, v: any) => a + (v.inventory || 0), 0) || 0,
+                cjCategoryId: d.categoryId || null,
+                updatedAt: new Date()
+              },
+              create: {
+                cjId: d.pid,
+                name: d.productNameEn || d.productName,
+                description: d.description || '',
+                images: d.productImageSet && d.productImageSet.length > 0 ? d.productImageSet : [d.productImage],
+                variantCount: d.variants?.length || 0,
+                totalStock: d.variants?.reduce((a: number, v: any) => a + (v.inventory || 0), 0) || 0,
+                cjCategoryId: d.categoryId || null,
+                status: 'ACTIVE'
+              }
+            });
+
+            imported++;
+          } catch (err) {
+            console.error(`Failed to import product ${p.pid}:`, err);
+          }
+        }
+
+        page++;
+        // Update state to next page
+        await prisma.autoImportState.update({
+          where: { id: "default" },
+          data: { currentPage: page }
+        });
       }
 
-      console.log(`✅ Import finished for category ${cjId}`);
+      console.log(`✅ Import finished for category ${cjId} — ${imported} products imported`);
       await prisma.autoImportState.update({
         where: { id: "default" },
         data: { status: "IDLE", currentCategory: null }
