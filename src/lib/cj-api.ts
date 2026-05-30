@@ -46,6 +46,25 @@ export { slugify, parseProductName, parseProductImage } from '@/lib/utils';
 export const BASE_URL = process.env.CJ_API_BASE_URL || 'https://api.cjdropshipping.com';
 const API_KEY = process.env.CJ_API_KEY;
 
+// ── Global Error Codes ───────────────────────────────────────────────────────
+const GLOBAL_ERROR_CODES: Record<number | string, string> = {
+  1600100: "QPS Limit Exceeded (Too many requests)",
+  1600101: "Access Token Invalid or Expired",
+  1600102: "Refresh Token Invalid or Expired",
+  1000003: "Token verification failed",
+  1000010: "Access frequency limit reached",
+  1000012: "Required parameter missing or invalid",
+  7000003: "Insufficient CJ Balance",
+  8000000: "System Error"
+};
+
+function formatCJError(data: any): string {
+  const code = data.code;
+  const knownMsg = GLOBAL_ERROR_CODES[code];
+  const apiMsg = data.message || 'Unknown error';
+  return knownMsg ? `[CJ Error ${code}] ${knownMsg} - ${apiMsg}` : `[CJ Error ${code || 'N/A'}] ${apiMsg}`;
+}
+
 // ── Token cache ───────────────────────────────────────────────────────────
 let cachedToken: string | null = null;
 let tokenExpiry: number | null = null;
@@ -220,12 +239,12 @@ export async function getAccessTokenServer(): Promise<string> {
       const data: CJResponse<CJTokenResponse> = await response.json();
 
       if (!data.success && !data.result) {
-        if (data.message?.includes('QPS limit') || data.code === 1600100) {
+        if (data.message?.includes('QPS limit') || data.code === 1600100 || data.code === 1000010) {
           retryCount++;
           await new Promise(resolve => setTimeout(resolve, 2000 * retryCount));
           continue;
         }
-        throw new Error(data.message || 'Auth failed');
+        throw new Error(formatCJError(data));
       }
 
       const tokenData: CJTokenResponse = data.data;
@@ -314,7 +333,7 @@ export async function cjFetch<T>(
       const data = await response.json();
 
       // Handle Invalid/Expired Token (Retry once with fresh token)
-      if (!data.success && !data.result && (data.code === 1600101 || data.code === 1600102 || data.message?.toLowerCase().includes('access token'))) {
+      if (!data.success && !data.result && (data.code === 1600101 || data.code === 1600102 || data.code === 1000003 || data.message?.toLowerCase().includes('access token'))) {
         if (retryCount === 0) {
           console.warn(`[CJ API] Token invalid or expired. Clearing cache and retrying...`);
           cachedToken = null;
@@ -333,7 +352,7 @@ export async function cjFetch<T>(
       }
 
       // Handle QPS Limit
-      if (!data.success && !data.result && (data.code === 1600100 || data.message?.includes('QPS limit'))) {
+      if (!data.success && !data.result && (data.code === 1600100 || data.code === 1000010 || data.message?.includes('QPS limit'))) {
         retryCount++;
         // Exponential backoff with jitter: 2s, 4s, 8s, 16s...
         const baseWait = Math.pow(2, retryCount) * 1000;
@@ -349,6 +368,12 @@ export async function cjFetch<T>(
       if (isGet && isProductEndpoint && (data.success || data.result)) {
         await setCache(cacheKey, data);
       }
+
+      // Log specific param errors but don't throw, as callers may handle the { result: false } themselves
+      if (!data.success && !data.result && (data.code === 1000012 || data.code === '1000012')) {
+         console.error(`🚨 [CJ API Param Error]: ${formatCJError(data)} on ${endpoint} with params:`, options.body);
+      }
+
       return data;
     } catch (err: any) {
       if (retryCount >= maxRetries) throw err;

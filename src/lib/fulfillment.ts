@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db';
-import { createOrder } from '@/lib/cj-api';
+import { createOrder, getBalance, payBalance } from '@/lib/cj-api';
 
 /**
  * Common logic to process a local order and send it to CJ Dropshipping.
@@ -52,34 +52,97 @@ export async function processFulfillment(orderNum: string) {
     }
   }
 
-  // 4. Call CJ API to create (and pay if payType 2)
+  // 4. Call CJ API to create the order
   console.log(`[Fulfillment] Processing order ${orderNum} to CJ with payType ${payType}...`);
   const res = await createOrder({
     ...(cjPayload as any),
     payType: payType
   });
 
-  if (res.success) {
-    const cjOrderId = (res.data as any)?.cjOrderId || (res.data as any)?.orderId;
-    
-    // 4. Update local status
-    const updatedOrder = await prisma.order.update({
-      where: { orderNum },
-      data: {
-        cjOrderId,
-        status: 'FULFILLED',
-      },
-    });
-
-    return { success: true, order: updatedOrder, cjData: res.data };
-  } else {
-    // If CJ fails (e.g. balance too low), at least mark as PAID in our DB 
-    // so the admin knows the customer paid but the sync failed.
+  if (!res.success) {
+    // If CJ fails, mark as PAID so admin knows customer paid but sync failed
     await prisma.order.update({
       where: { orderNum },
       data: { status: 'PAID' },
     });
-    
     throw new Error(`CJ API Error: ${res.message || 'Unknown'}`);
   }
+
+  const cjOrderId = (res.data as any)?.cjOrderId || (res.data as any)?.orderId;
+  const lineItemIds: Record<string, string> = {};
+
+  // Extract lineItemId per product from CJ response (if available)
+  const cjProducts: any[] = (res.data as any)?.products || [];
+  for (const p of cjProducts) {
+    if (p.storeLineItemId && p.lineItemId) {
+      lineItemIds[p.storeLineItemId] = p.lineItemId;
+    }
+  }
+
+  // 5. Auto-pay with CJ balance if payType = 2 (auto balance)
+  if (payType === 2 && cjOrderId) {
+    try {
+      console.log(`[Fulfillment] Auto-paying order ${orderNum} (CJ: ${cjOrderId}) via balance...`);
+      const payRes = await payBalance({ orderNumber: cjOrderId });
+      if (payRes.success) {
+        console.log(`[Fulfillment] Auto-pay SUCCESS for ${orderNum}`);
+      } else {
+        console.warn(`[Fulfillment] Auto-pay FAILED for ${orderNum}: ${payRes.message}`);
+        // Notify admin of pay failure via OpenClaw (non-blocking)
+        import('@/lib/openclaw-client').then(({ sendCustomWA }) => {
+          const adminWa = process.env.NEXT_PUBLIC_WHATSAPP || '628219105980';
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
+          sendCustomWA(adminWa, [
+            `⚠️ *CJ Auto-Pay Failed*`,
+            ``,
+            `Order: #${orderNum}`,
+            `CJ Order: ${cjOrderId}`,
+            `Error: ${payRes.message}`,
+            ``,
+            `Please pay manually in CJ dashboard.`,
+            `🔗 ${baseUrl}/admin/orders`,
+          ].join('\n')).catch(() => {});
+        });
+      }
+    } catch (payErr: any) {
+      console.error(`[Fulfillment] Auto-pay error for ${orderNum}:`, payErr.message);
+    }
+  }
+
+  // 6. Update local order with CJ order ID and FULFILLED status
+  const updatedOrder = await prisma.order.update({
+    where: { orderNum },
+    data: {
+      cjOrderId,
+      status: 'FULFILLED',
+      cjResponse: res.data as any,
+    },
+  });
+
+  // 7. Update lineItemIds in OrderItem records (if available from CJ)
+  if (Object.keys(lineItemIds).length > 0) {
+    for (const [storeItemId, lineItemId] of Object.entries(lineItemIds)) {
+      await prisma.orderItem.updateMany({
+        where: { id: storeItemId },
+        data: { cjLineItemId: lineItemId } as any,
+      }).catch(() => {}); // Ignore if field doesn't exist yet
+    }
+  }
+
+  // 8. Notify admin via OpenClaw (non-blocking)
+  import('@/lib/openclaw-client').then(({ sendCustomWA }) => {
+    const adminWa = process.env.NEXT_PUBLIC_WHATSAPP || '628219105980';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
+    sendCustomWA(adminWa, [
+      `✅ *Order Fulfilled to CJ*`,
+      ``,
+      `Store Order: #${orderNum}`,
+      `CJ Order ID: ${cjOrderId || '-'}`,
+      `Pay Type: ${payType === 2 ? 'Auto Balance' : 'Manual'}`,
+      ``,
+      `🔗 ${baseUrl}/admin/orders`,
+    ].join('\n')).catch(() => {});
+  });
+
+  return { success: true, order: updatedOrder, cjData: res.data };
 }

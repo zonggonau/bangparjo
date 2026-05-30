@@ -27,8 +27,10 @@ const NAV_GROUPS = [
   {
     label: 'Operations',
     items: [
-      { id: 'warehouse', label: 'Warehouses', icon: 'fas fa-warehouse', path: '/dashboard/warehouse' },
-      { id: 'support',   label: 'Support',    icon: 'fas fa-headset',   path: '/dashboard/support' },
+      { id: 'warehouse', label: 'Warehouses', icon: 'fas fa-warehouse',      path: '/dashboard/warehouse' },
+      { id: 'tracking',  label: 'Tracking',   icon: 'fas fa-shipping-fast',  path: '/dashboard/tracking' },
+      { id: 'balance',   label: 'CJ Balance', icon: 'fas fa-wallet',         path: '/dashboard/balance' },
+      { id: 'support',   label: 'Support',    icon: 'fas fa-headset',        path: '/dashboard/support' },
     ],
   },
   {

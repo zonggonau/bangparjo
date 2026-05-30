@@ -29,17 +29,33 @@ export async function POST(req: Request) {
   const { type, params, messageId, messageType } = body;
 
   try {
-    // 1. Log webhook
+    // 1. Idempotency Check (prevent duplicate processing)
+    if (messageId) {
+      const recentLogs = await prisma.webhookLog.findMany({
+        where: { eventType: type || messageType || 'UNKNOWN' },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      });
+      const isDuplicate = recentLogs.some((log) => (log.payload as any)?.messageId === messageId);
+      
+      if (isDuplicate) {
+        console.log(`[CJ Webhook] Skipping duplicate messageId: ${messageId}`);
+        return NextResponse.json({ success: true, messageId, note: 'duplicate skipped' });
+      }
+    }
+
+    // 2. Log webhook
     await prisma.webhookLog.create({
       data: {
         eventType: type || messageType || 'UNKNOWN',
         payload: body,
+        processed: true,
       },
     });
 
     console.log(`🔔 [CJ Dropship Webhook]: ${type}/${messageType}`, params);
 
-    // 2. Dispatch by type
+    // 3. Dispatch by type
     switch (type) {
       case 'ORDER':
         await handleOrderUpdate(params);
@@ -49,6 +65,9 @@ export async function POST(req: Request) {
         break;
       case 'STOCK':
         await handleStockUpdate(params);
+        break;
+      case 'PRODUCT':
+        await handleProductUpdate(params);
         break;
       default:
         console.warn(`[CJ Webhook] Unhandled type: ${type}`);
@@ -84,7 +103,7 @@ async function handleOrderUpdate(params: any) {
   // Map CJ status to local status
   const internalStatus =
     orderStatus === 'SHIPPED' ? 'SHIPPED' :
-    orderStatus === 'CANCELLED' ? 'CANCELLED' :
+    (orderStatus === 'CANCELLED' || orderStatus === 'CLOSED') ? 'CANCELLED' :
     orderStatus === 'COMPLETED' ? 'DELIVERED' :
     'PROCESSING';
 
@@ -108,6 +127,22 @@ async function handleOrderUpdate(params: any) {
     cjOrderId,
     orderStatus,
   });
+
+  if (internalStatus === 'CANCELLED') {
+    const adminPhone = process.env.ADMIN_PHONE_NUMBER;
+    if (adminPhone) {
+      const cancelMsg = [
+        `🚨 *ACTION REQUIRED: ORDER CANCELLED*`,
+        ``,
+        `CJ has cancelled order *#${orderNumber}*.`,
+        `Please check CJ Dashboard for the reason.`,
+        `If the customer has paid via Midtrans/PayPal, please process their *Refund* manually!`,
+        ``,
+        `— CJ Integration Bot`,
+      ].join('\n');
+      await sendCustomWA(adminPhone, cancelMsg).catch(() => {});
+    }
+  }
 
   // 2. Notify customer via OpenClaw if they have a phone number
   if (updatedOrder.customerPhone) {
@@ -259,6 +294,54 @@ async function handleStockUpdate(params: any) {
   }
 }
 
+// ── PRODUCT Update ───────────────────────────────────────────────────────────
+
+async function handleProductUpdate(params: any) {
+  /**
+   * CJ sends PRODUCT webhooks when:
+   * - Product price changes
+   * - Product availability changes (listed/unlisted)
+   * - Product info updates
+   *
+   * params can contain: pid, vid, status, sellPrice, etc.
+   */
+  const { pid, vid, status, sellPrice } = params || {};
+
+  console.log(`[CJ Webhook] PRODUCT update:`, params);
+
+  // If variant-level update (has vid + new price)
+  if (vid && sellPrice != null) {
+    try {
+      await prisma.variant.updateMany({
+        where: { cjId: vid },
+        data: { baseCost: parseFloat(sellPrice) },
+      });
+      console.log(`[CJ Webhook] Updated variant ${vid} baseCost → ${sellPrice}`);
+    } catch (e: any) {
+      console.warn(`[CJ Webhook] Variant update failed for ${vid}:`, e.message);
+    }
+  }
+
+  // If product-level status update (listed/unlisted)
+  if (pid && status !== undefined) {
+    const productStatus = status === 0 ? 'INACTIVE' : 'ACTIVE';
+    try {
+      await prisma.product.updateMany({
+        where: { cjId: pid },
+        data: { status: productStatus },
+      });
+      console.log(`[CJ Webhook] Updated product ${pid} status → ${productStatus}`);
+    } catch (e: any) {
+      console.warn(`[CJ Webhook] Product status update failed for ${pid}:`, e.message);
+    }
+  }
+
+  // Invalidate product caches
+  revalidateTag('home:featured', { expire: 0 });
+  revalidateTag('home:bestsellers', { expire: 0 });
+  revalidateTag('home:categories', { expire: 0 });
+}
+
 /**
  * GET /api/cjdropship/webhook
  * Health check / info endpoint
@@ -268,6 +351,6 @@ export async function GET() {
     success: true,
     message: 'CJ Dropshipping Webhook Handler',
     version: '2.0.0',
-    supportedTypes: ['ORDER', 'LOGISTIC', 'STOCK'],
+    supportedTypes: ['ORDER', 'LOGISTIC', 'STOCK', 'PRODUCT'],
   });
 }

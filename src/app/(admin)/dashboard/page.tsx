@@ -148,6 +148,12 @@ export default function DashboardPage() {
             <Link href="/dashboard/inventory" className="inline-flex items-center gap-2.5 px-4 py-3 rounded-[12px] text-sm font-bold border border-[#E2E8F0] bg-white hover:border-[#FF6B00] hover:bg-[#F8FAFC] transition-all duration-200 w-full justify-start">
               <i className="fas fa-boxes text-[#FF6B00]"></i> Manage Inventory
             </Link>
+            <Link href="/dashboard/tracking" className="inline-flex items-center gap-2.5 px-4 py-3 rounded-[12px] text-sm font-bold border border-[#E2E8F0] bg-white hover:border-[#10B981] hover:bg-[#F8FAFC] transition-all duration-200 w-full justify-start">
+              <i className="fas fa-shipping-fast text-[#10B981]"></i> Order Tracking
+            </Link>
+            <Link href="/dashboard/balance" className="inline-flex items-center gap-2.5 px-4 py-3 rounded-[12px] text-sm font-bold border border-[#E2E8F0] bg-white hover:border-[#38BDF8] hover:bg-[#F8FAFC] transition-all duration-200 w-full justify-start">
+              <i className="fas fa-wallet text-[#38BDF8]"></i> CJ Balance
+            </Link>
             <Link href="/dashboard/settings" className="inline-flex items-center gap-2.5 px-4 py-3 rounded-[12px] text-sm font-bold border border-[#E2E8F0] bg-white hover:border-[#FF6B00] hover:bg-[#F8FAFC] transition-all duration-200 w-full justify-start">
               <i className="fas fa-cog text-[#FF6B00]"></i> Store Settings
             </Link>
