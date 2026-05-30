@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { CJProduct } from '@/lib/cj-api';
+import { CJProduct } from '@/lib/cj';
 import { useSession } from 'next-auth/react';
 import { syncCartAction, getCartAction } from '@/lib/actions';
 

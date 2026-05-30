@@ -1,9 +1,9 @@
 'use server';
 
 import { prisma } from '@/lib/db';
-import { cjFetch, getProductDetails } from '@/lib/cj-api';
+import { cjFetch, getProductDetails, CJProductDetail } from '@/lib/cj';
 import { revalidateTag } from 'next/cache';
-import { slugify, parseProductName } from '@/lib/cj-utils';
+import { slugify, parseProductName } from '@/lib/utils';
 import { generateLandingPageContent } from '@/lib/ai-content';
 
 export async function updateAdminInventoryAction(data: { variantId?: string; sellingPrice?: number; id?: string; isHero?: boolean }) {
@@ -30,10 +30,10 @@ export async function updateAdminInventoryAction(data: { variantId?: string; sel
 
 export async function syncAdminInventoryAction(cjId: string) {
   try {
-    const res = await cjFetch(`/v1/product/query?pid=${cjId}`, { method: 'GET' });
+    const res = await cjFetch<CJProductDetail>(`/v1/product/query?pid=${cjId}`, { method: 'GET' });
     if (!res.result) return { success: false, error: 'Product not found in CJ' };
 
-    const cjProduct = res.data as any;
+    const cjProduct = res.data;
     const variants = cjProduct.variants || [];
 
     const updatedVariants = [];
@@ -105,9 +105,9 @@ async function fetchCjShippingMethods(variantCjId: string, quantity: number = 1,
 
     const data = await response.json();
     if (data.success && data.data) {
-      return data.data.map((m: any) => ({
+      return data.data.map((m: Record<string, any>) => ({
         shippingName: m.shippingName || m.name || 'Standard Shipping',
-        shippingCost: parseFloat(m.shippingCost || m.cost || 0),
+        shippingCost: parseFloat(String(m.shippingCost || m.cost || 0)),
         estimatedDays: m.estimatedDays || m.deliveryTime || '7-21 days',
         shippingType: m.shippingType || 'standard',
       }));
@@ -254,16 +254,13 @@ export async function exportToBlogAction(productId: string, couponId?: string | 
   }
 }
 
-export async function importProductAction(pid: string, isHero: boolean = false) {
+export async function importProductAction(
+  productData: { pid: string; name: string; image: string; sellPrice: number; categoryName?: string },
+  isHero: boolean = false
+) {
   try {
+    const { pid, name, image, sellPrice, categoryName } = productData;
     if (!pid) return { success: false, error: 'Product ID (pid) is required' };
-
-    const res = await getProductDetails(pid);
-    if (!res.success || !res.data) {
-      return { success: false, error: res.message || 'Failed to fetch product from CJ' };
-    }
-
-    const cjProduct = res.data;
 
     const existing = await prisma.product.findUnique({
       where: { cjId: pid },
@@ -275,43 +272,48 @@ export async function importProductAction(pid: string, isHero: boolean = false) 
         where: { id: existing.id },
         data: { 
           isHero: !!isHero,
-          cjCategoryId: cjProduct.categoryId || existing.cjCategoryId
+          status: 'SYNCING_VARIANTS'
         }
       });
-      return { success: true, message: 'Product already exists. Updated metadata.', product: { ...existing, isHero: !!isHero } };
+      
+      // Trigger background sync
+      fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/sync-product-variants?pid=${pid}`).catch(() => {});
+      
+      return { success: true, message: 'Product already exists. Triggered variant sync.', product: { ...existing, isHero: !!isHero } };
     }
-
-    const variantCount = cjProduct.variants.length;
-    const totalStock = 2000;
 
     const product = await prisma.product.create({
       data: {
         cjId: pid,
-        name: cjProduct.productNameEn || cjProduct.productName,
-        description: cjProduct.description,
-        images: cjProduct.productImageSet && cjProduct.productImageSet.length > 0 ? cjProduct.productImageSet : [cjProduct.productImage],
-        cjCategoryId: cjProduct.categoryId || null,
-        variantCount,
-        totalStock,
+        name: name,
+        description: 'Product details are being synced in the background...',
+        images: [image],
+        cjCategoryId: categoryName || null,
+        variantCount: 1, // Placeholder
+        totalStock: 0,
         isHero: !!isHero,
+        status: 'SYNCING_VARIANTS',
         variants: {
-          create: cjProduct.variants.map((v: any) => ({
-            cjId: v.vid,
-            sku: v.variantSku,
-            color: v.variantKey || v.variantNameEn || v.variantName || 'Default',
+          create: [{
+            cjId: `${pid}-default`,
+            sku: `${pid}-default`,
+            color: 'Default',
             size: '', 
-            weight: v.variantWeight || 0,
-            baseCost: Number(v.variantSellPrice),
-            sellingPrice: Number(v.variantSellPrice), 
-            inventory: 100, 
-            image: v.variantImage || cjProduct.productImage
-          }))
+            weight: 0,
+            baseCost: Number(sellPrice),
+            sellingPrice: Number(sellPrice), 
+            inventory: 0, 
+            image: image
+          }]
         }
       },
       include: {
         variants: true
       }
     });
+
+    // Trigger background sync asynchronously (fire and forget)
+    fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/sync-product-variants?pid=${pid}`).catch(() => {});
 
     return { success: true, product };
   } catch (error: any) {

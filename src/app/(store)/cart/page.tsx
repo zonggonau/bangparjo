@@ -2,7 +2,7 @@
 
 import { useCart } from '@/context/CartContext';
 import { useSettings } from '@/context/SettingsContext';
-import { parseProductName, parseProductImage } from '@/lib/cj-utils';
+import { parseProductName, parseProductImage } from '@/lib/utils';
 import { calculateFinalPrice } from '@/lib/pricing';
 import Link from 'next/link';
 

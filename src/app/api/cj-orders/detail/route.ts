@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getTrackingInfo } from '@/lib/cj-api';
+import { getTrackingInfo } from '@/lib/cj';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);

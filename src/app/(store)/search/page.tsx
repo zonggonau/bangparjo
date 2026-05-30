@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import ProductCard from '@/components/ProductCard';
 import SearchFilters from '@/components/SearchFilters';
-import { getProductsV2 } from '@/lib/cj-api';
+import { getProductsV2 } from '@/lib/cj';
 import { prisma } from '@/lib/db';
 
 export const metadata: Metadata = {

@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/db';
-import { cjFetch } from '@/lib/cj-api';
+import { cjFetch } from '@/lib/cj';
 
 export async function getDashboardAnalyticsAction() {
   try {

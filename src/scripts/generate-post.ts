@@ -6,7 +6,7 @@
  * Output: Ready to copy-paste to FB, IG, Twitter
  */
 import 'dotenv/config';
-import { getProductDetails } from '@/lib/cj-api';
+import { getProductDetails } from '@/lib/cj';
 
 const productId = process.argv[2];
 if (!productId) {

@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/db';
-import { getProductDetails, cjFetch } from '@/lib/cj-api';
+import { getProductDetails, cjFetch } from '@/lib/cj';
 import { getAllCategories, getCategoryTree } from '@/lib/categories';
 
 export async function getProductDetailsAction(cjId: string) {

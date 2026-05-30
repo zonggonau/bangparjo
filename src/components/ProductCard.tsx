@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { CJProduct } from '@/lib/cj-api';
+import { CJProduct } from '@/lib/cj';
 import { parseProductName, parseProductImage, slugify, formatUSD } from '@/lib/utils';
 import { calculateFinalPrice } from '@/lib/pricing';
 import { useSettings } from '@/context/SettingsContext';

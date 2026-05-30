@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getTrackingInfo, getProductDetails } from '@/lib/cj-api';
+import { getTrackingInfo, getProductDetails } from '@/lib/cj';
 import { sendCustomWA } from '@/lib/openclaw';
 import { normalizePhone } from '@/lib/phone';
 

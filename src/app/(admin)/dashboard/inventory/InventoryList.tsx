@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { calculateFinalPrice } from '@/lib/pricing';
 import { useSettings } from '@/context/SettingsContext';
-import { slugify, parseProductName } from '@/lib/cj-utils';
+import { slugify, parseProductName } from '@/lib/utils';
 import { getAdminCouponsAction } from '@/lib/actions-admin';
 import { 
   updateAdminInventoryAction, 

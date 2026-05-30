@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
-import { getCategories } from '../lib/cj-api';
+import { getCategories } from '../lib/cj';
 import slugify from 'slugify';
 
 const prisma = new PrismaClient();

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { CJShippingMethod, parseProductName, parseProductImage } from '@/lib/cj-utils';
+import { CJShippingMethod } from '@/lib/cj';
+import { parseProductName, parseProductImage } from '@/lib/utils';
 import { calculateFinalPrice, calculateShippingFee } from '@/lib/pricing';
 import { useCart } from '@/context/CartContext';
 import { useSettings } from '@/context/SettingsContext';

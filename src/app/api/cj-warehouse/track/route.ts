@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { trackInfo, getTrackInfo } from '@/lib/cj-api';
+import { trackInfo, getTrackInfo } from '@/lib/cj';
 
 /**
  * GET /api/cj-warehouse/track?trackingNumber=CJ123456789CN

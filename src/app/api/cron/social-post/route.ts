@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { generateProductContent, calculateMarkupPrice } from '@/lib/ai-content';
 import { postToSocialMedia, type SocialPostPayload } from '@/lib/social-poster';
-import { getProductDetails, parseProductName } from '@/lib/cj-api';
+import { getProductDetails, parseProductName } from '@/lib/cj';
 
 /**
  * GET /api/cron/social-post

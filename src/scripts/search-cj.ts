@@ -6,7 +6,7 @@
  *         npx tsx src/scripts/search-cj.ts --category electronics
  */
 import 'dotenv/config';
-import { getProducts, getCategories } from '@/lib/cj-api';
+import { getProducts, getCategories } from '@/lib/cj';
 
 const args = process.argv.slice(2);
 const isTrending = args.includes('--trending') || args.includes('-t');

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProductDetails, parseProductName } from '@/lib/cj-api';
+import { getProductDetails, parseProductName } from '@/lib/cj';
 import { generateProductContent, calculateMarkupPrice } from '@/lib/ai-content';
 import { postToSocialMedia, type SocialPostPayload } from '@/lib/social-poster';
 import { prisma } from '@/lib/db';

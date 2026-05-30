@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db';
-import { slugify } from './cj-api';
+import { slugify } from './cj';
 
 export interface CategoryNode {
   id: string;

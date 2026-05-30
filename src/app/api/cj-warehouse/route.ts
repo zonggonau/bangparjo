@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getWarehouseDetail, getGlobalWarehouseList } from '@/lib/cj-api';
+import { getWarehouseDetail, getGlobalWarehouseList } from '@/lib/cj';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

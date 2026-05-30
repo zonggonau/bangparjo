@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db';
-import { createOrder, getBalance, payBalance } from '@/lib/cj-api';
+import { createOrder, getBalance, payBalance } from '@/lib/cj';
 
 /**
  * Common logic to process a local order and send it to CJ Dropshipping.

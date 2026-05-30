@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { parseProductImage } from '@/lib/cj-api';
+import { parseProductImage } from '@/lib/cj';
 
 interface ProductImageProps {
   src: string;

@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db';
 import { getOrSet } from '@/lib/redis';
 import ProductCard from '../ProductCard';
-import { getProducts } from '@/lib/cj-api';
+import { getProducts } from '@/lib/cj';
 import Link from 'next/link';
 
 const CACHE_TTL = 3600; // 1 hour

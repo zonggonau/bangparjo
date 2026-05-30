@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { getTrackingInfo } from '@/lib/cj-api';
+import { getTrackingInfo } from '@/lib/cj';
 
 export default function AIChat() {
   const [isOpen, setIsOpen] = useState(false);

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cjFetch } from '@/lib/cj-api';
+import { cjFetch } from '@/lib/cj';
 
 export async function PATCH(req: Request) {
   try {

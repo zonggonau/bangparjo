@@ -1,7 +1,7 @@
 import ProductView from './ProductView';
 import { Metadata } from 'next';
 import { prisma } from '@/lib/db';
-import { getProductDetails } from '@/lib/cj-api';
+import { getProductDetails } from '@/lib/cj';
 
 export async function generateMetadata({ 
   params, 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { getBalance, payBalance, payBalanceV2 } from '@/lib/cj-api';
+import { getBalance, payBalance, payBalanceV2 } from '@/lib/cj';
 
 /**
  * GET /api/cj-balance

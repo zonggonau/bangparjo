@@ -4,7 +4,7 @@ import Link from 'next/link';
 import SortSelector from '@/components/SortSelector';
 import { getAppCache, setAppCache } from '@/lib/cache';
 import { getCategoryBySlug as getCategoryBySlugLib, getCategoryHierarchy } from '@/lib/categories';
-import { getProductsV2 } from '@/lib/cj-api';
+import { getProductsV2 } from '@/lib/cj';
 
 async function getCategoryBySlug(slug: string) {
   const category = await getCategoryBySlugLib(slug);

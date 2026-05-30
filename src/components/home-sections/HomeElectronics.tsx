@@ -1,4 +1,4 @@
-import { getProducts } from '@/lib/cj-api';
+import { getProducts } from '@/lib/cj';
 import { prisma } from '@/lib/db';
 import { getOrSet } from '@/lib/redis';
 import ProductCard from '@/components/ProductCard';

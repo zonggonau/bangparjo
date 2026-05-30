@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/db';
-import { getTrackingInfo } from '@/lib/cj-api';
+import { getTrackingInfo, deleteOrder, confirmOrder } from '@/lib/cj';
 import { processFulfillment } from '@/lib/fulfillment';
 
 export async function getAdminOrdersAction() {
@@ -76,6 +76,26 @@ export async function fulfillAdminOrderAction(orderNum: string) {
     if (!orderNum) return { success: false, error: 'orderNum is required' };
     const result = await processFulfillment(orderNum);
     return result;
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteCjOrderAction(cjOrderId: string) {
+  try {
+    if (!cjOrderId) return { success: false, error: 'CJ Order ID is required' };
+    const res = await deleteOrder(cjOrderId);
+    return res;
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function confirmCjOrderAction(cjOrderId: string) {
+  try {
+    if (!cjOrderId) return { success: false, error: 'CJ Order ID is required' };
+    const res = await confirmOrder({ orderId: cjOrderId });
+    return res;
   } catch (error: any) {
     return { success: false, error: error.message };
   }

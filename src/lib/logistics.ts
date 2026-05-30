@@ -1,4 +1,4 @@
-import { getShippingFee, CJShippingMethod } from './cj-api';
+import { getShippingFee, CJShippingMethod } from './cj';
 
 export interface ShippingRate extends CJShippingMethod {
   estimatedDays: string;

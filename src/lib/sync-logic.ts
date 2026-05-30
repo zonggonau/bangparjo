@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/db';
-import { getCategories, getProducts, getProductDetails, slugify } from '@/lib/cj-api';
-import { setCache } from './cj-api'; // Re-use the cache setter
+import { getCategories, getProducts, getProductDetails, slugify } from '@/lib/cj';
+import { setCache } from './cj'; // Re-use the cache setter
 
 const DELAY_MS = 2000;
 

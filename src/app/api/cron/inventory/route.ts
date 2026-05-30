@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { cjFetch } from '@/lib/cj-api';
+import { cjFetch } from '@/lib/cj';
 
 /**
  * Bulk Inventory Sync

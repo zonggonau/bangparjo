@@ -27,7 +27,7 @@ export default async function HomeHero() {
     }));
 
     if (heroProducts.length === 0) {
-      const { getProducts } = await import('@/lib/cj-api');
+      const { getProducts } = await import('@/lib/cj');
       const heroRes = await getProducts({ pageSize: 10, keyWord: 'trending', searchType: 2 });
       heroProducts = heroRes?.success && heroRes.data ? heroRes.data.list : [];
     }

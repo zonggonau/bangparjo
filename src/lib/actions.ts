@@ -9,7 +9,7 @@ import { processFulfillment } from '@/lib/fulfillment';
 import { getExchangeRateIDR } from '@/lib/currency';
 import { sendCheckoutEmail } from '@/lib/mail';
 import { normalizePhone } from '@/lib/phone';
-import { getShippingFee, getShippingFeeBySku } from '@/lib/cj-api';
+import { getShippingFee, getShippingFeeBySku } from '@/lib/cj';
 import { calculateShippingFee, DEFAULT_SETTINGS, StoreSettings } from '@/lib/pricing';
 import { getCachedStoreSettings } from '@/lib/server-settings';
 

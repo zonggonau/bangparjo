@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { getAdminOrdersAction, fulfillAdminOrderAction, syncAdminOrderAction } from '@/lib/actions-admin-orders';
+import { getAdminOrdersAction, fulfillAdminOrderAction, syncAdminOrderAction, deleteCjOrderAction, confirmCjOrderAction } from '@/lib/actions-admin-orders';
 
 function formatUSD(price: number | string | null | undefined) {
   const p = typeof price === 'string' ? parseFloat(price) : (price || 0);
@@ -70,6 +70,68 @@ export default function AdminOrderDetail() {
       alert(data.success ? 'Status synced: ' + data.status : 'Sync error: ' + data.error);
       if (data.success) window.location.reload();
     } catch (e: any) { alert('Error: ' + e.message); }
+  };
+
+  const handlePayBalance = async () => {
+    if (!order?.cjOrderId) return;
+    if (!confirm(`Pay for CJ Order ${order.cjOrderId} using your CJ balance?`)) return;
+    setCjLoading(true);
+    try {
+      const res = await fetch('/api/cj-balance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderNumber: order.cjOrderId })
+      });
+      const data = await res.json();
+      if (data.success || data.result) {
+        alert('Payment successful!');
+        window.location.reload();
+      } else {
+        alert('Payment failed: ' + (data.message || 'Unknown error'));
+      }
+    } catch (err: any) {
+      alert('Error: ' + err.message);
+    } finally {
+      setCjLoading(false);
+    }
+  };
+
+  const handleDeleteCjOrder = async () => {
+    if (!order?.cjOrderId) return;
+    if (!confirm(`Delete CJ Order ${order.cjOrderId}? This cannot be undone.`)) return;
+    setCjLoading(true);
+    try {
+      const data = await deleteCjOrderAction(order.cjOrderId) as any;
+      if (data.success || data.result) {
+        alert('Order deleted successfully from CJ.');
+        window.location.reload();
+      } else {
+        alert('Failed to delete order: ' + (data.message || data.error));
+      }
+    } catch (err: any) {
+      alert('Error: ' + err.message);
+    } finally {
+      setCjLoading(false);
+    }
+  };
+
+  const handleConfirmCjOrder = async () => {
+    if (!order?.cjOrderId) return;
+    if (!confirm(`Confirm CJ Order ${order.cjOrderId}?`)) return;
+    setCjLoading(true);
+    try {
+      const data = await confirmCjOrderAction(order.cjOrderId) as any;
+      if (data.success || data.result) {
+        alert('Order confirmed successfully on CJ.');
+        window.location.reload();
+      } else {
+        alert('Failed to confirm order: ' + (data.message || data.error));
+      }
+    } catch (err: any) {
+      alert('Error: ' + err.message);
+    } finally {
+      setCjLoading(false);
+    }
   };
 
   if (loading) {
@@ -179,23 +241,126 @@ export default function AdminOrderDetail() {
 
           {/* CJ Order Detail */}
           {cjLoading ? (
-            <div className="bg-white rounded-[16px] border border-[#E2E8F0] p-8 text-center">
-              <i className="fas fa-spinner fa-spin text-[#FF6B00]"></i>
-              <p className="mt-3 text-sm font-bold text-[#64748B]">Loading CJ order data...</p>
+            <div className="bg-white rounded-[16px] border border-[#E2E8F0] p-8 text-center shadow-sm">
+              <i className="fas fa-circle-notch fa-spin text-[#FF6B00] fa-2x"></i>
+              <p className="mt-3 text-sm font-bold text-[#64748B]">Retrieving live CJ network payload...</p>
             </div>
           ) : cjOrder ? (
-            <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-sm overflow-hidden">
-              <div className="px-8 py-5 border-b border-[#E2E8F0]">
-                <div className="flex items-center gap-2">
-                  <i className="fas fa-globe text-[#FF6B00]"></i>
-                  <h3 className="text-lg font-extrabold text-[#1E293B]">CJ Order Detail</h3>
-                  <span className="ml-2 text-xs text-[#64748B]">(#{order.cjOrderId})</span>
+            <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-sm overflow-hidden space-y-6">
+              {/* Card Header with Aksi Toolbar */}
+              <div className="px-8 py-5 border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50">
+                <div className="flex items-center gap-2.5">
+                  <i className="fas fa-globe text-[#FF6B00] text-lg"></i>
+                  <div>
+                    <h3 className="text-base font-extrabold text-[#1E293B]">Live CJ Network Sync</h3>
+                    <p className="text-[11px] text-[#64748B] font-semibold">CJ ID: #{order.cjOrderId}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(cjOrder.orderStatus || cjOrder.status || '').toUpperCase() === 'WAITPAY' && (
+                    <button className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[8px] text-[11px] font-bold bg-[#10B981] text-white hover:bg-[#059669] transition-all duration-200" onClick={handlePayBalance} title="Pay via Balance">
+                      <i className="fas fa-wallet"></i> Pay Balance
+                    </button>
+                  )}
+                  {['WAITCONFIRM', 'DRAFT', 'PENDING'].includes((cjOrder.orderStatus || cjOrder.status || '').toUpperCase()) && (
+                    <button className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[8px] text-[11px] font-bold bg-[#3B82F6] text-white hover:bg-[#2563EB] transition-all duration-200" onClick={handleConfirmCjOrder} title="Confirm Order">
+                      <i className="fas fa-check-double"></i> Confirm Order
+                    </button>
+                  )}
+                  {['WAITPAY', 'DRAFT', 'WAITCONFIRM'].includes((cjOrder.orderStatus || cjOrder.status || '').toUpperCase()) && (
+                    <button className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[8px] text-[11px] font-bold bg-[#EF4444] text-white hover:bg-[#DC2626] transition-all duration-200" onClick={handleDeleteCjOrder} title="Delete CJ Order">
+                      <i className="fas fa-trash-alt"></i> Delete Order
+                    </button>
+                  )}
+                  <button className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[8px] text-[11px] font-bold border border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200" onClick={handleSync}>
+                    <i className="fas fa-sync"></i> Refresh Live
+                  </button>
                 </div>
               </div>
-              <div className="p-8">
-                <pre className="bg-[#0F172A] text-[#38BDF8] rounded-[12px] p-5 text-xs font-mono max-h-[400px] overflow-auto leading-[1.6]">
-                  {JSON.stringify(cjOrder, null, 2)}
-                </pre>
+
+              <div className="px-8 pb-8 space-y-6">
+                {/* Financial Summary */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-[12px] p-3 text-center">
+                    <p className="text-[10px] font-extrabold text-[#64748B] uppercase tracking-[0.05em] mb-1">CJ Status</p>
+                    <StatusBadge status={cjOrder.orderStatus || cjOrder.status} />
+                  </div>
+                  <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-[12px] p-3 text-center">
+                    <p className="text-[10px] font-extrabold text-[#64748B] uppercase tracking-[0.05em] mb-1">Product Amount</p>
+                    <p className="text-sm font-black text-[#1E293B]">${Number(cjOrder.productAmount || 0).toFixed(2)}</p>
+                  </div>
+                  <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-[12px] p-3 text-center">
+                    <p className="text-[10px] font-extrabold text-[#64748B] uppercase tracking-[0.05em] mb-1">Postage Fee</p>
+                    <p className="text-sm font-black text-[#38BDF8]">${Number(cjOrder.postageAmount || 0).toFixed(2)}</p>
+                  </div>
+                  <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-[12px] p-3 text-center">
+                    <p className="text-[10px] font-extrabold text-[#64748B] uppercase tracking-[0.05em] mb-1">Actual Paid</p>
+                    <p className="text-sm font-black text-[#10B981]">${Number(cjOrder.actualPayment || 0).toFixed(2)}</p>
+                  </div>
+                </div>
+
+                {/* Shipping Details */}
+                <div className="bg-[#FAFBFE] border border-[#E2E8F0] rounded-[16px] p-5">
+                  <h4 className="font-extrabold text-sm text-[#1E293B] flex items-center gap-2 mb-3">
+                    <i className="fas fa-truck text-[#FF6B00]"></i> CJ Shipping Details
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-[#475569]">
+                    <div>
+                      <p className="font-semibold text-gray-400 uppercase tracking-[0.02em]">Recipient Name</p>
+                      <p className="font-bold text-[#1E293B] mt-0.5">{cjOrder.shippingCustomerName || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-400 uppercase tracking-[0.02em]">Phone</p>
+                      <p className="font-bold text-[#1E293B] mt-0.5">{cjOrder.shippingPhone || 'N/A'}</p>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <p className="font-semibold text-gray-400 uppercase tracking-[0.02em]">Delivery Address</p>
+                      <p className="font-bold text-[#1E293B] mt-0.5 text-xs leading-relaxed">
+                        {cjOrder.shippingAddress} {cjOrder.shippingAddress2 || ''}
+                        <br />
+                        {cjOrder.shippingCity}, {cjOrder.shippingProvince} {cjOrder.shippingZip}
+                        <br />
+                        {cjOrder.shippingCountry} ({cjOrder.shippingCountryCode})
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CJ Order Items */}
+                <div className="bg-white border border-[#E2E8F0] rounded-[16px] overflow-hidden">
+                  <div className="px-5 py-3 border-b border-[#E2E8F0] bg-gray-50 flex items-center justify-between">
+                    <h4 className="font-extrabold text-xs text-[#1E293B] flex items-center gap-2">
+                      <i className="fas fa-boxes text-[#FF6B00]"></i> CJ Synced Items
+                    </h4>
+                  </div>
+                  <div className="divide-y divide-[#F1F5F9]">
+                    {(cjOrder.productInfoList || []).map((item: any, idx: number) => (
+                      <div key={idx} className="p-4 flex items-center justify-between text-xs hover:bg-gray-50 transition-colors">
+                        <div>
+                          <p className="font-bold text-[#1E293B]">CJ SKU: <span className="font-semibold text-[#64748B]">{item.variantId || 'Variant'}</span></p>
+                          <p className="text-[10px] text-gray-400 mt-0.5">Line ID: {item.storeLineItemId || 'N/A'}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-extrabold text-[#1E293B]">Qty: {item.quantity}</p>
+                          <p className="text-[10px] text-green-600 font-semibold">{item.isGroup ? 'Main Package' : 'Standard'}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Accordion for JSON dump */}
+                <details className="group border border-[#E2E8F0] rounded-[12px] bg-slate-50 overflow-hidden">
+                  <summary className="px-5 py-3 flex items-center justify-between cursor-pointer font-bold text-xs text-[#64748B] select-none hover:bg-slate-100 transition-colors">
+                    <span className="flex items-center gap-2"><i className="fas fa-code"></i> Live CJ JSON Payload Auditor</span>
+                    <i className="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                  </summary>
+                  <div className="px-5 pb-5 pt-2 border-t border-[#E2E8F0] bg-white">
+                    <pre className="bg-[#0F172A] text-[#38BDF8] rounded-[10px] p-4 text-[10px] font-mono max-h-[300px] overflow-auto leading-[1.6]">
+                      {JSON.stringify(cjOrder, null, 2)}
+                    </pre>
+                  </div>
+                </details>
               </div>
             </div>
           ) : null}

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getTrackingInfo } from '@/lib/cj-api';
+import { getTrackingInfo } from '@/lib/cj';
 
 // ── Order Sync Cron Job ──────────────────────────────────────────────────
 // Trigger: Every 15 minutes (configured via Vercel Cron / external cron)

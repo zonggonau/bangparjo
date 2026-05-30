@@ -10,27 +10,15 @@ const NAV_GROUPS = [
     label: 'Overview',
     items: [
       { id: 'overview',  label: 'Dashboard',  icon: 'fas fa-chart-line', path: '/dashboard' },
-      { id: 'analytics', label: 'Analytics',  icon: 'fas fa-chart-pie',  path: '/dashboard/analytics' },
     ],
   },
   {
     label: 'Commerce',
     items: [
       { id: 'orders',     label: 'Orders',      icon: 'fas fa-shopping-cart', path: '/dashboard/orders' },
-      { id: 'myproducts', label: 'My Products', icon: 'fas fa-star',         path: '/dashboard/myproducts' },
+      { id: 'tracking',   label: 'Tracking',    icon: 'fas fa-shipping-fast', path: '/dashboard/tracking' },
       { id: 'inventory',  label: 'Inventory',   icon: 'fas fa-box',          path: '/dashboard/inventory' },
-      { id: 'importer',   label: 'Importer',    icon: 'fas fa-download',     path: '/dashboard/importer' },
       { id: 'disputes',   label: 'Disputes',    icon: 'fas fa-gavel',        path: '/dashboard/disputes' },
-      { id: 'coupon',     label: 'Coupons',     icon: 'fas fa-tag',          path: '/dashboard/coupon' },
-    ],
-  },
-  {
-    label: 'Operations',
-    items: [
-      { id: 'warehouse', label: 'Warehouses', icon: 'fas fa-warehouse',      path: '/dashboard/warehouse' },
-      { id: 'tracking',  label: 'Tracking',   icon: 'fas fa-shipping-fast',  path: '/dashboard/tracking' },
-      { id: 'balance',   label: 'CJ Balance', icon: 'fas fa-wallet',         path: '/dashboard/balance' },
-      { id: 'support',   label: 'Support',    icon: 'fas fa-headset',        path: '/dashboard/support' },
     ],
   },
   {
@@ -44,13 +32,11 @@ const NAV_GROUPS = [
     label: 'System',
     items: [
       { id: 'subscribers',  label: 'Customers',     icon: 'fas fa-users',     path: '/dashboard/subscribers' },
-      { id: 'webhooks',     label: 'Webhooks',      icon: 'fas fa-bell',      path: '/dashboard/webhooks/settings' },
       { id: 'webhook-logs', label: 'Webhook Logs',  icon: 'fas fa-file-alt',  path: '/dashboard/webhooks' },
       { id: 'settings',     label: 'Settings',      icon: 'fas fa-cog',       path: '/dashboard/settings' },
     ],
   },
 ];
-
 export const ALL_NAV = NAV_GROUPS.flatMap(g => g.items);
 
 export default function AdminSidebar() {

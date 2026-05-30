@@ -47,7 +47,41 @@ export async function saveAdminWebhookSettingsAction(url: string, secret: string
       });
     }
 
-    revalidateTag('', { expire: 0 });
+    // Auto-register webhooks with CJ via API if a secure public HTTPS URL is provided
+    if (url && url.startsWith('https://')) {
+      const { setWebhook } = await import('@/lib/cj');
+      
+      const cjRes = await setWebhook({
+        product: {
+          type: events.some(e => e.toUpperCase() === 'PRODUCT') ? 'ENABLE' : 'CANCEL',
+          callbackUrls: [url]
+        },
+        stock: {
+          type: events.some(e => e.toUpperCase() === 'STOCK') ? 'ENABLE' : 'CANCEL',
+          callbackUrls: [url]
+        },
+        order: {
+          type: events.some(e => e.toUpperCase() === 'ORDER') ? 'ENABLE' : 'CANCEL',
+          callbackUrls: [url]
+        },
+        logistics: {
+          type: events.some(e => e.toUpperCase() === 'LOGISTIC' || e.toUpperCase() === 'LOGISTICS') ? 'ENABLE' : 'CANCEL',
+          callbackUrls: [url]
+        }
+      });
+
+      if (!cjRes.success) {
+        console.warn('[Webhook Registration] CJ registration failed:', cjRes.message);
+        return { 
+          success: true, 
+          warning: `Local settings saved, but CJ webhook registration failed: ${cjRes.message || 'Unknown reason'}` 
+        };
+      }
+    }
+
+    try {
+      revalidateTag('', { expire: 0 });
+    } catch {}
 
     return { success: true };
   } catch (error: any) {
