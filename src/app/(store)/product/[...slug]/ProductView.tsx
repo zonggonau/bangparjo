@@ -163,7 +163,8 @@ export default function ProductView({ id, initialData, initialError, selectedVid
 
     try {
       const sku = selectedVariant.variantSku || selectedVariant.vid;
-      const res = await fetch(`/api/shipping-rates?sku=${sku}&quantity=${qty}&country=${shippingCountry}&subtotal=${originalPrice}`);
+      const weight = selectedVariant.variantWeight || product?.productWeight || 500;
+      const res = await fetch(`/api/shipping-rates?sku=${sku}&quantity=${qty}&country=${shippingCountry}&subtotal=${originalPrice}&weight=${weight}`);
       const data = await res.json();
       if (data.success) {
         setShippingRates(data.data);
@@ -474,7 +475,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                         Starting from <strong className="text-[#1A1A1A]">{shippingRates[0].formattedPrice}</strong> <span className="text-xs text-gray-500">({shippingRates[0].estimatedDays})</span>
                       </p>
                     ) : showShippingCalculator && !shippingLoading && shippingRates.length === 0 ? (
-                      <p className="text-sm text-red-500 m-0 mt-1">Click Go to calculate or no methods available.</p>
+                      <p className="text-sm text-amber-600 m-0 mt-1">Shipping rates will be calculated at checkout.</p>
                     ) : null}
                   </div>
                 </div>

@@ -50,6 +50,10 @@ export async function POST(req: Request) {
       case 'STOCK':
         await handleStockUpdate(params);
         break;
+      case 'PRODUCT':
+      case 'VARIANT':
+        await handleProductUpdate(type, messageType, params);
+        break;
       default:
         console.warn(`[CJ Webhook] Unhandled type: ${type}`);
     }
@@ -69,6 +73,129 @@ export async function POST(req: Request) {
     } catch {}
     // Always return 200 to prevent CJ from retrying
     return NextResponse.json({ success: false, error: error.message });
+  }
+}
+
+// ── PRODUCT & VARIANT Update ────────────────────────────────────────────────
+
+async function handleProductUpdate(type: string, messageType: string, params: any) {
+  const pid = params.pid;
+  const vid = params.vid;
+
+  if (messageType === 'DELETE') {
+    if (type === 'PRODUCT' && pid) {
+      await prisma.product.updateMany({
+        where: { cjId: pid },
+        data: { status: 'INACTIVE' },
+      });
+      console.log(`[CJ Webhook] Product ${pid} set to INACTIVE (DELETED)`);
+    } else if (type === 'VARIANT' && vid) {
+      await prisma.variant.updateMany({
+        where: { cjId: vid },
+        data: { inventory: 0 },
+      });
+      console.log(`[CJ Webhook] Variant ${vid} stock set to 0 (DELETED)`);
+    }
+    return;
+  }
+
+  // Handle INSERT or UPDATE
+  if (type === 'PRODUCT' && pid) {
+    const product = await prisma.product.findUnique({ where: { cjId: pid } });
+    if (!product) {
+      console.log(`[CJ Webhook] PRODUCT ${messageType}: Product ${pid} not found in local DB. Skipping.`);
+      return;
+    }
+
+    const updateData: any = {};
+    if (params.productNameEn) updateData.name = params.productNameEn;
+    if (params.productDescription) updateData.description = params.productDescription;
+    if (params.productStatus) updateData.status = params.productStatus === 3 ? 'ACTIVE' : 'INACTIVE';
+    if (params.productImage) updateData.images = { set: [params.productImage] };
+
+    if (Object.keys(updateData).length > 0) {
+      await prisma.product.update({
+        where: { id: product.id },
+        data: updateData,
+      });
+      console.log(`[CJ Webhook] Updated product ${pid}`);
+    }
+  } 
+  else if (type === 'VARIANT' && vid) {
+    // If variant exists, update it. If not, try to fetch its parent and create it.
+    const variant = await prisma.variant.findUnique({ 
+      where: { cjId: vid },
+      include: { product: true }
+    });
+
+    const baseCost = Number(params.variantSellPrice || 0);
+    const weight = Number(params.variantWeight || 0);
+    const inventory = Number(params.variantStatus === 3 ? (params.inventory || 100) : 0);
+
+    if (variant) {
+      await prisma.variant.update({
+        where: { id: variant.id },
+        data: {
+          sku: params.variantSku || variant.sku,
+          baseCost: baseCost || variant.baseCost,
+          sellingPrice: baseCost || variant.sellingPrice,
+          weight: weight || variant.weight,
+          inventory: inventory,
+          image: params.variantImage || variant.image,
+          color: params.variantKey || variant.color,
+        }
+      });
+      console.log(`[CJ Webhook] Updated variant ${vid}`);
+    } else {
+      // NEW VARIANT or UPGRADE (Product exists but variant doesn't)
+      // We need to know which product this belongs to.
+      // Call CJ API to get the parent PID.
+      const { getVariantById } = await import('@/lib/cj-api');
+      const vRes = await getVariantById(vid);
+      
+      if (vRes.success && vRes.data && vRes.data.pid) {
+        const parentCjId = vRes.data.pid;
+        const product = await prisma.product.findUnique({ where: { cjId: parentCjId } });
+        
+        if (product) {
+          const vData = vRes.data;
+          await prisma.variant.create({
+            data: {
+              productId: product.id,
+              cjId: vid,
+              sku: vData.variantSku,
+              color: vData.variantKey || 'Default',
+              size: vData.variantNameEn || '',
+              weight: Number(vData.variantWeight || 0),
+              baseCost: Number(vData.variantSellPrice || 0),
+              sellingPrice: Number(vData.variantSellPrice || 0),
+              inventory: 100, // Default for new variant
+              image: vData.variantImage || product.images[0],
+            }
+          });
+          
+          // Update parent product metadata
+          const updatedProduct = await prisma.product.findUnique({
+            where: { id: product.id },
+            include: { variants: true }
+          });
+          
+          if (updatedProduct) {
+            await prisma.product.update({
+              where: { id: product.id },
+              data: {
+                variantCount: updatedProduct.variants.length,
+                totalStock: updatedProduct.variants.reduce((sum, v) => sum + v.inventory, 0),
+              }
+            });
+          }
+          
+          console.log(`[CJ Webhook] Created new variant ${vid} for product ${parentCjId}`);
+        } else {
+          console.log(`[CJ Webhook] Variant ${vid} belongs to unknown product ${parentCjId}. Skipping.`);
+        }
+      }
+    }
   }
 }
 

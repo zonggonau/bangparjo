@@ -531,7 +531,7 @@ export default function InventoryList({
                                               }}
                                               title="Click to edit price"
                                             >
-                                              ${v.baseCost.toFixed(2)}
+                                              ${v.sellingPrice.toFixed(2)}
                                             </span>
                                           </div>
 

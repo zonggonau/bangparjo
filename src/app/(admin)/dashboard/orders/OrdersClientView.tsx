@@ -128,27 +128,37 @@ export default function OrdersClientView({
   };
 
   const STATUSES = ['ALL', 'UNPAID', 'PAID', 'FULFILLING', 'SHIPPED', 'COMPLETED', 'CANCELLED'];
+  const [exporting, setExporting] = useState(false);
 
-  const exportCSV = () => {
-    const headers = ['Order ID', 'Customer', 'Email', 'Amount', 'Status', 'Tracking', 'Date'];
-    const rows = orders.map(o => [
-      o.orderNum || o.orderId || '',
-      o.customerName || o.shippingCustomerName || '',
-      o.customerEmail || '',
-      `$${Number(o.totalAmount || o.orderAmount || 0).toFixed(2)}`,
-      o.status || o.orderStatus || '',
-      o.trackingNumber || '',
-      o.createdAt ? new Date(o.createdAt).toISOString() : '',
-    ]);
+  const exportCSV = async () => {
+    setExporting(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('source', currentSource);
+      params.set('status', currentStatus);
+      if (currentSearch) params.set('search', currentSearch);
 
-    const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `orders-export-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+      const res = await fetch(`/api/admin/orders/export?${params.toString()}`);
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error || `HTTP ${res.status}: Export failed`);
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `orders-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      toast.error('Export failed: ' + e.message);
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -175,8 +185,8 @@ export default function OrdersClientView({
             </button>
           </div>
           <div className="flex gap-2">
-            <button className="inline-flex items-center gap-2 px-3 py-2 rounded-[8px] text-sm font-semibold border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200" onClick={exportCSV} disabled={orders.length === 0}>
-              <i className="fas fa-download"></i> Export CSV
+            <button className="inline-flex items-center gap-2 px-3 py-2 rounded-[8px] text-sm font-semibold border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200 disabled:opacity-50" onClick={exportCSV} disabled={orders.length === 0 || exporting}>
+              <i className={`fas ${exporting ? 'fa-spinner fa-spin' : 'fa-download'}`}></i> {exporting ? 'Exporting...' : 'Export CSV'}
             </button>
             <button className="inline-flex items-center gap-2 px-3 py-2 rounded-[8px] text-sm font-semibold border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200" onClick={() => router.refresh()}>
               <i className={`fas fa-sync`}></i> Refresh

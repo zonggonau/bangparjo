@@ -278,10 +278,6 @@ function CheckoutContent() {
     if (!product || !countryTouched) return;
 
     const vid = selectedVariant?.vid || (isCartCheckout ? cartItems[0]?.selectedVid : null);
-    if (!vid && !isCartCheckout) {
-      setShippingError('Shipping rates cannot be calculated for this item.');
-      return;
-    }
 
     const timer = setTimeout(() => {
       setFetchingShipping(true);
@@ -316,6 +312,7 @@ function CheckoutContent() {
           sku: selectedVariant?.variantSku || selectedVariant?.vid || product?.productSku,
           vid: selectedVariant?.vid || selectedVariant?.variantSku || product?.productSku,
           quantity: qty,
+          weight: selectedVariant?.variantWeight || product?.productWeight || 500,
           country: formData.country,
           subtotal: retailSinglePrice * qty
         };

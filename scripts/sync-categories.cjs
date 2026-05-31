@@ -56,8 +56,8 @@ async function main() {
     // Upsert Level 1
     const l1Db = await prisma.category.upsert({
       where: { cjId: l1Id },
-      update: { name: l1Name, slug: slugify(l1Name) },
-      create: { cjId: l1Id, name: l1Name, slug: slugify(l1Name), parentId: null }
+      update: { name: l1Name, slug: slugify(`${l1Name}-${l1Id}`) },
+      create: { cjId: l1Id, name: l1Name, slug: slugify(`${l1Name}-${l1Id}`), parentId: null }
     });
     total++;
     console.log(`  📂 ${l1Name}`);
@@ -71,8 +71,8 @@ async function main() {
       // Upsert Level 2
       const l2Db = await prisma.category.upsert({
         where: { cjId: l2Id },
-        update: { name: l2Name, slug: slugify(l2Name), parentId: l1Db.id },
-        create: { cjId: l2Id, name: l2Name, slug: slugify(l2Name), parentId: l1Db.id }
+        update: { name: l2Name, slug: slugify(`${l2Name}-${l2Id}`), parentId: l1Db.id },
+        create: { cjId: l2Id, name: l2Name, slug: slugify(`${l2Name}-${l2Id}`), parentId: l1Db.id }
       });
       total++;
       console.log(`    📁 ${l2Name}`);
@@ -85,8 +85,8 @@ async function main() {
 
         await prisma.category.upsert({
           where: { cjId: l3Id },
-          update: { name: l3Name, slug: slugify(l3Name), parentId: l2Db.id },
-          create: { cjId: l3Id, name: l3Name, slug: slugify(l3Name), parentId: l2Db.id }
+          update: { name: l3Name, slug: slugify(`${l3Name}-${l3Id}`), parentId: l2Db.id },
+          create: { cjId: l3Id, name: l3Name, slug: slugify(`${l3Name}-${l3Id}`), parentId: l2Db.id }
         });
         total++;
       }

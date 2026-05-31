@@ -664,7 +664,24 @@ export async function getShippingRatesAction(data: { products?: any[], country?:
     const res = await getShippingFee({ products, endCountryCode: country });
 
     if (!res.success || !res.data || res.data.length === 0) {
-      return { success: false, error: 'Failed to calculate shipping rates from CJ.' };
+      // ── Fallback: estimasi shipping berdasarkan weight ──────────
+      const totalWeight = productsParam
+        ? productsParam.reduce((sum: number, p: any) => sum + (Number(p.weight) || 500), 0)
+        : (weight || 500);
+
+      // Harga estimasi: $5 + $1/kg
+      const baseShipping = 5 + Math.ceil(totalWeight / 1000) * 1;
+      const finalPrice = calculateShippingFee(baseShipping, subtotal, settings);
+
+      const fallbackRates = [{
+        logisticName: 'Standard Shipping',
+        logisticPrice: finalPrice,
+        logisticAging: 'CJ Packet',
+        estimatedDays: 'Estimated at checkout',
+        formattedPrice: finalPrice === 0 ? 'FREE' : `USD ${finalPrice.toFixed(2)}`
+      }];
+
+      return { success: true, data: fallbackRates };
     }
 
     const finalRates = res.data.map((rate: any) => {

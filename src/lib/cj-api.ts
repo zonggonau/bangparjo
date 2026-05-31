@@ -1,9 +1,36 @@
 // ── Throttle (Server-side Only) ──────────────────────────────────────────
 let lastRequestAt = 0;
-const MIN_INTERVAL_MS = 5000; // Increased to 5s to reduce QPS limit hits
+const MIN_INTERVAL_MS = 5000; // 5s interval to respect CJ QPS limit (max 20 req/min)
 
 async function waitForSlot(): Promise<void> {
+  if (typeof window !== 'undefined') return;
+
   const now = Date.now();
+  
+  // Try to use Redis for global throttling across multiple workers
+  try {
+    const { redis, redisAvailable } = await import('@/lib/redis');
+    if (redis && redisAvailable) {
+      const key = 'cj_api_last_request_at';
+      const last = await redis.get(key);
+      const lastTs = last ? parseInt(last) : 0;
+      
+      const wait = Math.max(0, lastTs + MIN_INTERVAL_MS - now);
+      const nextTs = now + wait;
+      
+      // Atomic increment/set is better but let's keep it simple with a set
+      await redis.set(key, nextTs.toString(), 'EX', 10);
+      
+      if (wait > 0) {
+        await new Promise(resolve => setTimeout(resolve, wait));
+      }
+      return;
+    }
+  } catch (e) {
+    // Fallback to local throttling
+  }
+
+  // Local-only fallback
   const wait = Math.max(0, lastRequestAt + MIN_INTERVAL_MS - now);
   lastRequestAt = now + wait;
   if (wait > 0) {
@@ -301,14 +328,14 @@ export async function cjFetch<T>(
   // ── Fix double-path: BASE_URL already includes /api2.0, so strip it from endpoints ──
   const cleanEndpoint = endpoint.replace(/^\/api2\.0/, '');
   
-  // ── AbortController with 20-second timeout ──
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 20000);
-
   let retryCount = 0;
-  const maxRetries = 3; // Reduce to 3 to avoid excessive spinning
+  const maxRetries = 5;
 
   while (retryCount < maxRetries) {
+    // ── AbortController with 30-second timeout per attempt ──
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     try {
       const token = await getAccessTokenServer();
       await waitForSlot();
@@ -328,23 +355,24 @@ export async function cjFetch<T>(
       }
 
       const response = await fetch(`${BASE_URL}${cleanEndpoint}`, fetchOptions);
+      
+      // Check response is actually JSON before parsing
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('json') && !contentType.includes('javascript')) {
+        const text = await response.text().catch(() => '<empty>');
+        if (text.trim().startsWith('<!doctype') || text.trim().startsWith('<html')) {
+          throw new Error(`CJ API gateway returned HTML (HTTP ${response.status}) — likely timeout or maintenance`);
+        }
+        throw new Error(`CJ API returned non-JSON (HTTP ${response.status}): ${text.slice(0, 200)}`);
+      }
+      
       const data = await response.json();
 
       // Handle Invalid/Expired Token (Retry once with fresh token)
       if (!data.success && !data.result && (data.code === 1600101 || data.code === 1600102 || data.message?.toLowerCase().includes('access token'))) {
-        if (retryCount === 0) {
-          console.warn(`[CJ API] Token invalid or expired. Calling explicit logout to flush CJ cache and retrying...`);
+        if (retryCount <= 1) { // Allow up to 2 token refreshes
+          console.warn(`[CJ API] Token invalid or expired. Flushing cache and retrying...`);
           
-          // ── Explicitly call Logout to flush CJ's 24-hour server-side cache! ──
-          try {
-            await fetch(`${AUTH_BASE_URL}/api2.0/v1/authentication/logout`, {
-              method: 'POST',
-              headers: { 'CJ-Access-Token': token },
-            });
-          } catch (e) {
-            // Ignore logout failure
-          }
-
           cachedToken = null;
           tokenExpiry = null;
           try {
@@ -352,9 +380,9 @@ export async function cjFetch<T>(
             await prisma.storeSetting.deleteMany({
               where: { key: { in: ['CJ_ACCESS_TOKEN', 'CJ_TOKEN_EXPIRY', 'CJ_REFRESH_TOKEN', 'CJ_REFRESH_TOKEN_EXPIRY'] } }
             });
-          } catch (e) {
-            console.error('[Token Clear Error]:', e);
-          }
+          } catch (e) {}
+          
+          clearTimeout(timeoutId);
           retryCount++;
           continue;
         }
@@ -362,19 +390,22 @@ export async function cjFetch<T>(
 
       // Handle QPS Limit
       if (!data.success && !data.result && (data.code === 1600100 || data.message?.includes('QPS limit'))) {
-        // For non-critical endpoints (reviews/comments), fail fast instead of retrying
         const isNonCritical = endpoint.includes('productComments') || endpoint.includes('reviews');
         if (isNonCritical) {
           clearTimeout(timeoutId);
           return { success: false, result: false, message: 'QPS limit - skipping', code: 1600100, data: null as unknown as T, requestId: '' };
         }
+        
         retryCount++;
-        // Exponential backoff with jitter: 2s, 4s, 8s, 16s...
-        const baseWait = Math.pow(2, retryCount) * 1000;
-        const jitter = Math.random() * 1000;
+        if (retryCount >= maxRetries) break;
+
+        // Exponential backoff with jitter: 3s, 6s, 12s, 24s...
+        const baseWait = Math.pow(2, retryCount) * 1500;
+        const jitter = Math.random() * 2000;
         const wait = baseWait + jitter;
         
         console.warn(`[CJ API] QPS Limit on ${endpoint}. Retrying in ${Math.round(wait)}ms (Attempt ${retryCount}/${maxRetries})...`);
+        clearTimeout(timeoutId);
         await new Promise(resolve => setTimeout(resolve, wait));
         continue;
       }
@@ -386,14 +417,15 @@ export async function cjFetch<T>(
       clearTimeout(timeoutId);
       return data;
     } catch (err: any) {
-      if (retryCount >= maxRetries) throw err;
+      clearTimeout(timeoutId);
+      if (retryCount >= maxRetries - 1) throw err;
       retryCount++;
-      const wait = 2000 * retryCount;
+      const wait = 3000 * retryCount;
+      console.warn(`[CJ API] Fetch error on ${endpoint}: ${err.message}. Retrying in ${wait}ms...`);
       await new Promise(resolve => setTimeout(resolve, wait));
     }
   }
-  clearTimeout(timeoutId);
-  throw new Error(`Failed to fetch from CJ after ${maxRetries} retries due to QPS limits or network errors`);
+  throw new Error(`Failed to fetch from CJ after ${maxRetries} attempts due to QPS limits or network errors`);
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────

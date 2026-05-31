@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
-import SortSelector from '@/components/SortSelector';
+import FilterSortBar from './FilterSortBar';
 import { getAppCache, setAppCache } from '@/lib/cache';
 import { getCategoryBySlug as getCategoryBySlugLib, getCategoryHierarchy } from '@/lib/categories';
 import { getProductsV2 } from '@/lib/cj-api';
@@ -66,7 +66,7 @@ export default async function CategoryPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ page?: string; minPrice?: string; maxPrice?: string; sort?: string }>;
+  searchParams: Promise<{ page?: string; minPrice?: string; maxPrice?: string; sort?: string; freeShipping?: string; keyword?: string }>;
 }) {
   const { slug } = await params;
   const sParams = await searchParams;
@@ -75,6 +75,8 @@ export default async function CategoryPage({
   const minPrice = sParams.minPrice ? parseFloat(sParams.minPrice) : undefined;
   const maxPrice = sParams.maxPrice ? parseFloat(sParams.maxPrice) : undefined;
   const sortParam = sParams.sort || 'default';
+  const freeShipping = sParams.freeShipping === '1' ? 1 : undefined;
+  const keyword = sParams.keyword || '';
   
   let orderBy: number | undefined = undefined;
   let sortDir: 'desc' | 'asc' | undefined = undefined;
@@ -103,7 +105,7 @@ export default async function CategoryPage({
   let products: any[] = [];
   let total = 0;
 
-  const cacheKey = `cat_api_products_${category.id}_p${pageNum}_s${sortParam}_min${minPrice || 0}_max${maxPrice || 0}`;
+  const cacheKey = `cat_api_products_${category.id}_p${pageNum}_s${sortParam}_min${minPrice || 0}_max${maxPrice || 0}_fs${freeShipping || 0}_kw${keyword || ''}`;
 
   try {
     const cachedData = await getAppCache<{ products: any[], total: number }>(cacheKey);
@@ -115,11 +117,13 @@ export default async function CategoryPage({
         categoryId: category.id, 
         page: pageNum, 
         size: 60,
+        keyWord: keyword || undefined,
         startSellPrice: minPrice,
         endSellPrice: maxPrice,
+        addMarkStatus: freeShipping,
         orderBy: orderBy,
         sort: sortDir,
-        features: ['enable_description'],
+        features: ['enable_description', 'enable_category'],
       });
       
       if (res.success && res.data) {
@@ -143,6 +147,9 @@ export default async function CategoryPage({
             productUnit: p.productUnit || 'piece',
             listedNum: p.listedNum || 0,
             isFreeShipping: p.addMarkStatus === 1,
+            deliveryCycle: p.deliveryCycle || '3-5',
+            warehouseInventory: p.warehouseInventoryNum || 0,
+            discountPriceRate: p.discountPriceRate || '',
           }));
 
         }
@@ -192,10 +199,7 @@ export default async function CategoryPage({
               <p className="text-gray-500 font-semibold text-sm sm:text-base">{total.toLocaleString()} products available</p>
             </div>
             
-            <div className="flex items-center gap-3 shrink-0">
-              <label htmlFor="sort" className="text-[11px] font-extrabold uppercase text-gray-400 hidden sm:block">Sort By:</label>
-              <SortSelector currentSort={orderBy || 0} />
-            </div>
+            <FilterSortBar slug={slug} />
           </div>
 
           {/* Subcategories as chips/pills */}

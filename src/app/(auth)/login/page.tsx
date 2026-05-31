@@ -37,7 +37,6 @@ function SetupForm({ onComplete }: { onComplete: () => void }) {
       if (!res.ok) {
         setError(data.error || 'Failed to create admin.');
       } else {
-        // Auto-login after setup
         const result = await signIn('credentials', {
           email,
           password,
@@ -145,7 +144,6 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/account';
   
-  const [mode, setMode] = useState<'customer' | 'admin'>('customer');
   const [checkingSession, setCheckingSession] = useState(true);
   const [needsSetup, setNeedsSetup] = useState(false);
 
@@ -155,7 +153,6 @@ function LoginForm() {
 
     const check = async () => {
       try {
-        // 1. Check if already logged in
         const sessionRes = await fetch('/api/auth/session');
         const session = await sessionRes.json();
 
@@ -168,7 +165,6 @@ function LoginForm() {
           return;
         }
 
-        // 2. Check if setup is needed (no admin users exist)
         const setupRes = await fetch('/api/admin/setup/check');
         const setup = await setupRes.json();
 
@@ -191,9 +187,11 @@ function LoginForm() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [step, setStep] = useState<'email' | 'otp'>('email');
+  const [step, setStep] = useState<'email' | 'password' | 'otp'>('email');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
   const [error, setError] = useState('');
   const [remember, setRemember] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -213,10 +211,41 @@ function LoginForm() {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  const handleSendCode = async (e: React.FormEvent) => {
+  // ── Step 1: Check email → detect admin or customer ──────────────────
+  const handleCheckEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    
+
+    setCheckingEmail(true);
+    setError('');
+
+    try {
+      const res = await fetch(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Failed to check email.');
+        return;
+      }
+
+      if (data.isAdmin) {
+        // Admin detected → show password field
+        setIsAdmin(true);
+        setStep('password');
+      } else {
+        // Regular customer → send OTP
+        setIsAdmin(false);
+        await sendOTP();
+      }
+    } catch (err) {
+      setError('Connection error. Please try again.');
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
+
+  // ── Send OTP to email ──────────────────────────────────────────────
+  const sendOTP = async () => {
     setLoading(true);
     setError('');
 
@@ -237,99 +266,13 @@ function LoginForm() {
         setTimeout(() => inputRefs.current[0]?.focus(), 100);
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      setError('Failed to send code. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const fullCode = code.join('');
-    if (fullCode.length !== 6) {
-      setError('Please enter the complete 6-digit code.');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
-    try {
-      const res = await fetch('/api/auth/verify-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code: fullCode }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'Invalid code. Please try again.');
-        setCode(['', '', '', '', '', '']);
-        inputRefs.current[0]?.focus();
-      } else if (data.success && data.sessionToken) {
-        // Use the one-time session token as the "password" — auth.ts validates it
-        const result = await signIn('credentials', {
-          email: data.email,
-          password: data.sessionToken,
-          redirect: false,
-        });
-
-        if (result?.error) {
-          setError('Login failed. Please try again.');
-        } else {
-          const sessionRes = await fetch('/api/auth/session');
-          const session = await sessionRes.json();
-          
-          if (session?.user?.role === 'ADMIN') {
-            router.push('/dashboard');
-          } else {
-            router.push(callbackUrl);
-          }
-          router.refresh();
-        }
-      } else {
-        setError('Verification response was invalid. Please try again.');
-      }
-    } catch (err) {
-      setError('Verification failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResendCode = async () => {
-    if (countdown > 0) return;
-    setCode(['', '', '', '', '', '']);
-    setError('');
-    setLoading(true);
-
-    try {
-      const res = await fetch('/api/auth/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      if (res.ok) {
-        setCountdown(600);
-      } else {
-        const data = await res.json();
-        setError(data.error || 'Failed to resend code.');
-      }
-    } catch (err) {
-      setError('Failed to resend code.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChangeEmail = () => {
-    setStep('email');
-    setCode(['', '', '', '', '', '']);
-    setError('');
-  };
-
+  // ── Admin login with password ──────────────────────────────────────
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
@@ -358,13 +301,81 @@ function LoginForm() {
         router.refresh();
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+      setError('An unexpected error occurred.');
     } finally {
       setLoading(false);
     }
   };
 
-  // ── Show loading while checking session ─────────────────────────────────
+  // ── Verify OTP ────────────────────────────────────────────────────
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const fullCode = code.join('');
+    if (fullCode.length !== 6) {
+      setError('Please enter the complete 6-digit code.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/auth/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code: fullCode }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Invalid code. Please try again.');
+        setCode(['', '', '', '', '', '']);
+        inputRefs.current[0]?.focus();
+      } else if (data.success && data.sessionToken) {
+        const result = await signIn('credentials', {
+          email: data.email,
+          password: data.sessionToken,
+          redirect: false,
+        });
+
+        if (result?.error) {
+          setError('Login failed. Please try again.');
+        } else {
+          const sessionRes = await fetch('/api/auth/session');
+          const session = await sessionRes.json();
+          
+          if (session?.user?.role === 'ADMIN') {
+            router.push('/dashboard');
+          } else {
+            router.push(callbackUrl);
+          }
+          router.refresh();
+        }
+      } else {
+        setError('Verification failed. Please try again.');
+      }
+    } catch (err) {
+      setError('Verification failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (countdown > 0) return;
+    setCode(['', '', '', '', '', '']);
+    await sendOTP();
+  };
+
+  const handleChangeEmail = () => {
+    setStep('email');
+    setCode(['', '', '', '', '', '']);
+    setPassword('');
+    setError('');
+  };
+
+  // ── Loading ────────────────────────────────────────────────────────
   if (checkingSession) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -373,18 +384,22 @@ function LoginForm() {
     );
   }
 
-  // ── Show setup form if no admin exists ──────────────────────────────────
+  // ── Setup form (first run) ─────────────────────────────────────────
   if (needsSetup) {
     return <SetupForm onComplete={() => router.push('/dashboard')} />;
   }
 
-  const switchMode = () => {
-    setMode(mode === 'customer' ? 'admin' : 'customer');
-    setStep('email');
-    setCode(['', '', '', '', '', '']);
-    setPassword('');
-    setError('');
-  };
+  const headingText = step === 'email' 
+    ? 'Sign in' 
+    : step === 'password' 
+      ? 'Admin sign in' 
+      : 'Check your email';
+
+  const subText = step === 'email'
+    ? 'Enter your email to continue.'
+    : step === 'password'
+      ? 'Enter your admin password.'
+      : `We sent a code to ${email}`;
 
   return (
     <div className="min-h-screen flex items-center justify-center px-5 py-10">
@@ -393,64 +408,13 @@ function LoginForm() {
           <Link href="/" className="text-[32px] font-black text-[#1A1A1A] mb-4 block no-underline">
             Bang<span className="text-[#FF6B00]">Parjo</span>
           </Link>
-          <h1 className="text-[22px] font-black text-[#1A1A1A] mb-2">
-            {mode === 'admin' ? 'Admin sign in' : (step === 'email' ? 'Sign in' : 'Check your email')}
-          </h1>
-          <p className="text-gray-500 text-sm leading-relaxed">
-            {mode === 'admin' 
-              ? 'Sign in with your admin credentials.'
-              : (step === 'email' 
-                ? 'Enter your email and we\'ll send you a login code.'
-                : `We sent a code to ${email}`)}
-          </p>
+          <h1 className="text-[22px] font-black text-[#1A1A1A] mb-2">{headingText}</h1>
+          <p className="text-gray-500 text-sm leading-relaxed">{subText}</p>
         </div>
 
-        {mode === 'admin' ? (
-          <form onSubmit={handleAdminLogin}>
-            <div className="mb-5">
-              <label className="block font-black text-xs uppercase text-gray-500 tracking-[0.05em] mb-2">Email Address</label>
-              <input 
-                type="email" 
-                placeholder="admin@bangparjo.com" 
-                required 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3.5 rounded-[12px] border border-gray-200 text-base outline-none focus:border-[#FF6B00]"
-                autoFocus
-              />
-            </div>
-
-            <div className="mb-6">
-              <label className="block font-black text-xs uppercase text-gray-500 tracking-[0.05em] mb-2">Password</label>
-              <input 
-                type="password" 
-                placeholder="••••••••" 
-                required 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3.5 rounded-[12px] border border-gray-200 text-base outline-none focus:border-[#FF6B00]"
-              />
-            </div>
-
-            {error && (
-              <div className="mb-5 flex items-center gap-3 p-3 bg-red-50 border border-red-200 text-red-600 rounded-[10px] text-sm font-semibold">
-                <i className="fas fa-exclamation-circle"></i>
-                <span>{error}</span>
-              </div>
-            )}
-
-            <button type="submit" className="w-full px-6 py-4 rounded-md text-base font-black bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200 disabled:opacity-50" disabled={loading || !email || !password}>
-              {loading ? <i className="fas fa-spinner fa-spin"></i> : 'Sign in'}
-            </button>
-
-            <div className="mt-5 text-center">
-              <button type="button" onClick={switchMode} className="bg-none border-none cursor-pointer text-[#FF6B00] font-bold text-sm underline">
-                Back to customer sign in
-              </button>
-            </div>
-          </form>
-        ) : step === 'email' ? (
-          <form onSubmit={handleSendCode}>
+        {/* ── STEP: EMAIL ───────────────────────────────────────── */}
+        {step === 'email' && (
+          <form onSubmit={handleCheckEmail}>
             <div className="mb-5">
               <label className="block font-black text-xs uppercase text-gray-500 tracking-[0.05em] mb-2">Email Address</label>
               <input 
@@ -483,17 +447,68 @@ function LoginForm() {
               </div>
             )}
 
-            <button type="submit" className="w-full px-6 py-4 rounded-md text-base font-black bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200 disabled:opacity-50" disabled={loading || !email}>
-              {loading ? <i className="fas fa-spinner fa-spin"></i> : 'Continue'}
+            <button 
+              type="submit" 
+              className="w-full px-6 py-4 rounded-md text-base font-black bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200 disabled:opacity-50"
+              disabled={checkingEmail || loading || !email}
+            >
+              {checkingEmail ? <i className="fas fa-spinner fa-spin"></i> : 'Continue'}
+            </button>
+          </form>
+        )}
+
+        {/* ── STEP: PASSWORD (Admin) ────────────────────────────── */}
+        {step === 'password' && (
+          <form onSubmit={handleAdminLogin}>
+            <div className="mb-5">
+              <label className="block font-black text-xs uppercase text-gray-500 tracking-[0.05em] mb-2">Email</label>
+              <div className="w-full px-4 py-3.5 rounded-[12px] border border-gray-200 bg-gray-50 text-base text-gray-700 font-semibold">
+                {email}
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label className="block font-black text-xs uppercase text-gray-500 tracking-[0.05em] mb-2">Password</label>
+              <input 
+                type="password" 
+                placeholder="••••••••" 
+                required 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3.5 rounded-[12px] border border-gray-200 text-base outline-none focus:border-[#FF6B00]"
+                autoFocus
+              />
+            </div>
+
+            {error && (
+              <div className="mb-5 flex items-center gap-3 p-3 bg-red-50 border border-red-200 text-red-600 rounded-[10px] text-sm font-semibold">
+                <i className="fas fa-exclamation-circle"></i>
+                <span>{error}</span>
+              </div>
+            )}
+
+            <button 
+              type="submit" 
+              className="w-full px-6 py-4 rounded-md text-base font-black bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200 disabled:opacity-50"
+              disabled={loading || !email || !password}
+            >
+              {loading ? <i className="fas fa-spinner fa-spin"></i> : 'Sign in'}
             </button>
 
             <div className="mt-5 text-center">
-              <button type="button" onClick={switchMode} className="bg-none border-none cursor-pointer text-gray-500 font-semibold text-sm underline">
-                Admin sign in
+              <button 
+                type="button" 
+                onClick={handleChangeEmail}
+                className="bg-none border-none cursor-pointer text-gray-500 font-semibold text-sm underline"
+              >
+                Use a different email
               </button>
             </div>
           </form>
-        ) : (
+        )}
+
+        {/* ── STEP: OTP ────────────────────────────────────────── */}
+        {step === 'otp' && (
           <div>
             <form onSubmit={handleVerifyCode}>
               <div className="flex gap-2 justify-center mb-6">
@@ -536,7 +551,11 @@ function LoginForm() {
                 </div>
               )}
 
-              <button type="submit" className="w-full px-6 py-4 rounded-md text-base font-black bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200 disabled:opacity-50" disabled={loading || code.join('').length !== 6}>
+              <button 
+                type="submit" 
+                className="w-full px-6 py-4 rounded-md text-base font-black bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200 disabled:opacity-50"
+                disabled={loading || code.join('').length !== 6}
+              >
                 {loading ? <i className="fas fa-spinner fa-spin"></i> : 'Sign in'}
               </button>
             </form>

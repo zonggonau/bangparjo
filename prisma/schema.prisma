@@ -118,8 +118,8 @@ model Variant {
   color        String?
   size         String?
   weight       Float
-  baseCost     Float       // Harga asli CJ
-  sellingPrice Float       // Harga jual setelah markup
+  baseCost     Float       // Harga asli CJ (bulatkan ke 2 desimal di aplikasi)
+  sellingPrice Float       // Harga jual setelah markup (bulatkan ke 2 desimal)
   inventory    Int         @default(0)
   image        String?
   orderItems   OrderItem[]
