@@ -5,12 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { calculateFinalPrice } from '@/lib/pricing';
 import { useSettings } from '@/context/SettingsContext';
-<<<<<<< HEAD
 import { slugify, parseProductName } from '@/lib/utils';
-import { getAdminCouponsAction } from '@/lib/actions-admin';
-=======
-import { slugify, parseProductName } from '@/lib/cj-utils';
->>>>>>> main
 import { 
   updateAdminInventoryAction, 
   syncAdminInventoryAction, 

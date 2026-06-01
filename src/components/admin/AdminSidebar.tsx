@@ -16,40 +16,23 @@ const NAV_GROUPS = [
     label: 'Store Management',
     items: [
       { id: 'orders',     label: 'Orders',      icon: 'fas fa-shopping-cart', path: '/dashboard/orders' },
-<<<<<<< HEAD
       { id: 'tracking',   label: 'Tracking',    icon: 'fas fa-shipping-fast', path: '/dashboard/tracking' },
       { id: 'inventory',  label: 'Inventory',   icon: 'fas fa-box',          path: '/dashboard/inventory' },
-=======
-      { id: 'inventory',  label: 'Inventory',   icon: 'fas fa-box',          path: '/dashboard/inventory' },
-      { id: 'categories', label: 'Categories',  icon: 'fas fa-tags',         path: '/dashboard/categories' },
->>>>>>> main
       { id: 'disputes',   label: 'Disputes',    icon: 'fas fa-gavel',        path: '/dashboard/disputes' },
     ],
   },
   {
-<<<<<<< HEAD
     label: 'Content',
     items: [
       { id: 'blog',  label: 'Blog',  icon: 'fas fa-blog',         path: '/dashboard/blog' },
       { id: 'about', label: 'About', icon: 'fas fa-info-circle',   path: '/dashboard/about' },
-=======
-    label: 'Content & Marketing',
-    items: [
-      { id: 'blog',        label: 'Blog',        icon: 'fas fa-blog',         path: '/dashboard/blog' },
-      { id: 'about',       label: 'About Page',  icon: 'fas fa-info-circle',   path: '/dashboard/about' },
-      { id: 'subscribers', label: 'Subscribers', icon: 'fas fa-users',        path: '/dashboard/subscribers' },
->>>>>>> main
     ],
   },
   {
     label: 'System',
     items: [
-<<<<<<< HEAD
       { id: 'subscribers',  label: 'Customers',     icon: 'fas fa-users',     path: '/dashboard/subscribers' },
       { id: 'webhook-logs', label: 'Webhook Logs',  icon: 'fas fa-file-alt',  path: '/dashboard/webhooks' },
-=======
-      { id: 'webhook-logs', label: 'Webhooks Logs', icon: 'fas fa-exchange-alt',  path: '/dashboard/webhooks' },
->>>>>>> main
       { id: 'settings',     label: 'Settings',      icon: 'fas fa-cog',       path: '/dashboard/settings' },
     ],
   },

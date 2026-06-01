@@ -1,13 +1,9 @@
 import ProductView from './ProductView';
 import { Metadata } from 'next';
 import { prisma } from '@/lib/db';
-<<<<<<< HEAD
 import { getProductDetails } from '@/lib/cj';
-=======
-import { getProductDetails } from '@/lib/cj-api';
 import { Suspense } from 'react';
 import { ProductDetailSkeleton } from '@/components/ProductSkeleton';
->>>>>>> main
 
 export async function generateMetadata({ 
   params, 

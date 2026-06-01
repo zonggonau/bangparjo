@@ -82,9 +82,16 @@ export async function getDashboardAnalyticsAction() {
       select: { id: true },
     });
 
+    const pointsRemaining = await prisma.storeSetting.findUnique({ where: { key: 'CJ_POINTS_REMAINING' } });
+    const pointsUsed = await prisma.storeSetting.findUnique({ where: { key: 'CJ_POINTS_USED' } });
+
     return {
       success: true,
       data: {
+        cjPoints: {
+          remaining: parseInt(pointsRemaining?.value || '0'),
+          used: parseInt(pointsUsed?.value || '0'),
+        },
         totalOrders,
         totalRevenue,
         totalCost,

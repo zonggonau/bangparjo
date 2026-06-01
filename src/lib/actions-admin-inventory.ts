@@ -1,11 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/db';
-<<<<<<< HEAD
-import { cjFetch, getProductDetails, CJProductDetail } from '@/lib/cj';
-=======
-import { cjFetch, getProductDetails, getInventoryByPid } from '@/lib/cj-api';
->>>>>>> main
+import { cjFetch, getProductDetails, CJProductDetail, getInventoryByPid } from '@/lib/cj';
 import { revalidateTag } from 'next/cache';
 import { slugify, parseProductName } from '@/lib/utils';
 import { generateLandingPageContent } from '@/lib/ai-content';
@@ -34,13 +30,8 @@ export async function updateAdminInventoryAction(data: { variantId?: string; sel
 
 export async function syncAdminInventoryAction(cjId: string) {
   try {
-<<<<<<< HEAD
     const res = await cjFetch<CJProductDetail>(`/v1/product/query?pid=${cjId}`, { method: 'GET' });
     if (!res.result) return { success: false, error: 'Product not found in CJ' };
-=======
-    const res = await getProductDetails(cjId);
-    if (!res.success || !res.data) return { success: false, error: res.message || 'Product not found in CJ' };
->>>>>>> main
 
     const cjProduct = res.data;
     const variants = cjProduct.variants || [];
@@ -275,15 +266,10 @@ export async function exportToBlogAction(productId: string, lang: string = 'en')
   }
 }
 
-<<<<<<< HEAD
 export async function importProductAction(
   productData: { pid: string; name: string; image: string; sellPrice: number; categoryName?: string },
   isHero: boolean = false
 ) {
-=======
-
-export async function importProductAction(pid: string, isHero: boolean = false) {
->>>>>>> main
   try {
     const { pid, name, image, sellPrice, categoryName } = productData;
     if (!pid) return { success: false, error: 'Product ID (pid) is required' };
@@ -308,50 +294,6 @@ export async function importProductAction(pid: string, isHero: boolean = false) 
       return { success: true, message: 'Product already exists. Triggered variant sync.', product: { ...existing, isHero: !!isHero } };
     }
 
-<<<<<<< HEAD
-=======
-    // Fetch warehouse stock from getInventoryByPid
-    const stockRes = await getInventoryByPid(pid);
-    const variantStockMap = new Map<string, number>();
-    if (stockRes.success && stockRes.data && Array.isArray(stockRes.data.variantInventories)) {
-      for (const vi of stockRes.data.variantInventories) {
-        if (!vi.vid) continue;
-        let total = 0;
-        if (Array.isArray(vi.inventory)) {
-          total = vi.inventory.reduce((acc: number, inv: any) => acc + (Number(inv.totalInventory || inv.totalInventoryNum || 0) || 0), 0);
-        }
-        variantStockMap.set(vi.vid, total);
-      }
-    }
-
-    const variantCount = cjProduct.variants.length;
-    let totalStock = 0;
-
-    const variantsData = cjProduct.variants.map((v: any) => {
-      let variantStock = 100; // fallback
-      if (variantStockMap.has(v.vid)) {
-        variantStock = variantStockMap.get(v.vid)!;
-      } else if (Array.isArray(v.inventories) && v.inventories.length > 0) {
-        variantStock = v.inventories.reduce((acc: number, inv: any) => acc + (Number(inv.totalInventory) || 0), 0);
-      } else if (v.variantNum !== undefined) {
-        variantStock = Number(v.variantNum);
-      }
-      totalStock += variantStock;
-
-      return {
-        cjId: v.vid,
-        sku: v.variantSku,
-        color: v.variantKey || v.variantNameEn || v.variantName || 'Default',
-        size: '', 
-        weight: v.variantWeight || 0,
-        baseCost: Number(v.variantSellPrice),
-        sellingPrice: Number(v.variantSellPrice), 
-        inventory: variantStock, 
-        image: v.variantImage || cjProduct.productImage
-      };
-    });
-
->>>>>>> main
     const product = await prisma.product.create({
       data: {
         cjId: pid,
@@ -364,7 +306,6 @@ export async function importProductAction(pid: string, isHero: boolean = false) 
         isHero: !!isHero,
         status: 'SYNCING_VARIANTS',
         variants: {
-<<<<<<< HEAD
           create: [{
             cjId: `${pid}-default`,
             sku: `${pid}-default`,
@@ -376,9 +317,6 @@ export async function importProductAction(pid: string, isHero: boolean = false) 
             inventory: 0, 
             image: image
           }]
-=======
-          create: variantsData
->>>>>>> main
         }
       },
       include: {

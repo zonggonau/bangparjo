@@ -4,13 +4,7 @@ import Link from 'next/link';
 import SortSelector from '@/components/SortSelector';
 import { getAppCache, setAppCache } from '@/lib/cache';
 import { getCategoryBySlug as getCategoryBySlugLib, getCategoryHierarchy } from '@/lib/categories';
-<<<<<<< HEAD
 import { getProductsV2 } from '@/lib/cj';
-=======
-import { getProductsV2 } from '@/lib/cj-api';
-import { prisma } from '@/lib/db';
-
->>>>>>> main
 
 async function getCategoryBySlug(slug: string) {
   const category = await getCategoryBySlugLib(slug);

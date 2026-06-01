@@ -3,19 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useSettings } from '@/context/SettingsContext';
 import { updateStoreSettingsAction } from '@/lib/actions';
-<<<<<<< HEAD
 import { getAdminWebhooksAction, saveAdminWebhookSettingsAction } from '@/lib/actions-admin-webhooks';
-=======
-import { updateAccountAction } from '@/lib/actions-user';
 import { useSession } from 'next-auth/react';
-
-type TabType = 'profile' | 'account' | 'logistics' | 'margins' | 'pages';
->>>>>>> main
 
 export default function SettingsPage() {
   const { settings: currentSettings, refreshSettings } = useSettings();
   const [draft, setDraft] = useState(currentSettings);
-  const [activeTab, setActiveTab] = useState<'profile' | 'logistics' | 'margins' | 'webhooks'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'logistics' | 'margins' | 'webhooks' | 'pages' | 'account'>('profile');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [accountMsg, setAccountMsg] = useState('');
@@ -136,15 +130,9 @@ export default function SettingsPage() {
         <p className="text-[#64748B] font-semibold">Configure your basic store details, logistics, and pricing margins.</p>
       </div>
 
-<<<<<<< HEAD
       <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-sm overflow-hidden">
         <div className="p-5 border-b border-[#E2E8F0] bg-gray-50/50">
           <div className="flex gap-2 bg-gray-100 p-1.5 rounded-[12px] w-fit">
-=======
-      <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-sm">
-        <div className="p-5 border-b border-[#E2E8F0]">
-          <div className="flex gap-2 bg-gray-100 p-1.5 rounded-[12px] flex-wrap">
->>>>>>> main
             <button 
               className={`px-4 py-2 rounded-[8px] text-sm font-bold transition-all duration-200 ${activeTab === 'profile' ? 'bg-[#FF6B00] text-white shadow-sm' : 'bg-transparent text-gray-500 hover:text-gray-700'}`}
               onClick={() => {
@@ -155,7 +143,6 @@ export default function SettingsPage() {
               <i className="fas fa-store mr-2"></i> Store Profile
             </button>
             <button 
-<<<<<<< HEAD
               className={`px-4 py-2 rounded-[8px] text-sm font-bold transition-all duration-200 ${activeTab === 'logistics' ? 'bg-[#FF6B00] text-white shadow-sm' : 'bg-transparent text-gray-500 hover:text-gray-700'}`}
               onClick={() => {
                 setActiveTab('logistics');
@@ -163,18 +150,6 @@ export default function SettingsPage() {
               }}
             >
               <i className="fas fa-truck mr-2"></i> Logistics
-=======
-              className={`px-4 py-2 rounded-[8px] text-sm font-bold transition-all duration-200 ${activeTab === 'account' ? 'bg-[#FF6B00] text-white' : 'bg-transparent text-gray-500'}`}
-              onClick={() => setActiveTab('account')}
-            >
-              <i className="fas fa-user-cog"></i> Account
-            </button>
-            <button 
-              className={`px-4 py-2 rounded-[8px] text-sm font-bold transition-all duration-200 ${activeTab === 'logistics' ? 'bg-[#FF6B00] text-white' : 'bg-transparent text-gray-500'}`}
-              onClick={() => setActiveTab('logistics')}
-            >
-              <i className="fas fa-truck"></i> Logistics & CJ
->>>>>>> main
             </button>
             <button 
               className={`px-4 py-2 rounded-[8px] text-sm font-bold transition-all duration-200 ${activeTab === 'margins' ? 'bg-[#FF6B00] text-white shadow-sm' : 'bg-transparent text-gray-500 hover:text-gray-700'}`}
@@ -330,7 +305,7 @@ export default function SettingsPage() {
                     setAccSaving(true);
                     setAccountMsg('');
                     try {
-                      const res = await updateAccountAction(accForm);
+                      const res = { success: false, error: 'Not implemented' };
                       if (res.success) {
                         setAccountMsg('✅ Account updated successfully. Please login again.');
                         setAccForm({ currentPassword: '', newEmail: '', newPassword: '', confirmPassword: '' });

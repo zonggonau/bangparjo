@@ -70,9 +70,8 @@ export default function ProductCard({ product }: { product: CJProduct & { nowPri
     const isCouponProduct = !!getProductActiveCoupon(product.pid);
     addToCart({ 
       ...product, 
-      sellPrice: typeof product.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product.sellPrice)),
-      isCouponProduct
-    });
+      sellPrice: typeof product.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product.sellPrice))
+    } as any);
   };
 
   const displayName = parseProductName(product.productNameEn || product.productName);

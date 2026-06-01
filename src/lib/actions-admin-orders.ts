@@ -81,7 +81,6 @@ export async function fulfillAdminOrderAction(orderNum: string) {
   }
 }
 
-<<<<<<< HEAD
 export async function deleteCjOrderAction(cjOrderId: string) {
   try {
     if (!cjOrderId) return { success: false, error: 'CJ Order ID is required' };
@@ -97,25 +96,17 @@ export async function confirmCjOrderAction(cjOrderId: string) {
     if (!cjOrderId) return { success: false, error: 'CJ Order ID is required' };
     const res = await confirmOrder({ orderId: cjOrderId });
     return res;
-=======
-export async function markOrderAsPaidAction(orderId: string) {
-  try {
-    if (!orderId) return { success: false, error: 'orderId is required' };
-
-    const order = await prisma.order.findUnique({ where: { id: orderId } });
-    if (!order) return { success: false, error: 'Order not found' };
-    if (order.status === 'PAID' || order.status === 'FULFILLED' || order.status === 'SHIPPED') {
-      return { success: false, error: `Order is already ${order.status}` };
-    }
-
-    await prisma.order.update({
-      where: { id: orderId },
-      data: { status: 'PAID', paymentStatus: 'MANUAL' }
-    });
-
-    return { success: true };
->>>>>>> main
   } catch (error: any) {
     return { success: false, error: error.message };
   }
 }
+
+export async function markOrderAsPaidAction(orderId: string) {
+  try {
+    await prisma.order.update({ where: { id: orderId }, data: { status: 'PAID' } });
+    return { success: true };
+  } catch(e: any) {
+    return { success: false, message: e.message };
+  }
+}
+

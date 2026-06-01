@@ -328,7 +328,31 @@ export async function cjFetch<T>(
       }
 
       const response = await fetch(`${BASE_URL}${cleanEndpoint}`, fetchOptions);
+      
+      if (response.status === 429) {
+        clearTimeout(timeoutId);
+        throw new Error(`POINTS_EXHAUSTED: CJ API daily points limit reached. Endpoint: ${endpoint}.`);
+      }
+
       const data = await response.json();
+
+      // Track CJ points consumption if provided
+      if (data && data.pointsInfo) {
+        import('@/lib/db').then(({ prisma }) => {
+          Promise.all([
+            prisma.storeSetting.upsert({
+              where: { key: 'CJ_POINTS_REMAINING' },
+              update: { value: String(data.pointsInfo.remainingPoints || 0) },
+              create: { key: 'CJ_POINTS_REMAINING', value: String(data.pointsInfo.remainingPoints || 0) }
+            }),
+            prisma.storeSetting.upsert({
+              where: { key: 'CJ_POINTS_USED' },
+              update: { value: String(data.pointsInfo.usedPoints || 0) },
+              create: { key: 'CJ_POINTS_USED', value: String(data.pointsInfo.usedPoints || 0) }
+            })
+          ]).catch(() => {}); // silent fail for tracking
+        }).catch(() => {});
+      }
 
       // Handle Invalid/Expired Token (Retry once with fresh token)
       if (!data.success && !data.result && (data.code === 1600101 || data.code === 1600102 || data.message?.toLowerCase().includes('access token'))) {
@@ -633,9 +657,13 @@ export async function getShippingFeeBySku(params: {
   endCountryCode: string;
   startCountryCode?: string;
 }): Promise<CJResponse<CJShippingMethod[]>> {
-  // No Redis caching - langsung hit API
+  const startArea = params.startCountryCode || 'CN';
+  const cacheKey = `cj_ship_sku_${startArea}_${params.endCountryCode}_${JSON.stringify(params.products.map(p => `${p.sku}-${p.quantity}`))}`;
+  const cached = await getCache(cacheKey);
+  if (cached) return cached;
+
   const reqDTOS = [{
-    srcAreaCode: params.startCountryCode || 'CN',
+    srcAreaCode: startArea,
     destAreaCode: params.endCountryCode,
     volume: 0.001,
     totalGoodsAmount: params.products.reduce((sum, p) => sum + (p.price || 10) * p.quantity, 0),
@@ -670,7 +698,9 @@ export async function getShippingFeeBySku(params: {
         taxesFee: item.taxesFee,
         totalPostageFee: item.postage || item.discountFee || 0,
       }));
-      return { success: true, result: true, data: methods, code: 200, message: 'Success', requestId: 'sku' };
+      const finalRes = { success: true, result: true, data: methods, code: 200, message: 'Success', requestId: 'sku' };
+      await setCache(cacheKey, finalRes, 3600); // 1 hour cache
+      return finalRes;
     }
     
     // Fallback jika gagal
@@ -689,12 +719,16 @@ export async function getShippingFee(params: {
   endCountryCode: string;
   startCountryCode?: string;
 }): Promise<CJResponse<CJShippingMethod[]>> {
-  // No Redis caching - langsung hit API
+  const startArea = params.startCountryCode || 'CN';
+  const cacheKey = `cj_ship_vid_${startArea}_${params.endCountryCode}_${JSON.stringify(params.products.map(p => `${p.vid}-${p.quantity}`))}`;
+  const cached = await getCache(cacheKey);
+  if (cached) return cached;
+
   try {
     const res = await cjFetch<CJShippingMethod[]>('/v1/logistic/freightCalculate', {
       method: 'POST',
       body: JSON.stringify({
-        startCountryCode: params.startCountryCode || 'CN',
+        startCountryCode: startArea,
         endCountryCode: params.endCountryCode,
         products: params.products,
       }),
@@ -705,6 +739,8 @@ export async function getShippingFee(params: {
     // Fallback logic if API fails due to QPS or other issues
     if (!res.success) {
        console.warn(`[Shipping API] Failed: ${res.message}`);
+    } else if (res.data && res.data.length > 0) {
+       await setCache(cacheKey, res, 3600); // 1 hour cache
     }
 
     return res;
@@ -783,8 +819,14 @@ export async function getOrderList(params: {
 }
 
 export async function getCategories() {
-  // No Redis caching - langsung ambil dari CJ API
+  const cacheKey = 'cj_categories_cache';
+  const cached = await getCache(cacheKey);
+  if (cached) return cached;
+
   const res = await cjFetch<any>('/v1/product/getCategory');
+  if (res.success && res.data) {
+    await setCache(cacheKey, res, 86400); // 24 hours cache
+  }
   return res;
 }
 
