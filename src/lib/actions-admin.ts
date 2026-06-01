@@ -114,13 +114,69 @@ export async function getCjBalanceAction() {
   }
 }
 
-export async function getAdminCouponsAction() {
+export async function registerCJWebhookAction(
+  baseUrl: string,
+  enabledEvents: { product: boolean; stock: boolean; order: boolean; logistics: boolean }
+) {
   try {
-    const coupons = await prisma.coupon.findMany({
-      orderBy: { createdAt: 'desc' },
+    const { setWebhook } = await import('@/lib/cj-api');
+    const callbackUrl = `${baseUrl.replace(/\/+$/, '')}/api/cj-webhook`;
+    
+    const res = await setWebhook({
+      product: {
+        type: enabledEvents.product ? 'ENABLE' : 'CANCEL',
+        callbackUrls: [callbackUrl],
+      },
+      stock: {
+        type: enabledEvents.stock ? 'ENABLE' : 'CANCEL',
+        callbackUrls: [callbackUrl],
+      },
+      order: {
+        type: enabledEvents.order ? 'ENABLE' : 'CANCEL',
+        callbackUrls: [callbackUrl],
+      },
+      logistics: {
+        type: enabledEvents.logistics ? 'ENABLE' : 'CANCEL',
+        callbackUrls: [callbackUrl],
+      },
     });
-    return { success: true, data: coupons };
+
+    if (res.success) {
+      // Save webhook configuration in StoreSetting table
+      await prisma.storeSetting.upsert({
+        where: { key: 'CJ_WEBHOOK_URL' },
+        update: { value: callbackUrl },
+        create: { key: 'CJ_WEBHOOK_URL', value: callbackUrl },
+      });
+
+      await prisma.storeSetting.upsert({
+        where: { key: 'CJ_WEBHOOK_REGISTERED_AT' },
+        update: { value: new Date().toISOString() },
+        create: { key: 'CJ_WEBHOOK_REGISTERED_AT', value: new Date().toISOString() },
+      });
+
+      const activeEvents = Object.keys(enabledEvents).filter(
+        (key) => enabledEvents[key as keyof typeof enabledEvents]
+      );
+      await prisma.storeSetting.upsert({
+        where: { key: 'CJ_WEBHOOK_EVENTS' },
+        update: { value: JSON.stringify(activeEvents) },
+        create: { key: 'CJ_WEBHOOK_EVENTS', value: JSON.stringify(activeEvents) },
+      });
+
+      try {
+        const { invalidateCache } = await import('@/lib/redis');
+        await invalidateCache('store:settings');
+      } catch (e) {
+        console.warn('[Webhook] Failed to invalidate Redis cache:', e);
+      }
+
+      return { success: true, message: 'Webhook registered successfully with CJ API.' };
+    } else {
+      return { success: false, message: res.message || 'Failed to register webhook.' };
+    }
   } catch (error: any) {
-    return { success: false, error: error.message };
+    console.error('[Webhook Registration Error]:', error);
+    return { success: false, message: error.message };
   }
 }

@@ -4,7 +4,13 @@ import Link from 'next/link';
 import SortSelector from '@/components/SortSelector';
 import { getAppCache, setAppCache } from '@/lib/cache';
 import { getCategoryBySlug as getCategoryBySlugLib, getCategoryHierarchy } from '@/lib/categories';
+<<<<<<< HEAD
 import { getProductsV2 } from '@/lib/cj';
+=======
+import { getProductsV2 } from '@/lib/cj-api';
+import { prisma } from '@/lib/db';
+
+>>>>>>> main
 
 async function getCategoryBySlug(slug: string) {
   const category = await getCategoryBySlugLib(slug);
@@ -72,7 +78,20 @@ export default async function CategoryPage({
   const pageNum = parseInt(sParams.page || '1');
   const minPrice = sParams.minPrice ? parseFloat(sParams.minPrice) : undefined;
   const maxPrice = sParams.maxPrice ? parseFloat(sParams.maxPrice) : undefined;
-  const sort = sParams.sort ? parseInt(sParams.sort) : 0; 
+  const sortParam = sParams.sort || 'default';
+  
+  let orderBy: number | undefined = undefined;
+  let sortDir: 'desc' | 'asc' | undefined = undefined;
+
+  switch (sortParam) {
+    case 'newest': orderBy = 3; sortDir = 'desc'; break;
+    case 'oldest': orderBy = 3; sortDir = 'asc'; break;
+    case 'price-desc': orderBy = 2; sortDir = 'desc'; break;
+    case 'price-asc': orderBy = 2; sortDir = 'asc'; break;
+    case 'listed-desc': orderBy = 1; sortDir = 'desc'; break;
+    case 'inventory-desc': orderBy = 4; sortDir = 'desc'; break;
+    default: orderBy = 0; break;
+  }
 
   const category = await getCategoryBySlug(slug);
 
@@ -88,7 +107,7 @@ export default async function CategoryPage({
   let products: any[] = [];
   let total = 0;
 
-  const cacheKey = `cat_api_products_${category.id}_p${pageNum}_s${sort}_min${minPrice || 0}_max${maxPrice || 0}`;
+  const cacheKey = `cat_api_products_${category.id}_p${pageNum}_s${sortParam}_min${minPrice || 0}_max${maxPrice || 0}`;
 
   try {
     const cachedData = await getAppCache<{ products: any[], total: number }>(cacheKey);
@@ -102,7 +121,8 @@ export default async function CategoryPage({
         size: 60,
         startSellPrice: minPrice,
         endSellPrice: maxPrice,
-        orderBy: sort > 0 ? sort : undefined,
+        orderBy: orderBy,
+        sort: sortDir,
         features: ['enable_description'],
       });
       
@@ -154,6 +174,7 @@ export default async function CategoryPage({
               <i className="fas fa-chevron-right text-[8px] opacity-40"></i>
               <Link href={`/category/${category.grandparent.slug}`} className="text-inherit no-underline hover:text-[#FF6B00] transition-colors">{category.grandparent.name}</Link>
             </>
+
           )}
           {category.parent && (
             <>
@@ -177,7 +198,7 @@ export default async function CategoryPage({
             
             <div className="flex items-center gap-3 shrink-0">
               <label htmlFor="sort" className="text-[11px] font-extrabold uppercase text-gray-400 hidden sm:block">Sort By:</label>
-              <SortSelector currentSort={sort} />
+              <SortSelector currentSort={orderBy || 0} />
             </div>
           </div>
 
@@ -206,16 +227,14 @@ export default async function CategoryPage({
               </Link>
             </div>
           )}
-        </header>
-
-        {/* Products Grid - Full Width */}
+        </header>        {/* Products Grid - Full Width */}
         {products.length > 0 ? (
           <>
             <div className="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {products.map((product) => (
+              {products.map((product: any) => (
                 <ProductCard key={product.id || product.pid} product={product} />
-              ))}
 
+              ))}
             </div>
 
             {totalPages > 1 && (

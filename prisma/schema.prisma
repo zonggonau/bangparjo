@@ -254,35 +254,8 @@ model BlogPost {
   updatedAt DateTime @updatedAt
 }
 
-model Coupon {
-  id          String           @id @default(cuid())
-  code        String           @unique
-  type        String           @default("PERCENTAGE") // PERCENTAGE, FIXED, FREE_SHIPPING
-  value       Float            // Discount value (percentage or fixed amount)
-  minPurchase Float?           // Minimum purchase amount to use this coupon
-  maxUses     Int?             // Maximum number of times this coupon can be used
-  usedCount   Int              @default(0)
-  isActive    Boolean          @default(true)
-  expiresAt   DateTime?
-  description String?
-  products    CouponProduct[]
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-}
-
-// Many-to-many: Coupon assigned to specific products (by cjId)
-model CouponProduct {
-  id          String   @id @default(cuid())
-  couponId    String
-  coupon      Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
-  productCjId String   // CJ product ID (pid)
-  createdAt   DateTime @default(now())
-
-  @@unique([couponId, productCjId])
-}
-
-
 model AboutPage {
+
   id        String   @id @default(cuid())
   title     String   @default("About Us")
   content   String   @db.Text
@@ -292,5 +265,38 @@ model AboutPage {
   published Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model AutoImportState {
+  id              String   @id @default("default")
+  currentCategory String?  
+  currentPage     Int      @default(1)
+  status          String   @default("IDLE") 
+  updatedAt       DateTime @updatedAt
+}
+
+model Coupon {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  type          String            // PERCENTAGE, FIXED, FREE_SHIPPING
+  value         Float
+  description   String?
+  minPurchase   Float?
+  maxUses       Int?
+  usedCount     Int      @default(0)
+  isActive      Boolean  @default(true)
+  expiresAt     DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  products      CouponProduct[]
+}
+
+model CouponProduct {
+  id          String @id @default(cuid())
+  couponId    String
+  productCjId String
+  coupon      Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  
+  @@unique([couponId, productCjId])
 }
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
 
@@ -57,6 +58,7 @@ export const metadata: Metadata = {
 
 import { Providers } from "@/components/Providers";
 import Analytics from "@/components/Analytics";
+import ScrollToTop from "@/components/ScrollToTop";
 import { getCachedStoreSettings } from "@/lib/server-settings";
 
 export default async function RootLayout({
@@ -70,6 +72,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
+        <ScrollToTop />
         {/* JSON-LD Structured Data for SEO */}
         <script
           type="application/ld+json"
@@ -102,7 +105,9 @@ export default async function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="BangParjo" />
 
-        <Analytics />
+        <Suspense fallback={null}>
+          <Analytics />
+        </Suspense>
         <Providers initialSettings={initialSettings}>
           {children}
         </Providers>

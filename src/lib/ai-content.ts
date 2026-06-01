@@ -20,15 +20,8 @@ export interface AiLandingContent {
   faqs?: Array<{ q: string; a: string }>;
   shippingPolicy?: string;
   returnPolicy?: string;
-  /** Optional coupon offer to display on the landing page */
-  couponOffer?: {
-    code: string;
-    type: 'PERCENTAGE' | 'FIXED' | 'FREE_SHIPPING';
-    value: number;
-    description: string;
-    minPurchase?: number;
-  };
 }
+
 
 
 interface ProductInput {
@@ -43,24 +36,15 @@ interface ProductInput {
   }>;
 }
 
-/** Coupon data passed from DB to AI for generating marketing content */
-interface CouponInput {
-  code: string;
-  type: 'PERCENTAGE' | 'FIXED' | 'FREE_SHIPPING';
-  value: number;
-  description: string;
-  minPurchase?: number | null;
-  expiresAt?: string | null;
-}
-
 /**
  * Call DeepSeek API to generate landing page content for a product
- * @param coupon - Optional coupon data from DB to incorporate into marketing content
  */
 export async function generateLandingPageContent(
   product: ProductInput,
-  coupon?: CouponInput
+  lang: string = 'en'
 ): Promise<AiLandingContent> {
+  const isIndo = lang.toLowerCase() === 'id';
+
   const minPrice = Math.min(...product.variants.map(v => v.sellingPrice));
   const maxPrice = Math.max(...product.variants.map(v => v.sellingPrice));
   const priceRange = minPrice === maxPrice
@@ -70,37 +54,12 @@ export async function generateLandingPageContent(
   const totalStock = product.variants.reduce((sum, v) => sum + v.inventory, 0);
   const variantCount = product.variants.length;
 
-  // Build coupon section for prompt if coupon is provided
-  let couponPromptSection = '';
-  if (coupon) {
-    let couponLabel = '';
-    if (coupon.type === 'PERCENTAGE') {
-      couponLabel = `${coupon.value}% OFF`;
-    } else if (coupon.type === 'FIXED') {
-      couponLabel = `$${coupon.value} OFF`;
-    } else if (coupon.type === 'FREE_SHIPPING') {
-      couponLabel = 'FREE SHIPPING';
-    }
-    couponPromptSection = `
-COUPON OFFER (REAL — use this exact data):
-- Code: ${coupon.code}
-- Type: ${coupon.type}
-- Value: ${coupon.value}
-- Label: ${couponLabel}
-- Description: ${coupon.description || ''}
-- Min Purchase: ${coupon.minPurchase ? '$' + coupon.minPurchase : 'None'}
-- Expires: ${coupon.expiresAt ? new Date(coupon.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No expiry'}
+  const systemPrompt = isIndo
+    ? `You are a professional e-commerce copywriter for dropshipping in Indonesia. CRITICAL: You MUST generate ALL text in INDONESIAN (Bahasa Indonesia) only. NEVER use any other language. Generate ONLY pure JSON, no markdown, no backticks, no explanations. Focus on benefits, emotional appeal, and conversion optimization.`
+    : `You are a professional e-commerce copywriter for global dropshipping. CRITICAL: You MUST generate ALL text in ENGLISH only. NEVER use any other language. Generate ONLY pure JSON, no markdown, no backticks, no explanations. Focus on benefits, emotional appeal, and conversion optimization.`;
 
-IMPORTANT: Incorporate this coupon offer into the marketing content naturally:
-- Add the coupon label (${couponLabel}) as one of the heroBadges
-- Mention the coupon code ${coupon.code} in the adCopy
-- Include the coupon in the couponOffer field below with the EXACT data above
-- Make the coupon feel like a limited-time bonus to create urgency`;
-  }
-
-  const systemPrompt = `You are a professional e-commerce copywriter for global dropshipping. CRITICAL: You MUST generate ALL text in ENGLISH only. NEVER use any other language. Generate ONLY pure JSON, no markdown, no backticks, no explanations. Focus on benefits, emotional appeal, and conversion optimization.`;
-
-  const userPrompt = `Analyze this product and generate optimized marketing content for a social media landing page (Facebook/Instagram/TikTok/Google Ads). Write in ENGLISH for a global audience.
+  const userPrompt = isIndo
+    ? `Analyze this product and generate optimized marketing content for a social media landing page (Facebook/Instagram/TikTok/Google Ads). Write in INDONESIAN (Bahasa Indonesia) for an Indonesian audience.
 
 PRODUCT DATA:
 - Name: ${product.name}
@@ -108,7 +67,45 @@ PRODUCT DATA:
 - Price Range: ${priceRange}
 - Variants: ${variantCount}
 - Total Stock: ${totalStock}
-${couponPromptSection}
+
+INSTRUCTIONS — Focus on BENEFITS over features. Use simple, emotional, and persuasive language. Add urgency where appropriate.
+
+Generate JSON with this exact structure:
+{
+  "tagline": "Slogan pendek yang kuat (maks 8 kata) untuk bagian hero, berfokus pada konversi",
+  "heroBadges": ["3 lencana pendek (maks 2 kata masing-masing), misal: Terlaris, Promo Hot, Stok Terbatas, Sedang Tren"],
+  "benefits": [
+    {"icon": "quality", "title": "judul benefit 1 (2-3 kata)", "desc": "deskripsi benefit singkat 8-12 kata, fokus pada keuntungan pembeli"},
+    {"icon": "price", "title": "judul benefit 2", "desc": "deskripsi singkat"},
+    {"icon": "shipping", "title": "judul benefit 3", "desc": "deskripsi singkat"}
+  ],
+  "socialProof": {
+    "sold": "estimasi unit terjual yang realistis (misal: 2.500+)",
+    "rating": "penilaian bintang (4.5 - 5.0)",
+    "reviews": "jumlah ulasan (misal: 850+)"
+  },
+  "seoTitle": "Judul SEO maks 60 karakter untuk meta tag",
+  "seoDescription": "Deskripsi SEO maks 160 karakter untuk meta tag",
+  "adCopy": "Salinan iklan media sosial 1-2 kalimat pendek yang menarik, maks 150 karakter",
+  "faqs": [
+    {"q": "Pertanyaan FAQ 1 terkait produk ini", "a": "Jawaban singkat yang jelas maks 20 kata"},
+    {"q": "Pertanyaan FAQ 2", "a": "Jawaban 2"},
+    {"q": "Pertanyaan FAQ 3 (pengiriman, ukuran, atau penggunaan)", "a": "Jawaban 3"}
+  ],
+  "shippingPolicy": "Kebijakan pengiriman 1-2 kalimat. Estimasi waktu pengiriman.",
+  "returnPolicy": "Kebijakan pengembalian/garansi 1-2 kalimat. Syarat dan ketentuan."
+}
+
+ALL TEXT MUST BE IN INDONESIAN (BAHASA INDONESIA).
+Pure JSON only, no markdown, no backticks.`
+    : `Analyze this product and generate optimized marketing content for a social media landing page (Facebook/Instagram/TikTok/Google Ads). Write in ENGLISH for a global audience.
+
+PRODUCT DATA:
+- Name: ${product.name}
+- Description: ${product.description?.substring(0, 500) || 'No description available'}
+- Price Range: ${priceRange}
+- Variants: ${variantCount}
+- Total Stock: ${totalStock}
 
 INSTRUCTIONS — Focus on BENEFITS over features. Use simple, emotional language. Add urgency where appropriate.
 
@@ -135,14 +132,7 @@ Generate JSON with this exact structure:
     {"q": "FAQ question 3 (shipping, sizing, or usage)", "a": "Answer 3"}
   ],
   "shippingPolicy": "Shipping policy 1-2 sentences. Estimated delivery time and carrier.",
-  "returnPolicy": "Return/warranty policy 1-2 sentences. Terms and conditions.",
-  "couponOffer": {
-    "code": "Coupon code (uppercase)",
-    "type": "PERCENTAGE or FIXED or FREE_SHIPPING",
-    "value": "Numeric value",
-    "description": "Short compelling description of the offer (max 8 words)",
-    "minPurchase": "Optional minimum purchase amount in USD (number only, e.g. 20)"
-  }
+  "returnPolicy": "Return/warranty policy 1-2 sentences. Terms and conditions."
 }
 
 ALL TEXT MUST BE IN ENGLISH.
@@ -152,20 +142,21 @@ Pure JSON only, no markdown, no backticks.`;
   // Try DeepSeek
   if (DEEPSEEK_API_KEY && DEEPSEEK_API_KEY !== 'sk-your-deepseek-api-key-here') {
     try {
-      const result = await callDeepSeek(systemPrompt, userPrompt, product.name);
+      const result = await callDeepSeek(systemPrompt, userPrompt, product.name, isIndo);
       if (result) return result;
     } catch (err) {
       console.warn('[AI Content] DeepSeek failed:', err);
     }
   }
 
-  return getFallbackContent(product.name);
+  return getFallbackContent(product.name, isIndo);
 }
+
 
 /**
  * Call DeepSeek chat completions API
  */
-async function callDeepSeek(systemPrompt: string, userPrompt: string, productName: string): Promise<AiLandingContent | null> {
+async function callDeepSeek(systemPrompt: string, userPrompt: string, productName: string, isIndo: boolean): Promise<AiLandingContent | null> {
   const response = await fetch(DEEPSEEK_API_URL, {
     method: 'POST',
     headers: {
@@ -192,28 +183,17 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, productNam
   const data = await response.json();
   const text = data?.choices?.[0]?.message?.content || '';
 
-  return parseAiResponse(text, productName);
+  return parseAiResponse(text, productName, isIndo);
 }
 
 /**
  * Parse AI response JSON into AiLandingContent
  */
-function parseAiResponse(text: string, productName: string): AiLandingContent | null {
+function parseAiResponse(text: string, productName: string, isIndo: boolean): AiLandingContent | null {
   try {
     const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
     const parsed = JSON.parse(cleaned);
-    const fallback = getFallbackContent(productName);
-    // Parse couponOffer if provided by AI
-    var couponOffer: AiLandingContent['couponOffer'] = undefined;
-    if (parsed.couponOffer && parsed.couponOffer.code && parsed.couponOffer.type) {
-      couponOffer = {
-        code: String(parsed.couponOffer.code).toUpperCase().replace(/[^A-Z0-9]/g, ''),
-        type: ['PERCENTAGE', 'FIXED', 'FREE_SHIPPING'].includes(parsed.couponOffer.type) ? parsed.couponOffer.type : 'PERCENTAGE',
-        value: Number(parsed.couponOffer.value) || 0,
-        description: String(parsed.couponOffer.description || 'Special offer'),
-        minPurchase: parsed.couponOffer.minPurchase ? Number(parsed.couponOffer.minPurchase) : undefined,
-      };
-    }
+    const fallback = getFallbackContent(productName, isIndo);
     return {
       tagline: parsed.tagline || fallback.tagline,
       heroBadges: Array.isArray(parsed.heroBadges) ? parsed.heroBadges.slice(0, 3) : fallback.heroBadges,
@@ -225,13 +205,13 @@ function parseAiResponse(text: string, productName: string): AiLandingContent | 
       faqs: Array.isArray(parsed.faqs) ? parsed.faqs.slice(0, 5) : undefined,
       shippingPolicy: parsed.shippingPolicy || undefined,
       returnPolicy: parsed.returnPolicy || undefined,
-      couponOffer: couponOffer,
     };
   } catch {
     console.error('[AI Content] Failed to parse AI response as JSON:', text.substring(0, 200));
     return null;
   }
 }
+
 
 
 /**
@@ -252,7 +232,25 @@ export function calculateMarkupPrice(baseCost: number, markupPercent?: number): 
 /**
  * Fallback content when AI is unavailable
  */
-function getFallbackContent(productName: string): AiLandingContent {
+function getFallbackContent(productName: string, isIndo: boolean): AiLandingContent {
+  if (isIndo) {
+    return {
+      tagline: `${productName} — Harga Terbaik, Pengiriman Cepat`,
+      heroBadges: ['Terlaris', 'Pengiriman Cepat', 'Harga Terbaik'],
+      benefits: [
+        { icon: 'quality', title: 'Kualitas Premium', desc: 'Produk berkualitas tinggi yang memenuhi standar internasional. Kepuasan terjamin.' },
+        { icon: 'price', title: 'Garansi Harga Terbaik', desc: 'Dapatkan harga terbaik langsung dari produsen. Tanpa biaya perantara.' },
+        { icon: 'shipping', title: 'Pengiriman Cepat', desc: 'Pengiriman ke seluruh dunia dengan pelacakan langsung.' },
+      ],
+      socialProof: { sold: '2.500+', rating: '4.8', reviews: '850+' },
+      seoTitle: `${productName} — Belanja Global di BangParjo`,
+      seoDescription: `Beli ${productName} dengan harga terbaik. Kualitas premium, pengiriman cepat ke seluruh dunia, dan garansi uang kembali. Belanja sekarang di BangParjo.`,
+      adCopy: `${productName} dengan harga yang tak tertandingi! ✓ Kualitas premium ✓ Pengiriman cepat ✓ Garansi 30 hari. Pesan sekarang!`,
+      shippingPolicy: 'Pengiriman internasional cepat 7-21 hari kerja dengan nomor pelacakan.',
+      returnPolicy: 'Garansi kepuasan 100%. Kembalikan dalam waktu 7 hari jika produk tidak memuaskan untuk pengembalian dana penuh.'
+    };
+  }
+
   return {
     tagline: `${productName} — Best Price, Global Shipping`,
     heroBadges: ['Best Seller', 'Global Shipping', 'Best Price'],
@@ -265,5 +263,7 @@ function getFallbackContent(productName: string): AiLandingContent {
     seoTitle: `${productName} — Shop Global at BangParjo`,
     seoDescription: `Buy ${productName} at the best price. Premium quality, fast worldwide shipping, and money-back guarantee. Shop now at BangParjo.`,
     adCopy: `${productName} at unbeatable prices! ✓ Premium quality ✓ Fast global shipping ✓ 30-day returns. Order now!`,
+    shippingPolicy: 'Fast worldwide shipping in 7-21 business days with tracking number.',
+    returnPolicy: '100% satisfaction guarantee. Return within 7 days if not satisfied for a full refund.'
   };
 }

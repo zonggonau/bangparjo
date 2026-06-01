@@ -1,7 +1,11 @@
 'use server';
 
 import { prisma } from '@/lib/db';
+<<<<<<< HEAD
 import { cjFetch, getProductDetails, CJProductDetail } from '@/lib/cj';
+=======
+import { cjFetch, getProductDetails, getInventoryByPid } from '@/lib/cj-api';
+>>>>>>> main
 import { revalidateTag } from 'next/cache';
 import { slugify, parseProductName } from '@/lib/utils';
 import { generateLandingPageContent } from '@/lib/ai-content';
@@ -30,20 +34,57 @@ export async function updateAdminInventoryAction(data: { variantId?: string; sel
 
 export async function syncAdminInventoryAction(cjId: string) {
   try {
+<<<<<<< HEAD
     const res = await cjFetch<CJProductDetail>(`/v1/product/query?pid=${cjId}`, { method: 'GET' });
     if (!res.result) return { success: false, error: 'Product not found in CJ' };
+=======
+    const res = await getProductDetails(cjId);
+    if (!res.success || !res.data) return { success: false, error: res.message || 'Product not found in CJ' };
+>>>>>>> main
 
     const cjProduct = res.data;
     const variants = cjProduct.variants || [];
 
+    // Fetch warehouse stock from getInventoryByPid
+    const stockRes = await getInventoryByPid(cjId);
+    const variantStockMap = new Map<string, number>();
+    if (stockRes.success && stockRes.data && Array.isArray(stockRes.data.variantInventories)) {
+      for (const vi of stockRes.data.variantInventories) {
+        if (!vi.vid) continue;
+        let total = 0;
+        if (Array.isArray(vi.inventory)) {
+          total = vi.inventory.reduce((acc: number, inv: any) => acc + (Number(inv.totalInventory || inv.totalInventoryNum || 0) || 0), 0);
+        }
+        variantStockMap.set(vi.vid, total);
+      }
+    }
+
     const updatedVariants = [];
     for (const v of variants) {
       if (!v.vid) continue;
+      
+      let variantStock = 0;
+      if (variantStockMap.has(v.vid)) {
+        variantStock = variantStockMap.get(v.vid)!;
+      } else {
+        // Fallback to variant metadata properties
+        const vAny = v as any;
+        if (Array.isArray(vAny.inventories) && vAny.inventories.length > 0) {
+          variantStock = vAny.inventories.reduce((acc: number, inv: any) => acc + (Number(inv.totalInventory || inv.totalInventoryNum || 0) || 0), 0);
+        } else if (vAny.variantNum !== undefined) {
+          variantStock = Number(vAny.variantNum);
+        } else if (vAny.inventory !== undefined) {
+          variantStock = Number(vAny.inventory);
+        }
+      }
+
+      const baseCost = Number(v.variantSellPrice || 0);
+
       const updated = await prisma.variant.updateMany({
         where: { cjId: v.vid },
         data: {
-          inventory: Number(v.variantNum || 0),
-          baseCost: Number(v.variantPrice || 0),
+          inventory: variantStock,
+          baseCost: baseCost,
         },
       });
       if (updated.count > 0) {
@@ -51,6 +92,20 @@ export async function syncAdminInventoryAction(cjId: string) {
         updatedVariants.push(variantDoc);
       }
     }
+
+    // Also update parent product totalStock
+    const product = await prisma.product.findUnique({
+      where: { cjId },
+      include: { variants: true }
+    });
+    if (product) {
+      const totalStock = product.variants.reduce((acc, v) => acc + v.inventory, 0);
+      await prisma.product.update({
+        where: { id: product.id },
+        data: { totalStock }
+      });
+    }
+
     return { success: true, data: { variants: updatedVariants } };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -118,7 +173,7 @@ async function fetchCjShippingMethods(variantCjId: string, quantity: number = 1,
   }
 }
 
-export async function exportToBlogAction(productId: string, couponId?: string | null) {
+export async function exportToBlogAction(productId: string, lang: string = 'en') {
   try {
     if (!productId) return { success: false, error: 'productId is required' };
 
@@ -130,28 +185,11 @@ export async function exportToBlogAction(productId: string, couponId?: string | 
     if (!product) return { success: false, error: 'Product not found' };
 
     const displayName = parseProductName(product.name);
-    const slug = slugify(displayName) + '-' + product.cjId.toLowerCase();
+    const langSuffix = lang === 'id' ? '-id' : '';
+    const slug = slugify(displayName) + '-' + product.cjId.toLowerCase() + langSuffix;
 
     const existing = await prisma.blogPost.findUnique({ where: { slug } });
     if (existing) return { success: false, error: 'Blog post already exists for this product', status: 409 };
-
-    let couponData: any = null;
-    if (couponId) {
-      const coupon = await prisma.coupon.findUnique({ where: { id: couponId } });
-      if (coupon && coupon.isActive) {
-        if (!coupon.expiresAt || new Date(coupon.expiresAt) > new Date()) {
-          couponData = {
-            id: coupon.id,
-            code: coupon.code,
-            type: coupon.type,
-            value: coupon.value,
-            description: coupon.description || `Use code ${coupon.code} for savings`,
-            minPurchase: coupon.minPurchase,
-            expiresAt: coupon.expiresAt?.toISOString() || null,
-          };
-        }
-      }
-    }
 
     const productData: Record<string, any> = {
       type: 'product',
@@ -176,17 +214,6 @@ export async function exportToBlogAction(productId: string, couponId?: string | 
       createdAt: new Date().toISOString(),
     };
 
-    if (couponData) {
-      productData.coupon = {
-        code: couponData.code,
-        type: couponData.type,
-        value: couponData.value,
-        description: couponData.description,
-        minPurchase: couponData.minPurchase || undefined,
-        expiresAt: couponData.expiresAt || undefined,
-      };
-    }
-
     try {
       const aiContent = await generateLandingPageContent(
         {
@@ -200,14 +227,7 @@ export async function exportToBlogAction(productId: string, couponId?: string | 
             inventory: v.inventory,
           })),
         },
-        couponData ? {
-          code: couponData.code,
-          type: couponData.type,
-          value: couponData.value,
-          description: couponData.description,
-          minPurchase: couponData.minPurchase,
-          expiresAt: couponData.expiresAt,
-        } : undefined
+        lang
       );
       productData.ai = aiContent;
     } catch (err) {}
@@ -224,9 +244,11 @@ export async function exportToBlogAction(productId: string, couponId?: string | 
 
     const post = await prisma.blogPost.create({
       data: {
-        title: displayName,
+        title: displayName + (lang === 'id' ? ' (ID)' : ' (EN)'),
         slug,
-        excerpt: `Product review and details for ${displayName}. Check pricing, variants, and specifications.`,
+        excerpt: lang === 'id'
+          ? `Ulasan produk dan detail untuk ${displayName}. Periksa harga, varian, dan spesifikasi.`
+          : `Product review and details for ${displayName}. Check pricing, variants, and specifications.`,
         content,
         image: product.images[0] || null,
         author: 'Admin',
@@ -245,7 +267,6 @@ export async function exportToBlogAction(productId: string, couponId?: string | 
         slug: post.slug,
         title: post.title,
         aiGenerated: !!productData.ai,
-        hasCoupon: !!couponData,
         hasShipping: !!(productData.shippingMethods?.length > 0),
       },
     };
@@ -254,10 +275,15 @@ export async function exportToBlogAction(productId: string, couponId?: string | 
   }
 }
 
+<<<<<<< HEAD
 export async function importProductAction(
   productData: { pid: string; name: string; image: string; sellPrice: number; categoryName?: string },
   isHero: boolean = false
 ) {
+=======
+
+export async function importProductAction(pid: string, isHero: boolean = false) {
+>>>>>>> main
   try {
     const { pid, name, image, sellPrice, categoryName } = productData;
     if (!pid) return { success: false, error: 'Product ID (pid) is required' };
@@ -282,6 +308,50 @@ export async function importProductAction(
       return { success: true, message: 'Product already exists. Triggered variant sync.', product: { ...existing, isHero: !!isHero } };
     }
 
+<<<<<<< HEAD
+=======
+    // Fetch warehouse stock from getInventoryByPid
+    const stockRes = await getInventoryByPid(pid);
+    const variantStockMap = new Map<string, number>();
+    if (stockRes.success && stockRes.data && Array.isArray(stockRes.data.variantInventories)) {
+      for (const vi of stockRes.data.variantInventories) {
+        if (!vi.vid) continue;
+        let total = 0;
+        if (Array.isArray(vi.inventory)) {
+          total = vi.inventory.reduce((acc: number, inv: any) => acc + (Number(inv.totalInventory || inv.totalInventoryNum || 0) || 0), 0);
+        }
+        variantStockMap.set(vi.vid, total);
+      }
+    }
+
+    const variantCount = cjProduct.variants.length;
+    let totalStock = 0;
+
+    const variantsData = cjProduct.variants.map((v: any) => {
+      let variantStock = 100; // fallback
+      if (variantStockMap.has(v.vid)) {
+        variantStock = variantStockMap.get(v.vid)!;
+      } else if (Array.isArray(v.inventories) && v.inventories.length > 0) {
+        variantStock = v.inventories.reduce((acc: number, inv: any) => acc + (Number(inv.totalInventory) || 0), 0);
+      } else if (v.variantNum !== undefined) {
+        variantStock = Number(v.variantNum);
+      }
+      totalStock += variantStock;
+
+      return {
+        cjId: v.vid,
+        sku: v.variantSku,
+        color: v.variantKey || v.variantNameEn || v.variantName || 'Default',
+        size: '', 
+        weight: v.variantWeight || 0,
+        baseCost: Number(v.variantSellPrice),
+        sellingPrice: Number(v.variantSellPrice), 
+        inventory: variantStock, 
+        image: v.variantImage || cjProduct.productImage
+      };
+    });
+
+>>>>>>> main
     const product = await prisma.product.create({
       data: {
         cjId: pid,
@@ -294,6 +364,7 @@ export async function importProductAction(
         isHero: !!isHero,
         status: 'SYNCING_VARIANTS',
         variants: {
+<<<<<<< HEAD
           create: [{
             cjId: `${pid}-default`,
             sku: `${pid}-default`,
@@ -305,6 +376,9 @@ export async function importProductAction(
             inventory: 0, 
             image: image
           }]
+=======
+          create: variantsData
+>>>>>>> main
         }
       },
       include: {
@@ -320,3 +394,6 @@ export async function importProductAction(
     return { success: false, error: error.message };
   }
 }
+
+
+

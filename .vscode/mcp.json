@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "cj-dropshipping": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "d:/projek/nextjs/cjdropshiping/api-mcp/dist/mcp-server/index.cjs"
+      ]
+    }
+  }
+}

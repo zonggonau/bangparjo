@@ -12,6 +12,8 @@ import HomeHomeLiving from '@/components/home-sections/HomeHomeLiving';
 import Newsletter from '@/components/Newsletter';
 import LiveSales from '@/components/LiveSales';
 import AIChat from '@/components/AIChat';
+import { getDBStoreSettings, calculateFinalPrice } from '@/lib/pricing';
+
 
 const CACHE_TTL = 3600; // 1 hour
 
@@ -64,7 +66,23 @@ async function fetchFeaturedProducts() {
 }
 
 async function FeaturedHeroWrapper() {
-  const featuredProducts = await getFeaturedProducts();
+  const rawFeaturedProducts = await getFeaturedProducts();
+
+  // Fetch real-time settings
+  const settings = await getDBStoreSettings();
+
+  const featuredProducts = rawFeaturedProducts
+    .map((p: any) => {
+      const rawPrice = Number(p.sellPrice || 0);
+      const targetPrice = calculateFinalPrice(rawPrice, settings);
+
+      return {
+        ...p,
+        sellPrice: targetPrice,
+      };
+    });
+
+
   return <HeroSection products={featuredProducts} />;
 }
 
@@ -77,17 +95,17 @@ export default function HomePage() {
       </Suspense>
 
       {/* ===== GLOBAL SHIPPING BADGE ===== */}
-      <div className="bg-gradient-to-r from-[#FF6B00] to-[#E06000] py-3 overflow-hidden">
+      <div className="bg-gradient-to-r from-[#FF6B00] to-[#E06000] py-3.5 overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-5">
           <div className="flex justify-center items-center gap-6 sm:gap-10 flex-wrap">
-            <span className="text-white text-[13px] sm:text-[14px] flex items-center gap-1.5">
-              🌍 <strong>Global E-Commerce</strong> — Shipping to <strong className="text-white/90">200+ Countries</strong>
+            <span className="text-white text-[13px] sm:text-[14px] flex items-center gap-1.5 font-medium">
+              🌍 <strong>Global Shipping</strong> — 200+ Countries
             </span>
-            <span className="text-white text-[13px] sm:text-[14px] flex items-center gap-1.5">
-              ✈️ <strong className="text-white/90">7-14 Days</strong> Delivery Time
+            <span className="text-white text-[13px] sm:text-[14px] flex items-center gap-1.5 font-medium">
+              ✈️ <strong>7-14 Days</strong> Fast Delivery
             </span>
-            <span className="text-white text-[13px] sm:text-[14px] flex items-center gap-1.5">
-              🔒 <strong className="text-white/90">Secure</strong> SSL-Encrypted Checkout
+            <span className="text-white text-[13px] sm:text-[14px] flex items-center gap-1.5 font-medium">
+              ⚠️ <strong className="text-white">Duty Unpaid (DDU)</strong> — Customers are responsible for any import customs duties & taxes applicable in their destination country.
             </span>
           </div>
         </div>

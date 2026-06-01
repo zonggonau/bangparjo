@@ -46,17 +46,22 @@ export default function PayPalButton({ amount, orderId, onSuccess }: PayPalButto
           }}
           onApprove={async (data, actions) => {
             if (actions.order) {
-              const details = await actions.order.capture();
-              
-              // Call our backend to update status
-              const resData = await capturePayPalOrderAction({
-                orderId: orderId,
-                paypalData: details
-              });
-              if (resData.success) {
-                onSuccess();
-              } else {
-                setError("Payment captured but failed to update order status. Please contact support.");
+              try {
+                await actions.order.capture();
+                
+                // Use data.orderID from the onApprove params (the PayPal order ID)
+                const resData = await capturePayPalOrderAction({
+                  orderId: orderId,
+                  paypalData: { orderID: data.orderID }
+                });
+                if (resData.success) {
+                  onSuccess();
+                } else {
+                  setError("Payment captured but failed to update order status. Please contact support.");
+                }
+              } catch (err: any) {
+                console.error("PayPal capture error:", err);
+                setError("Payment processing failed. Please contact support.");
               }
             }
           }}

@@ -11,11 +11,18 @@ import { ProductDetailSkeleton } from '@/components/ProductSkeleton';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import AIChat from '@/components/AIChat';
-import { getProductDetailsAction, cjProxyAction } from '@/lib/actions-catalog';
+import { getProductDetailsAction } from '@/lib/actions-catalog';
+import { countries } from '@/lib/countries';
+
+function renderStars(score: any) {
+  const parsed = parseInt(score);
+  const validScore = isNaN(parsed) ? 0 : Math.max(0, Math.min(5, parsed));
+  return '★'.repeat(validScore) + '☆'.repeat(5 - validScore);
+}
 
 export default function ProductView({ id, initialData, initialError, selectedVid }: { id: string, initialData: any, initialError: string | null, selectedVid?: string }) {
   const { addToCart } = useCart();
-  const { settings } = useSettings();
+  const { settings, activeCoupons } = useSettings();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -77,9 +84,13 @@ export default function ProductView({ id, initialData, initialError, selectedVid
     setSelectedVariant(variant);
     
     // Update URL query param without full navigation
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('v', variant.vid);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    try {
+      const params = new URLSearchParams(searchParams ? searchParams.toString() : '');
+      params.set('v', variant.vid);
+      window.history.replaceState(null, '', `${pathname}?${params.toString()}`);
+    } catch (e) {
+      // Fallback: ignore URL update error
+    }
   };
 
   useEffect(() => {
@@ -101,39 +112,131 @@ export default function ProductView({ id, initialData, initialError, selectedVid
   useEffect(() => {
     if (!product?.pid) return;
     setReviewsLoading(true);
+
+    // Use the dedicated API route with Redis caching + 5s timeout to avoid
+    // blocking on CJ QPS limits. Falls back to empty gracefully on timeout/error.
     const params = new URLSearchParams({ pid: product.pid });
     if (reviewsScore != null) params.set('score', reviewsScore.toString());
     params.set('pageNum', reviewsPage.toString());
     params.set('pageSize', '5');
-    cjProxyAction(`/api2.0/v1/product/productComments?${params.toString()}`)
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+    fetch(`/api/product-reviews?${params.toString()}`, { signal: controller.signal })
+      .then(r => r.json())
       .then(res => {
         if (res.success && res.data) {
-          const resData = res.data as any;
-          setReviews(resData.list || []);
-          setReviewsTotal(parseInt(resData.total || '0'));
+          setReviews(res.data.list || []);
+          setReviewsTotal(parseInt(res.data.total || '0'));
         }
       })
-      .catch(console.error)
-      .finally(() => setReviewsLoading(false));
+      .catch(() => {
+        // Silently fail — reviews are non-critical
+        setReviews([]);
+        setReviewsTotal(0);
+      })
+      .finally(() => {
+        clearTimeout(timeoutId);
+        setReviewsLoading(false);
+      });
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, [product?.pid, reviewsPage, reviewsScore]);
 
-  // ── Inventory ────────────────────────────────────────────────────────────
-  // Using static inventory from product details instead of live API fetch
+  // ── Shipping Rates ───────────────────────────────────────────────────────
+  const [shippingLoading, setShippingLoading] = useState(false);
+  const [shippingRates, setShippingRates] = useState<any[]>([]);
+  const [shippingCountry, setShippingCountry] = useState('US');
+  const [showShippingCalculator, setShowShippingCalculator] = useState(false);
 
+  const calculateShipping = async () => {
+    if (!selectedVariant) return;
+    
+    const originalPrice = selectedVariant?.variantSellPrice ? Number(selectedVariant.variantSellPrice) : (typeof product?.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product?.sellPrice)));
+
+    setShippingRates([]);
+    setShippingLoading(true);
+
+    try {
+      const sku = selectedVariant.variantSku || selectedVariant.vid;
+      const res = await fetch(`/api/shipping-rates?sku=${sku}&quantity=${qty}&country=${shippingCountry}&subtotal=${originalPrice}`);
+      const data = await res.json();
+      if (data.success) {
+        setShippingRates(data.data);
+      }
+    } catch (err) {
+      console.error('Failed to load shipping rates:', err);
+    } finally {
+      setShippingLoading(false);
+    }
+  };
+
+  // ── Inventory ────────────────────────────────────────────────────────────
+  const [realStock, setRealStock] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!selectedVariant) return;
+    const fallbackStock = Array.isArray(selectedVariant.inventories)
+      ? selectedVariant.inventories.reduce((sum: number, inv: any) => sum + (inv.totalInventory || inv.totalInventoryNum || 0), 0) 
+      : (selectedVariant.totalInventoryNum || selectedVariant.inventory || 0);
+    setRealStock(fallbackStock);
+  }, [selectedVariant]);
+
+  const getProductActiveCoupon = (productCjId: string) => {
+    if (!activeCoupons) return null;
+    const now = new Date();
+    // 1. Find coupon specifically assigned to this product
+    const specificCoupon = activeCoupons.find(c => {
+      const isExpired = c.expiresAt ? new Date(c.expiresAt) <= now : false;
+      const isExhausted = c.maxUses !== null ? c.usedCount >= c.maxUses : false;
+      const isValid = c.isActive && !isExpired && !isExhausted;
+      if (!isValid) return false;
+      return c.products && c.products.some((pr: any) => pr.productCjId === productCjId);
+    });
+
+    if (specificCoupon) return specificCoupon;
+
+    // 2. Find general active coupon (no products listed, meaning general store-wide)
+    const generalCoupon = activeCoupons.find(c => {
+      const isExpired = c.expiresAt ? new Date(c.expiresAt) <= now : false;
+      const isExhausted = c.maxUses !== null ? c.usedCount >= c.maxUses : false;
+      const isValid = c.isActive && !isExpired && !isExhausted;
+      if (!isValid) return false;
+      return !c.products || c.products.length === 0;
+    });
+
+    return generalCoupon || null;
+  };
+
+  // Harga jual langsung dari DB (sellingPrice sudah include margin)
   const currentCjPrice = selectedVariant?.variantSellPrice 
     ? Number(selectedVariant.variantSellPrice)
-    : (typeof product?.sellPrice === 'number' ? product?.sellPrice : parseFloat(String(product?.sellPrice)));
+    : (typeof product?.sellPrice === 'number' ? product?.sellPrice : Number(product?.sellPrice || 0));
     
   const finalPrice = calculateFinalPrice(currentCjPrice, settings);
 
+  // ── Discount calculation ──────────────────────────────────────────────
+  const fakeOriginalPrice = finalPrice * 1.35; // Display 35% fake discount
+
 
   const handleAddToCart = () => {
-    const variantInfo = selectedVariant ? { vid: selectedVariant.vid, sku: selectedVariant.variantSku, name: selectedVariant.variantNameEn || selectedVariant.variantKey } : undefined;
-    const normalizedPrice = selectedVariant?.variantSellPrice ? selectedVariant.variantSellPrice : (typeof product.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product.sellPrice)));
-    const cartProduct = { ...product, sellPrice: normalizedPrice };
-    for (let i = 0; i < qty; i++) {
-      addToCart(cartProduct, variantInfo);
-    }
+    if (!product) return;
+    const variantInfo = selectedVariant ? { 
+      vid: selectedVariant.vid, 
+      sku: selectedVariant.variantSku, 
+      name: selectedVariant.variantNameEn || selectedVariant.variantKey,
+      image: selectedVariant.variantImage
+    } : undefined;
+    const normalizedPrice = selectedVariant?.variantSellPrice 
+      ? Number(selectedVariant.variantSellPrice)
+      : (typeof product.sellPrice === 'number' ? product.sellPrice : (product.sellPrice ? Number(product.sellPrice) : 0));
+    const isCouponProduct = product?.pid ? !!getProductActiveCoupon(product.pid) : false;
+    const cartProduct = { ...product, sellPrice: normalizedPrice || 0, isCouponProduct };
+    addToCart(cartProduct, variantInfo, qty);
   };
 
   if (loading) return <ProductDetailSkeleton />;
@@ -147,7 +250,12 @@ export default function ProductView({ id, initialData, initialError, selectedVid
   );
 
   const allImages = (() => {
-    const raw = [product.bigImage, ...(product.productImageSet || []), ...(typeof product.productImage === 'string' && product.productImage.startsWith('[') ? (() => { try { return JSON.parse(product.productImage); } catch { return []; } })() : [product.productImage])]
+    const imgSet = Array.isArray(product.productImageSet)
+      ? product.productImageSet
+      : typeof product.productImageSet === 'string'
+      ? product.productImageSet.split(',').map((s: string) => s.trim()).filter(Boolean)
+      : [];
+    const raw = [product.bigImage, ...imgSet, ...(typeof product.productImage === 'string' && product.productImage.startsWith('[') ? (() => { try { return JSON.parse(product.productImage); } catch { return []; } })() : [product.productImage])]
       .map((img: any) => parseProductImage(img))
       .filter((img: string) => img && img !== '/placeholder.png');
     const seen = new Set<string>();
@@ -158,7 +266,10 @@ export default function ProductView({ id, initialData, initialError, selectedVid
   // Use real reviews data for rating display
   const realRatingCount = reviewsTotal || 0;
   const realAvgScore = reviews.length > 0 
-    ? Math.round(reviews.reduce((sum: number, r: any) => sum + parseInt(r.score || '0'), 0) / reviews.length) 
+    ? Math.round(reviews.reduce((sum: number, r: any) => {
+        const score = parseInt(r.score || '0');
+        return sum + (isNaN(score) ? 0 : score);
+      }, 0) / reviews.length) 
     : 0;
   const hasRealReviews = realRatingCount > 0;
 
@@ -201,15 +312,23 @@ export default function ProductView({ id, initialData, initialError, selectedVid
               
               {hasRealReviews ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-[#FFB800] text-base sm:text-lg">{'★'.repeat(realAvgScore)}{'☆'.repeat(5 - realAvgScore)}</span>
+                  <span className="text-[#FFB800] text-base sm:text-lg">{renderStars(realAvgScore)}</span>
                   <span className="text-xs sm:text-sm text-gray-500">({realRatingCount} reviews)</span>
                 </div>
               ) : reviewsLoading ? (
                 <div className="h-5 w-32 bg-gray-200 rounded animate-pulse"></div>
               ) : null}
 
-              <div className="flex items-center gap-3">
-                <span className="text-2xl md:text-3xl font-black text-[#FF6B00]">{formatUSD(finalPrice)}</span>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl md:text-3xl font-black text-[#FF6B00]">{formatUSD(finalPrice)}</span>
+                  <span className="px-2 py-1 rounded-[6px] bg-[#FFF3E8] text-[#FF6B00] text-xs font-bold tracking-wide">
+                    -35% OFF
+                  </span>
+                </div>
+                <span className="text-sm text-gray-400 line-through font-medium">
+                  {formatUSD(fakeOriginalPrice)}
+                </span>
               </div>
 
 
@@ -222,7 +341,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                       {product.variants.map((variant: any, idx: number) => (
                         <button 
                           key={variant.vid} 
-                          className={`px-4 py-2 rounded-[8px] text-sm font-semibold border-2 transition-all duration-200 cursor-pointer ${
+                          className={`px-3 py-1.5 rounded-[6px] text-[13px] font-semibold border-2 transition-all duration-200 cursor-pointer ${
                             selectedVariant?.vid === variant.vid 
                               ? 'border-[#FF6B00] bg-orange-50 text-[#FF6B00]' 
                               : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
@@ -239,24 +358,24 @@ export default function ProductView({ id, initialData, initialError, selectedVid
 
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-[#1A1A1A]">Quantity</h3>
-                <div className="flex items-center border border-gray-200 rounded-[10px] overflow-hidden w-fit">
+                <div className="flex items-center border border-gray-200 rounded-[8px] overflow-hidden w-fit">
                   <button 
-                    className="px-4 py-2.5 text-lg font-bold text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer border-none"
+                    className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer border-none bg-white"
                     onClick={() => setQty(Math.max(1, qty - 1))}
                   >
-                    −
+                    <i className="fas fa-minus text-[10px]"></i>
                   </button>
                   <input 
                     type="number" 
                     value={qty} 
                     readOnly 
-                    className="w-16 text-center py-2.5 text-sm font-bold text-[#1A1A1A] border-x border-gray-200 outline-none"
+                    className="w-12 h-10 text-center text-[13px] font-bold text-[#1A1A1A] border-x border-gray-200 outline-none bg-white"
                   />
                   <button 
-                    className="px-4 py-2.5 text-lg font-bold text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer border-none"
+                    className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer border-none bg-white"
                     onClick={() => setQty(qty + 1)}
                   >
-                    +
+                    <i className="fas fa-plus text-[10px]"></i>
                   </button>
                 </div>
               </div>
@@ -270,7 +389,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                   <i className="fas fa-shopping-bag"></i> Add to Cart
                 </button>
                 <Link 
-                  href={`/checkout?pid=${id}${selectedVariant ? `&vid=${selectedVariant.vid}` : ''}`} 
+                  href={`/checkout?pid=${id}${selectedVariant ? `&vid=${selectedVariant.vid}` : ''}&qty=${qty}${searchParams?.get('coupon') ? `&coupon=${searchParams.get('coupon')}` : ''}`} 
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px] font-bold text-sm bg-[#1A1A1A] text-white hover:bg-[#333] transition-all duration-200 no-underline"
                 >
                   Buy Now
@@ -315,6 +434,68 @@ export default function ProductView({ id, initialData, initialError, selectedVid
               </div>
 
 
+              {/* Shipping Info */}
+              <div className="p-4 bg-gray-50 rounded-[10px] border border-gray-200 space-y-3">
+                <div className="flex items-start gap-3">
+                  <span className="text-xl">🚚</span>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                       <strong className="text-sm text-[#1A1A1A] block">Shipping Estimate</strong>
+                       <button onClick={() => setShowShippingCalculator(!showShippingCalculator)} className="text-xs font-bold text-[#FF6B00] bg-transparent border-none cursor-pointer">
+                         {showShippingCalculator ? 'Hide' : 'Calculate'}
+                       </button>
+                    </div>
+
+                    {showShippingCalculator && (
+                      <div className="mb-3 flex items-center gap-2">
+                        <select 
+                          className="px-3 py-1.5 text-sm border border-gray-200 bg-white text-gray-600 rounded-[6px] outline-none w-full cursor-pointer"
+                          value={shippingCountry}
+                          onChange={(e) => setShippingCountry(e.target.value)}
+                        >
+                          {countries.map(c => (
+                            <option key={c.code} value={c.code}>{c.name}</option>
+                          ))}
+                        </select>
+                        <button 
+                          className="px-4 py-1.5 bg-[#1A1A1A] text-white text-sm font-bold rounded-[6px] border-none cursor-pointer disabled:opacity-50"
+                          onClick={calculateShipping}
+                          disabled={shippingLoading}
+                        >
+                          {shippingLoading ? '...' : 'Go'}
+                        </button>
+                      </div>
+                    )}
+
+                    {shippingLoading ? (
+                      <p className="text-sm text-gray-500 m-0 mt-1 animate-pulse">Calculating rates...</p>
+                    ) : shippingRates.length > 0 ? (
+                      <p className="text-sm text-gray-600 m-0 mt-1">
+                        Starting from <strong className="text-[#1A1A1A]">{shippingRates[0].formattedPrice}</strong> <span className="text-xs text-gray-500">({shippingRates[0].estimatedDays})</span>
+                      </p>
+                    ) : showShippingCalculator && !shippingLoading && shippingRates.length === 0 ? (
+                      <p className="text-sm text-red-500 m-0 mt-1">Click Go to calculate or no methods available.</p>
+                    ) : null}
+                  </div>
+                </div>
+                
+                {!shippingLoading && shippingRates.length > 0 && (
+                  <div className="pt-3 border-t border-gray-200 space-y-2">
+                     {shippingRates.slice(0, 2).map((rate) => (
+                       <div key={rate.logisticName} className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600">{rate.logisticName}</span>
+                          <strong className="text-[#1A1A1A]">{rate.formattedPrice}</strong>
+                       </div>
+                     ))}
+                  </div>
+                )}
+
+                <div className="pt-3 border-t border-gray-200 flex items-center gap-3">
+                  <span className="text-xl">🔒</span>
+                  <span className="text-sm text-gray-600">Secure &amp; encrypted payment</span>
+                </div>
+              </div>
+
               {/* Inventory Status */}
               <div className="p-4 bg-gray-50 rounded-[10px] border border-gray-200">
                 <div className="flex items-center gap-2 mb-3">
@@ -324,9 +505,11 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                 {selectedVariant ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className={`w-2.5 h-2.5 rounded-full ${selectedVariant.inventory > 0 ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      <span className={`w-2.5 h-2.5 rounded-full ${(realStock ?? 0) > 0 ? 'bg-green-500' : 'bg-red-500'}`}></span>
                       <span className="text-sm font-semibold text-[#1A1A1A]">
-                        {selectedVariant.inventory > 0 ? `${selectedVariant.inventory.toLocaleString()} units in stock` : 'Out of stock'}
+                        {(realStock ?? 0) > 999 
+                          ? '999+ units in stock' 
+                          : `${(realStock ?? 0).toLocaleString()} units in stock`}
                       </span>
                     </div>
                   </div>
@@ -346,7 +529,14 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                 </div>
                 <button 
                   onClick={() => {
-                    const event = new CustomEvent('openAiChat', { detail: { productId: id, productName: displayName } });
+                    const event = new CustomEvent('openAiChat', { 
+                      detail: { 
+                        productId: id, 
+                        productName: displayName,
+                        productImage: selectedImage,
+                        price: formatUSD(finalPrice)
+                      } 
+                    });
                     window.dispatchEvent(event);
                   }}
                   className="px-4 py-2 rounded-[6px] font-bold text-[13px] bg-[#FF6B00] text-white border-none whitespace-nowrap hover:bg-[#E06000] transition-all duration-200 cursor-pointer"
@@ -399,8 +589,8 @@ export default function ProductView({ id, initialData, initialError, selectedVid
               </div>
             ) : reviews.length > 0 ? (
               <div className="space-y-4">
-                {reviews.map((review: any) => (
-                  <div key={review.commentId} className="p-4 bg-gray-50 rounded-[10px] border border-gray-100">
+                {reviews.map((review: any, idx: number) => (
+                  <div key={`${review.commentId || idx}-${idx}`} className="p-4 bg-gray-50 rounded-[10px] border border-gray-100">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-[#FF6B00] flex items-center justify-center text-white text-xs font-bold">
@@ -409,7 +599,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                         <div>
                           <span className="text-sm font-semibold text-[#1A1A1A]">{review.commentUser}</span>
                           <span className="text-[#FFB800] text-xs ml-2">
-                            {'★'.repeat(parseInt(review.score || '0'))}{'☆'.repeat(5 - parseInt(review.score || '0'))}
+                            {renderStars(review.score || '0')}
                           </span>
                         </div>
                       </div>

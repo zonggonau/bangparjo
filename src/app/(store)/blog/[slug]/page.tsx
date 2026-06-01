@@ -41,7 +41,7 @@ export default function BlogDetailPage() {
     const productData = parseProductData(post.content);
     if (!productData) return null;
     // Render the full product landing page template
-    return renderProductTemplate(productData, '628219105980', window.location.origin);
+    return renderProductTemplate(productData, '628219105980', window.location.origin, 35);
   }, [post]);
 
   // Check if content is raw HTML (not JSON)
@@ -96,7 +96,7 @@ export default function BlogDetailPage() {
             ← Blog
           </Link>
         </div>
-        <div dangerouslySetInnerHTML={{ __html: productHtml }} />
+        <div dangerouslySetInnerHTML={{ __html: productHtml }} suppressHydrationWarning />
       </div>
     );
   }
@@ -145,6 +145,7 @@ export default function BlogDetailPage() {
           <div
             className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-[#FF6B00] prose-img:rounded-xl"
             dangerouslySetInnerHTML={{ __html: post.content }}
+            suppressHydrationWarning
           />
         ) : (
           <div className="text-center py-12 text-gray-400">

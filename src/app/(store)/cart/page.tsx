@@ -12,9 +12,13 @@ function formatUSD(price: number) {
 
 export default function CartPage() {
   const { items, removeFromCart, updateQuantity, totalItems, isLoaded } = useCart();
-  const { settings } = useSettings();
+  const { settings, activeCoupons } = useSettings();
 
-  const subtotal = items.reduce((acc, item) => {
+  const filteredItems = items;
+  
+  const filteredTotalItems = filteredItems.reduce((acc, item) => acc + item.quantity, 0);
+
+  const subtotal = filteredItems.reduce((acc, item) => {
     const rawCjPrice = Number(item.sellPrice);
     const price = isNaN(rawCjPrice) ? 0 : calculateFinalPrice(rawCjPrice, settings);
     return acc + price * item.quantity;
@@ -29,7 +33,7 @@ export default function CartPage() {
     </div>
   );
 
-  if (totalItems === 0) {
+  if (filteredTotalItems === 0) {
     return (
       <div className="text-center py-24">
         <div className="max-w-[1400px] mx-auto px-5">
@@ -54,14 +58,15 @@ export default function CartPage() {
 
       <section className="max-w-[1400px] mx-auto px-5">
         <h1 className="text-[32px] font-bold text-[#1A1A1A] mb-8">
-          Shopping Cart <span className="text-base font-normal text-gray-500">({totalItems} items)</span>
+          Shopping Cart <span className="text-base font-normal text-gray-500">({filteredTotalItems} items)</span>
         </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
           <div className="space-y-4">
-            {items.map((item) => {
+            {filteredItems.map((item) => {
               const name = parseProductName(item.productNameEn || item.productName);
-              const img = parseProductImage(item.bigImage || item.productImage);
+              const rawImg = item.selectedVariantImage || item.bigImage || item.productImage;
+              const img = parseProductImage(rawImg);
               const rawCjPrice = Number(item.sellPrice);
               const price = isNaN(rawCjPrice) ? 0 : calculateFinalPrice(rawCjPrice, settings);
 
@@ -78,7 +83,10 @@ export default function CartPage() {
                     {item.selectedVariantName && (
                       <p className="text-[13px] text-gray-500 truncate max-w-[320px]">{item.selectedVariantName}</p>
                     )}
-                    <div className="text-[#FF6B00] font-bold mt-1">{formatUSD(price)}</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[#FF6B00] font-bold">{formatUSD(price)}</span>
+                      <span className="text-xs text-gray-400 line-through font-medium">{formatUSD(price * 1.35)}</span>
+                    </div>
                   </div>
                   <div className="flex flex-col items-end gap-3 shrink-0">
                     <button className="text-sm text-gray-400 hover:text-red-500 transition-colors" onClick={() => removeFromCart(item.pid, item.selectedVid)}>

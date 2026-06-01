@@ -3,7 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+<<<<<<< HEAD
 import { getAdminOrdersAction, fulfillAdminOrderAction, syncAdminOrderAction, deleteCjOrderAction, confirmCjOrderAction } from '@/lib/actions-admin-orders';
+=======
+import { getAdminOrdersAction, fulfillAdminOrderAction, syncAdminOrderAction } from '@/lib/actions-admin-orders';
+import { toast } from 'react-hot-toast';
+>>>>>>> main
 
 function formatUSD(price: number | string | null | undefined) {
   const p = typeof price === 'string' ? parseFloat(price) : (price || 0);
@@ -29,6 +34,11 @@ export default function AdminOrderDetail() {
   const [loading, setLoading] = useState(true);
   const [cjLoading, setCjLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{
+    type: 'fulfill' | 'sync';
+    orderId: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!orderNum) return;
@@ -55,21 +65,40 @@ export default function AdminOrderDetail() {
       .finally(() => setCjLoading(false));
   }, [order?.cjOrderId]);
 
-  const handleFulfill = async () => {
-    if (!confirm(`Submit order ${orderNum} to CJ for fulfillment?`)) return;
+  const executeFulfill = async () => {
+    setBusy(true);
+    setConfirmModal(null);
     try {
       const data = await fulfillAdminOrderAction(orderNum) as any;
-      alert(data.success ? 'Fulfillment initiated!' : 'Error: ' + (data.error || data.message));
-      if (data.success) window.location.reload();
-    } catch (e: any) { alert('Error: ' + e.message); }
+      if (data.success) {
+        toast.success('Fulfillment initiated!');
+        window.location.reload();
+      } else {
+        toast.error('Error: ' + (data.error || data.message));
+      }
+    } catch (e: any) { 
+      toast.error('Error: ' + e.message); 
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleSync = async () => {
+  const executeSync = async () => {
+    setBusy(true);
+    setConfirmModal(null);
     try {
       const data = await syncAdminOrderAction(order.id);
-      alert(data.success ? 'Status synced: ' + data.status : 'Sync error: ' + data.error);
-      if (data.success) window.location.reload();
-    } catch (e: any) { alert('Error: ' + e.message); }
+      if (data.success) {
+        toast.success('Status synced: ' + data.status);
+        window.location.reload();
+      } else {
+        toast.error('Sync error: ' + data.error);
+      }
+    } catch (e: any) { 
+      toast.error('Error: ' + e.message); 
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handlePayBalance = async () => {
@@ -170,13 +199,13 @@ export default function AdminOrderDetail() {
           </div>
           <div className="flex gap-3">
             {order.status === 'PAID' && !order.cjOrderId && (
-              <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-bold bg-[#FF6B00] text-white hover:bg-[#E65100] transition-all duration-200" onClick={handleFulfill}>
-                <i className="fas fa-check-circle"></i> Fulfill to CJ
+              <button disabled={busy} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-bold bg-[#FF6B00] text-white hover:bg-[#E65100] transition-all duration-200" onClick={() => setConfirmModal({ type: 'fulfill', orderId: order.id })}>
+                <i className={`fas fa-check-circle ${busy ? 'fa-spin' : ''}`}></i> Fulfill to CJ
               </button>
             )}
             {(order.cjOrderId || order.status === 'UNPAID') && (
-              <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-bold border border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200" onClick={handleSync}>
-                <i className="fas fa-sync"></i> Sync Status
+              <button disabled={busy} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-bold border border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200" onClick={() => setConfirmModal({ type: 'sync', orderId: order.id })}>
+                <i className={`fas fa-sync ${busy ? 'fa-spin' : ''}`}></i> Sync Status
               </button>
             )}
           </div>
@@ -246,6 +275,7 @@ export default function AdminOrderDetail() {
               <p className="mt-3 text-sm font-bold text-[#64748B]">Retrieving live CJ network payload...</p>
             </div>
           ) : cjOrder ? (
+<<<<<<< HEAD
             <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-sm overflow-hidden space-y-6">
               {/* Card Header with Aksi Toolbar */}
               <div className="px-8 py-5 border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50">
@@ -360,6 +390,44 @@ export default function AdminOrderDetail() {
                       {JSON.stringify(cjOrder, null, 2)}
                     </pre>
                   </div>
+=======
+            <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-sm overflow-hidden">
+              <div className="px-8 py-5 border-b border-[#E2E8F0]">
+                <div className="flex items-center gap-2">
+                  <i className="fas fa-globe text-[#FF6B00]"></i>
+                  <h3 className="text-lg font-extrabold text-[#1E293B]">CJ Order Summary</h3>
+                  <span className="ml-2 text-xs text-[#64748B]">(#{order.cjOrderId})</span>
+                </div>
+              </div>
+              <div className="p-8 space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.05em]">CJ Order Status</p>
+                    <p className="font-bold text-[#1E293B] mt-1"><StatusBadge status={cjOrder.status || cjOrder.orderStatus || 'N/A'} /></p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.05em]">Logistics Provider</p>
+                    <p className="font-bold text-[#1E293B] mt-1">{cjOrder.logisticName || cjOrder.logisticsName || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.05em]">Tracking Number</p>
+                    <p className="font-bold text-[#1E293B] mt-1">{cjOrder.trackingNumber || cjOrder.trackNumber || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.05em]">Total Amount</p>
+                    <p className="font-bold text-[#1E293B] mt-1">{formatUSD(cjOrder.ORDER_AMOUNT || cjOrder.totalAmount || cjOrder.orderAmount)}</p>
+                  </div>
+                </div>
+
+                <details className="mt-4 border border-[#E2E8F0] rounded-[10px] overflow-hidden group">
+                  <summary className="px-4 py-3 bg-[#F8FAFC] text-xs font-bold text-[#64748B] cursor-pointer hover:bg-[#F1F5F9] transition-colors flex items-center justify-between">
+                    <span>View Raw Payload Data</span>
+                    <i className="fas fa-chevron-down group-open:rotate-180 transition-transform"></i>
+                  </summary>
+                  <pre className="bg-[#0F172A] text-[#38BDF8] p-5 text-xs font-mono max-h-[300px] overflow-auto leading-[1.6]">
+                    {JSON.stringify(cjOrder, null, 2)}
+                  </pre>
+>>>>>>> main
                 </details>
               </div>
             </div>
@@ -430,18 +498,74 @@ export default function AdminOrderDetail() {
           {order.orderData && (
             <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-sm overflow-hidden">
               <div className="px-6 py-5 border-b border-[#E2E8F0] flex items-center gap-2">
-                <i className="fas fa-database text-[#FF6B00]"></i>
-                <h3 className="font-extrabold text-[#1E293B]">Raw Payload</h3>
+                <i className="fas fa-file-invoice text-[#FF6B00]"></i>
+                <h3 className="font-extrabold text-[#1E293B]">Fulfillment Details</h3>
               </div>
-              <div className="p-6">
-                <pre className="bg-[#F8FAFC] text-[#475569] rounded-[10px] p-4 text-[11px] font-mono max-h-[300px] overflow-auto leading-[1.6] border border-[#E2E8F0]">
-                  {JSON.stringify(order.orderData, null, 2)}
-                </pre>
+              <div className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.05em]">Logistics Method</p>
+                    <p className="font-bold text-[#1E293B] mt-1">{order.orderData.logisticName || 'Default'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.05em]">Origin Country</p>
+                    <p className="font-bold text-[#1E293B] mt-1">{order.orderData.fromCountryCode || 'CN'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.05em]">IOSS Configuration</p>
+                    <p className="font-bold text-[#1E293B] mt-1">
+                      {order.orderData.iossType === 1 ? "1 - Don't use IOSS" : 
+                       order.orderData.iossType === 3 ? "3 - Use CJ IOSS" : 
+                       order.orderData.iossType || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+
+                <details className="mt-4 border border-[#E2E8F0] rounded-[10px] overflow-hidden group">
+                  <summary className="px-4 py-3 bg-[#F8FAFC] text-xs font-bold text-[#64748B] cursor-pointer hover:bg-[#F1F5F9] transition-colors flex items-center justify-between">
+                    <span>View Raw JSON Data</span>
+                    <i className="fas fa-chevron-down group-open:rotate-180 transition-transform"></i>
+                  </summary>
+                  <pre className="bg-[#F8FAFC] text-[#475569] p-4 text-[11px] font-mono max-h-[300px] overflow-auto leading-[1.6]">
+                    {JSON.stringify(order.orderData, null, 2)}
+                  </pre>
+                </details>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Real React Modal for Confirmation */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+          <div className="max-w-sm w-full bg-white shadow-2xl rounded-[16px] pointer-events-auto flex flex-col overflow-hidden animate-slide-up-fade">
+            <div className="p-5 flex gap-4">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${confirmModal.type === 'fulfill' ? 'bg-orange-100 text-orange-500' : 'bg-emerald-100 text-emerald-600'}`}>
+                <i className={`fas ${confirmModal.type === 'fulfill' ? 'fa-paper-plane' : 'fa-sync'}`}></i>
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900">{confirmModal.type === 'fulfill' ? 'Fulfill Order?' : 'Sync Status?'}</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {confirmModal.type === 'fulfill' 
+                    ? <span>Submit order <b>#{orderNum.slice(0, 8)}...</b> to CJ terminal for fulfillment.</span>
+                    : <span>Synchronize current status from CJ.</span>
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="flex border-t border-gray-100 bg-gray-50">
+              <button onClick={() => setConfirmModal(null)} className="flex-1 px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors border-r border-gray-100">Cancel</button>
+              <button 
+                onClick={() => confirmModal.type === 'fulfill' ? executeFulfill() : executeSync()} 
+                className={`flex-1 px-4 py-3 text-sm font-bold transition-colors ${confirmModal.type === 'fulfill' ? 'text-orange-600 hover:bg-orange-50' : 'text-emerald-600 hover:bg-emerald-50'}`}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

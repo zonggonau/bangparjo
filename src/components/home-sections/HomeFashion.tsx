@@ -61,8 +61,9 @@ async function fetchFashionProducts() {
 
 export default async function HomeFashion() {
   const mainProducts = await getFashionProducts();
+  const filteredProducts = mainProducts.filter((product: any) => product.pid);
 
-  if (mainProducts.length === 0) return null;
+  if (filteredProducts.length === 0) return null;
 
   return (
     <section className="py-20">
@@ -84,7 +85,7 @@ export default async function HomeFashion() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {mainProducts.map((product) => (
+          {filteredProducts.map((product) => (
             <ProductCard key={product.pid} product={product} />
           ))}
         </div>

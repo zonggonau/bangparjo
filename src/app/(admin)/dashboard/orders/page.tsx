@@ -1,25 +1,23 @@
-'use client';
+import { getAdminOrdersAction } from '@/lib/actions-admin-orders';
+import { getOrderList } from '@/lib/cj-api';
+import OrdersClientView from './OrdersClientView';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { getAdminOrdersAction, fulfillAdminOrderAction, syncAdminOrderAction } from '@/lib/actions-admin-orders';
+// Force dynamic since searchParams dictates the data
+export const dynamic = 'force-dynamic';
 
-function StatusBadge({ status }: { status: string }) {
-  const s = (status || 'PENDING').toUpperCase();
-  
-  let badgeClass = 'bg-gray-100 text-gray-600';
-  if (['PAID', 'FULFILLED', 'COMPLETED', 'DELIVERED'].includes(s)) badgeClass = 'bg-[#D1FAE5] text-[#065F46]';
-  if (['SHIPPED'].includes(s)) badgeClass = 'bg-[#DBEAFE] text-[#1E40AF]';
-  if (['UNPAID', 'PENDING'].includes(s)) badgeClass = 'bg-[#FFEDD5] text-[#9A3412]';
-  if (['CANCELLED', 'FAILED'].includes(s)) badgeClass = 'bg-[#FEE2E2] text-[#991B1B]';
+export default async function OrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const source = (resolvedSearchParams.source as string) || 'LOCAL';
+  const statusFilter = (resolvedSearchParams.status as string) || 'ALL';
+  const searchQuery = ((resolvedSearchParams.search as string) || '').toLowerCase();
 
-  return (
-    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${badgeClass}`}>
-      {s}
-    </span>
-  );
-}
+  let orders = [];
 
+<<<<<<< HEAD
 export default function OrdersPage() {
   const [localOrders, setLocalOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -263,5 +261,66 @@ export default function OrdersPage() {
         </div>
       </div>
     </>
+=======
+  if (source === 'LOCAL') {
+    const res = await getAdminOrdersAction();
+    let localOrders = res.success ? res.data || [] : [];
+    
+    if (statusFilter !== 'ALL') {
+      localOrders = localOrders.filter((o: any) => o.status === statusFilter);
+    }
+    
+    if (searchQuery) {
+      localOrders = localOrders.filter((o: any) => 
+        (o.orderNum && o.orderNum.toLowerCase().includes(searchQuery)) ||
+        (o.customerName && o.customerName.toLowerCase().includes(searchQuery)) ||
+        (o.customerEmail && o.customerEmail.toLowerCase().includes(searchQuery))
+      );
+    }
+    
+    orders = localOrders;
+  } else {
+    // Fetch from CJ
+    // Note: status param for CJ API might need mapping, but keeping simple for now
+    try {
+      const res = await getOrderList({ pageNum: 1, pageSize: 50, status: statusFilter === 'ALL' ? '' : statusFilter });
+      const data = res.data as any;
+      if (res.success && data && data.list) {
+        let cjOrders = data.list;
+        
+        if (searchQuery) {
+          cjOrders = cjOrders.filter((o: any) => 
+            (o.orderId && o.orderId.toLowerCase().includes(searchQuery)) ||
+            (o.shippingCustomerName && o.shippingCustomerName.toLowerCase().includes(searchQuery))
+          );
+        }
+        
+        orders = cjOrders;
+      }
+    } catch (e) {
+      console.error('Failed to fetch CJ orders:', e);
+    }
+  }
+
+  const currentPage = Number(resolvedSearchParams.page as string) || 1;
+  const pageSize = 10;
+  const total = orders.length;
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedOrders = orders.slice(startIndex, endIndex);
+
+  const serializedOrders = JSON.parse(JSON.stringify(paginatedOrders));
+
+  return (
+    <OrdersClientView 
+      orders={serializedOrders} 
+      currentSource={source} 
+      currentStatus={statusFilter} 
+      currentSearch={searchQuery}
+      total={total}
+      currentPage={currentPage}
+    />
+>>>>>>> main
   );
 }

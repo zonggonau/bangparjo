@@ -77,6 +77,7 @@ export default async function SearchPage({
 
   const totalPages = Math.ceil(total / pageSize);
 
+
   // Build filter URL helper
   const buildFilterUrl = (params: Record<string, string>) => {
     const url = new URLSearchParams();
@@ -108,26 +109,7 @@ export default async function SearchPage({
           )}
         </div>
 
-        {/* Search Form */}
-        <form
-          action="/search"
-          method="GET"
-          className="flex gap-3 mb-6 max-w-[600px] flex-wrap"
-        >
-          <input
-            type="text"
-            name="q"
-            defaultValue={query}
-            placeholder="Search products globally..."
-            className="flex-1 min-w-[200px] px-5 py-3.5 rounded-md border-2 border-gray-200 text-base outline-none focus:border-[#FF6B00]"
-          />
-          <button
-            type="submit"
-            className="px-8 py-3.5 rounded-md font-semibold bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200"
-          >
-            <i className="fas fa-search"></i> Search
-          </button>
-        </form>
+
 
         {/* Filters Row */}
         {query && (
@@ -162,6 +144,7 @@ export default async function SearchPage({
             <div className="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {products.map((product: any) => (
                 <ProductCard key={product.pid || product.spuId} product={product} />
+
               ))}
             </div>
 

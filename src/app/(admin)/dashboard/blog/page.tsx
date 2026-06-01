@@ -19,6 +19,10 @@ export default function AdminBlogPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<BlogPost | null>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [form, setForm] = useState({
     title: '',
     slug: '',
@@ -35,13 +39,19 @@ export default function AdminBlogPage() {
     setLoading(true);
     getAdminBlogPostsAction()
       .then(data => {
-        if (data.success) setPosts((data.data as any[]) || []);
+        if (data.success) {
+          setPosts((data.data as any[]) || []);
+          setCurrentPage(1); // reset page on load
+        }
       })
       .catch(console.error)
       .finally(() => setLoading(false));
   };
 
   useEffect(() => { loadPosts(); }, []);
+
+  const totalPages = Math.ceil(posts.length / itemsPerPage);
+  const paginatedPosts = posts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const resetForm = () => {
     setForm({ title: '', slug: '', excerpt: '', content: '', image: '', author: 'Admin', published: false });
@@ -287,7 +297,7 @@ export default function AdminBlogPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {posts.map(post => (
+          {paginatedPosts.map(post => (
             <div key={post.id} className="bg-white rounded-xl border border-gray-200 p-5 flex items-center justify-between hover:shadow-sm transition-shadow">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-1">
@@ -335,6 +345,45 @@ export default function AdminBlogPage() {
               </div>
             </div>
           ))}
+          
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 p-4 mt-6">
+              <span className="text-sm text-gray-500 font-medium">
+                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, posts.length)} of {posts.length} posts
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }).map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentPage(idx + 1)}
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition-colors ${
+                        currentPage === idx + 1
+                          ? 'bg-[#FF6B00] text-white'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      {idx + 1}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -44,6 +44,23 @@ export async function POST(req: Request) {
         result = await notifyContactAdmin(data);
         break;
 
+      case 'chat-ai':
+        try {
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+          const aiUrl = baseUrl.replace(/\/+$/, '') + '/api/ai/chat';
+          const aiRes = await fetch(aiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+            signal: AbortSignal.timeout(30000)
+          });
+          result = await aiRes.json();
+        } catch (e: any) {
+          console.error('[Chat-AI] fetch error:', e.message);
+          result = { success: false, text: "Parjo AI is currently unavailable. Please try again later. 😊" };
+        }
+        break;
+
       case 'send-wa':
         if (!data?.target || !data?.message) {
           return NextResponse.json({ success: false, error: 'target and message required' }, { status: 400 });

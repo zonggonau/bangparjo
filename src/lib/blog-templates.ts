@@ -1,3 +1,5 @@
+import { calculateFinalPrice } from './pricing';
+
 /**
  * Escape HTML special characters to prevent XSS
  */
@@ -118,11 +120,16 @@ export function parseProductData(content: any): ProductData | null {
  * @param waNumber - WhatsApp number for the AI agent (with country code, no +)
  * @param baseUrl - Base URL of the store (e.g. https://bangparjo.shop) for product link
  */
-export function renderProductTemplate(product: ProductData, waNumber?: string, baseUrl?: string): string {
+export function renderProductTemplate(product: ProductData, waNumber?: string, baseUrl?: string, markupPct?: number): string {
   const whatsappNumber = waNumber || '628219105980';
   const storeBaseUrl = baseUrl || 'https://bangparjo.shop';
-  var minPrice = Math.min.apply(null, product.variants.map(function(v) { return v.sellingPrice; }));
-  var maxPrice = Math.max.apply(null, product.variants.map(function(v) { return v.sellingPrice; }));
+  // Calculate margin price using dynamic store pricing settings
+  function getDisplayPrice(sellingPrice: number): number {
+    return calculateFinalPrice(sellingPrice);
+  }
+
+  var minPrice = Math.min.apply(null, product.variants.map(function(v) { return getDisplayPrice(v.sellingPrice); }));
+  var maxPrice = Math.max.apply(null, product.variants.map(function(v) { return getDisplayPrice(v.sellingPrice); }));
   var priceDisplay = minPrice === maxPrice
     ? '$' + minPrice.toFixed(2)
     : '$' + minPrice.toFixed(2) + ' - $' + maxPrice.toFixed(2);
@@ -167,7 +174,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     if (firstVariant.cjId) params.push('vid=' + encodeURIComponent(firstVariant.cjId));
     if (firstVariant.color) params.push('color=' + encodeURIComponent(firstVariant.color));
     if (firstVariant.size) params.push('size=' + encodeURIComponent(firstVariant.size));
-    params.push('price=' + firstVariant.sellingPrice.toFixed(2));
+    params.push('price=' + getDisplayPrice(firstVariant.sellingPrice).toFixed(2));
     variantParams = '?' + params.join('&');
   }
   var productLink = product.slug
@@ -186,7 +193,8 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
       + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#1A1A2E;">' + variantName + '</td>'
       + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#64748b;">' + safeSku + '</td>'
       + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;">' + stockStatus + '</td>'
-      + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;font-weight:700;color:#FF6B35;">$' + v.sellingPrice.toFixed(2) + '</td>'
+      + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;font-weight:700;color:#FF6B35;">$' + getDisplayPrice(v.sellingPrice).toFixed(2) 
+      + ' <span style="font-size:11px;color:#94a3b8;text-decoration:line-through;font-weight:500;margin-left:6px;">$' + (getDisplayPrice(v.sellingPrice) * 1.35).toFixed(2) + '</span></td>'
       + '</tr>';
   }).join('');
 
@@ -238,10 +246,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     '&#127974;', // bank
     '&#128666;', // paypal/cod
   ];
-  var visitorCount = Math.floor(Math.random() * 50) + 15; // Simulated live visitors
-  var limitedOfferEnd = new Date();
-  limitedOfferEnd.setHours(limitedOfferEnd.getHours() + 48); // 48-hour countdown
-  var offerEndStr = limitedOfferEnd.toISOString();
+  var visitorCount = 45; // Fixed initial visitors to prevent hydration mismatch, fluctuates on client
   var isLimitedStock = totalInventory > 0 && totalInventory < 100;
   var stockUrgencyLevel = totalInventory < 20 ? 'high' : (totalInventory < 50 ? 'medium' : 'low');
   var urgencyMessages = [
@@ -261,7 +266,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
 
   // --- JSON-LD Product Schema ---
   var offers = product.variants.map(function(v) {
-    return '{"@type":"Offer","price":"' + v.sellingPrice.toFixed(2) + '","priceCurrency":"USD","availability":"' + (v.inventory > 0 ? 'InStock' : 'OutOfStock') + '","sku":"' + hAttr(v.sku) + '"}';
+    return '{"@type":"Offer","price":"' + getDisplayPrice(v.sellingPrice).toFixed(2) + '","priceCurrency":"USD","availability":"' + (v.inventory > 0 ? 'InStock' : 'OutOfStock') + '","sku":"' + hAttr(v.sku) + '"}';
   }).join(',');
   var jsonLd = '{\n'
     + '  "@context": "https://schema.org/",\n'
@@ -274,37 +279,8 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '  "offers": [' + offers + ']\n'
     + '}';
 
-  // Build head
-  var result = '<!DOCTYPE html>\n'
-    + '<html lang="en">\n'
-    + '<head>\n'
-    + '<meta charset="UTF-8" />\n'
-    + '<meta name="viewport" content="width=device-width, initial-scale=1.0"/>\n'
-    + '<meta name="theme-color" content="#FF6B35">\n'
-    + '<title>' + safeSeoTitle + '</title>\n'
-    + '<meta name="description" content="' + safeSeoDesc + '" />\n'
-    + '<link rel="canonical" href="' + safeLink + '" />\n'
-    + '<!-- Open Graph -->\n'
-    + '<meta property="og:title" content="' + safeSeoTitle + '">\n'
-    + '<meta property="og:description" content="' + safeSeoDesc + '">\n'
-    + '<meta property="og:type" content="product">\n'
-    + '<meta property="og:site_name" content="BangParjo">\n'
-    + '<meta property="og:url" content="' + safeLink + '">\n'
-    + '<meta property="og:locale" content="en_US">\n'
-    + (product.images[0] ? '<meta property="og:image" content="' + hAttr(product.images[0]) + '">\n' : '')
-    + '<meta property="og:image:width" content="1200">\n'
-    + '<meta property="og:image:height" content="630">\n'
-    + '<meta property="product:price:amount" content="' + minPrice.toFixed(2) + '">\n'
-    + '<meta property="product:price:currency" content="USD">\n'
-    + (product.createdAt ? '<meta property="article:published_time" content="' + product.createdAt + '">\n' : '')
-    + '<meta property="article:modified_time" content="' + new Date().toISOString() + '">\n'
-    + '<!-- Twitter Card -->\n'
-    + '<meta name="twitter:card" content="summary_large_image">\n'
-    + '<meta name="twitter:site" content="@bangparjo">\n'
-    + '<meta name="twitter:title" content="' + safeSeoTitle + '">\n'
-    + '<meta name="twitter:description" content="' + safeSeoDesc + '">\n'
-    + (product.images[0] ? '<meta name="twitter:image" content="' + hAttr(product.images[0]) + '">\n' : '')
-    + '<!-- JSON-LD Product Schema -->\n'
+  // Build safe in-body tags (JSON-LD schema, hidden ad copy meta, and page styles)
+  var result = '<!-- JSON-LD Product Schema -->\n'
     + '<script type="application/ld+json">\n'
     + jsonLd + '\n'
     + '</script>\n'
@@ -404,9 +380,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '.section{padding:32px 0;}\n'
     + '.hero .hero-image-wrap .price-tag{font-size:16px;padding:8px 14px;}\n'
     + '}\n'
-    + '</style>\n'
-    + '</head>\n'
-    + '<body>\n';
+    + '</style>\n';
 
   // Hero section — modern landing page style
   var stockText = totalInventory > 0 ? '&#9989; In Stock' : '&#9203; Pre-Order';
@@ -414,6 +388,15 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
   var urgencyText = totalInventory > 0 && totalInventory < 50
     ? '<div style="background:linear-gradient(135deg,#f43f5e,#e11d48);color:white;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:700;margin-bottom:12px;display:inline-flex;align-items:center;gap:6px;animation:pulse 2s infinite;">&#9888; Only ' + totalInventory + ' left in stock — Order soon!</div>\n'
     : '';
+  var directCheckoutUrl = '/checkout?pid=' + encodeURIComponent(product.cjId);
+  if (firstVariant) {
+    directCheckoutUrl += '&vid=' + encodeURIComponent(firstVariant.cjId);
+  }
+
+  var heroActionsHtml = '<div class="hero-actions">\n'
+    + '<a href="#checkout-section" class="btn btn-primary">&#128722; Order Now — ' + priceDisplay + '</a>\n'
+    + '</div>\n';
+
   result += '<section class="hero">\n'
     + '<div class="container">\n'
     + '<div class="grid-2">\n'
@@ -426,10 +409,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '</div>\n'
     + '<h1>' + safeName + '</h1>\n'
     + '<p>' + safeTagline + '</p>\n'
-    + '<div class="hero-actions">\n'
-    + '<a href="' + safeLink + '" class="btn btn-primary">&#128722; Order Now — ' + priceDisplay + '</a>\n'
-    + '<a href="#detail" class="btn btn-outline">&#128269; View Details</a>\n'
-    + '</div>\n'
+    + heroActionsHtml
     + '</div>\n'
     + '<div class="hero-image-wrap">\n'
     + '<div class="price-tag">' + priceDisplay + '</div>\n'
@@ -440,57 +420,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '</div>\n'
     + '</section>\n';
 
-  // ── Coupon Banner ──────────────────────────────────────────────────────────
-  var couponHtml = '';
-  if (product.coupon) {
-    var c = product.coupon;
-    var couponDesc = h(c.description);
-    var couponCode = h(c.code);
-    var couponLabel = '';
-    var couponIcon = '&#127873;'; // gift box
-    var couponBg = 'linear-gradient(135deg,#1A1A2E,#0F3460)';
-    var couponBtnBg = '#FF6B35';
-    // Coupon "Claim Now" links to the product page with variant params
-    var checkoutLink = productLink;
-
-
-    if (c.type === 'FREE_SHIPPING') {
-      couponLabel = 'FREE SHIPPING';
-      couponIcon = '&#128666;'; // truck
-    } else if (c.type === 'PERCENTAGE') {
-      couponLabel = c.value + '% OFF';
-    } else if (c.type === 'FIXED') {
-      couponLabel = '$' + c.value.toFixed(0) + ' OFF';
-    }
-
-    var minPurchaseText = c.minPurchase ? 'Min. purchase $' + c.minPurchase.toFixed(2) : '';
-    var expiresText = c.expiresAt ? 'Valid until ' + new Date(c.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
-
-    couponHtml = '<section style="background:' + couponBg + ';padding:32px 0;position:relative;overflow:hidden;">\n'
-      + '<div style="position:absolute;top:-50%;right:-20%;width:300px;height:300px;background:radial-gradient(circle,rgba(255,107,53,0.12) 0%,transparent 70%);border-radius:50%;pointer-events:none;"></div>\n'
-      + '<div style="position:absolute;bottom:-30%;left:-10%;width:200px;height:200px;background:radial-gradient(circle,rgba(255,255,255,0.05) 0%,transparent 70%);border-radius:50%;pointer-events:none;"></div>\n'
-      + '<div class="container" style="position:relative;z-index:1;">\n'
-      + '<div style="display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap;text-align:center;">\n'
-      + '<div style="font-size:40px;line-height:1;">' + couponIcon + '</div>\n'
-      + '<div>\n'
-      + '<div style="display:inline-block;background:rgba(255,107,53,0.2);color:#FF6B35;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:1px;margin-bottom:6px;">' + couponLabel + '</div>\n'
-      + '<h3 style="font-family:Outfit,-apple-system,sans-serif;font-size:22px;font-weight:800;color:white;margin-bottom:4px;">' + couponDesc + '</h3>\n'
-      + '<div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:8px;">\n'
-      + '<code style="background:rgba(255,255,255,0.12);color:#FFD700;padding:8px 20px;border-radius:8px;font-size:18px;font-weight:800;letter-spacing:2px;border:1px dashed rgba(255,215,0,0.3);">' + couponCode + '</code>\n'
-      + '<a href="' + checkoutLink + '" style="display:inline-block;background:' + couponBtnBg + ';color:white;padding:10px 24px;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.3s;" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 4px 15px rgba(255,107,53,0.4)\'" onmouseout="this.style.transform=\'none\';this.style.boxShadow=\'none\'">&#128722; Claim Now</a>\n'
-      + '</div>\n'
-      + '<div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:8px;flex-wrap:wrap;">\n'
-      + (minPurchaseText ? '<span style="color:rgba(255,255,255,0.5);font-size:12px;">&#9432; ' + minPurchaseText + '</span>\n' : '')
-      + (expiresText ? '<span style="color:rgba(255,255,255,0.5);font-size:12px;">&#9200; ' + expiresText + '</span>\n' : '')
-      + '</div>\n'
-      + '</div>\n'
-      + '</div>\n'
-      + '</div>\n'
-      + '</section>\n';
-  }
-
-  // Append coupon banner after hero
-  result += couponHtml;
+  // Coupon banner removed
 
   // Social proof bar
   result += '<div style="background:#1A1A2E;padding:20px 0;">\n'
@@ -539,8 +469,20 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '    if(count > 200) count = 200;\n'
     + '    el.textContent = count;\n'
     + '  }, 3000);\n'
-    + '  // Countdown timer — 48 hours from now\n'
-    + '  var endTime = new Date("' + offerEndStr + '").getTime();\n'
+    + '  // Countdown timer — 48 hours from now with client persistence\n'
+    + '  var endTime;\n'
+    + '  try {\n'
+    + '    var endKey = "offer_end_' + product.cjId + '";\n'
+    + '    endTime = localStorage.getItem(endKey);\n'
+    + '    if(!endTime){\n'
+    + '      endTime = new Date().getTime() + 172800000; // 48 hours\n'
+    + '      localStorage.setItem(endKey, endTime);\n'
+    + '    } else {\n'
+    + '      endTime = parseInt(endTime, 10);\n'
+    + '    }\n'
+    + '  } catch(e) {\n'
+    + '    endTime = new Date().getTime() + 172800000;\n'
+    + '  }\n'
     + '  function updateTimer(){\n'
     + '    var el = document.getElementById("countdownTimer");\n'
     + '    if(!el) return;\n'
@@ -681,6 +623,71 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '<div class="desc-box">' + fullDescription + '</div>\n'
     + '</div>\n'
     + '</section>\n';
+
+  // --- Interactive Checkout Preparation Section ---
+  var initialPrice = firstVariant ? getDisplayPrice(firstVariant.sellingPrice) : 0.00;
+  var initialComparePrice = initialPrice * 1.5;
+
+  var leftColumnHtml = '<div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100%; box-shadow: 0 8px 30px rgba(0,0,0,0.04); min-height: 420px;">\n'
+    + '  <img id="left-variant-image" src="' + (firstVariant ? (firstVariant.image || product.images[0]) : product.images[0]) + '" alt="' + safeName + '" style="width: 100%; height: 100%; object-fit: cover; transition: all 0.3s ease;" />\n'
+    + '</div>\n';
+
+  var variantOptions = product.variants.map(function(v) {
+    var vName = [v.color, v.size].filter(Boolean).join(' / ') || 'Default';
+    return '<option value="' + v.cjId + '" data-price="' + getDisplayPrice(v.sellingPrice).toFixed(2) + '" data-img="' + (v.image || product.images[0]) + '">' + h(vName) + ' - $' + getDisplayPrice(v.sellingPrice).toFixed(2) + '</option>';
+  }).join('');
+
+  var rightColumnButtonHtml = '<button type="button" onclick="window.handleDirectCheckout(event)" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">\n'
+    + '&#128722; Order Now\n'
+    + '</button>\n';
+
+  var rightColumnCardHtml = '<div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 28px; box-shadow: 0 8px 30px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 20px;">\n'
+    + '  <div>\n'
+    + '    <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; display: block; margin-bottom: 4px;">Selected Variant</span>\n'
+    + '    <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px;">\n'
+    + '      <span id="total-price-display" style="font-family:\'Outfit\',sans-serif; font-size: 32px; font-weight: 800; color: #FF6B35; line-height: 1;">$' + initialPrice.toFixed(2) + '</span>\n'
+    + '      <span id="compare-price-display" style="font-size: 16px; color: #94a3b8; text-decoration: line-through; font-weight: 500;">$' + initialComparePrice.toFixed(2) + '</span>\n'
+    + '    </div>\n'
+    + '    <label style="display:block; font-size:12px; font-weight:700; color:#64748b; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Select Variant</label>\n'
+    + '    <select id="variant-selector" onchange="window.updateVariantSelection(this)" style="width:100%; padding:12px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:14px; color:#1A1A2E; outline:none; font-family:inherit; transition:all 0.2s; cursor:pointer; font-weight:600; background:#f8fafc;" onfocus="this.style.borderColor=\'#FF6B35\';this.style.background=\'#ffffff\'" onblur="this.style.borderColor=\'#e2e8f0\';this.style.background=\'#f8fafc\'">\n'
+    + variantOptions
+    + '    </select>\n'
+    + '  </div>\n'
+    + '  \n'
+    + '  <div>\n'
+    + '    <label style="display:block; font-size:12px; font-weight:700; color:#64748b; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Quantity</label>\n'
+    + '    <div style="display:flex; align-items:center; border:2px solid #e2e8f0; border-radius:10px; overflow:hidden; width:130px; background:#f8fafc;">\n'
+    + '      <button type="button" onclick="window.changeQty(-1)" style="flex:1; padding:10px; border:none; background:transparent; font-size:16px; color:#64748b; cursor:pointer; font-weight:bold; transition:all 0.2s;" onmouseover="this.style.background=\'#e2e8f0\'" onmouseout="this.style.background=\'transparent\'">&minus;</button>\n'
+    + '      <input type="number" id="qty-input" value="1" min="1" readonly style="width:40px; text-align:center; border:none; font-size:15px; font-weight:700; color:#1A1A2E; outline:none; background:transparent;" />\n'
+    + '      <button type="button" onclick="window.changeQty(1)" style="flex:1; padding:10px; border:none; background:transparent; font-size:16px; color:#64748b; cursor:pointer; font-weight:bold; transition:all 0.2s;" onmouseover="this.style.background=\'#e2e8f0\'" onmouseout="this.style.background=\'transparent\'">+</button>\n'
+    + '    </div>\n'
+    + '  </div>\n'
+    + '  \n'
+    + rightColumnButtonHtml
+    + '  \n'
+    + '  <div style="display:flex; align-items:center; justify-content:center; gap:12px; opacity:0.85; margin-top:4px;">\n'
+    + '    <span style="font-size:10px; color:#94a3b8; font-weight:600; display:inline-flex; align-items:center; gap:4px;">&#128274; SSL Secure</span>\n'
+    + '    <span style="color:#e2e8f0;">|</span>\n'
+    + '    <span style="font-size:10px; color:#94a3b8; font-weight:600; display:inline-flex; align-items:center; gap:4px;">🚚 Fast Delivery</span>\n'
+    + '    <span style="color:#e2e8f0;">|</span>\n'
+    + '    <span style="font-size:10px; color:#94a3b8; font-weight:600; display:inline-flex; align-items:center; gap:4px;">&#128179; All Cards</span>\n'
+    + '  </div>\n'
+    + '</div>\n';
+
+  var checkoutSectionHtml = '<section id="checkout-section" class="section" style="scroll-margin-top: 80px; background: #ffffff;">\n'
+    + '<div class="container">\n'
+    + '  <div class="section-title">\n'
+    + '    <h2>Select Your Variant & Order Now</h2>\n'
+    + '    <p>Choose your size/color and proceed to secure checkout.</p>\n'
+    + '  </div>\n'
+    + '  <div class="grid-2" style="align-items: stretch;">\n'
+    + '    <div>' + leftColumnHtml + '</div>\n'
+    + '    <div>' + rightColumnCardHtml + '</div>\n'
+    + '  </div>\n'
+    + '</div>\n'
+    + '</section>\n';
+
+  result += checkoutSectionHtml;
 
   // ── Shipping Methods (from CJ API) ──────────────────────────────────────────
   var shippingMethodsHtml = '';
@@ -837,6 +844,109 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
   result += '<div id="sticky-wa">\n'
     + '<a href="' + waUrl + '" target="_blank" rel="noopener noreferrer">&#128172; Chat on WhatsApp</a>\n'
     + '</div>\n';
+
+  var jsProductData = {
+    pid: product.cjId,
+    productName: product.name,
+    productNameEn: product.name,
+    categoryName: '',
+    images: product.images,
+    coupon: null,
+    variants: product.variants.map(function(v) {
+      return {
+        vid: v.cjId,
+        sku: v.sku,
+        name: [v.color, v.size].filter(Boolean).join(' / ') || 'Default',
+        price: getDisplayPrice(v.sellingPrice),
+        baseCost: v.baseCost,
+        image: v.image || product.images[0]
+      };
+    })
+  };
+
+  var scriptBlock = '<script>\n'
+    + 'var productData = ' + JSON.stringify(jsProductData) + ';\n'
+    + 'var selectedVariant = productData.variants[0];\n'
+    + 'var quantity = 1;\n'
+    + '\n'
+    + 'window.updateVariantSelection = function(selectEl) {\n'
+    + '  var vid = selectEl.value;\n'
+    + '  selectedVariant = productData.variants.find(function(v) { return v.vid === vid; }) || productData.variants[0];\n'
+    + '  updateDisplay();\n'
+    + '};\n'
+    + '\n'
+    + 'window.changeQty = function(delta) {\n'
+    + '  quantity += delta;\n'
+    + '  if(quantity < 1) quantity = 1;\n'
+    + '  document.getElementById("qty-input").value = quantity;\n'
+    + '  updateDisplay();\n'
+    + '};\n'
+    + '\n'
+    + 'function updateDisplay() {\n'
+    + '  if(!selectedVariant) return;\n'
+    + '  var total = selectedVariant.price * quantity;\n'
+    + '  var displayEl = document.getElementById("total-price-display");\n'
+    + '  if(displayEl) displayEl.textContent = "$" + total.toFixed(2);\n'
+    + '  \n'
+    + '  var compareEl = document.getElementById("compare-price-display");\n'
+    + '  if(compareEl) compareEl.textContent = "$" + (selectedVariant.price * 1.5 * quantity).toFixed(2);\n'
+    + '  \n'
+    + '  var leftImgEl = document.getElementById("left-variant-image");\n'
+    + '  if(leftImgEl) leftImgEl.src = selectedVariant.image;\n'
+    + '  var leftNameEl = document.getElementById("left-variant-name");\n'
+    + '  if(leftNameEl) leftNameEl.textContent = selectedVariant.name;\n'
+    + '  \n'
+    + '}\n'
+    + '\n'
+    + 'updateDisplay();\n'
+    + '\n'
+    + 'window.handleDirectCheckout = function(event) {\n'
+    + '  if(!selectedVariant) return;\n'
+    + '  \n'
+    + '  // Direct to cart and checkout\n'
+    + '  \n'
+    + '  var item = {\n'
+    + '    pid: productData.pid,\n'
+    + '    selectedVid: selectedVariant.vid,\n'
+    + '    selectedSku: selectedVariant.sku,\n'
+    + '    selectedVariantName: selectedVariant.name,\n'
+    + '    productName: productData.productName,\n'
+    + '    productNameEn: productData.productNameEn,\n'
+    + '    productImage: selectedVariant.image,\n'
+    + '    bigImage: selectedVariant.image,\n'
+    + '    sellPrice: selectedVariant.baseCost,\n'
+    + '    quantity: quantity,\n'
+    + '    categoryName: productData.categoryName\n'
+    + '  };\n'
+    + '  \n'
+    + '  var cart = [];\n'
+    + '  try {\n'
+    + '    var saved = localStorage.getItem("cart");\n'
+    + '    if(saved) cart = JSON.parse(saved);\n'
+    + '  } catch(e) {}\n'
+    + '  \n'
+    + '  var existingIdx = cart.findIndex(function(i) { return i.pid === item.pid && i.selectedVid === item.selectedVid; });\n'
+    + '  if(existingIdx >= 0) {\n'
+    + '    cart[existingIdx].quantity = quantity;\n'
+    + '  } else {\n'
+    + '    cart = [item];\n'
+    + '  }\n'
+    + '  localStorage.setItem("cart", JSON.stringify(cart));\n'
+    + '  \n'
+    + '  var btn = event.currentTarget;\n'
+    + '  btn.innerHTML = "&#8987; Processing...";\n'
+    + '  btn.style.opacity = "0.7";\n'
+    + '  btn.disabled = true;\n'
+    + '  \n'
+    + '  var checkoutUrl = "/checkout?pid=" + encodeURIComponent(item.pid) + "&vid=" + encodeURIComponent(item.selectedVid) + "&qty=" + quantity;\n'
+    + '  \n'
+    + '  setTimeout(function() {\n'
+    + '    window.location.href = checkoutUrl;\n'
+    + '  }, 300);\n'
+    + '};\n'
+    + '</script>\n';
+
+  result += scriptBlock;
 
   return result;
 }

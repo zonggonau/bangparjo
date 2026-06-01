@@ -6,7 +6,6 @@ const RECENT_SALES = [
   { name: 'Michael from New York', product: 'Wireless Earbuds', time: '2 minutes ago', icon: 'fa-headphones' },
   { name: 'Sarah from London', product: 'Premium Skincare Set', time: '5 minutes ago', icon: 'fa-spray-can' },
   { name: 'Ahmad from Dubai', product: 'Smart Watch Series 7', time: '1 minute ago', icon: 'fa-stopwatch' },
-  { name: 'Elena from Madrid', product: 'Boho Summer Dress', time: '8 minutes ago', icon: 'fa-tshirt' },
   { name: 'Yuki from Tokyo', product: 'Mechanical Keyboard', time: '3 minutes ago', icon: 'fa-keyboard' },
   { name: 'David from Sydney', product: 'Ergonomic Desk Chair', time: '12 minutes ago', icon: 'fa-chair' },
 ];

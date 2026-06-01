@@ -91,8 +91,8 @@ export async function syncCartAction(items: any[]) {
           variantName: item.selectedVariantName || null,
           productName: item.productName || '',
           productNameEn: item.productNameEn || '',
-          productImage: item.productImage || '',
-          bigImage: item.bigImage || '',
+          productImage: item.selectedVariantImage || item.productImage || '',
+          bigImage: item.selectedVariantImage || item.bigImage || '',
           sellPrice: parseFloat(item.sellPrice) || 0,
           quantity: item.quantity || 1,
         })),
@@ -280,8 +280,10 @@ export async function createOrderAction(data: any) {
   }
 }
 
-export async function getOrderAction(orderNum: string, token?: string) {
+export async function getOrderAction(orderNum: string, token: string) {
   try {
+    if (!token) return { success: false, error: 'Security token is required' };
+
     const order = await prisma.order.findUnique({ 
       where: { orderNum },
       include: { items: { include: { variant: true } } }
@@ -289,7 +291,7 @@ export async function getOrderAction(orderNum: string, token?: string) {
     
     if (!order) return { success: false, error: 'Order not found' };
     
-    if (token && order.checkoutToken !== token) {
+    if (order.checkoutToken !== token) {
       return { success: false, error: 'Invalid security token' };
     }
 
@@ -410,6 +412,45 @@ export async function sendOrderLinkAction(data: { orderNum: string, token: strin
 }
 
 // --- Coupon Actions ---
+export async function getActiveCouponsAction() {
+  try {
+    const now = new Date();
+    const coupons = await prisma.coupon.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: now } }
+        ]
+      },
+      include: {
+        products: true
+      }
+    });
+
+    const serialized = coupons.map(c => ({
+      id: c.id,
+      code: c.code,
+      type: c.type,
+      value: c.value,
+      minPurchase: c.minPurchase,
+      maxUses: c.maxUses,
+      usedCount: c.usedCount,
+      isActive: c.isActive,
+      expiresAt: c.expiresAt ? c.expiresAt.toISOString() : null,
+      products: c.products.map(p => ({
+        id: p.id,
+        productCjId: p.productCjId
+      }))
+    }));
+
+    return { success: true, data: serialized };
+  } catch (error: any) {
+    console.error('[Get Active Coupons Error]:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 export async function validateCouponAction(data: { code: string; subtotal?: number; productPid?: string }) {
   try {
     const { code, subtotal, productPid } = data;
@@ -541,7 +582,23 @@ export async function capturePayPalOrderAction(data: { orderId: string; paypalDa
       return { success: false, error: 'Payment not completed' };
     }
 
-    console.log(`[PayPal] Payment verified for ${orderId}. Updating status to PAID...`);
+    const dbOrder = await prisma.order.findUnique({
+      where: { orderNum: orderId }
+    });
+
+    if (!dbOrder || !dbOrder.totalAmount) {
+      return { success: false, error: 'Order not found in database' };
+    }
+
+    const paypalAmount = parseFloat(orderDetails.purchase_units[0].amount.value);
+    
+    // Allow max $0.05 variation for floating point rounding discrepancies
+    if (Math.abs(paypalAmount - dbOrder.totalAmount) > 0.05) {
+      console.warn(`[PayPal Security] Amount mismatch! Order ${orderId} expected $${dbOrder.totalAmount}, but PayPal paid $${paypalAmount}`);
+      return { success: false, error: 'Payment amount mismatch. Possible tampering detected.' };
+    }
+
+    console.log(`[PayPal] Payment verified securely for ${orderId}. Updating status to PAID...`);
 
     await prisma.order.update({
       where: { orderNum: orderId },
@@ -563,10 +620,18 @@ export async function getShippingRatesAction(data: { products?: any[], country?:
     const { products: productsParam, country = 'ID', subtotal = 0, sku, vid, quantity = 1, weight = 0 } = data;
     const settings = await getCachedStoreSettings();
 
-    if (sku) {
-      const price = subtotal / quantity;
+    const skuList = productsParam 
+      ? productsParam.map(p => ({ 
+          sku: p.sku || p.vid || '', 
+          quantity: p.quantity || 1, 
+          weight: p.weight, 
+          price: subtotal > 0 ? subtotal / productsParam.length : 10 
+        })).filter(p => p.sku)
+      : (sku ? [{ sku, quantity, weight: weight || undefined, price: subtotal / quantity || 10 }] : []);
+
+    if (skuList.length > 0) {
       const skuRes = await getShippingFeeBySku({
-        products: [{ sku, quantity, weight: weight || 200, price: price || 10 }],
+        products: skuList,
         endCountryCode: country,
       });
 
@@ -598,22 +663,8 @@ export async function getShippingRatesAction(data: { products?: any[], country?:
 
     const res = await getShippingFee({ products, endCountryCode: country });
 
-    if (!res.success || !res.data) {
-      const fallbackRates = [
-        { logisticName: 'Economy Shipping', logisticPrice: 4.50, logisticAging: '20-30' },
-        { logisticName: 'Standard Shipping', logisticPrice: 7.00, logisticAging: '15-25' },
-        { logisticName: 'Express Shipping', logisticPrice: 15.00, logisticAging: '7-12' },
-      ];
-      const finalFallback = fallbackRates.map(rate => {
-        const finalPrice = calculateShippingFee(rate.logisticPrice, subtotal, settings);
-        return {
-          ...rate,
-          logisticPrice: finalPrice,
-          estimatedDays: rate.logisticAging ? `${rate.logisticAging} days` : '',
-          formattedPrice: finalPrice === 0 ? 'FREE' : `USD ${finalPrice.toFixed(2)}`
-        };
-      });
-      return { success: true, data: finalFallback };
+    if (!res.success || !res.data || res.data.length === 0) {
+      return { success: false, error: 'Failed to calculate shipping rates from CJ.' };
     }
 
     const finalRates = res.data.map((rate: any) => {

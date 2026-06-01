@@ -7,12 +7,16 @@ export default function FavoriteCounter() {
 
   useEffect(() => {
     const updateCount = () => {
-      const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-      const validFavs = favs.filter((f: any) => typeof f === 'object' && f !== null && f.pid);
-      setTotalFavorites(validFavs.length);
-      
-      if (validFavs.length !== favs.length) {
-        localStorage.setItem('favorites', JSON.stringify(validFavs));
+      try {
+        const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+        const validFavs = favs.filter((f: any) => typeof f === 'object' && f !== null && f.pid);
+        setTotalFavorites(validFavs.length);
+        
+        if (validFavs.length !== favs.length) {
+          localStorage.setItem('favorites', JSON.stringify(validFavs));
+        }
+      } catch (e) {
+        console.error('Failed to access localStorage in FavoriteCounter:', e);
       }
     };
 

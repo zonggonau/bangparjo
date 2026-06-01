@@ -60,8 +60,9 @@ async function fetchHomeLivingProducts() {
 
 export default async function HomeHomeLiving() {
   const mainProducts = await getHomeLivingProducts();
+  const filteredProducts = mainProducts.filter((product: any) => product.pid);
 
-  if (mainProducts.length === 0) return null;
+  if (filteredProducts.length === 0) return null;
 
   return (
     <section className="py-20 bg-white">
@@ -80,7 +81,7 @@ export default async function HomeHomeLiving() {
         </div>
         
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {mainProducts.slice(0, 10).map((product) => (
+          {filteredProducts.slice(0, 10).map((product) => (
             <ProductCard key={product.pid} product={product} />
           ))}
         </div>

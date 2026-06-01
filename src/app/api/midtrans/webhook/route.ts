@@ -4,7 +4,7 @@ import { processFulfillment } from '@/lib/fulfillment';
 import crypto from 'crypto';
 
 /**
- * Midtrans Webhook Handler
+ * Midtrans Webhook Handler (Singular URL Support)
  * Documentation: https://docs.midtrans.com/en/after-payment/http-notification
  */
 export async function POST(req: Request) {
@@ -33,7 +33,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Invalid signature' }, { status: 400 });
     }
 
-    // 2. Handle Payment Success
+    // 2. Extract actual orderNum
+    // Midtrans Snap formats order_id as: "ORD-{timestamp}-{midtransTimestamp}"
+    // We stored orderNum as "ORD-{timestamp}", so we strip only the LAST segment
+    const parts = (order_id as string).split('-');
+    const actualOrderId = parts.slice(0, -1).join('-') || order_id;
+
+    // 3. Handle Payment Success
     // 'settlement' = paid for most methods (QRIS, VA, Cards)
     // 'capture' + 'accept' = paid for CC
     const isSuccess = 
@@ -44,30 +50,40 @@ export async function POST(req: Request) {
     const isFailed = transaction_status === 'deny' || transaction_status === 'expire' || transaction_status === 'cancel';
 
     if (isSuccess) {
-      console.log(`[Midtrans Webhook] Order ${order_id} marked as PAID. Triggering fulfillment...`);
-      
+      console.log(`[Midtrans Webhook] Order ${actualOrderId} (from Snap ${order_id}) marked as PAID. Triggering fulfillment...`);
+
+      // Guard: verify order exists before updating
+      const existingOrder = await prisma.order.findUnique({ where: { orderNum: actualOrderId } });
+      if (!existingOrder) {
+        console.error(`[Midtrans Webhook] Order '${actualOrderId}' NOT FOUND in DB (raw order_id: '${order_id}')`);
+        return NextResponse.json({ message: 'Order not found' }, { status: 404 });
+      }
+
       // Update status to PAID first (customer has definitely paid)
       await prisma.order.update({
-        where: { orderNum: order_id },
+        where: { orderNum: actualOrderId },
         data: { status: 'PAID' }
       });
 
       try {
         // Auto-fulfill to CJ Dropshipping
-        const result = await processFulfillment(order_id);
-        console.log(`[Midtrans Webhook] Fulfillment result for ${order_id}:`, result.success ? 'SUCCESS' : 'FAILED');
+        const result = await processFulfillment(actualOrderId);
+        console.log(`[Midtrans Webhook] Fulfillment result for ${actualOrderId}:`, result.success ? 'SUCCESS' : 'FAILED');
       } catch (fulfillError: any) {
-        console.error(`[Midtrans Webhook] Auto-fulfillment error for ${order_id}:`, fulfillError.message);
+        console.error(`[Midtrans Webhook] Auto-fulfillment error for ${actualOrderId}:`, fulfillError.message);
         // Status remains 'PAID' from the update above, admin can retry manually
       }
     } else if (isFailed) {
-      console.log(`[Midtrans Webhook] Order ${order_id} FAILED/CANCELLED: ${transaction_status}`);
-      await prisma.order.update({
-        where: { orderNum: order_id },
-        data: { status: 'CANCELLED' }
-      });
+      console.log(`[Midtrans Webhook] Order ${actualOrderId} FAILED/CANCELLED: ${transaction_status}`);
+      const existingOrder = await prisma.order.findUnique({ where: { orderNum: actualOrderId } });
+      if (existingOrder) {
+        await prisma.order.update({
+          where: { orderNum: actualOrderId },
+          data: { status: 'CANCELLED' }
+        });
+      }
     } else if (isPending) {
-      console.log(`[Midtrans Webhook] Order ${order_id} is PENDING...`);
+      console.log(`[Midtrans Webhook] Order ${actualOrderId} is PENDING...`);
     }
 
     return NextResponse.json({ status: 'ok' });

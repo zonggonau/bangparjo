@@ -102,11 +102,15 @@ export default async function BlogSlugPage(props: Props) {
     if (product) {
       const settings = await getCachedStoreSettings();
 
-      // Dynamically recalculate prices based on current live margin settings
-      product.variants = product.variants.map(v => ({
-        ...v,
-        sellingPrice: calculateFinalPrice(v.baseCost, settings)
-      }));
+      // Calculate prices based on current live margin settings
+      product.variants = product.variants.map(v => {
+        const finalPrice = calculateFinalPrice(v.baseCost, settings);
+        return {
+          ...v,
+          sellingPrice: finalPrice
+        };
+      });
+
 
       // Fetch other blog posts for recommendations (cached separately)
       const recCacheKey = 'blog:recs:' + slug;
@@ -159,10 +163,10 @@ export default async function BlogSlugPage(props: Props) {
       const enrichedProduct = { ...product, recommendations: recs };
       const waNumber = process.env.NEXT_PUBLIC_WHATSAPP || '628219105980';
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
-      const html = renderProductTemplate(enrichedProduct, waNumber, baseUrl);
+      const html = renderProductTemplate(enrichedProduct, waNumber, baseUrl, settings.markupPct);
 
 
-      return <div dangerouslySetInnerHTML={{ __html: html }} />;
+      return <div dangerouslySetInnerHTML={{ __html: html }} suppressHydrationWarning />;
     }
   }
 
@@ -170,6 +174,7 @@ export default async function BlogSlugPage(props: Props) {
   return (
     <div
       dangerouslySetInnerHTML={{ __html: post.content }}
+      suppressHydrationWarning
     />
   );
 }

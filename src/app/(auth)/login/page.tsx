@@ -207,6 +207,12 @@ function LoginForm() {
     }
   }, [countdown]);
 
+  const formatCountdown = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
@@ -227,7 +233,7 @@ function LoginForm() {
         setError(data.error || 'Failed to send code.');
       } else {
         setStep('otp');
-        setCountdown(60);
+        setCountdown(600);
         setTimeout(() => inputRefs.current[0]?.focus(), 100);
       }
     } catch (err) {
@@ -261,10 +267,11 @@ function LoginForm() {
         setError(data.error || 'Invalid code. Please try again.');
         setCode(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
-      } else if (data.success) {
+      } else if (data.success && data.sessionToken) {
+        // Use the one-time session token as the "password" — auth.ts validates it
         const result = await signIn('credentials', {
           email: data.email,
-          password: '',
+          password: data.sessionToken,
           redirect: false,
         });
 
@@ -281,6 +288,8 @@ function LoginForm() {
           }
           router.refresh();
         }
+      } else {
+        setError('Verification response was invalid. Please try again.');
       }
     } catch (err) {
       setError('Verification failed. Please try again.');
@@ -303,7 +312,7 @@ function LoginForm() {
       });
 
       if (res.ok) {
-        setCountdown(60);
+        setCountdown(600);
       } else {
         const data = await res.json();
         setError(data.error || 'Failed to resend code.');
@@ -539,7 +548,7 @@ function LoginForm() {
                 disabled={countdown > 0 || loading}
                 className={`bg-none border-none cursor-pointer font-bold text-sm ${countdown > 0 ? 'text-gray-500 cursor-default' : 'text-[#FF6B00] underline'}`}
               >
-                {countdown > 0 ? `Resend code in ${countdown}s` : 'Resend code'}
+                {countdown > 0 ? `Resend code in ${formatCountdown(countdown)}` : 'Resend code'}
               </button>
             </div>
 

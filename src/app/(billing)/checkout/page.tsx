@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CJShippingMethod } from '@/lib/cj';
 import { parseProductName, parseProductImage } from '@/lib/utils';
@@ -35,57 +35,21 @@ function itemKey(pid: string, vid?: string) {
   return `${pid}__${vid || 'novid'}`;
 }
 
-// ── CouponField: standalone component with local input state ──────────────
+// ── CouponField: display only component for auto-applied coupons ──────────────
 function CouponField({
   entry,
-  onApply,
-  onRemove,
 }: {
   entry: CouponEntry;
-  onApply: (code: string) => void;
-  onRemove: () => void;
 }) {
-  const [localCode, setLocalCode] = useState(entry.applied ? entry.applied.code : entry.code);
-
-  // Sync localCode when entry is reset (e.g. remove)
-  useEffect(() => {
-    if (!entry.applied) {
-      setLocalCode('');
-    }
-  }, [entry.applied]);
-
   if (entry.applied) {
     return (
       <div className="bg-green-50 border border-green-200 rounded-[6px] p-2 flex items-center gap-2">
         <i className="fas fa-tag text-green-600 text-[10px]"></i>
-        <span className="text-[11px] font-bold text-green-700 flex-1 truncate">{entry.applied.code}</span>
-        <button type="button" onClick={onRemove} className="text-green-600 hover:text-green-800 text-[10px] font-bold shrink-0">
-          <i className="fas fa-times"></i>
-        </button>
+        <span className="text-[11px] font-bold text-green-700 flex-1 truncate">{entry.applied.code} Applied</span>
       </div>
     );
   }
-
-  return (
-    <div className="flex gap-1.5">
-      <input
-        type="text"
-        placeholder="Coupon"
-        value={localCode}
-        onChange={e => setLocalCode(e.target.value.toUpperCase())}
-        onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), onApply(localCode))}
-        className="flex-1 min-w-0 px-2 py-1.5 border border-gray-200 rounded-[6px] text-[11px] outline-none focus:border-[#FF6B00] transition-colors"
-      />
-      <button
-        type="button"
-        onClick={() => onApply(localCode)}
-        disabled={entry.loading || !localCode.trim()}
-        className="px-2.5 py-1.5 rounded-[6px] text-[11px] font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-      >
-        {entry.loading ? <i className="fas fa-spinner fa-spin"></i> : 'Apply'}
-      </button>
-    </div>
-  );
+  return null;
 }
 
 function CheckoutContent() {
@@ -111,9 +75,14 @@ function CheckoutContent() {
   const router = useRouter();
   const pidParam = searchParams.get('pid');
   const vidParam = searchParams.get('vid');
+  const couponParam = searchParams.get('coupon');
   
-  const { items: cartItems, clearCart, isLoaded } = useCart();
-  const { settings } = useSettings();
+  const { items: rawCartItems, clearCart, isLoaded } = useCart();
+  const { settings, activeCoupons } = useSettings();
+
+  const cartItems = useMemo(() => {
+    return rawCartItems;
+  }, [rawCartItems]);
   const [product, setProduct] = useState<any>(null);
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [qty, setQty] = useState(1);
@@ -125,7 +94,7 @@ function CheckoutContent() {
     city: '',
     province: '',
     zip: '',
-    country: 'US',
+    country: '',
   });
   const [loading, setLoading] = useState(false);
   const [shippingMethods, setShippingMethods] = useState<CJShippingMethod[]>([]);
@@ -138,8 +107,9 @@ function CheckoutContent() {
   
   // ── Per-Product Coupon State ──────────────────────────────────────────────
   const [couponMap, setCouponMap] = useState<Record<string, CouponEntry>>({});
+  const [couponApplied, setCouponApplied] = useState(false);
 
-  const getCouponEntry = (key: string): CouponEntry => couponMap[key] || makeCouponEntry();
+  const getCouponEntry = (key: string): CouponEntry => couponMap[key] || makeCouponEntry(couponParam || '');
 
   const updateCouponEntry = (key: string, partial: Partial<CouponEntry>) => {
     setCouponMap(prev => ({
@@ -149,14 +119,15 @@ function CheckoutContent() {
   };
 
   // ── Coupon Handlers ───────────────────────────────────────────────────────
-  const handleApplyCoupon = async (key: string, code: string) => {
+  const handleApplyCoupon = async (key: string, code: string, productPid?: string) => {
     if (!code.trim()) return;
 
     updateCouponEntry(key, { code, loading: true, error: '', applied: null });
 
-
-    // Find the item price for this key
+    // Find the item price and productPid for this key
     let itemSubtotal = 0;
+    let resolvedPid = productPid;
+
     if (isCartCheckout) {
       const [pid, vidRaw] = key.split('__');
       const vid = vidRaw === 'novid' ? undefined : vidRaw;
@@ -165,13 +136,24 @@ function CheckoutContent() {
         const rawCj = Number(item.sellPrice);
         const price = isNaN(rawCj) ? 0 : calculateFinalPrice(rawCj, settings);
         itemSubtotal = price * item.quantity;
+        resolvedPid = resolvedPid || item.pid;
       }
     } else if (product) {
-      itemSubtotal = variantPrice * qty;
+      const variantCjPrice = selectedVariant?.variantSellPrice || product.sellPrice || 0;
+      const basePrice = calculateFinalPrice(Number(variantCjPrice), settings);
+      const qParam = searchParams.get('qty');
+      const currentQty = qParam ? (parseInt(qParam, 10) || qty) : qty;
+      itemSubtotal = basePrice * currentQty;
+      resolvedPid = resolvedPid || product.pid || product.cjId;
     }
 
     try {
-      const json = await validateCouponAction({ code: code.trim(), subtotal: itemSubtotal });
+      // Pass productPid so product-specific coupons are accepted by the server
+      const json = await validateCouponAction({
+        code: code.trim(),
+        subtotal: itemSubtotal,
+        productPid: resolvedPid,
+      });
 
       if (json.success && json.data) {
         updateCouponEntry(key, {
@@ -259,7 +241,38 @@ function CheckoutContent() {
           setProductError('❌ Failed to load product data.');
         });
     }
-  }, [pidParam, vidParam]);
+  }, [pidParam, vidParam, cartItems]);
+
+  // Set quantity from URL param on load
+  useEffect(() => {
+    const q = searchParams.get('qty');
+    if (q) {
+      const val = parseInt(q, 10);
+      if (!isNaN(val) && val > 0) {
+        setQty(val);
+      }
+    }
+  }, [searchParams]);
+
+  // Auto-apply coupon from URL param on load
+  useEffect(() => {
+    if (!couponParam || !isLoaded || couponApplied) return;
+
+    if (isCartCheckout) {
+      if (cartItems.length > 0) {
+        const firstItem = cartItems[0];
+        const key = itemKey(firstItem.pid, firstItem.selectedVid);
+        setCouponApplied(true);
+        // Pass productPid so product-specific coupons are validated correctly
+        handleApplyCoupon(key, couponParam, firstItem.pid);
+      }
+    } else if (product && selectedVariant) {
+      const key = itemKey(product.pid || product.cjId);
+      setCouponApplied(true);
+      // Pass productPid so product-specific coupons are validated correctly
+      handleApplyCoupon(key, couponParam, product.pid || product.cjId);
+    }
+  }, [couponParam, product, selectedVariant, isCartCheckout, cartItems, isLoaded, couponApplied]);
 
   // Fetch shipping
   useEffect(() => {
@@ -279,20 +292,33 @@ function CheckoutContent() {
 
       const buildActionData = () => {
         if (isCartCheckout) {
+          // Hitung subtotal berdasarkan harga markup toko, bukan harga mentah CJ
+          const retailSubtotal = cartItems.reduce((acc, item) => {
+            const rawPrice = Number(item.sellPrice) || 0;
+            const retailPrice = calculateFinalPrice(rawPrice, settings);
+            return acc + (retailPrice * item.quantity);
+          }, 0);
+          
           return {
             products: cartItems.map(item => ({
               sku: item.selectedSku || item.selectedVid || item.pid,
+              vid: item.selectedVid || item.selectedSku || item.pid,
               quantity: item.quantity
             })),
             country: formData.country,
-            subtotal: cartItems.reduce((acc, item) => acc + Number(item.sellPrice) * item.quantity, 0)
+            subtotal: retailSubtotal
           };
         }
+        
+        // Single product checkout
+        const variantCjPrice = selectedVariant?.variantSellPrice || product?.sellPrice || 0;
+        const retailSinglePrice = calculateFinalPrice(Number(variantCjPrice), settings);
         return {
-          sku: selectedVariant?.variantSku || selectedVariant?.vid,
+          sku: selectedVariant?.variantSku || selectedVariant?.vid || product?.productSku,
+          vid: selectedVariant?.vid || selectedVariant?.variantSku || product?.productSku,
           quantity: qty,
           country: formData.country,
-          subtotal: subtotal
+          subtotal: retailSinglePrice * qty
         };
       };
 
@@ -430,27 +456,84 @@ function CheckoutContent() {
     </div>
   );
 
-  const variantCjPrice = selectedVariant?.variantSellPrice || (product ? product.sellPrice : 0);
-  const variantPrice = calculateFinalPrice(variantCjPrice, settings);
+  const variantCjPrice = Number(selectedVariant?.variantSellPrice || (product ? product.sellPrice : 0));
+
+  const itemKeyVal = itemKey(product?.pid || product?.cjId || '');
+  const couponEntry = getCouponEntry(itemKeyVal);
+
+  // Step 1: margin price = CJ price × markup% from DB settings
+  const marginPrice = calculateFinalPrice(variantCjPrice, settings);
+
+  // Step 2: inflate for display when coupon active — so coupon deduction nets to marginPrice
+  let variantPrice = marginPrice;
+  let discountAmount = 0;
+  if (couponEntry && couponEntry.applied) {
+    if (couponEntry.applied.type === 'PERCENTAGE') {
+      const pct = couponEntry.applied.value;
+      if (pct > 0 && pct < 100) {
+        variantPrice   = marginPrice / (1 - pct / 100);
+        discountAmount = variantPrice * qty * (pct / 100);
+      }
+    } else if (couponEntry.applied.type === 'FIXED') {
+      variantPrice   = marginPrice + couponEntry.applied.value;
+      discountAmount = Math.min(couponEntry.applied.value, variantPrice * qty);
+    } else {
+      discountAmount = couponEntry.discountAmount || 0;
+    }
+  }
+
+  // For cart items: apply margin from settings, inflate if coupon active
+  const getCartItemInflatedPrice = (item: any) => {
+    const rawCj = Number(item.sellPrice);
+    const baseMargin = isNaN(rawCj) ? 0 : calculateFinalPrice(rawCj, settings);
+    const key = itemKey(item.pid, item.selectedVid);
+    const entry = getCouponEntry(key);
+    if (entry && entry.applied) {
+      if (entry.applied.type === 'PERCENTAGE') {
+        const pct = entry.applied.value;
+        if (pct > 0 && pct < 100) return baseMargin / (1 - pct / 100);
+      } else if (entry.applied.type === 'FIXED') {
+        return baseMargin + entry.applied.value;
+      }
+    }
+    return baseMargin;
+  };
 
   const cartSubtotal = isCartCheckout
-    ? cartItems.reduce((acc, item) => {
-        const rawCj = Number(item.sellPrice);
-        return acc + (isNaN(rawCj) ? 0 : calculateFinalPrice(rawCj, settings)) * item.quantity;
-      }, 0)
+    ? cartItems.reduce((acc, item) => acc + getCartItemInflatedPrice(item) * item.quantity, 0)
     : variantPrice * qty;
-  
+
+  // logisticPrice dari server action sudah merupakan harga akhir (termasuk markup)
   const finalShippingCost = selectedShipping 
-    ? calculateShippingFee(selectedShipping.logisticPrice || 0, cartSubtotal, settings)
+    ? (selectedShipping.logisticPrice || 0)
     : 0;
   
   const subtotal = cartSubtotal;
   const taxAmount = (subtotal * (settings.taxPct || 0)) / 100;
   
-  // Sum all per-product discount amounts
-  const totalDiscount = Object.values(couponMap).reduce((sum, entry) => sum + (entry.discountAmount || 0), 0);
+  // Sum all per-product discounts (pct of inflated price → nets to margin price)
+  const totalDiscount = isCartCheckout
+    ? cartItems.reduce((sum, item) => {
+        const key = itemKey(item.pid, item.selectedVid);
+        const entry = getCouponEntry(key);
+        if (entry && entry.applied) {
+          const inflated = getCartItemInflatedPrice(item);
+          if (entry.applied.type === 'PERCENTAGE') {
+            const pct = entry.applied.value;
+            if (pct > 0 && pct < 100) {
+              return sum + (inflated * item.quantity * pct / 100);
+            }
+          } else if (entry.applied.type === 'FIXED') {
+            return sum + Math.min(entry.applied.value || 0, inflated * item.quantity);
+          } else {
+            return sum + (entry.discountAmount || 0);
+          }
+        }
+        return sum;
+      }, 0)
+    : discountAmount;
   
-  // Apply coupon discount to subtotal
+  // Net = inflated subtotal − coupon discount = margin price
   const discountedSubtotal = Math.max(0, subtotal - totalDiscount);
   
   // If any coupon has freeShipping, override shipping cost to 0
@@ -505,6 +588,7 @@ function CheckoutContent() {
             <div className="flex flex-col gap-1.5 mt-4">
               <label className="text-[13px] font-bold text-gray-500 uppercase tracking-[0.5px]">🌍 Country *</label>
               <select value={formData.country} onChange={e => { setFormData({ ...formData, country: e.target.value }); setCountryTouched(true); }} required className="px-4 py-3 border border-gray-200 rounded-[8px] text-sm outline-none focus:border-[#FF6B00] transition-colors bg-white">
+                <option value="" disabled>Choose country...</option>
                 {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
               </select>
             </div>
@@ -527,9 +611,9 @@ function CheckoutContent() {
                       <div className="flex justify-between items-center mb-1">
                         <span className="font-bold text-[15px] text-[#1A1A1A]">{method.logisticName}</span>
                         <span className="font-extrabold text-[#FF6B00]">
-                          { calculateShippingFee(method.logisticPrice, cartSubtotal, settings) === 0
+                          { method.logisticPrice === 0
                             ? <span className="text-green-600">FREE</span> 
-                            : formatUSD(calculateShippingFee(method.logisticPrice, cartSubtotal, settings)) }
+                            : formatUSD(method.logisticPrice) }
                         </span>
                       </div>
                       <span className="text-[13px] text-gray-500">⏱ {method.logisticAging}{method.logisticAging && !method.logisticAging.includes('days') ? ' days' : ''} delivery</span>
@@ -558,7 +642,13 @@ function CheckoutContent() {
           )}
 
           <button type="submit" className="w-full px-6 py-4 rounded-[8px] font-bold text-[16px] bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed" disabled={loading}>
-            {loading ? <><i className="fas fa-spinner fa-spin"></i> Processing...</> : selectedShipping ? `⚡ Place Order — ${formatUSD(grandTotal)}` : '⚡ Place Order'}
+            {loading ? (
+              <><i className="fas fa-spinner fa-spin"></i> Processing...</>
+            ) : Object.values(couponMap).some(entry => entry.applied !== null) ? (
+              selectedShipping ? `⚡ Claim Now — ${formatUSD(grandTotal)}` : '⚡ Claim Now'
+            ) : (
+              selectedShipping ? `⚡ Order Now — ${formatUSD(grandTotal)}` : '⚡ Order Now'
+            )}
           </button>
         </form>
 
@@ -571,34 +661,43 @@ function CheckoutContent() {
                 const key = itemKey(item.pid, item.selectedVid);
                 const entry = getCouponEntry(key);
                 const name = parseProductName(item.productNameEn || item.productName);
-                const itemPrice = calculateFinalPrice(Number(item.sellPrice), settings) * item.quantity;
-                const itemDiscounted = Math.max(0, itemPrice - (entry.discountAmount || 0));
+                // Use inflated price (same as product page) so coupon deduction nets to margin
+                const inflated = getCartItemInflatedPrice(item);
+                const itemPrice = inflated * item.quantity;
+                let discountVal = 0;
+                if (entry && entry.applied) {
+                  if (entry.applied.type === 'PERCENTAGE') {
+                    const pct = entry.applied.value;
+                    if (pct > 0 && pct < 100) discountVal = itemPrice * (pct / 100);
+                  } else if (entry.applied.type === 'FIXED') {
+                    discountVal = Math.min(entry.applied.value || 0, itemPrice);
+                  } else {
+                    discountVal = entry.discountAmount || 0;
+                  }
+                }
+                const itemDiscounted = Math.max(0, itemPrice - discountVal);
                 return (
                   <div key={key} className="pb-4 border-b border-gray-100 last:border-b-0">
                     <div className="flex gap-3">
-                      <img src={item.bigImage || item.productImage} alt={name} className="w-16 h-16 rounded-[8px] object-cover shrink-0 bg-gray-50" />
+                      <img src={item.selectedVariantImage || item.bigImage || item.productImage} alt={name} className="w-16 h-16 rounded-[8px] object-cover shrink-0 bg-gray-50" />
                       <div className="flex-1 min-w-0">
                         <h4 className="text-[13px] font-semibold text-[#1A1A1A] truncate max-w-[180px]">{name}</h4>
                         {item.selectedVariantName && <p className="text-[11px] text-gray-500 mt-0.5">Variant: {item.selectedVariantName}</p>}
                         <div className="flex justify-between items-center mt-1.5">
                           <span className="text-[11px] text-gray-400">Qty: {item.quantity}</span>
                           <span className="text-[13px] font-bold text-[#FF6B00]">
-                            {entry.discountAmount > 0 ? (
+                            {discountVal > 0 ? (
                               <><span className="line-through text-gray-400 mr-1">{formatUSD(itemPrice)}</span>{formatUSD(itemDiscounted)}</>
-                            ) : formatUSD(itemPrice)}
+                            ) : (
+                              <><span className="line-through text-gray-400 text-xs mr-1.5">{formatUSD(itemPrice * 1.35)}</span>{formatUSD(itemPrice)}</>
+                            )}
                           </span>
                         </div>
                       </div>
                     </div>
-                    {/* Per-product coupon field */}
+                    {/* Per-product auto-applied coupon field */}
                     <div className="mt-2 pl-[4.25rem]">
-                      {entry.error && (
-                        <p className="text-[10px] text-red-500 mb-1 flex items-center gap-1">
-                          <i className="fas fa-exclamation-circle"></i>
-                          {entry.error}
-                        </p>
-                      )}
-                      <CouponField entry={entry} onApply={(code) => handleApplyCoupon(key, code)} onRemove={() => handleRemoveCoupon(key)} />
+                      <CouponField entry={entry} />
                     </div>
                   </div>
                 );
@@ -608,35 +707,32 @@ function CheckoutContent() {
                 const key = itemKey(product.pid || product.cjId);
                 const entry = getCouponEntry(key);
                 const name = parseProductName(product.productNameEn || product.productName);
+                // variantPrice is already inflated when coupon is active
                 const itemPrice = variantPrice * qty;
-                const itemDiscounted = Math.max(0, itemPrice - (entry.discountAmount || 0));
+                let discountVal = discountAmount; // reuse already-computed discount
+                const itemDiscounted = Math.max(0, itemPrice - discountVal);
                 return (
                   <div key={key} className="pb-4 border-b border-gray-100">
                     <div className="flex gap-3">
-                      <img src={product.bigImage || product.productImage} alt={name} className="w-16 h-16 rounded-[8px] object-cover shrink-0 bg-gray-50" />
+                      <img src={selectedVariant?.variantImage || product.bigImage || product.productImage} alt={name} className="w-16 h-16 rounded-[8px] object-cover shrink-0 bg-gray-50" />
                       <div className="flex-1 min-w-0">
                         <h4 className="text-[13px] font-semibold text-[#1A1A1A] truncate max-w-[180px]">{name}</h4>
                         {selectedVariant && <p className="text-[11px] text-gray-500 mt-0.5">Variant: {selectedVariant.variantNameEn || selectedVariant.variantKey}</p>}
                         <div className="flex justify-between items-center mt-1.5">
                           <span className="text-[11px] text-gray-400">Qty: {qty}</span>
                           <span className="text-[13px] font-bold text-[#FF6B00]">
-                            {entry.discountAmount > 0 ? (
+                            {discountVal > 0 ? (
                               <><span className="line-through text-gray-400 mr-1">{formatUSD(itemPrice)}</span>{formatUSD(itemDiscounted)}</>
-                            ) : formatUSD(itemPrice)}
+                            ) : (
+                              <><span className="line-through text-gray-400 text-xs mr-1.5">{formatUSD(itemPrice * 1.35)}</span>{formatUSD(itemPrice)}</>
+                            )}
                           </span>
                         </div>
                       </div>
                     </div>
-                    {/* Per-product coupon field */}
+                    {/* Per-product auto-applied coupon field */}
                     <div className="mt-2 pl-[4.25rem]">
-                      {entry.error && (
-                        <p className="text-[10px] text-red-500 mb-1 flex items-center gap-1">
-                          <i className="fas fa-exclamation-circle"></i>
-                          {entry.error}
-                        </p>
-                      )}
-                      <CouponField entry={entry} onApply={(code) => handleApplyCoupon(key, code)} onRemove={() => handleRemoveCoupon(key)} />
-
+                      <CouponField entry={entry} />
                     </div>
                   </div>
                 );

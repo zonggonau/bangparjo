@@ -1,13 +1,14 @@
-import React from 'react';
-import { Metadata } from 'next';
-import Link from 'next/link';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Help Center — bangparjo.shop',
-  description: 'Find answers, track your order, and contact our support team.',
-};
+import React from 'react';
+import Link from 'next/link';
+import { useSettings } from '@/context/SettingsContext';
 
 export default function HelpCenter() {
+  const { settings } = useSettings();
+  const whatsappLink = settings.socialLinks?.find(l => l.platform === 'whatsapp')?.url || `https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP || '628219105980'}`;
+  const whatsappNumber = whatsappLink.split('/').pop() || '';
+
   return (
     <div className="bg-white min-h-screen">
       {/* Hero Section */}
@@ -30,7 +31,7 @@ export default function HelpCenter() {
       <section className="py-20">
         <div className="max-w-[1400px] mx-auto px-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="bg-white rounded-[32px] p-8 text-center border border-gray-200">
+            <div className="bg-white rounded-[32px] p-8 text-center border border-gray-200 hover:shadow-lg transition-all duration-300">
               <div className="flex items-center justify-center w-16 h-16 rounded-[16px] bg-gray-50 mx-auto mb-6 text-2xl text-[#FF6B00]">
                 <i className="fas fa-truck"></i>
               </div>
@@ -38,87 +39,60 @@ export default function HelpCenter() {
               <p className="text-gray-500 text-sm mb-6 leading-relaxed">Track your global orders and view shipping policies.</p>
               <Link href="/track" className="text-[#FF6B00] font-bold text-sm no-underline">Track Order &rarr;</Link>
             </div>
-            <div className="bg-white rounded-[32px] p-8 text-center border border-gray-200">
+            <div className="bg-white rounded-[32px] p-8 text-center border border-gray-200 hover:shadow-lg transition-all duration-300">
               <div className="flex items-center justify-center w-16 h-16 rounded-[16px] bg-gray-50 mx-auto mb-6 text-2xl text-[#FF6B00]">
                 <i className="fas fa-undo"></i>
               </div>
               <h3 className="text-lg font-bold text-[#1A1A1A] mb-3">Returns & Refunds</h3>
               <p className="text-gray-500 text-sm mb-6 leading-relaxed">Learn about our 30-day money-back guarantee.</p>
-              <Link href="/refund" className="text-[#FF6B00] font-bold text-sm no-underline">Read Policy &rarr;</Link>
+              <Link href="/returns" className="text-[#FF6B00] font-bold text-sm no-underline">Read Policy &rarr;</Link>
             </div>
-            <div className="bg-white rounded-[32px] p-8 text-center border border-gray-200">
+            <div className="bg-white rounded-[32px] p-8 text-center border border-gray-200 hover:shadow-lg transition-all duration-300">
               <div className="flex items-center justify-center w-16 h-16 rounded-[16px] bg-gray-50 mx-auto mb-6 text-2xl text-[#FF6B00]">
                 <i className="fas fa-credit-card"></i>
               </div>
               <h3 className="text-lg font-bold text-[#1A1A1A] mb-3">Payments & Billing</h3>
               <p className="text-gray-500 text-sm mb-6 leading-relaxed">Accepted payment methods and currency conversions.</p>
-              <a href="#payments" className="text-[#FF6B00] font-bold text-sm no-underline">View Details &rarr;</a>
+              <Link href="/faq" className="text-[#FF6B00] font-bold text-sm no-underline">View Details &rarr;</Link>
             </div>
-            <div className="bg-white rounded-[32px] p-8 text-center border border-gray-200">
+            <div className="bg-white rounded-[32px] p-8 text-center border border-gray-200 hover:shadow-lg transition-all duration-300">
               <div className="flex items-center justify-center w-16 h-16 rounded-[16px] bg-gray-50 mx-auto mb-6 text-2xl text-[#FF6B00]">
                 <i className="fas fa-question-circle"></i>
               </div>
               <h3 className="text-lg font-bold text-[#1A1A1A] mb-3">General FAQs</h3>
               <p className="text-gray-500 text-sm mb-6 leading-relaxed">Answers to common questions about our store.</p>
-              <a href="#faqs" className="text-[#FF6B00] font-bold text-sm no-underline">Browse FAQs &rarr;</a>
+              <Link href="/faq" className="text-[#FF6B00] font-bold text-sm no-underline">Browse FAQs &rarr;</Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* FAQs Section */}
-      <section className="bg-gray-50 py-20" id="faqs">
-        <div className="max-w-[800px] mx-auto px-5">
-          <h2 className="text-[32px] font-black text-[#1A1A1A] text-center mb-12">Frequently Asked Questions</h2>
-          <div className="flex flex-col gap-4">
-            
-            <details className="bg-white rounded-[16px] overflow-hidden border border-gray-200">
-              <summary className="p-5 cursor-pointer font-bold flex justify-between items-center list-none text-[#1A1A1A]">
-                How long does shipping take?
-                <i className="fas fa-plus text-xs opacity-50"></i>
-              </summary>
-              <div className="px-5 pb-5 text-gray-500 leading-relaxed text-sm">
-                <p>Since we source products globally, shipping times vary depending on your location and the supplier's location. Typically, deliveries take between 7 to 15 business days. You can track your order using your tracking number.</p>
-              </div>
-            </details>
-
-            <details className="bg-white rounded-[16px] overflow-hidden border border-gray-200">
-              <summary className="p-5 cursor-pointer font-bold flex justify-between items-center list-none text-[#1A1A1A]">
-                Do you ship internationally?
-                <i className="fas fa-plus text-xs opacity-50"></i>
-              </summary>
-              <div className="px-5 pb-5 text-gray-500 leading-relaxed text-sm">
-                <p>Yes! We offer worldwide shipping to most countries. Shipping fees and delivery times will be calculated at checkout based on your delivery address.</p>
-              </div>
-            </details>
-
-            <details className="bg-white rounded-[16px] overflow-hidden border border-gray-200">
-              <summary className="p-5 cursor-pointer font-bold flex justify-between items-center list-none text-[#1A1A1A]">
-                What is your return policy?
-                <i className="fas fa-plus text-xs opacity-50"></i>
-              </summary>
-              <div className="px-5 pb-5 text-gray-500 leading-relaxed text-sm">
-                <p>We offer a 30-day return policy for most items. If you are not satisfied with your purchase, please contact our support team within 30 days of receiving the item to initiate a return or exchange.</p>
-              </div>
-            </details>
-
-            <details className="bg-white rounded-[16px] overflow-hidden border border-gray-200">
-              <summary className="p-5 cursor-pointer font-bold flex justify-between items-center list-none text-[#1A1A1A]">
-                How can I contact customer support?
-                <i className="fas fa-plus text-xs opacity-50"></i>
-              </summary>
-              <div className="px-5 pb-5 text-gray-500 leading-relaxed text-sm">
-                <p>You can reach out to us via:</p>
-                <ul className="mt-2 leading-relaxed">
-                  <li><strong>WhatsApp:</strong> <a href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP || '628219105980'}`} target="_blank" rel="noopener noreferrer" className="text-[#25D366] font-bold no-underline">{(() => { const wa = process.env.NEXT_PUBLIC_WHATSAPP || '628219105980'; return `${wa.slice(2,6)}-${wa.slice(6,10)}-${wa.slice(10)}`; })()}</a></li>
-                  <li><strong>Email:</strong> support@bangparjo.shop</li>
-                  <li><strong>AI Chat:</strong> Bottom right corner of the screen</li>
-                </ul>
-                <p className="mt-2">We aim to respond to all inquiries within 24 hours.</p>
-              </div>
-            </details>
-
+      {/* Support Info Section */}
+      <section className="bg-gray-50 py-20">
+        <div className="max-w-[800px] mx-auto px-5 text-center">
+          <h2 className="text-[32px] font-black text-[#1A1A1A] mb-6">Contact Customer Support</h2>
+          <p className="text-gray-500 mb-12">Our team is available to help with any questions you might have.</p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="bg-white p-8 rounded-[24px] border border-gray-200">
+              <i className="fab fa-whatsapp text-4xl text-[#25D366] mb-4"></i>
+              <h4 className="font-bold text-[#1A1A1A] mb-2">WhatsApp</h4>
+              <a 
+                href={whatsappLink} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-[#25D366] font-bold no-underline"
+              >
+                {whatsappNumber.length > 10 ? `${whatsappNumber.slice(0, 4)}-${whatsappNumber.slice(4, 8)}-${whatsappNumber.slice(8)}` : whatsappNumber}
+              </a>
+            </div>
+            <div className="bg-white p-8 rounded-[24px] border border-gray-200">
+              <i className="fas fa-envelope text-4xl text-[#FF6B00] mb-4"></i>
+              <h4 className="font-bold text-[#1A1A1A] mb-2">Email</h4>
+              <p className="text-gray-600 font-bold m-0">{settings.adminEmail || 'support@bangparjo.shop'}</p>
+            </div>
           </div>
+          <p className="mt-8 text-gray-400 text-sm font-medium"><i className="fas fa-clock mr-2"></i> {settings.workingHours || 'Mon - Sat: 08:00 - 20:00 (GMT+7)'}</p>
         </div>
       </section>
 

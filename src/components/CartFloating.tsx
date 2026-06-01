@@ -2,11 +2,17 @@
 
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
+import { useSettings } from '@/context/SettingsContext';
 
 export default function CartFloating() {
-  const { totalItems } = useCart();
+  const { items } = useCart();
+  const { activeCoupons } = useSettings();
 
-  if (totalItems === 0) return null;
+  const filteredItems = items;
+  
+  const filteredTotalItems = filteredItems.reduce((acc, item) => acc + item.quantity, 0);
+
+  if (filteredTotalItems === 0) return null;
 
   return (
     <Link
@@ -31,7 +37,7 @@ export default function CartFloating() {
       className="cart-float-btn"
     >
       <i className="fas fa-shopping-bag"></i>
-      {totalItems > 0 && (
+      {filteredTotalItems > 0 && (
         <span style={{
           position: 'absolute', 
           top: '-2px', 
@@ -48,7 +54,7 @@ export default function CartFloating() {
           justifyContent: 'center',
           border: '2px solid var(--white)',
         }}>
-          {totalItems}
+          {filteredTotalItems}
         </span>
       )}
       <style>{`

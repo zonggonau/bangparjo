@@ -1,22 +1,21 @@
 From: <Saved by Blink>
 Snapshot-Content-Location: https://developers.cjdropshipping.cn/en/api/api2/api/webhook.html#_1-setting
 Subject: 08. Webhook | CJ Docs
-Date: Mon, 4 May 2026 23:37:12 +0900
+Date: Thu, 28 May 2026 20:14:23 +0900
 MIME-Version: 1.0
 Content-Type: multipart/related;
 	type="text/html";
-	boundary="----MultipartBoundary--3mVqRXyfs2pfyusDaU1TRIN1AreJfXbcCCseotGmvr----"
+	boundary="----MultipartBoundary--xrc2jvxIKeBvbNPEuR4h8b443Mm5P5DGukxak7mFK8----"
 
 
-------MultipartBoundary--3mVqRXyfs2pfyusDaU1TRIN1AreJfXbcCCseotGmvr----
+------MultipartBoundary--xrc2jvxIKeBvbNPEuR4h8b443Mm5P5DGukxak7mFK8----
 Content-Type: text/html
-Content-ID: <frame-BA63174D4EA3C2EC3715B90AAA00D1BE@mhtml.blink>
+Content-ID: <frame-FD5A629197E243F0DF2C981E868972A4@mhtml.blink>
 Content-Transfer-Encoding: quoted-printable
 Content-Location: https://developers.cjdropshipping.cn/en/api/api2/api/webhook.html#_1-setting
 
-<!DOCTYPE html><html lang=3D"en-US" class=3D" " data-jetski-tab-id=3D"error=
-"><head><meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3DU=
-TF-8">
+<!DOCTYPE html><html lang=3D"en-US" class=3D" "><head><meta http-equiv=3D"C=
+ontent-Type" content=3D"text/html; charset=3DUTF-8">
    =20
    =20
     <title>08. Webhook | CJ Docs</title>
@@ -45,130 +44,137 @@ esource/cj/favicon.ico">
    =20
    =20
     <link rel=3D"preload" href=3D"https://developers.cjdropshipping.cn/asse=
-ts/css/0.styles.00fe7cb9.css" as=3D"style"><link rel=3D"preload" href=3D"ht=
-tps://developers.cjdropshipping.cn/assets/js/app.0b19ee84.js" as=3D"script"=
+ts/css/0.styles.94fac48d.css" as=3D"style"><link rel=3D"preload" href=3D"ht=
+tps://developers.cjdropshipping.cn/assets/js/app.929674c4.js" as=3D"script"=
 ><link rel=3D"preload" href=3D"https://developers.cjdropshipping.cn/assets/=
-js/2.c692bfdb.js" as=3D"script"><link rel=3D"preload" href=3D"https://devel=
-opers.cjdropshipping.cn/assets/js/1.af814996.js" as=3D"script"><link rel=3D=
-"preload" href=3D"https://developers.cjdropshipping.cn/assets/js/38.fc3869f=
-c.js" as=3D"script"><link rel=3D"prefetch" href=3D"https://developers.cjdro=
-pshipping.cn/assets/js/10.21d77110.js"><link rel=3D"prefetch" href=3D"https=
-://developers.cjdropshipping.cn/assets/js/11.52bd7480.js"><link rel=3D"pref=
-etch" href=3D"https://developers.cjdropshipping.cn/assets/js/12.5d1b28ba.js=
-"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/asset=
-s/js/13.145f30af.js"><link rel=3D"prefetch" href=3D"https://developers.cjdr=
-opshipping.cn/assets/js/14.d5eb5bb0.js"><link rel=3D"prefetch" href=3D"http=
-s://developers.cjdropshipping.cn/assets/js/15.2f272700.js"><link rel=3D"pre=
-fetch" href=3D"https://developers.cjdropshipping.cn/assets/js/16.97c2c4a8.j=
-s"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/asse=
-ts/js/17.50f4a103.js"><link rel=3D"prefetch" href=3D"https://developers.cjd=
-ropshipping.cn/assets/js/18.04f82676.js"><link rel=3D"prefetch" href=3D"htt=
-ps://developers.cjdropshipping.cn/assets/js/19.d0969a6e.js"><link rel=3D"pr=
-efetch" href=3D"https://developers.cjdropshipping.cn/assets/js/20.073b23fa.=
+js/2.b4e2210f.js" as=3D"script"><link rel=3D"preload" href=3D"https://devel=
+opers.cjdropshipping.cn/assets/js/1.d082965a.js" as=3D"script"><link rel=3D=
+"preload" href=3D"https://developers.cjdropshipping.cn/assets/js/53.b6e8ed1=
+2.js" as=3D"script"><link rel=3D"prefetch" href=3D"https://developers.cjdro=
+pshipping.cn/assets/js/10.57318f89.js"><link rel=3D"prefetch" href=3D"https=
+://developers.cjdropshipping.cn/assets/js/100.3e28a9f0.js"><link rel=3D"pre=
+fetch" href=3D"https://developers.cjdropshipping.cn/assets/js/101.39a76499.=
 js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/ass=
-ets/js/21.d7a23fcc.js"><link rel=3D"prefetch" href=3D"https://developers.cj=
-dropshipping.cn/assets/js/22.6799b1e2.js"><link rel=3D"prefetch" href=3D"ht=
-tps://developers.cjdropshipping.cn/assets/js/23.721a8a61.js"><link rel=3D"p=
-refetch" href=3D"https://developers.cjdropshipping.cn/assets/js/24.6bc56bdd=
+ets/js/11.9681b6ca.js"><link rel=3D"prefetch" href=3D"https://developers.cj=
+dropshipping.cn/assets/js/12.13e31f8d.js"><link rel=3D"prefetch" href=3D"ht=
+tps://developers.cjdropshipping.cn/assets/js/13.e047031b.js"><link rel=3D"p=
+refetch" href=3D"https://developers.cjdropshipping.cn/assets/js/14.57d26efa=
 .js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/as=
-sets/js/25.5473b482.js"><link rel=3D"prefetch" href=3D"https://developers.c=
-jdropshipping.cn/assets/js/26.688a96b8.js"><link rel=3D"prefetch" href=3D"h=
-ttps://developers.cjdropshipping.cn/assets/js/27.498c756b.js"><link rel=3D"=
-prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/28.5430d18=
-e.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/a=
-ssets/js/29.4451d8fd.js"><link rel=3D"prefetch" href=3D"https://developers.=
-cjdropshipping.cn/assets/js/3.20fb58e2.js"><link rel=3D"prefetch" href=3D"h=
-ttps://developers.cjdropshipping.cn/assets/js/30.54f5f7e9.js"><link rel=3D"=
-prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/31.a880638=
-7.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/a=
-ssets/js/32.4a3180b5.js"><link rel=3D"prefetch" href=3D"https://developers.=
-cjdropshipping.cn/assets/js/33.c8ff2f49.js"><link rel=3D"prefetch" href=3D"=
-https://developers.cjdropshipping.cn/assets/js/34.47b23fe8.js"><link rel=3D=
-"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/35.cc928d=
-4c.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/=
-assets/js/36.b211ab6d.js"><link rel=3D"prefetch" href=3D"https://developers=
-.cjdropshipping.cn/assets/js/37.25aa8e9b.js"><link rel=3D"prefetch" href=3D=
-"https://developers.cjdropshipping.cn/assets/js/39.77383543.js"><link rel=
-=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/4.7d30=
-1cb1.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.c=
-n/assets/js/40.9da08c6d.js"><link rel=3D"prefetch" href=3D"https://develope=
-rs.cjdropshipping.cn/assets/js/41.72a76955.js"><link rel=3D"prefetch" href=
-=3D"https://developers.cjdropshipping.cn/assets/js/42.9580eccb.js"><link re=
-l=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/43.ea=
-424ba5.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping=
-.cn/assets/js/44.211dbdf3.js"><link rel=3D"prefetch" href=3D"https://develo=
-pers.cjdropshipping.cn/assets/js/45.3c40c863.js"><link rel=3D"prefetch" hre=
-f=3D"https://developers.cjdropshipping.cn/assets/js/46.adc5a278.js"><link r=
-el=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/47.7=
-d1b3a26.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshippin=
-g.cn/assets/js/48.043d13a7.js"><link rel=3D"prefetch" href=3D"https://devel=
-opers.cjdropshipping.cn/assets/js/49.229d719b.js"><link rel=3D"prefetch" hr=
-ef=3D"https://developers.cjdropshipping.cn/assets/js/5.4827d378.js"><link r=
-el=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/50.0=
-83d7001.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshippin=
-g.cn/assets/js/51.8d9a5979.js"><link rel=3D"prefetch" href=3D"https://devel=
-opers.cjdropshipping.cn/assets/js/52.7cd96973.js"><link rel=3D"prefetch" hr=
-ef=3D"https://developers.cjdropshipping.cn/assets/js/53.577f464c.js"><link =
-rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/54.=
-37813279.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshippi=
-ng.cn/assets/js/55.23ca27d9.js"><link rel=3D"prefetch" href=3D"https://deve=
-lopers.cjdropshipping.cn/assets/js/56.626fdd5e.js"><link rel=3D"prefetch" h=
-ref=3D"https://developers.cjdropshipping.cn/assets/js/57.814d1a4b.js"><link=
- rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/58=
-.1c903753.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipp=
-ing.cn/assets/js/59.6163e7f6.js"><link rel=3D"prefetch" href=3D"https://dev=
-elopers.cjdropshipping.cn/assets/js/6.58b5d337.js"><link rel=3D"prefetch" h=
-ref=3D"https://developers.cjdropshipping.cn/assets/js/60.65b679af.js"><link=
- rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/61=
-.669d9160.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipp=
-ing.cn/assets/js/62.04e33404.js"><link rel=3D"prefetch" href=3D"https://dev=
-elopers.cjdropshipping.cn/assets/js/63.b3260aff.js"><link rel=3D"prefetch" =
-href=3D"https://developers.cjdropshipping.cn/assets/js/64.58b0670a.js"><lin=
-k rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/6=
-5.5cff75cc.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropship=
-ping.cn/assets/js/66.290c9759.js"><link rel=3D"prefetch" href=3D"https://de=
-velopers.cjdropshipping.cn/assets/js/67.5210eeba.js"><link rel=3D"prefetch"=
- href=3D"https://developers.cjdropshipping.cn/assets/js/68.83258bc6.js"><li=
+sets/js/15.9cf7a76b.js"><link rel=3D"prefetch" href=3D"https://developers.c=
+jdropshipping.cn/assets/js/16.059bb88b.js"><link rel=3D"prefetch" href=3D"h=
+ttps://developers.cjdropshipping.cn/assets/js/17.7805196f.js"><link rel=3D"=
+prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/18.c21204d=
+2.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/a=
+ssets/js/19.b14d6aaa.js"><link rel=3D"prefetch" href=3D"https://developers.=
+cjdropshipping.cn/assets/js/20.e511a287.js"><link rel=3D"prefetch" href=3D"=
+https://developers.cjdropshipping.cn/assets/js/21.39fdd88c.js"><link rel=3D=
+"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/22.1ee8fd=
+4a.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/=
+assets/js/23.79bd8fe4.js"><link rel=3D"prefetch" href=3D"https://developers=
+.cjdropshipping.cn/assets/js/24.e1d75f2b.js"><link rel=3D"prefetch" href=3D=
+"https://developers.cjdropshipping.cn/assets/js/25.57483ff9.js"><link rel=
+=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/26.564=
+82a71.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.=
+cn/assets/js/27.526c7fe7.js"><link rel=3D"prefetch" href=3D"https://develop=
+ers.cjdropshipping.cn/assets/js/28.c547f780.js"><link rel=3D"prefetch" href=
+=3D"https://developers.cjdropshipping.cn/assets/js/29.1935eaa0.js"><link re=
+l=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/3.03f=
+d7651.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.=
+cn/assets/js/30.1185a68b.js"><link rel=3D"prefetch" href=3D"https://develop=
+ers.cjdropshipping.cn/assets/js/31.1f0763fc.js"><link rel=3D"prefetch" href=
+=3D"https://developers.cjdropshipping.cn/assets/js/32.16cb6368.js"><link re=
+l=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/33.16=
+1cd6fb.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping=
+.cn/assets/js/34.ed87b653.js"><link rel=3D"prefetch" href=3D"https://develo=
+pers.cjdropshipping.cn/assets/js/35.1e3786eb.js"><link rel=3D"prefetch" hre=
+f=3D"https://developers.cjdropshipping.cn/assets/js/36.82de4642.js"><link r=
+el=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/37.4=
+4723442.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshippin=
+g.cn/assets/js/38.52749d31.js"><link rel=3D"prefetch" href=3D"https://devel=
+opers.cjdropshipping.cn/assets/js/39.2160e6f4.js"><link rel=3D"prefetch" hr=
+ef=3D"https://developers.cjdropshipping.cn/assets/js/4.b2e44605.js"><link r=
+el=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/40.e=
+9cc0480.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshippin=
+g.cn/assets/js/41.82c41017.js"><link rel=3D"prefetch" href=3D"https://devel=
+opers.cjdropshipping.cn/assets/js/42.95fd1677.js"><link rel=3D"prefetch" hr=
+ef=3D"https://developers.cjdropshipping.cn/assets/js/43.e9dead52.js"><link =
+rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/44.=
+e0ecc4c1.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshippi=
+ng.cn/assets/js/45.6e8954ed.js"><link rel=3D"prefetch" href=3D"https://deve=
+lopers.cjdropshipping.cn/assets/js/46.e6b44734.js"><link rel=3D"prefetch" h=
+ref=3D"https://developers.cjdropshipping.cn/assets/js/47.e57cd20d.js"><link=
+ rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/48=
+.3ab7ecc1.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipp=
+ing.cn/assets/js/49.7c765cba.js"><link rel=3D"prefetch" href=3D"https://dev=
+elopers.cjdropshipping.cn/assets/js/5.e7984c8e.js"><link rel=3D"prefetch" h=
+ref=3D"https://developers.cjdropshipping.cn/assets/js/50.88605760.js"><link=
+ rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/51=
+.b95117ce.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipp=
+ing.cn/assets/js/52.be5f4d1c.js"><link rel=3D"prefetch" href=3D"https://dev=
+elopers.cjdropshipping.cn/assets/js/54.d6df21c0.js"><link rel=3D"prefetch" =
+href=3D"https://developers.cjdropshipping.cn/assets/js/55.fcf133b6.js"><lin=
+k rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/5=
+6.f35edbec.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropship=
+ping.cn/assets/js/57.2ff10605.js"><link rel=3D"prefetch" href=3D"https://de=
+velopers.cjdropshipping.cn/assets/js/58.6921224f.js"><link rel=3D"prefetch"=
+ href=3D"https://developers.cjdropshipping.cn/assets/js/59.62d84a9d.js"><li=
 nk rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/=
-69.678c409b.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshi=
-pping.cn/assets/js/7.affad021.js"><link rel=3D"prefetch" href=3D"https://de=
-velopers.cjdropshipping.cn/assets/js/70.81784ccc.js"><link rel=3D"prefetch"=
- href=3D"https://developers.cjdropshipping.cn/assets/js/71.e7ab7525.js"><li=
+6.e833795e.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropship=
+ping.cn/assets/js/60.ca354842.js"><link rel=3D"prefetch" href=3D"https://de=
+velopers.cjdropshipping.cn/assets/js/61.6f9a48a6.js"><link rel=3D"prefetch"=
+ href=3D"https://developers.cjdropshipping.cn/assets/js/62.c122b850.js"><li=
 nk rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js/=
-72.56ddcbe4.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshi=
-pping.cn/assets/js/73.b64ffbbe.js"><link rel=3D"prefetch" href=3D"https://d=
-evelopers.cjdropshipping.cn/assets/js/74.4f4d1233.js"><link rel=3D"prefetch=
-" href=3D"https://developers.cjdropshipping.cn/assets/js/75.72341cbf.js"><l=
+63.0dc89063.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshi=
+pping.cn/assets/js/64.f2483ab7.js"><link rel=3D"prefetch" href=3D"https://d=
+evelopers.cjdropshipping.cn/assets/js/65.79a5a61a.js"><link rel=3D"prefetch=
+" href=3D"https://developers.cjdropshipping.cn/assets/js/66.3ad59e75.js"><l=
 ink rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js=
-/76.dd96a2fd.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropsh=
-ipping.cn/assets/js/77.fe1d42c8.js"><link rel=3D"prefetch" href=3D"https://=
-developers.cjdropshipping.cn/assets/js/78.45c5be6a.js"><link rel=3D"prefetc=
-h" href=3D"https://developers.cjdropshipping.cn/assets/js/79.6b91ec19.js"><=
+/67.8bbfd580.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropsh=
+ipping.cn/assets/js/68.146a8912.js"><link rel=3D"prefetch" href=3D"https://=
+developers.cjdropshipping.cn/assets/js/69.a0d4d2e2.js"><link rel=3D"prefetc=
+h" href=3D"https://developers.cjdropshipping.cn/assets/js/7.8fb8f8fb.js"><l=
+ink rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/js=
+/70.1b899d06.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropsh=
+ipping.cn/assets/js/71.521c619d.js"><link rel=3D"prefetch" href=3D"https://=
+developers.cjdropshipping.cn/assets/js/72.aacf0ae3.js"><link rel=3D"prefetc=
+h" href=3D"https://developers.cjdropshipping.cn/assets/js/73.566de254.js"><=
 link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/j=
-s/80.307b4f21.js"><link rel=3D"prefetch" href=3D"https://developers.cjdrops=
-hipping.cn/assets/js/81.f5186465.js"><link rel=3D"prefetch" href=3D"https:/=
-/developers.cjdropshipping.cn/assets/js/82.d352ee9e.js"><link rel=3D"prefet=
-ch" href=3D"https://developers.cjdropshipping.cn/assets/js/83.77417760.js">=
+s/74.40afad97.js"><link rel=3D"prefetch" href=3D"https://developers.cjdrops=
+hipping.cn/assets/js/75.c815f4c8.js"><link rel=3D"prefetch" href=3D"https:/=
+/developers.cjdropshipping.cn/assets/js/76.8b03670e.js"><link rel=3D"prefet=
+ch" href=3D"https://developers.cjdropshipping.cn/assets/js/77.af8a06b7.js">=
 <link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets/=
-js/84.b91f2961.js"><link rel=3D"prefetch" href=3D"https://developers.cjdrop=
-shipping.cn/assets/js/85.3f72804a.js"><link rel=3D"prefetch" href=3D"https:=
-//developers.cjdropshipping.cn/assets/js/86.cfaac135.js"><link rel=3D"prefe=
-tch" href=3D"https://developers.cjdropshipping.cn/assets/js/87.931ae264.js"=
+js/78.633b6aa9.js"><link rel=3D"prefetch" href=3D"https://developers.cjdrop=
+shipping.cn/assets/js/79.9ae33614.js"><link rel=3D"prefetch" href=3D"https:=
+//developers.cjdropshipping.cn/assets/js/80.9a1c6709.js"><link rel=3D"prefe=
+tch" href=3D"https://developers.cjdropshipping.cn/assets/js/81.41aa178e.js"=
 ><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/assets=
-/js/88.af39a032.js"><link rel=3D"prefetch" href=3D"https://developers.cjdro=
-pshipping.cn/assets/js/89.fdf2d532.js"><link rel=3D"prefetch" href=3D"https=
-://developers.cjdropshipping.cn/assets/js/90.4fffbd6b.js"><link rel=3D"pref=
-etch" href=3D"https://developers.cjdropshipping.cn/assets/js/91.0599e738.js=
+/js/82.38d7f91b.js"><link rel=3D"prefetch" href=3D"https://developers.cjdro=
+pshipping.cn/assets/js/83.3c7b417e.js"><link rel=3D"prefetch" href=3D"https=
+://developers.cjdropshipping.cn/assets/js/84.580dee56.js"><link rel=3D"pref=
+etch" href=3D"https://developers.cjdropshipping.cn/assets/js/85.f09e5d6d.js=
 "><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/asset=
-s/js/92.dde39e3f.js"><link rel=3D"prefetch" href=3D"https://developers.cjdr=
-opshipping.cn/assets/js/93.6e1b0410.js"><link rel=3D"prefetch" href=3D"http=
-s://developers.cjdropshipping.cn/assets/js/94.3d13a981.js"><link rel=3D"pre=
-fetch" href=3D"https://developers.cjdropshipping.cn/assets/js/95.b4f4d80e.j=
+s/js/86.0864b7fe.js"><link rel=3D"prefetch" href=3D"https://developers.cjdr=
+opshipping.cn/assets/js/87.4ff9c429.js"><link rel=3D"prefetch" href=3D"http=
+s://developers.cjdropshipping.cn/assets/js/88.1b803e8b.js"><link rel=3D"pre=
+fetch" href=3D"https://developers.cjdropshipping.cn/assets/js/89.d77f6bb2.j=
 s"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/asse=
-ts/js/96.7f7279f0.js"><link rel=3D"prefetch" href=3D"https://developers.cjd=
-ropshipping.cn/assets/js/vendors~docsearch.82899547.js">
+ts/js/90.76cf816f.js"><link rel=3D"prefetch" href=3D"https://developers.cjd=
+ropshipping.cn/assets/js/91.5e550fbf.js"><link rel=3D"prefetch" href=3D"htt=
+ps://developers.cjdropshipping.cn/assets/js/92.9f2ae1af.js"><link rel=3D"pr=
+efetch" href=3D"https://developers.cjdropshipping.cn/assets/js/93.80baa67e.=
+js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/ass=
+ets/js/94.a485ef6c.js"><link rel=3D"prefetch" href=3D"https://developers.cj=
+dropshipping.cn/assets/js/95.0cf54396.js"><link rel=3D"prefetch" href=3D"ht=
+tps://developers.cjdropshipping.cn/assets/js/96.2c36e973.js"><link rel=3D"p=
+refetch" href=3D"https://developers.cjdropshipping.cn/assets/js/97.a14440a3=
+.js"><link rel=3D"prefetch" href=3D"https://developers.cjdropshipping.cn/as=
+sets/js/98.248abb84.js"><link rel=3D"prefetch" href=3D"https://developers.c=
+jdropshipping.cn/assets/js/99.a5ee64b2.js"><link rel=3D"prefetch" href=3D"h=
+ttps://developers.cjdropshipping.cn/assets/js/vendors~docsearch.cc0fc371.js=
+">
     <link rel=3D"stylesheet" href=3D"https://developers.cjdropshipping.cn/a=
-ssets/css/0.styles.00fe7cb9.css">
+ssets/css/0.styles.94fac48d.css">
   <meta name=3D"description" content=3D"CJ API enables developers to access=
  CJ system."><meta name=3D"keywords" content=3D"aliexpress&nbsp;dropshippin=
 g&nbsp;api,autods&nbsp;non&nbsp;api,oberlo&nbsp;api,aliexpress&nbsp;api&nbs=
@@ -209,7 +215,7 @@ H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373=
 ss=3D"home-link router-link-active"><img src=3D"https://developers.cjdropsh=
 ipping.cn/images/logo.png" alt=3D"CJ Docs" class=3D"logo"> <span class=3D"s=
 ite-name can-hide">CJ Docs</span></a> <div class=3D"links" style=3D"max-wid=
-th: 1784px;"><div class=3D"search-box"><input aria-label=3D"Search" autocom=
+th: 1799px;"><div class=3D"search-box"><input aria-label=3D"Search" autocom=
 plete=3D"off" spellcheck=3D"false" value=3D"" class=3D"" placeholder=3D""> =
 <!----></div> <nav class=3D"nav-links can-hide"><div class=3D"nav-item"><a =
 href=3D"https://developers.cjdropshipping.cn/en/summary/" class=3D"nav-link=
@@ -286,66 +292,92 @@ en/api/start/webhook.html" class=3D"sidebar-link">Webhook</a></li><li><a hr=
 ef=3D"https://developers.cjdropshipping.cn/en/api/start/sandbox.html" class=
 =3D"sidebar-link">Sandbox</a></li><li><a href=3D"https://developers.cjdrops=
 hipping.cn/en/api/start/limit.html" class=3D"sidebar-link">Interface Call R=
-estrictions</a></li></ul></section></li><li><section class=3D"sidebar-group=
- is-sub-group depth-1"><a href=3D"https://developers.cjdropshipping.cn/en/a=
-pi/api2/" class=3D"sidebar-heading clickable router-link-active open"><span=
->API</span> <!----></a> <ul class=3D"sidebar-links sidebar-group-items"><li=
-><section class=3D"sidebar-group is-sub-group depth-2"><p class=3D"sidebar-=
-heading"><span>Standard</span> <!----></p> <ul class=3D"sidebar-links sideb=
-ar-group-items"><li><a href=3D"https://developers.cjdropshipping.cn/en/api/=
-api2/standard/definition.html" class=3D"sidebar-link">Interface Definition<=
-/a></li><li><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/sta=
-ndard/field.html" class=3D"sidebar-link">Interface Field Definition</a></li=
-><li><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/standard/p=
-s-code.html" class=3D"sidebar-link">Appendix 1=EF=BC=9AGlobal Error Codes</=
-a></li><li><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/stan=
-dard/ps-country.html" class=3D"sidebar-link">Appendix 2=EF=BC=9ACountry Cod=
-e</a></li><li><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/s=
-tandard/ps-Platforms.html" class=3D"sidebar-link">Appendix 3=EF=BC=9APlatfo=
-rms</a></li></ul></section></li><li><section class=3D"sidebar-group is-sub-=
-group depth-2"><p class=3D"sidebar-heading open"><span>Interface</span> <!-=
----></p> <ul class=3D"sidebar-links sidebar-group-items"><li><a href=3D"htt=
-ps://developers.cjdropshipping.cn/en/api/api2/api/auth.html" class=3D"sideb=
-ar-link">1 Authentication</a></li><li><a href=3D"https://developers.cjdrops=
-hipping.cn/en/api/api2/api/setting.html" class=3D"sidebar-link">2 Setting</=
+estrictions</a></li></ul></section></li><li><a href=3D"https://developers.c=
+jdropshipping.cn/en/api/api2/mcp.html" class=3D"sidebar-link">MCP Integrati=
+on</a></li><li><section class=3D"sidebar-group is-sub-group depth-1"><a hre=
+f=3D"https://developers.cjdropshipping.cn/en/api/api2/" class=3D"sidebar-he=
+ading clickable router-link-active open"><span>API</span> <!----></a> <ul c=
+lass=3D"sidebar-links sidebar-group-items"><li><section class=3D"sidebar-gr=
+oup is-sub-group depth-2"><p class=3D"sidebar-heading"><span>Standard</span=
+> <!----></p> <ul class=3D"sidebar-links sidebar-group-items"><li><a href=
+=3D"https://developers.cjdropshipping.cn/en/api/api2/standard/definition.ht=
+ml" class=3D"sidebar-link">Interface Definition</a></li><li><a href=3D"http=
+s://developers.cjdropshipping.cn/en/api/api2/standard/field.html" class=3D"=
+sidebar-link">Interface Field Definition</a></li><li><a href=3D"https://dev=
+elopers.cjdropshipping.cn/en/api/api2/standard/ps-code.html" class=3D"sideb=
+ar-link">Appendix 1=EF=BC=9AGlobal Error Codes</a></li><li><a href=3D"https=
+://developers.cjdropshipping.cn/en/api/api2/standard/ps-country.html" class=
+=3D"sidebar-link">Appendix 2=EF=BC=9ACountry Code</a></li><li><a href=3D"ht=
+tps://developers.cjdropshipping.cn/en/api/api2/standard/ps-Platforms.html" =
+class=3D"sidebar-link">Appendix 3=EF=BC=9APlatforms</a></li></ul></section>=
+</li><li><section class=3D"sidebar-group is-sub-group depth-2"><p class=3D"=
+sidebar-heading open"><span>Interface</span> <!----></p> <ul class=3D"sideb=
+ar-links sidebar-group-items"><li><a href=3D"https://developers.cjdropshipp=
+ing.cn/en/api/api2/api/auth.html" class=3D"sidebar-link">1 Authentication</=
 a></li><li><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api/=
-product.html" class=3D"sidebar-link">3 Product</a></li><li><a href=3D"https=
-://developers.cjdropshipping.cn/en/api/api2/api/storage.html" class=3D"side=
-bar-link">4 Storage</a></li><li><a href=3D"https://developers.cjdropshippin=
-g.cn/en/api/api2/api/shopping.html" class=3D"sidebar-link">5 Shopping</a></=
-li><li><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api/logi=
-stic.html" class=3D"sidebar-link">6 Logistic</a></li><li><a href=3D"https:/=
-/developers.cjdropshipping.cn/en/api/api2/api/dispute.html" class=3D"sideba=
-r-link">7 Dispute</a></li><li><a href=3D"https://developers.cjdropshipping.=
-cn/en/api/api2/api/webhook.html" class=3D"active sidebar-link" aria-current=
-=3D"page">8 Webhook</a><ul class=3D"sidebar-sub-headers"><li class=3D"sideb=
-ar-sub-header"><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/=
-api/webhook.html#_1-setting" class=3D"active sidebar-link" aria-current=3D"=
-page">1 Setting</a><ul class=3D"sidebar-sub-headers"><li class=3D"sidebar-s=
-ub-header"><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api/=
-webhook.html#_1-1-message-setting-post" class=3D"sidebar-link">1.1 Message =
-Setting=EF=BC=88POST=EF=BC=89</a></li></ul></li></ul></li></ul></section></=
-li></ul></section></li></ul></section></li></ul> </aside> <main class=3D"pa=
-ge"> <div class=3D"theme-default-content content__default"><h1 id=3D"_08-we=
-bhook"><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api/webh=
-ook.html#_08-webhook" class=3D"header-anchor">#</a> 08. Webhook</h1> <h2 id=
-=3D"_1-setting"><a href=3D"https://developers.cjdropshipping.cn/en/api/api2=
-/api/webhook.html#_1-setting" class=3D"header-anchor">#</a> 1 Setting</h2> =
-<h4 id=3D"webhook-configuration-requirements"><a href=3D"https://developers=
-.cjdropshipping.cn/en/api/api2/api/webhook.html#webhook-configuration-requi=
-rements" class=3D"header-anchor">#</a> Webhook Configuration Requirements</=
-h4> <h5 id=3D"_1-protocol-requirements"><a href=3D"https://developers.cjdro=
-pshipping.cn/en/api/api2/api/webhook.html#_1-protocol-requirements" class=
-=3D"header-anchor">#</a> 1. Protocol Requirements</h5> <ul><li><strong>Supp=
-orted Protocols</strong>: HTTPS</li> <li><strong>Encryption</strong>: TLS 1=
-.2 or TLS 1.3 recommended for secure transmission</li> <li><strong>Request =
-Method</strong>: POST</li> <li><strong>Content Type</strong>: <code>Content=
--Type: application/json</code></li></ul> <h5 id=3D"_2-response-specificatio=
-ns"><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api/webhook=
-.html#_2-response-specifications" class=3D"header-anchor">#</a> 2. Response=
- Specifications</h5> <ul><li><strong>Success Status Code</strong>: <code>20=
-0 OK</code></li> <li><strong>Timeout</strong>: Response must be returned wi=
-thin <strong>3 seconds</strong><br>
+setting.html" class=3D"sidebar-link">2 Setting</a></li><li><a href=3D"https=
+://developers.cjdropshipping.cn/en/api/api2/api/product.html" class=3D"side=
+bar-link">3 Product</a></li><li><a href=3D"https://developers.cjdropshippin=
+g.cn/en/api/api2/api/storage.html" class=3D"sidebar-link">4 Storage</a></li=
+><li><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api/shoppi=
+ng.html" class=3D"sidebar-link">5 Shopping</a></li><li><a href=3D"https://d=
+evelopers.cjdropshipping.cn/en/api/api2/api/logistic.html" class=3D"sidebar=
+-link">6 Logistic</a></li><li><a href=3D"https://developers.cjdropshipping.=
+cn/en/api/api2/api/dispute.html" class=3D"sidebar-link">7 Dispute</a></li><=
+li><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api/webhook.=
+html" class=3D"active sidebar-link" aria-current=3D"page">8 Webhook</a><ul =
+class=3D"sidebar-sub-headers"><li class=3D"sidebar-sub-header"><a href=3D"h=
+ttps://developers.cjdropshipping.cn/en/api/api2/api/webhook.html#_1-setting=
+" class=3D"active sidebar-link" aria-current=3D"page">1 Setting</a><ul clas=
+s=3D"sidebar-sub-headers"><li class=3D"sidebar-sub-header"><a href=3D"https=
+://developers.cjdropshipping.cn/en/api/api2/api/webhook.html#_1-1-message-s=
+etting-post" class=3D"sidebar-link">1.1 Message Setting=EF=BC=88POST=EF=BC=
+=89</a></li></ul></li><li class=3D"sidebar-sub-header"><a href=3D"https://d=
+evelopers.cjdropshipping.cn/en/api/api2/api/webhook.html#_2-product-subscri=
+ption" class=3D"sidebar-link">2 Product Subscription</a><ul class=3D"sideba=
+r-sub-headers"><li class=3D"sidebar-sub-header"><a href=3D"https://develope=
+rs.cjdropshipping.cn/en/api/api2/api/webhook.html#_2-1-subscribe-products-p=
+ost" class=3D"sidebar-link">2.1 Subscribe Products=EF=BC=88POST=EF=BC=89</a=
+></li><li class=3D"sidebar-sub-header"><a href=3D"https://developers.cjdrop=
+shipping.cn/en/api/api2/api/webhook.html#_2-2-unsubscribe-products-post" cl=
+ass=3D"sidebar-link">2.2 Unsubscribe Products=EF=BC=88POST=EF=BC=89</a></li=
+><li class=3D"sidebar-sub-header"><a href=3D"https://developers.cjdropshipp=
+ing.cn/en/api/api2/api/webhook.html#_2-3-query-subscribed-products-get" cla=
+ss=3D"sidebar-link">2.3 Query Subscribed Products=EF=BC=88GET=EF=BC=89</a><=
+/li></ul></li><li class=3D"sidebar-sub-header"><a href=3D"https://developer=
+s.cjdropshipping.cn/en/api/api2/api/webhook.html#_3-notification-rules" cla=
+ss=3D"sidebar-link">3 Notification Rules</a><ul class=3D"sidebar-sub-header=
+s"><li class=3D"sidebar-sub-header"><a href=3D"https://developers.cjdropshi=
+pping.cn/en/api/api2/api/webhook.html#_3-1-product-variant-notification-fil=
+tering" class=3D"sidebar-link">3.1 Product/Variant Notification Filtering</=
+a></li><li class=3D"sidebar-sub-header"><a href=3D"https://developers.cjdro=
+pshipping.cn/en/api/api2/api/webhook.html#_3-2-stock-notification-filtering=
+" class=3D"sidebar-link">3.2 Stock Notification Filtering</a></li><li class=
+=3D"sidebar-sub-header"><a href=3D"https://developers.cjdropshipping.cn/en/=
+api/api2/api/webhook.html#_3-3-auto-close-mechanism" class=3D"sidebar-link"=
+>3.3 Auto-Close Mechanism</a></li></ul></li></ul></li><li><a href=3D"https:=
+//developers.cjdropshipping.cn/en/api/api2/api/shop.html" class=3D"sidebar-=
+link">9 Shop</a></li></ul></section></li></ul></section></li></ul></section=
+></li></ul> </aside> <main class=3D"page"> <div class=3D"theme-default-cont=
+ent content__default"><h1 id=3D"_08-webhook"><a href=3D"https://developers.=
+cjdropshipping.cn/en/api/api2/api/webhook.html#_08-webhook" class=3D"header=
+-anchor">#</a> 08. Webhook</h1> <h2 id=3D"_1-setting"><a href=3D"https://de=
+velopers.cjdropshipping.cn/en/api/api2/api/webhook.html#_1-setting" class=
+=3D"header-anchor">#</a> 1 Setting</h2> <h4 id=3D"webhook-configuration-req=
+uirements"><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api/=
+webhook.html#webhook-configuration-requirements" class=3D"header-anchor">#<=
+/a> Webhook Configuration Requirements</h4> <h5 id=3D"_1-protocol-requireme=
+nts"><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api/webhoo=
+k.html#_1-protocol-requirements" class=3D"header-anchor">#</a> 1. Protocol =
+Requirements</h5> <ul><li><strong>Supported Protocols</strong>: HTTPS</li> =
+<li><strong>Encryption</strong>: TLS 1.2 or TLS 1.3 recommended for secure =
+transmission</li> <li><strong>Request Method</strong>: POST</li> <li><stron=
+g>Content Type</strong>: <code>Content-Type: application/json</code></li></=
+ul> <h5 id=3D"_2-response-specifications"><a href=3D"https://developers.cjd=
+ropshipping.cn/en/api/api2/api/webhook.html#_2-response-specifications" cla=
+ss=3D"header-anchor">#</a> 2. Response Specifications</h5> <ul><li><strong>=
+Success Status Code</strong>: <code>200 OK</code></li> <li><strong>Timeout<=
+/strong>: Response must be returned within <strong>3 seconds</strong><br>
 (Avoid long-running or complex business logic to ensure prompt response)</l=
 i> <li><strong>URL Validation</strong>: The callback URL must be a public <=
 code>HTTPS</code> address. Local addresses such as <code>localhost</code> a=
@@ -458,20 +490,256 @@ tr> <tr><td>data</td> <td>return data</td> <td>object</td> <td></td> <td>in=
 terface data return</td></tr> <tr><td>requestId</td> <td>requestId</td> <td=
 >string</td> <td>48</td> <td>Flag request for logging errors</td></tr> <tr>=
 <td>success</td> <td>whether the call succeeded</td> <td>boolean</td> <td>1=
-</td> <td>true-success, false-failed</td></tr></tbody></table></div> <foote=
-r class=3D"page-edit"><!----> <!----></footer> <div class=3D"page-nav"><p c=
-lass=3D"inner"><span class=3D"prev">
+</td> <td>true-success, false-failed</td></tr></tbody></table> <hr> <h2 id=
+=3D"_2-product-subscription"><a href=3D"https://developers.cjdropshipping.c=
+n/en/api/api2/api/webhook.html#_2-product-subscription" class=3D"header-anc=
+hor">#</a> 2 Product Subscription</h2> <h3 id=3D"_2-1-subscribe-products-po=
+st"><a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api/webhook=
+.html#_2-1-subscribe-products-post" class=3D"header-anchor">#</a> 2.1 Subsc=
+ribe Products=EF=BC=88POST=EF=BC=89</h3> <p>Subscribe specific products or =
+enable subscribe-all mode for product/variant/stock webhook notifications.<=
+/p> <blockquote><p><strong>Note</strong>: Subscribing specific products and=
+ subscribing all products are mutually exclusive.</p> <ul><li>If <code>prod=
+uctIds</code> is provided, only the specified products will be subscribed, =
+and subscribe-all will be automatically disabled.</li> <li>If only <code>su=
+bscribeAll=3Dtrue</code> is provided (without <code>productIds</code>), all=
+ previously subscribed specific products will be cleared.</li></ul></blockq=
+uote> <h4 id=3D"url-2"><a href=3D"https://developers.cjdropshipping.cn/en/a=
+pi/api2/api/webhook.html#url-2" class=3D"header-anchor">#</a> URL</h4> <p>h=
+ttps://developers.cjdropshipping.com/api2.0/v1/webhook/product/subscribe</p=
+> <h4 id=3D"curl-2"><a href=3D"https://developers.cjdropshipping.cn/en/api/=
+api2/api/webhook.html#curl-2" class=3D"header-anchor">#</a> CURL</h4> <div =
+class=3D"language- extra-class"><pre class=3D"language-text"><code>curl --l=
+ocation --request POST 'https://developers.cjdropshipping.com/api2.0/v1/web=
+hook/product/subscribe' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+                --header 'Content-Type: application/json' \
+                --data-raw '{
+                    "productIds": ["1952652478987366401", "1952652478987366=
+402"],
+                    "subscribeAll": false
+                }'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th>=
+ <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead>=
+ <tbody><tr><td>productIds</td> <td>Product ID list</td> <td>string[]</td> =
+<td>N</td> <td>max 100</td> <td>Product IDs to subscribe. Cannot exceed sub=
+scription limit based on user level</td></tr> <tr><td>subscribeAll</td> <td=
+>Subscribe all products</td> <td>boolean</td> <td>N</td> <td></td> <td>true=
+=3Denable all products subscription, false=3Ddisable. Mutually exclusive wi=
+th productIds</td></tr></tbody></table> <h4 id=3D"result-2"><a href=3D"http=
+s://developers.cjdropshipping.cn/en/api/api2/api/webhook.html#result-2" cla=
+ss=3D"header-anchor">#</a> Result</h4> <p>success</p> <div class=3D"languag=
+e- extra-class"><pre class=3D"language-text"><code>{
+    "code": 200,
+    "result": true,
+    "message": "Success",
+    "data": {
+        "successProductIds": ["1952652478987366401"],
+        "failProductIds": ["1952652478987366402"],
+        "subscribeAll": false
+    },
+    "requestId": "97367e0f-cf3a-4c9b-acea-a36fb56f81b8",
+    "success": true
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th=
+>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</=
+td> <td>error code</td> <td>int</td> <td>20</td> <td><a href=3D"https://dev=
+elopers.cjdropshipping.cn/en/api/api2/standard/ps-code.html" class=3D"">Ref=
+erence error code</a></td></tr> <tr><td>result</td> <td>Whether or not the =
+return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>me=
+ssage</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></=
+tr> <tr><td>data</td> <td>return data</td> <td>object</td> <td></td> <td></=
+td></tr> <tr><td>- successProductIds</td> <td>Successfully subscribed produ=
+ct IDs</td> <td>string[]</td> <td></td> <td></td></tr> <tr><td>- failProduc=
+tIds</td> <td>Failed product IDs (already subscribed, not exist, etc.)</td>=
+ <td>string[]</td> <td></td> <td></td></tr> <tr><td>- subscribeAll</td> <td=
+>Whether all-products subscription is enabled</td> <td>boolean</td> <td></t=
+d> <td></td></tr> <tr><td>requestId</td> <td>requestId</td> <td>string</td>=
+ <td>48</td> <td>Flag request for logging errors</td></tr> <tr><td>success<=
+/td> <td>whether the call succeeded</td> <td>boolean</td> <td>1</td> <td>tr=
+ue-success, false-failed</td></tr></tbody></table> <p>error</p> <div class=
+=3D"language- extra-class"><pre class=3D"language-text"><code>{
+    "code": 1606010,
+    "result": false,
+    "message": "Product webhook is not enabled",
+    "data": null,
+    "requestId": "a18c9793-7c99-42f9-970b-790eecdceba2",
+    "success": false
+}
+</code></pre></div><p><strong>Error Codes</strong>:</p> <table><thead><tr><=
+th>Code</th> <th>Message</th></tr></thead> <tbody><tr><td>1606010</td> <td>=
+Product webhook is not enabled</td></tr> <tr><td>1606011</td> <td>Subscript=
+ion limit exceeded</td></tr> <tr><td>1606012</td> <td>Product is not subscr=
+ibable</td></tr> <tr><td>1606013</td> <td>Product subscription failed</td><=
+/tr></tbody></table> <p><strong>Subscription Limits by User Level</strong>:=
+</p> <table><thead><tr><th>Level</th> <th>Max Subscriptions</th></tr></thea=
+d> <tbody><tr><td>lv1</td> <td>100</td></tr> <tr><td>lv2</td> <td>1000</td>=
+</tr> <tr><td>lv3</td> <td>2000</td></tr> <tr><td>lv4</td> <td>5000</td></t=
+r> <tr><td>lv5</td> <td>10000</td></tr></tbody></table> <hr> <h3 id=3D"_2-2=
+-unsubscribe-products-post"><a href=3D"https://developers.cjdropshipping.cn=
+/en/api/api2/api/webhook.html#_2-2-unsubscribe-products-post" class=3D"head=
+er-anchor">#</a> 2.2 Unsubscribe Products=EF=BC=88POST=EF=BC=89</h3> <p>Rem=
+ove specific products from the subscription list.</p> <h4 id=3D"url-3"><a h=
+ref=3D"https://developers.cjdropshipping.cn/en/api/api2/api/webhook.html#ur=
+l-3" class=3D"header-anchor">#</a> URL</h4> <p>https://developers.cjdropshi=
+pping.com/api2.0/v1/webhook/product/unsubscribe</p> <h4 id=3D"curl-3"><a hr=
+ef=3D"https://developers.cjdropshipping.cn/en/api/api2/api/webhook.html#cur=
+l-3" class=3D"header-anchor">#</a> CURL</h4> <div class=3D"language- extra-=
+class"><pre class=3D"language-text"><code>curl --location --request POST 'h=
+ttps://developers.cjdropshipping.com/api2.0/v1/webhook/product/unsubscribe'=
+ \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+                --header 'Content-Type: application/json' \
+                --data-raw '{
+                    "productIds": ["1952652478987366401", "1952652478987366=
+402"]
+                }'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th>=
+ <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead>=
+ <tbody><tr><td>productIds</td> <td>Product ID list</td> <td>string[]</td> =
+<td>Y</td> <td>max 100</td> <td>Product IDs to unsubscribe</td></tr></tbody=
+></table> <h4 id=3D"result-3"><a href=3D"https://developers.cjdropshipping.=
+cn/en/api/api2/api/webhook.html#result-3" class=3D"header-anchor">#</a> Res=
+ult</h4> <p>success</p> <div class=3D"language- extra-class"><pre class=3D"=
+language-text"><code>{
+    "code": 200,
+    "result": true,
+    "message": "Success",
+    "data": true,
+    "requestId": "97367e0f-cf3a-4c9b-acea-a36fb56f81b8",
+    "success": true
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th=
+>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</=
+td> <td>error code</td> <td>int</td> <td>20</td> <td><a href=3D"https://dev=
+elopers.cjdropshipping.cn/en/api/api2/standard/ps-code.html" class=3D"">Ref=
+erence error code</a></td></tr> <tr><td>result</td> <td>Whether or not the =
+return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>me=
+ssage</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></=
+tr> <tr><td>data</td> <td>return data</td> <td>boolean</td> <td>1</td> <td>=
+true=3Dsuccess</td></tr> <tr><td>requestId</td> <td>requestId</td> <td>stri=
+ng</td> <td>48</td> <td>Flag request for logging errors</td></tr> <tr><td>s=
+uccess</td> <td>whether the call succeeded</td> <td>boolean</td> <td>1</td>=
+ <td>true-success, false-failed</td></tr></tbody></table> <hr> <h3 id=3D"_2=
+-3-query-subscribed-products-get"><a href=3D"https://developers.cjdropshipp=
+ing.cn/en/api/api2/api/webhook.html#_2-3-query-subscribed-products-get" cla=
+ss=3D"header-anchor">#</a> 2.3 Query Subscribed Products=EF=BC=88GET=EF=BC=
+=89</h3> <p>Query the list of subscribed products with pagination support.<=
+/p> <h4 id=3D"url-4"><a href=3D"https://developers.cjdropshipping.cn/en/api=
+/api2/api/webhook.html#url-4" class=3D"header-anchor">#</a> URL</h4> <p>htt=
+ps://developers.cjdropshipping.com/api2.0/v1/webhook/product/subscribe/list=
+</p> <h4 id=3D"curl-4"><a href=3D"https://developers.cjdropshipping.cn/en/a=
+pi/api2/api/webhook.html#curl-4" class=3D"header-anchor">#</a> CURL</h4> <d=
+iv class=3D"language- extra-class"><pre class=3D"language-text"><code>curl =
+--location --request GET 'https://developers.cjdropshipping.com/api2.0/v1/w=
+ebhook/product/subscribe/list?pageNum=3D1&amp;pageSize=3D20&amp;sku=3DCJJJJ=
+TJT00784&amp;shopId=3D123456' \
+                --header 'CJ-Access-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre></div><table><thead><tr><th>Parameter</th> <th>Definition</th>=
+ <th>Type</th> <th>Required</th> <th>Length</th> <th>Note</th></tr></thead>=
+ <tbody><tr><td>pageNum</td> <td>Page number</td> <td>int</td> <td>N</td> <=
+td></td> <td>Default: 1, min: 1</td></tr> <tr><td>pageSize</td> <td>Page si=
+ze</td> <td>int</td> <td>N</td> <td></td> <td>Default: 20, min: 1, max: 200=
+</td></tr> <tr><td>sku</td> <td>Product SPU</td> <td>string</td> <td>N</td>=
+ <td>21</td> <td>Optional filter by SPU</td></tr> <tr><td>productId</td> <t=
+d>Product ID</td> <td>string</td> <td>N</td> <td>50</td> <td>Optional filte=
+r by product ID</td></tr> <tr><td>shopId</td> <td>Shop ID</td> <td>string</=
+td> <td>Y</td> <td></td> <td>Shop ID for authorization</td></tr></tbody></t=
+able> <h4 id=3D"result-4"><a href=3D"https://developers.cjdropshipping.cn/e=
+n/api/api2/api/webhook.html#result-4" class=3D"header-anchor">#</a> Result<=
+/h4> <p>success</p> <div class=3D"language- extra-class"><pre class=3D"lang=
+uage-text"><code>{
+    "code": 200,
+    "result": true,
+    "message": "Success",
+    "data": {
+        "pageSize": 20,
+        "pageNumber": 1,
+        "totalRecords": 50,
+        "totalPages": 3,
+        "content": [
+            {
+                "productId": "1952652478987366401",
+                "sku": "CJJJJTJT00784",
+                "productName": "Wireless Bluetooth Headphone",
+                "productImage": "https://cdn.cjdropshipping.com/xxx.jpg",
+                "status": true,
+                "reason": null,
+                "createAt": "2026-04-01 10:30:00"
+            }
+        ]
+    },
+    "requestId": "97367e0f-cf3a-4c9b-acea-a36fb56f81b8",
+    "success": true
+}
+</code></pre></div><table><thead><tr><th>Field</th> <th>Definition</th> <th=
+>Type</th> <th>Length</th> <th>Note</th></tr></thead> <tbody><tr><td>code</=
+td> <td>error code</td> <td>int</td> <td>20</td> <td><a href=3D"https://dev=
+elopers.cjdropshipping.cn/en/api/api2/standard/ps-code.html" class=3D"">Ref=
+erence error code</a></td></tr> <tr><td>result</td> <td>Whether or not the =
+return is normal</td> <td>boolean</td> <td>1</td> <td></td></tr> <tr><td>me=
+ssage</td> <td>return message</td> <td>string</td> <td>200</td> <td></td></=
+tr> <tr><td>data</td> <td>return data</td> <td>object</td> <td></td> <td>Pa=
+gination wrapper</td></tr> <tr><td>- pageSize</td> <td>Items per page</td> =
+<td>int</td> <td></td> <td></td></tr> <tr><td>- pageNumber</td> <td>Current=
+ page</td> <td>int</td> <td></td> <td></td></tr> <tr><td>- totalRecords</td=
+> <td>Total item count</td> <td>int</td> <td></td> <td></td></tr> <tr><td>-=
+ totalPages</td> <td>Total page count</td> <td>int</td> <td></td> <td></td>=
+</tr> <tr><td>- content</td> <td>Product list</td> <td>array</td> <td></td>=
+ <td></td></tr> <tr><td>-- productId</td> <td>Product ID</td> <td>string</t=
+d> <td>50</td> <td></td></tr> <tr><td>-- sku</td> <td>Product SPU</td> <td>=
+string</td> <td>21</td> <td></td></tr> <tr><td>-- productName</td> <td>Prod=
+uct name</td> <td>string</td> <td></td> <td></td></tr> <tr><td>-- productIm=
+age</td> <td>Product image URL</td> <td>string</td> <td></td> <td></td></tr=
+> <tr><td>-- status</td> <td>Subscription status</td> <td>boolean</td> <td>=
+</td> <td>true=3Dactive, false=3Dinactive</td></tr> <tr><td>-- reason</td> =
+<td>Inactive reason</td> <td>string</td> <td>255</td> <td>e.g. "Product del=
+isted"</td></tr> <tr><td>-- createAt</td> <td>Subscription time</td> <td>st=
+ring</td> <td></td> <td>Format: yyyy-MM-dd HH:mm:ss</td></tr> <tr><td>reque=
+stId</td> <td>requestId</td> <td>string</td> <td>48</td> <td>Flag request f=
+or logging errors</td></tr> <tr><td>success</td> <td>whether the call succe=
+eded</td> <td>boolean</td> <td>1</td> <td>true-success, false-failed</td></=
+tr></tbody></table> <h2 id=3D"_3-notification-rules"><a href=3D"https://dev=
+elopers.cjdropshipping.cn/en/api/api2/api/webhook.html#_3-notification-rule=
+s" class=3D"header-anchor">#</a> 3 Notification Rules</h2> <h3 id=3D"_3-1-p=
+roduct-variant-notification-filtering"><a href=3D"https://developers.cjdrop=
+shipping.cn/en/api/api2/api/webhook.html#_3-1-product-variant-notification-=
+filtering" class=3D"header-anchor">#</a> 3.1 Product/Variant Notification F=
+iltering</h3> <p>When a product or variant changes, the webhook notificatio=
+n is sent based on user's subscription:</p> <ol><li>If user has <code>subsc=
+ribeAllProducts=3Dtrue</code> =E2=86=92 notification is sent</li> <li>If us=
+er has subscribed the specific product =E2=86=92 notification is sent</li> =
+<li>Otherwise =E2=86=92 notification is skipped</li></ol> <h3 id=3D"_3-2-st=
+ock-notification-filtering"><a href=3D"https://developers.cjdropshipping.cn=
+/en/api/api2/api/webhook.html#_3-2-stock-notification-filtering" class=3D"h=
+eader-anchor">#</a> 3.2 Stock Notification Filtering</h3> <p>Stock change n=
+otifications follow the same product subscription filtering rules. Only use=
+rs who subscribed the corresponding product will receive stock change notif=
+ications.</p> <h3 id=3D"_3-3-auto-close-mechanism"><a href=3D"https://devel=
+opers.cjdropshipping.cn/en/api/api2/api/webhook.html#_3-3-auto-close-mechan=
+ism" class=3D"header-anchor">#</a> 3.3 Auto-Close Mechanism</h3> <ul><li>We=
+bhook success/failure counts are recorded per hour per topic</li> <li>If th=
+e success rate in each of the previous 2 complete hours is below 80% (confi=
+gurable), the webhook topic will be automatically closed</li> <li>Auto-clos=
+ed webhooks require manual re-activation</li> <li>Close reason is recorded =
+in the system</li></ul></div> <footer class=3D"page-edit"><!----> <!----></=
+footer> <div class=3D"page-nav"><p class=3D"inner"><span class=3D"prev">
       =E2=86=90
       <a href=3D"https://developers.cjdropshipping.cn/en/api/api2/api/dispu=
 te.html" class=3D"prev">
         7 Dispute
-      </a></span> <!----></p></div> </main></div><div class=3D"global-ui"><=
-!----></div></div>
+      </a></span> <span class=3D"next"><a href=3D"https://developers.cjdrop=
+shipping.cn/en/api/api2/api/shop.html" class=3D"">
+        9 Shop
+      </a>
+      =E2=86=92
+    </span></p></div> </main></div><div class=3D"global-ui"><!----></div></=
+div>
    =20
  =20
 
-</body></html>
-------MultipartBoundary--3mVqRXyfs2pfyusDaU1TRIN1AreJfXbcCCseotGmvr----
+<div class=3D"mermaidTooltip" style=3D"opacity: 0;"></div></body></html>
+------MultipartBoundary--xrc2jvxIKeBvbNPEuR4h8b443Mm5P5DGukxak7mFK8----
 Content-Type: image/png
 Content-Transfer-Encoding: base64
 Content-Location: https://developers.cjdropshipping.cn/images/logo.png
@@ -1090,7 +1358,7 @@ l/8PsBaiYYedaHH/l2j9wJfwDc6RvnRpiyECXLmvm8OCwREcwRH+J0UNzGZpUUP6RX1psm9wEnq/
 NBs9np2NC4eDcPKXrrgQGS4Y8K1IPBWMrCR/FGRXkvvD0b1Wn1y4V0pF4K3x8Aw4jaAGh1Cv008I
 rh8Hd0GZs9NETAYK8nhHYAfgOoIjOML1hf8XYAALiSMs1BkFxwAAAABJRU5ErkJggg==
 
-------MultipartBoundary--3mVqRXyfs2pfyusDaU1TRIN1AreJfXbcCCseotGmvr----
+------MultipartBoundary--xrc2jvxIKeBvbNPEuR4h8b443Mm5P5DGukxak7mFK8----
 Content-Type: image/svg+xml
 Content-Transfer-Encoding: quoted-printable
 Content-Location: https://developers.cjdropshipping.cn/assets/img/search.83621669.svg
@@ -1099,10 +1367,10 @@ Content-Location: https://developers.cjdropshipping.cn/assets/img/search.8362166
 000/svg" width=3D"12" height=3D"13"><g stroke-width=3D"2" stroke=3D"#aaa" f=
 ill=3D"none"><path d=3D"M11.29 11.71l-4-4"/><circle cx=3D"5" cy=3D"5" r=3D"=
 4"/></g></svg>=0A
-------MultipartBoundary--3mVqRXyfs2pfyusDaU1TRIN1AreJfXbcCCseotGmvr----
+------MultipartBoundary--xrc2jvxIKeBvbNPEuR4h8b443Mm5P5DGukxak7mFK8----
 Content-Type: text/css
 Content-Transfer-Encoding: quoted-printable
-Content-Location: https://developers.cjdropshipping.cn/assets/css/0.styles.00fe7cb9.css
+Content-Location: https://developers.cjdropshipping.cn/assets/css/0.styles.94fac48d.css
 
 @charset "utf-8";
 
@@ -1499,6 +1767,18 @@ ul li a { color: rgb(44, 62, 80); }
 table td, th { text-align: left !important; }
 
 ul li a:hover { color: rgb(249, 148, 41); }
+
+.cj-mermaid-diagram { margin: 1.2rem 0px; padding: 1rem; overflow-x: auto; =
+text-align: center; background: rgb(255, 255, 255); border: 1px solid rgb(2=
+34, 236, 239); border-radius: 6px; }
+
+.cj-mermaid-diagram svg { max-width: 100%; height: auto; }
+
+.cj-mermaid-api-link text { cursor: pointer; text-decoration: underline; fi=
+ll: rgb(3, 102, 214) !important; }
+
+.cj-mermaid-error { color: rgb(204, 0, 0); text-align: left; white-space: p=
+re-wrap; }
 
 #nprogress { pointer-events: none; }
 
@@ -2439,4 +2719,4 @@ ight: 1.7; font-weight: 700; }
 er-link-active::after { top: calc(-2px + 1rem); }
   .sidebar > .sidebar-links { padding: 1rem 0px; }
 }
-------MultipartBoundary--3mVqRXyfs2pfyusDaU1TRIN1AreJfXbcCCseotGmvr------
+------MultipartBoundary--xrc2jvxIKeBvbNPEuR4h8b443Mm5P5DGukxak7mFK8------
