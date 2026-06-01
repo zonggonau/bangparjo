@@ -15,7 +15,7 @@ import AIChat from '@/components/AIChat';
 import { getDBStoreSettings, calculateFinalPrice } from '@/lib/pricing';
 
 
-const CACHE_TTL = 3600; // 1 hour
+const CACHE_TTL = 315360000; // 10 years (effectively forever)
 
 async function getFeaturedProducts() {
   return getOrSet('home:featured', fetchFeaturedProducts, CACHE_TTL);

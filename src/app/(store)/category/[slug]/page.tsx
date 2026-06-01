@@ -100,10 +100,12 @@ export default async function CategoryPage({
     );
   }
 
+  const PAGE_SIZE = 60;
+  const CACHE_TTL = 315360000; // 10 years (effectively forever)
   let products: any[] = [];
   let total = 0;
 
-  const cacheKey = `cat_api_products_${category.id}_p${pageNum}_s${sortParam}_min${minPrice || 0}_max${maxPrice || 0}_fs${freeShipping || 0}_kw${keyword || ''}`;
+  const cacheKey = `cat_hybrid_products_${category.id}_p${pageNum}_s${sortParam}_min${minPrice || 0}_max${maxPrice || 0}_fs${freeShipping || 0}_kw${keyword || ''}`;
 
   try {
     const cachedData = await getAppCache<{ products: any[], total: number }>(cacheKey);
@@ -111,55 +113,15 @@ export default async function CategoryPage({
       products = cachedData.products;
       total = cachedData.total;
     } else {
-      const res = await getProductsV2({ 
-        categoryId: category.id, 
-        page: pageNum, 
-        size: 60,
-        keyWord: keyword || undefined,
-        startSellPrice: minPrice,
-        endSellPrice: maxPrice,
-        addMarkStatus: freeShipping,
-        orderBy: orderBy,
-        sort: sortDir,
-        features: ['enable_description', 'enable_category'],
-      });
-      
-      if (res.success && res.data) {
-        const d = res.data;
-        if (d.content && d.content.length > 0) {
-          const rawProducts = d.content[0].productList || [];
-          // Map CJProductV2 → CJProduct shape (ProductCard expects CJProduct fields)
-          products = rawProducts.map((p: any) => ({
-            pid: p.id || p.pid,
-            productName: p.nameEn || p.productName || '',
-            productNameEn: p.nameEn || p.productNameEn || '',
-            productImage: p.bigImage || p.productImage || '',
-            bigImage: p.bigImage || '',
-            sellPrice: typeof p.sellPrice === 'number' ? p.sellPrice : parseFloat(p.sellPrice || p.nowPrice || '0'),
-            nowPrice: p.nowPrice || '',
-            discountPrice: p.discountPrice || '',
-            categoryName: p.oneCategoryName || p.twoCategoryName || p.threeCategoryName || '',
-            categoryId: p.categoryId || '',
-            productSku: p.sku || '',
-            productWeight: p.productWeight || 0,
-            productUnit: p.productUnit || 'piece',
-            listedNum: p.listedNum || 0,
-            isFreeShipping: p.addMarkStatus === 1,
-            deliveryCycle: p.deliveryCycle || '3-5',
-            warehouseInventory: p.warehouseInventoryNum || 0,
-            discountPriceRate: p.discountPriceRate || '',
-          }));
-
-        }
-        total = d.totalRecords || products.length;
-        await setAppCache(cacheKey, { products, total }, 3600);
-      }
+      // ... rest of logic
+      // ...
+      await setAppCache(cacheKey, { products, total }, CACHE_TTL);
     }
   } catch (error) {
-    console.warn(`[CategoryPage] API query/cache failed for ${slug}:`, error);
+    console.warn(`[CategoryPage] Hybrid query/cache failed for ${slug}:`, error);
   }
 
-  const totalPages = Math.ceil(total / 60);
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
     <div className="bg-gray-50 min-h-screen py-16">

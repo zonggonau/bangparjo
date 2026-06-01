@@ -356,13 +356,11 @@ export async function cjFetch<T>(
 
       const response = await fetch(`${BASE_URL}${cleanEndpoint}`, fetchOptions);
       
-<<<<<<< HEAD
       if (response.status === 429) {
         clearTimeout(timeoutId);
         throw new Error(`POINTS_EXHAUSTED: CJ API daily points limit reached. Endpoint: ${endpoint}.`);
       }
 
-=======
       // Check response is actually JSON before parsing
       const contentType = response.headers.get('content-type') || '';
       if (!contentType.includes('json') && !contentType.includes('javascript')) {
@@ -372,8 +370,6 @@ export async function cjFetch<T>(
         }
         throw new Error(`CJ API returned non-JSON (HTTP ${response.status}): ${text.slice(0, 200)}`);
       }
-      
->>>>>>> fe928faf3c7a520b3e9879a7f24b8c173ff098c6
       const data = await response.json();
 
       // Track CJ points consumption if provided
@@ -680,6 +676,7 @@ export interface CJShippingMethod {
   logisticAging: string;
   taxesFee?: number;
   totalPostageFee?: number;
+  rawCjPrice?: number;
 }
 
 /**

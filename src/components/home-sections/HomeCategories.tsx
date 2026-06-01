@@ -2,7 +2,7 @@ import { prisma } from '@/lib/db';
 import { getOrSet } from '@/lib/redis';
 import Link from 'next/link';
 
-const CACHE_TTL = 3600; // 1 hour
+const CACHE_TTL = 315360000; // 10 years (effectively forever)
 
 // Map kategori ke icon yang sesuai
 const categoryIcons: Record<string, string> = {

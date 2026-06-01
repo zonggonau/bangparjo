@@ -386,7 +386,8 @@ function CheckoutContent() {
       const cartCost = isCartCheckout
         ? cartItems.reduce((acc, item) => acc + Number(item.sellPrice) * item.quantity, 0)
         : Number(variantCjPrice) * qty;
-      const totalCost = cartCost + (selectedShipping?.logisticPrice || 0);
+      const rawShippingCost = selectedShipping?.rawCjPrice || selectedShipping?.logisticPrice || 0;
+      const totalCost = cartCost + rawShippingCost;
 
       const dbJson = await createOrderAction({
         orderNum,

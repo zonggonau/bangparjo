@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 import { getOrSet } from '@/lib/redis';
 import ProductCard from '@/components/ProductCard';
 
-const CACHE_TTL = 3600; // 1 hour
+const CACHE_TTL = 315360000; // 10 years (effectively forever)
 
 async function getBestSellers() {
   return getOrSet('home:bestsellers', fetchBestSellers, CACHE_TTL);

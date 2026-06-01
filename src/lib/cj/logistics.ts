@@ -10,6 +10,7 @@ export interface CJShippingMethod {
   taxesFee?: number;
   totalPostageFee?: number;
   logisticId?: string;
+  rawCjPrice?: number;
 }
 
 export interface CJPartnerFreightRequest {

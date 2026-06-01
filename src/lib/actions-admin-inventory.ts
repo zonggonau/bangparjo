@@ -5,6 +5,46 @@ import { cjFetch, getProductDetails, CJProductDetail, getInventoryByPid } from '
 import { revalidateTag } from 'next/cache';
 import { slugify, parseProductName } from '@/lib/utils';
 import { generateLandingPageContent } from '@/lib/ai-content';
+import { invalidateAppCache } from '@/lib/cache';
+
+async function invalidateProductCaches(categoryName?: string) {
+  try {
+    // 1. Invalidate main home keys
+    await Promise.all([
+      invalidateAppCache('home:featured'),
+      invalidateAppCache('home:bestsellers'),
+      invalidateAppCache('home:beauty'),
+      invalidateAppCache('home:fashion'),
+      invalidateAppCache('home:electronics'),
+      invalidateAppCache('home:toys'),
+      invalidateAppCache('home:homeliving'),
+      invalidateAppCache('home:categories')
+    ]);
+
+    // 2. Invalidate category hybrid cache if name is known
+    // Since we don't know the exact slug or params (sort, min, max, etc.) 
+    // and Redis 'keys' command is expensive, we focus on the most common entries 
+    // or let the 10-year cache be a baseline. 
+    // For more surgical invalidation, we would need to track all used cache keys.
+    
+    // Attempt to invalidate first page of the specific category
+    // Note: This is an approximation.
+    if (categoryName) {
+      // We'd need to find the category ID to be precise
+      const cat = await prisma.category.findFirst({ where: { name: categoryName } });
+      if (cat) {
+        // Invalidate common first page variants
+        await invalidateAppCache(`cat_hybrid_products_${cat.id}_p1_sdefault_min0_max0_fs0_kw`);
+      }
+    }
+    
+    // 3. Next.js cache tags
+    revalidateTag('home:featured');
+    revalidateTag('home:bestsellers');
+  } catch (err) {
+    console.warn('[Cache Invalidation] Failed:', err);
+  }
+}
 
 export async function updateAdminInventoryAction(data: { variantId?: string; sellingPrice?: number; id?: string; isHero?: boolean }) {
   try {
@@ -267,12 +307,47 @@ export async function exportToBlogAction(productId: string, lang: string = 'en')
 }
 
 export async function importProductAction(
-  productData: { pid: string; name: string; image: string; sellPrice: number; categoryName?: string },
+  productData: { pid: string; name: string; image: string; sellPrice: number | string; categoryName?: string } | string,
   isHero: boolean = false
 ) {
   try {
-    const { pid, name, image, sellPrice, categoryName } = productData;
+    let pid = '';
+    let name = '';
+    let image = '';
+    let rawSellPrice: number | string = 0;
+    let categoryName = '';
+
+    if (typeof productData === 'string') {
+      pid = productData;
+      const res = await cjFetch<any>(`/v1/product/query?pid=${pid}`, { method: 'GET' });
+      if (!res.result || !res.data) {
+        return { success: false, error: `Failed to fetch product details from CJ: ${res.message || 'Product not found'}` };
+      }
+      const cjProduct = res.data;
+      name = cjProduct.productNameEn || cjProduct.productName || 'Imported Product';
+      image = cjProduct.productImage || cjProduct.bigImage || '';
+      rawSellPrice = cjProduct.sellPrice || 0;
+      categoryName = cjProduct.categoryName || 'Imported';
+    } else {
+      pid = productData.pid;
+      name = productData.name;
+      image = productData.image;
+      rawSellPrice = productData.sellPrice;
+      categoryName = productData.categoryName || 'Imported';
+    }
+
     if (!pid) return { success: false, error: 'Product ID (pid) is required' };
+
+    // Robust parsing for sellPrice to prevent NaN prisma error
+    let parsedPrice = 0;
+    if (typeof rawSellPrice === 'number') {
+      parsedPrice = rawSellPrice;
+    } else if (rawSellPrice) {
+      parsedPrice = parseFloat(String(rawSellPrice)) || 0;
+    }
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      parsedPrice = 0;
+    }
 
     const existing = await prisma.product.findUnique({
       where: { cjId: pid },
@@ -312,8 +387,8 @@ export async function importProductAction(
             color: 'Default',
             size: '', 
             weight: 0,
-            baseCost: Number(sellPrice),
-            sellingPrice: Number(sellPrice), 
+            baseCost: parsedPrice,
+            sellingPrice: parsedPrice, 
             inventory: 0, 
             image: image
           }]
@@ -326,6 +401,9 @@ export async function importProductAction(
 
     // Trigger background sync asynchronously (fire and forget)
     fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/sync-product-variants?pid=${pid}`).catch(() => {});
+
+    // Invalidate caches to show the new product
+    await invalidateProductCaches(categoryName);
 
     return { success: true, product };
   } catch (error: any) {

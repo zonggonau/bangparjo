@@ -4,7 +4,7 @@ import { getOrSet } from '@/lib/redis';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
 
-const CACHE_TTL = 3600; // 1 hour
+const CACHE_TTL = 315360000; // 10 years (effectively forever)
 
 async function getToysProducts() {
   return getOrSet('home:toys', fetchToysProducts, CACHE_TTL);

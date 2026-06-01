@@ -79,23 +79,15 @@ export default function AboutPage() {
         {/* Default content if no admin content */}
         {!about?.content && (
           <div className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Welcome to BangParjo Shop</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Welcome to bangparjo.shop</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
-              BangParjo Shop is a premier dropshipping store powered by <strong>CJ Dropshipping</strong> — 
-              one of the world's leading dropshipping and fulfillment platforms. We connect you with 
-              thousands of quality products sourced directly from manufacturers, with global shipping 
-              to over 200 countries worldwide.
+              <strong>bangparjo.shop</strong> is a premier global e-commerce destination dedicated to bringing you the most innovative and trending products from around the world. We partner with leading global fulfillment centers to provide a seamless shopping experience.
             </p>
             <p className="text-gray-600 leading-relaxed mb-4">
-              Our platform is built on the robust CJ Dropshipping infrastructure, which includes 
-              multiple global warehouses, automated order fulfillment, real-time inventory sync, 
-              and competitive shipping rates. This means faster delivery times and better prices 
-              for our customers.
+              Our platform, <strong>bangparjo.shop</strong>, is built on robust international logistics infrastructure, including multiple global warehouses and automated order fulfillment. This ensures that your orders are processed efficiently and shipped at competitive rates to over 200 countries.
             </p>
             <p className="text-gray-600 leading-relaxed">
-              Whether you're looking for fashion, electronics, home goods, beauty products, or 
-              unique gifts, we've got you covered. Our team works tirelessly to curate the best 
-              products at the most competitive prices.
+              At <strong>bangparjo.shop</strong>, we work tirelessly to curate the best products across fashion, electronics, home goods, and beauty. Our mission is to provide quality, value, and exceptional service to our global community of shoppers.
             </p>
           </div>
         )}

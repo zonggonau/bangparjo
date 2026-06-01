@@ -640,6 +640,7 @@ export async function getShippingRatesAction(data: { products?: any[], country?:
           const finalPrice = calculateShippingFee(rate.logisticPrice, subtotal, settings);
           return {
             ...rate,
+            rawCjPrice: rate.logisticPrice,
             logisticPrice: finalPrice,
             estimatedDays: rate.logisticAging ? `${rate.logisticAging} days` : '',
             formattedPrice: finalPrice === 0 ? 'FREE' : `USD ${finalPrice.toFixed(2)}`
@@ -666,8 +667,8 @@ export async function getShippingRatesAction(data: { products?: any[], country?:
     if (!res.success || !res.data || res.data.length === 0) {
       // ── Fallback: estimasi shipping berdasarkan weight ──────────
       const totalWeight = productsParam
-        ? productsParam.reduce((sum: number, p: any) => sum + (Number(p.weight) || 500), 0)
-        : (weight || 500);
+         ? productsParam.reduce((sum: number, p: any) => sum + (Number(p.weight) || 500), 0)
+         : (weight || 500);
 
       // Harga estimasi: $5 + $1/kg
       const baseShipping = 5 + Math.ceil(totalWeight / 1000) * 1;
@@ -676,6 +677,7 @@ export async function getShippingRatesAction(data: { products?: any[], country?:
       const fallbackRates = [{
         logisticName: 'Standard Shipping',
         logisticPrice: finalPrice,
+        rawCjPrice: baseShipping,
         logisticAging: 'CJ Packet',
         estimatedDays: 'Estimated at checkout',
         formattedPrice: finalPrice === 0 ? 'FREE' : `USD ${finalPrice.toFixed(2)}`
@@ -688,6 +690,7 @@ export async function getShippingRatesAction(data: { products?: any[], country?:
       const finalPrice = calculateShippingFee(rate.logisticPrice, subtotal, settings);
       return {
         ...rate,
+        rawCjPrice: rate.logisticPrice,
         logisticPrice: finalPrice,
         estimatedDays: rate.logisticAging ? `${rate.logisticAging} days` : '',
         formattedPrice: finalPrice === 0 ? 'FREE' : `USD ${finalPrice.toFixed(2)}`

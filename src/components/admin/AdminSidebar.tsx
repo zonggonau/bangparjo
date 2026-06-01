@@ -16,8 +16,9 @@ const NAV_GROUPS = [
     label: 'Store Management',
     items: [
       { id: 'orders',     label: 'Orders',      icon: 'fas fa-shopping-cart', path: '/dashboard/orders' },
-      { id: 'tracking',   label: 'Tracking',    icon: 'fas fa-shipping-fast', path: '/dashboard/tracking' },
       { id: 'inventory',  label: 'Inventory',   icon: 'fas fa-box',          path: '/dashboard/inventory' },
+      { id: 'products',   label: 'Products',    icon: 'fas fa-tags',          path: '/dashboard/products' },
+      { id: 'tracking',   label: 'Tracking',    icon: 'fas fa-shipping-fast', path: '/dashboard/tracking' },
       { id: 'disputes',   label: 'Disputes',    icon: 'fas fa-gavel',        path: '/dashboard/disputes' },
     ],
   },

@@ -17,7 +17,7 @@ export interface StoreSettings {
   markupPct: number;          // legacy fallback
   marginTiers?: MarginTier[]; // tiered markup
   freeShippingThreshold: number;
-  shippingMarkup: number;     // Extra fee added to live shipping (markup diatas ongkir CJ)
+  shippingMarkup: number;     // Percentage shipping markup added to live shipping (markup ongkir CJ dalam %)
   shippingBufferPct: number;  // Extra % buffer di atas ongkir CJ (untuk antisipasi selisih estimasi vs aktual)
   currencySymbol: string;
   storeName: string;
@@ -39,7 +39,7 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   markupPct: 0,
   marginTiers: [],
   freeShippingThreshold: 1000,
-  shippingMarkup: 3.50,      // Markup flat di atas ongkir CJ (dinaikkan dari $2 ke $3.5 untuk buffer aman)
+  shippingMarkup: 15,        // Markup persentase di atas ongkir CJ (default 15% untuk buffer aman)
   shippingBufferPct: 20,     // Tambahan buffer 20% di atas ongkir CJ agar tidak rugi saat estimasi meleset
   currencySymbol: 'USD',
   storeName: 'BangParjo Shop',
@@ -139,8 +139,9 @@ export function calculateShippingFee(baseShipping: number, subtotal: number, cus
     return 0;
   }
   
-  // Opsi 1: flat markup (shippingMarkup)
-  const withFlatMarkup = baseShipping + (settings.shippingMarkup || 0);
+  // Opsi 1: percentage markup (shippingMarkup)
+  const markupPct = settings.shippingMarkup || 0;
+  const withPercentageMarkup = baseShipping * (1 + markupPct / 100);
   
   // Opsi 2: percentage buffer (shippingBufferPct) — berguna untuk produk berbobot tinggi
   // yang ongkir aktual CJ-nya bisa lebih mahal dari estimasi
@@ -148,7 +149,7 @@ export function calculateShippingFee(baseShipping: number, subtotal: number, cus
   const withPctBuffer = baseShipping * (1 + bufferPct / 100);
   
   // Ambil nilai TERBESAR dari kedua metode untuk memastikan tidak rugi
-  return Math.max(withFlatMarkup, withPctBuffer);
+  return Math.max(withPercentageMarkup, withPctBuffer);
 }
 
 

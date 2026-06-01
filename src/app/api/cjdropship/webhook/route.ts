@@ -67,12 +67,8 @@ export async function POST(req: Request) {
         await handleStockUpdate(params);
         break;
       case 'PRODUCT':
-<<<<<<< HEAD
-        await handleProductUpdate(params);
-=======
       case 'VARIANT':
         await handleProductUpdate(type, messageType, params);
->>>>>>> fe928faf3c7a520b3e9879a7f24b8c173ff098c6
         break;
       default:
         console.warn(`[CJ Webhook] Unhandled type: ${type}`);
@@ -98,9 +94,10 @@ export async function POST(req: Request) {
 
 // ── PRODUCT & VARIANT Update ────────────────────────────────────────────────
 
-async function handleProductUpdate(type: string, messageType: string, params: any) {
-  const pid = params.pid;
-  const vid = params.vid;
+async function handleProductUpdate(type: string, messageType: string | undefined, params: any) {
+  const { pid, vid, status, sellPrice } = params || {};
+  
+  console.log(`[CJ Webhook] PRODUCT/VARIANT update type=${type} messageType=${messageType}:`, params);
 
   if (messageType === 'DELETE') {
     if (type === 'PRODUCT' && pid) {
@@ -119,56 +116,65 @@ async function handleProductUpdate(type: string, messageType: string, params: an
     return;
   }
 
-  // Handle INSERT or UPDATE
-  if (type === 'PRODUCT' && pid) {
-    const product = await prisma.product.findUnique({ where: { cjId: pid } });
-    if (!product) {
-      console.log(`[CJ Webhook] PRODUCT ${messageType}: Product ${pid} not found in local DB. Skipping.`);
-      return;
-    }
-
+  // Handle INSERT, UPDATE, or other updates
+  if (pid && (type === 'PRODUCT' || !vid)) {
     const updateData: any = {};
     if (params.productNameEn) updateData.name = params.productNameEn;
     if (params.productDescription) updateData.description = params.productDescription;
-    if (params.productStatus) updateData.status = params.productStatus === 3 ? 'ACTIVE' : 'INACTIVE';
+    if (params.productStatus !== undefined) {
+      updateData.status = params.productStatus === 3 ? 'ACTIVE' : 'INACTIVE';
+    } else if (status !== undefined) {
+      updateData.status = status === 0 ? 'INACTIVE' : 'ACTIVE';
+    }
     if (params.productImage) updateData.images = { set: [params.productImage] };
 
     if (Object.keys(updateData).length > 0) {
-      await prisma.product.update({
-        where: { id: product.id },
+      await prisma.product.updateMany({
+        where: { cjId: pid },
         data: updateData,
       });
-      console.log(`[CJ Webhook] Updated product ${pid}`);
+      console.log(`[CJ Webhook] Updated product ${pid} with data:`, updateData);
     }
-  } 
-  else if (type === 'VARIANT' && vid) {
-    // If variant exists, update it. If not, try to fetch its parent and create it.
-    const variant = await prisma.variant.findUnique({ 
+  }
+
+  if (vid && (type === 'VARIANT' || vid)) {
+    const variant = await prisma.variant.findUnique({
       where: { cjId: vid },
       include: { product: true }
     });
 
-    const baseCost = Number(params.variantSellPrice || 0);
+    const baseCost = sellPrice !== undefined ? parseFloat(sellPrice) : Number(params.variantSellPrice || 0);
     const weight = Number(params.variantWeight || 0);
-    const inventory = Number(params.variantStatus === 3 ? (params.inventory || 100) : 0);
+    
+    // Determine inventory if status/inventory is provided
+    let inventory: number | undefined = undefined;
+    if (params.variantStatus !== undefined) {
+      inventory = params.variantStatus === 3 ? Number(params.inventory || 100) : 0;
+    } else if (params.inventory !== undefined) {
+      inventory = Number(params.inventory);
+    }
 
     if (variant) {
-      await prisma.variant.update({
-        where: { id: variant.id },
-        data: {
-          sku: params.variantSku || variant.sku,
-          baseCost: baseCost || variant.baseCost,
-          sellingPrice: baseCost || variant.sellingPrice,
-          weight: weight || variant.weight,
-          inventory: inventory,
-          image: params.variantImage || variant.image,
-          color: params.variantKey || variant.color,
-        }
-      });
-      console.log(`[CJ Webhook] Updated variant ${vid}`);
+      const vUpdateData: any = {};
+      if (params.variantSku) vUpdateData.sku = params.variantSku;
+      if (baseCost > 0) {
+        vUpdateData.baseCost = baseCost;
+        vUpdateData.sellingPrice = baseCost;
+      }
+      if (weight > 0) vUpdateData.weight = weight;
+      if (inventory !== undefined) vUpdateData.inventory = inventory;
+      if (params.variantImage) vUpdateData.image = params.variantImage;
+      if (params.variantKey) vUpdateData.color = params.variantKey;
+
+      if (Object.keys(vUpdateData).length > 0) {
+        await prisma.variant.update({
+          where: { id: variant.id },
+          data: vUpdateData
+        });
+        console.log(`[CJ Webhook] Updated variant ${vid} with data:`, vUpdateData);
+      }
     } else {
       // NEW VARIANT or UPGRADE (Product exists but variant doesn't)
-      // We need to know which product this belongs to.
       // Call CJ API to get the parent PID.
       const { getVariantById } = await import('@/lib/cj-api');
       const vRes = await getVariantById(vid);
@@ -217,6 +223,11 @@ async function handleProductUpdate(type: string, messageType: string, params: an
       }
     }
   }
+
+  // Invalidate product caches
+  revalidateTag('home:featured', { expire: 0 });
+  revalidateTag('home:bestsellers', { expire: 0 });
+  revalidateTag('home:categories', { expire: 0 });
 }
 
 // ── ORDER Status Update ──────────────────────────────────────────────────────
@@ -422,53 +433,7 @@ async function handleStockUpdate(params: any) {
   }
 }
 
-// ── PRODUCT Update ───────────────────────────────────────────────────────────
-
-async function handleProductUpdate(params: any) {
-  /**
-   * CJ sends PRODUCT webhooks when:
-   * - Product price changes
-   * - Product availability changes (listed/unlisted)
-   * - Product info updates
-   *
-   * params can contain: pid, vid, status, sellPrice, etc.
-   */
-  const { pid, vid, status, sellPrice } = params || {};
-
-  console.log(`[CJ Webhook] PRODUCT update:`, params);
-
-  // If variant-level update (has vid + new price)
-  if (vid && sellPrice != null) {
-    try {
-      await prisma.variant.updateMany({
-        where: { cjId: vid },
-        data: { baseCost: parseFloat(sellPrice) },
-      });
-      console.log(`[CJ Webhook] Updated variant ${vid} baseCost → ${sellPrice}`);
-    } catch (e: any) {
-      console.warn(`[CJ Webhook] Variant update failed for ${vid}:`, e.message);
-    }
-  }
-
-  // If product-level status update (listed/unlisted)
-  if (pid && status !== undefined) {
-    const productStatus = status === 0 ? 'INACTIVE' : 'ACTIVE';
-    try {
-      await prisma.product.updateMany({
-        where: { cjId: pid },
-        data: { status: productStatus },
-      });
-      console.log(`[CJ Webhook] Updated product ${pid} status → ${productStatus}`);
-    } catch (e: any) {
-      console.warn(`[CJ Webhook] Product status update failed for ${pid}:`, e.message);
-    }
-  }
-
-  // Invalidate product caches
-  revalidateTag('home:featured', { expire: 0 });
-  revalidateTag('home:bestsellers', { expire: 0 });
-  revalidateTag('home:categories', { expire: 0 });
-}
+// ── Webhook Handler Health Check ────────────────────────────────────────────────
 
 /**
  * GET /api/cjdropship/webhook

@@ -1,4 +1,4 @@
-import { calculateFinalPrice } from './pricing';
+import { calculateFinalPrice, DEFAULT_SETTINGS } from './pricing';
 
 /**
  * Escape HTML special characters to prevent XSS
@@ -124,12 +124,21 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
   const whatsappNumber = waNumber || '628219105980';
   const storeBaseUrl = baseUrl || 'https://bangparjo.shop';
   // Calculate margin price using dynamic store pricing settings
-  function getDisplayPrice(sellingPrice: number): number {
-    return calculateFinalPrice(sellingPrice);
+  function getDisplayPrice(v: any): number {
+    if (!v) return 0;
+    const base = typeof v === 'object' ? v.baseCost : v;
+    const sell = typeof v === 'object' ? v.sellingPrice : v;
+    
+    if (sell !== base) {
+      return sell;
+    }
+    
+    const customSettings = markupPct !== undefined ? { ...DEFAULT_SETTINGS, markupPct } : undefined;
+    return calculateFinalPrice(base, customSettings);
   }
 
-  var minPrice = Math.min.apply(null, product.variants.map(function(v) { return getDisplayPrice(v.sellingPrice); }));
-  var maxPrice = Math.max.apply(null, product.variants.map(function(v) { return getDisplayPrice(v.sellingPrice); }));
+  var minPrice = Math.min.apply(null, product.variants.map(function(v) { return getDisplayPrice(v); }));
+  var maxPrice = Math.max.apply(null, product.variants.map(function(v) { return getDisplayPrice(v); }));
   var priceDisplay = minPrice === maxPrice
     ? '$' + minPrice.toFixed(2)
     : '$' + minPrice.toFixed(2) + ' - $' + maxPrice.toFixed(2);
@@ -174,7 +183,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     if (firstVariant.cjId) params.push('vid=' + encodeURIComponent(firstVariant.cjId));
     if (firstVariant.color) params.push('color=' + encodeURIComponent(firstVariant.color));
     if (firstVariant.size) params.push('size=' + encodeURIComponent(firstVariant.size));
-    params.push('price=' + getDisplayPrice(firstVariant.sellingPrice).toFixed(2));
+    params.push('price=' + getDisplayPrice(firstVariant).toFixed(2));
     variantParams = '?' + params.join('&');
   }
   var productLink = product.slug
@@ -193,8 +202,8 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
       + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#1A1A2E;">' + variantName + '</td>'
       + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#64748b;">' + safeSku + '</td>'
       + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;">' + stockStatus + '</td>'
-      + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;font-weight:700;color:#FF6B35;">$' + getDisplayPrice(v.sellingPrice).toFixed(2) 
-      + ' <span style="font-size:11px;color:#94a3b8;text-decoration:line-through;font-weight:500;margin-left:6px;">$' + (getDisplayPrice(v.sellingPrice) * 1.35).toFixed(2) + '</span></td>'
+      + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;font-weight:700;color:#FF6B35;">$' + getDisplayPrice(v).toFixed(2) 
+      + ' <span style="font-size:11px;color:#94a3b8;text-decoration:line-through;font-weight:500;margin-left:6px;">$' + (getDisplayPrice(v) * 1.35).toFixed(2) + '</span></td>'
       + '</tr>';
   }).join('');
 
@@ -266,7 +275,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
 
   // --- JSON-LD Product Schema ---
   var offers = product.variants.map(function(v) {
-    return '{"@type":"Offer","price":"' + getDisplayPrice(v.sellingPrice).toFixed(2) + '","priceCurrency":"USD","availability":"' + (v.inventory > 0 ? 'InStock' : 'OutOfStock') + '","sku":"' + hAttr(v.sku) + '"}';
+    return '{"@type":"Offer","price":"' + getDisplayPrice(v).toFixed(2) + '","priceCurrency":"USD","availability":"' + (v.inventory > 0 ? 'InStock' : 'OutOfStock') + '","sku":"' + hAttr(v.sku) + '"}';
   }).join(',');
   var jsonLd = '{\n'
     + '  "@context": "https://schema.org/",\n'
@@ -625,7 +634,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '</section>\n';
 
   // --- Interactive Checkout Preparation Section ---
-  var initialPrice = firstVariant ? getDisplayPrice(firstVariant.sellingPrice) : 0.00;
+  var initialPrice = firstVariant ? getDisplayPrice(firstVariant) : 0.00;
   var initialComparePrice = initialPrice * 1.5;
 
   var leftColumnHtml = '<div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100%; box-shadow: 0 8px 30px rgba(0,0,0,0.04); min-height: 420px;">\n'
@@ -634,7 +643,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
 
   var variantOptions = product.variants.map(function(v) {
     var vName = [v.color, v.size].filter(Boolean).join(' / ') || 'Default';
-    return '<option value="' + v.cjId + '" data-price="' + getDisplayPrice(v.sellingPrice).toFixed(2) + '" data-img="' + (v.image || product.images[0]) + '">' + h(vName) + ' - $' + getDisplayPrice(v.sellingPrice).toFixed(2) + '</option>';
+    return '<option value="' + v.cjId + '" data-price="' + getDisplayPrice(v).toFixed(2) + '" data-img="' + (v.image || product.images[0]) + '">' + h(vName) + ' - $' + getDisplayPrice(v).toFixed(2) + '</option>';
   }).join('');
 
   var rightColumnButtonHtml = '<button type="button" onclick="window.handleDirectCheckout(event)" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">\n'
@@ -857,7 +866,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
         vid: v.cjId,
         sku: v.sku,
         name: [v.color, v.size].filter(Boolean).join(' / ') || 'Default',
-        price: getDisplayPrice(v.sellingPrice),
+        price: getDisplayPrice(v),
         baseCost: v.baseCost,
         image: v.image || product.images[0]
       };

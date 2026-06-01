@@ -9,7 +9,7 @@ import { useSession } from 'next-auth/react';
 export default function SettingsPage() {
   const { settings: currentSettings, refreshSettings } = useSettings();
   const [draft, setDraft] = useState(currentSettings);
-  const [activeTab, setActiveTab] = useState<'profile' | 'logistics' | 'margins' | 'webhooks' | 'pages' | 'account'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'logistics' | 'margins' | 'pages' | 'account'>('profile');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [accountMsg, setAccountMsg] = useState('');
@@ -159,15 +159,6 @@ export default function SettingsPage() {
               }}
             >
               <i className="fas fa-percentage mr-2"></i> Pricing
-            </button>
-            <button 
-              className={`px-4 py-2 rounded-[8px] text-sm font-bold transition-all duration-200 ${activeTab === 'webhooks' ? 'bg-[#FF6B00] text-white shadow-sm' : 'bg-transparent text-gray-500 hover:text-gray-700'}`}
-              onClick={() => {
-                setActiveTab('webhooks');
-                setMessage('');
-              }}
-            >
-              <i className="fas fa-network-wired mr-2"></i> Webhooks
             </button>
             <button 
               className={`px-4 py-2 rounded-[8px] text-sm font-bold transition-all duration-200 ${activeTab === 'pages' ? 'bg-[#FF6B00] text-white' : 'bg-transparent text-gray-500'}`}
@@ -341,9 +332,9 @@ export default function SettingsPage() {
           {activeTab === 'logistics' && (
             <div className="grid gap-6">
               <div>
-                <label className={labelClass}>Shipping Service Markup ({draft.currencySymbol || 'USD'})</label>
+                <label className={labelClass}>Shipping Service Markup (%)</label>
                 <input type="number" className={inputClass} value={draft.shippingMarkup ?? 0} onChange={e => setDraft({...draft, shippingMarkup: Number(e.target.value)})} />
-                <p className="text-[11px] text-gray-400 mt-2">Added to the real carrier cost as a handling fee.</p>
+                <p className="text-[11px] text-gray-400 mt-2">Added as a percentage markup to the real carrier cost (e.g. 15% markup).</p>
               </div>
               <div>
                 <label className={labelClass}>Default Tax Rate (%)</label>
@@ -571,110 +562,12 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {activeTab === 'webhooks' && (
-            <div className="grid gap-6">
-              <div>
-                <label className={labelClass}>Webhook Target URL</label>
-                <input 
-                  type="url" 
-                  className={inputClass} 
-                  placeholder="https://yourstore.com/api/cjdropship/webhook" 
-                  value={webhookDraft.url} 
-                  onChange={e => setWebhookDraft({...webhookDraft, url: e.target.value})} 
-                />
-                <p className="text-[11px] text-gray-400 mt-2">
-                  The HTTPS URL of your store's webhook receiver. This will be registered automatically to CJ.
-                </p>
-              </div>
-
-              <div>
-                <label className={labelClass}>Webhook Secret Token</label>
-                <input 
-                  type="text" 
-                  className={inputClass} 
-                  placeholder="Enter a secret token to secure callbacks" 
-                  value={webhookDraft.secret} 
-                  onChange={e => setWebhookDraft({...webhookDraft, secret: e.target.value})} 
-                />
-                <p className="text-[11px] text-gray-400 mt-2">
-                  Used locally to authenticate incoming webhook packets.
-                </p>
-              </div>
-
-              <div>
-                <label className={labelClass}>Monitor Event Topics (V2.0)</label>
-                <div className="grid gap-3 mt-3 bg-gray-50 p-6 rounded-[12px] border border-[#E2E8F0]">
-                  {[
-                    { id: 'PRODUCT', label: 'Product Updates (PRODUCT)', desc: 'Variant price, stock status, or descriptions updates.' },
-                    { id: 'STOCK', label: 'Real-time Stock Levels (STOCK)', desc: 'Live variant warehouse inventory updates.' },
-                    { id: 'ORDER', label: 'CJ Order State Transitions (ORDER)', desc: 'Order placed, pay confirmation, or split alerts.' },
-                    { id: 'LOGISTIC', label: 'Live Delivery & Waybills (LOGISTIC)', desc: 'Carrier waybill generation and tracking steps.' },
-                  ].map(topic => {
-                    const isChecked = webhookDraft.events.includes(topic.id);
-                    return (
-                      <label key={topic.id} className="flex items-start gap-3 cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          className="mt-1 accent-[#FF6B00]" 
-                          checked={isChecked}
-                          onChange={() => {
-                            const newEvents = isChecked 
-                              ? webhookDraft.events.filter(e => e !== topic.id)
-                              : [...webhookDraft.events, topic.id];
-                            setWebhookDraft({...webhookDraft, events: newEvents});
-                          }}
-                        />
-                        <div>
-                          <span className="text-sm font-bold text-[#1E293B]">{topic.label}</span>
-                          <p className="text-xs text-gray-400 mt-0.5">{topic.desc}</p>
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-[#E2E8F0] flex items-center justify-between">
-                <span className={`text-sm font-bold ${message.includes('✅') ? 'text-green-600' : 'text-red-500'} ${message.includes('⚠️') ? 'text-amber-500' : ''}`}>{message}</span>
-                <button 
-                  className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-[12px] font-bold bg-[#FF6B00] text-white hover:bg-[#E65100] shadow-[0_4px_12px_rgba(255,107,0,0.3)] transition-all duration-200 disabled:opacity-50"
-                  onClick={async () => {
-                    setWebhookLoading(true);
-                    setMessage('');
-                    try {
-                      const res = await saveAdminWebhookSettingsAction(webhookDraft.url, webhookDraft.secret, webhookDraft.events);
-                      if (res.success) {
-                        if ((res as any).warning) {
-                          setMessage(`⚠️ ${(res as any).warning}`);
-                        } else {
-                          setMessage('✅ Webhooks successfully registered & saved!');
-                          setTimeout(() => setMessage(''), 4000);
-                        }
-                      } else {
-                        setMessage(`❌ Error: ${res.error || 'Failed to save'}`);
-                      }
-                    } catch (err: any) {
-                      setMessage(`❌ Error: ${err.message}`);
-                    } finally {
-                      setWebhookLoading(false);
-                    }
-                  }}
-                  disabled={webhookLoading}
-                >
-                  {webhookLoading ? <><i className="fas fa-spinner fa-spin"></i> Syncing...</> : 'Sync & Register Webhooks'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {activeTab !== 'webhooks' && (
-            <div className="mt-12 pt-8 border-t border-[#E2E8F0] flex items-center justify-between">
-              <span className={`text-sm font-bold ${message.includes('✅') ? 'text-green-600' : 'text-red-500'}`}>{message}</span>
-              <button className="inline-flex items-center gap-2.5 px-10 py-4 rounded-[12px] font-bold bg-[#FF6B00] text-white hover:bg-[#E65100] shadow-[0_4px_12px_rgba(255,107,0,0.3)] transition-all duration-200 disabled:opacity-50" onClick={handleSave} disabled={saving}>
-                {saving ? <><i className="fas fa-spinner fa-spin"></i> Updating...</> : 'Save Configuration'}
-              </button>
-            </div>
-          )}
+          <div className="mt-12 pt-8 border-t border-[#E2E8F0] flex items-center justify-between">
+            <span className={`text-sm font-bold ${message.includes('✅') ? 'text-green-600' : 'text-red-500'}`}>{message}</span>
+            <button className="inline-flex items-center gap-2.5 px-10 py-4 rounded-[12px] font-bold bg-[#FF6B00] text-white hover:bg-[#E65100] shadow-[0_4px_12px_rgba(255,107,0,0.3)] transition-all duration-200 disabled:opacity-50" onClick={handleSave} disabled={saving}>
+              {saving ? <><i className="fas fa-spinner fa-spin"></i> Updating...</> : 'Save Configuration'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
