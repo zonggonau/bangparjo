@@ -39,8 +39,8 @@ async function invalidateProductCaches(categoryName?: string) {
     }
     
     // 3. Next.js cache tags
-    revalidateTag('home:featured');
-    revalidateTag('home:bestsellers');
+    revalidateTag('home:featured', { expire: 0 });
+    revalidateTag('home:bestsellers', { expire: 0 });
   } catch (err) {
     console.warn('[Cache Invalidation] Failed:', err);
   }
