@@ -1,8 +1,19 @@
 import { NextResponse } from 'next/server';
+<<<<<<< HEAD
 import { cjFetch } from '@/lib/cj';
+=======
+import { cjFetch } from '@/lib/cj-api';
+import { auth } from '@/auth';
+>>>>>>> fe928faf3c7a520b3e9879a7f24b8c173ff098c6
 
 export async function GET() {
   try {
+    // Hanya user login yang boleh lihat CJ settings
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const settingsData = await cjFetch('/v1/setting/get');
     return NextResponse.json(settingsData);
   } catch (error) {

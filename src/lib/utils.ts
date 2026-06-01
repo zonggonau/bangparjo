@@ -2,6 +2,11 @@
 // Single source of truth for all formatting & parsing functions.
 // Import from here instead of duplicating across files.
 
+/** Round money to 2 decimal places (avoids floating-point drift) */
+export function r2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 /**
  * Slugify a string for URL use.
  */

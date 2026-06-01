@@ -40,7 +40,7 @@ export default async function SearchPage({
         size: pageSize,
         page,
         orderBy: 0, // best match
-        features: ['enable_description'],
+        features: ['enable_description', 'enable_category'],
       });
       if (res.success && res.data) {
         const d = res.data;
@@ -63,6 +63,9 @@ export default async function SearchPage({
             productUnit: p.productUnit || 'piece',
             listedNum: p.listedNum || 0,
             isFreeShipping: p.addMarkStatus === 1,
+            deliveryCycle: p.deliveryCycle || '3-5',
+            warehouseInventory: p.warehouseInventoryNum || 0,
+            discountPriceRate: p.discountPriceRate || '',
           }));
         }
 

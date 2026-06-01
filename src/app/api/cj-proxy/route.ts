@@ -12,8 +12,8 @@ export async function GET(request: Request) {
   const endpoint = urlStr.substring(idx + 10);
   
   try {
-    const res = await cjProxyAction(endpoint, { method: 'GET' });
-    return NextResponse.json(res);
+    const res: any = await cjProxyAction(endpoint, { method: 'GET' });
+    return NextResponse.json(res, { status: res.status || 200 });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
@@ -28,13 +28,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: 'Missing endpoint' }, { status: 400 });
     }
 
-    const res = await cjProxyAction(endpoint, {
+    const res: any = await cjProxyAction(endpoint, {
       method,
       body: data,
       headers: { 'Content-Type': 'application/json' }
     });
     
-    return NextResponse.json(res);
+    return NextResponse.json(res, { status: res.status || 200 });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }

@@ -1,47 +1,85 @@
 import { NextResponse } from 'next/server';
-import { getShippingFeeBySku } from '@/lib/cj-api';
+import { getShippingFeeBySku, cjFetch } from '@/lib/cj-api';
 import { calculateShippingFee } from '@/lib/pricing';
 import { getCachedStoreSettings } from '@/lib/server-settings';
 
 export const dynamic = 'force-dynamic';
+
+/** Try multiple CJ freight APIs and return whatever works */
+async function tryShippingApis(params: { sku: string; weight: number; country: string; subtotal: number }) {
+  // 1. SKU-based (freightCalculateTip)
+  const tipRes = await getShippingFeeBySku({
+    products: [{ sku: params.sku, quantity: 1, price: params.subtotal }],
+    endCountryCode: params.country,
+  });
+  if (tipRes.success && tipRes.data && tipRes.data.length > 0) return tipRes.data;
+
+  // 2. Partner freight
+  try {
+    const partnerRes = await cjFetch<any>('/api2.0/v1/logistic/partnerFreightCalculate', {
+      method: 'POST',
+      body: JSON.stringify({
+        fromCountryCode: 'CN',
+        endCountryCode: params.country,
+        weight: params.weight,
+        totalGoodsAmount: params.subtotal,
+      }),
+      maxRetries: 0,
+    });
+    if (partnerRes.success && partnerRes.data) {
+      const items = Array.isArray(partnerRes.data) ? partnerRes.data : [partnerRes.data];
+      return items.map((i: any) => ({
+        logisticName: i.channelNameEn || i.logisticName || 'Standard Shipping',
+        logisticPrice: i.totalFee || i.freight || i.logisticPrice || 0,
+        logisticAging: i.estimatedDays || i.deliveryTime || '10-20',
+      }));
+    }
+  } catch {}
+
+  // 3. Return empty — shipping will be calculated at checkout
+  return [];
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const sku = searchParams.get('sku');
   const quantity = parseInt(searchParams.get('quantity') || '1', 10);
   const country = searchParams.get('country') || 'ID';
-  // subtotal di sini adalah harga jual (setelah margin), bukan harga CJ mentah
   const subtotal = parseFloat(searchParams.get('subtotal') || '10');
+  const weight = parseInt(searchParams.get('weight') || '500', 10);
 
   if (!sku) {
     return NextResponse.json({ success: false, message: 'Missing sku parameter' }, { status: 400 });
   }
 
   try {
-    // Ambil settings dari DB agar markup konsisten dengan halaman checkout
     const settings = await getCachedStoreSettings();
+    const rates = await tryShippingApis({ sku, weight, country, subtotal });
 
-    const res = await getShippingFeeBySku({
-      products: [{ sku, quantity, price: subtotal }],
-      endCountryCode: country,
-    });
-
-    if (res.success && res.data) {
-      const rates = res.data.map((rate: any) => {
-        // Terapkan calculateShippingFee SAMA PERSIS seperti di checkout
-        const finalPrice = calculateShippingFee(rate.logisticPrice, subtotal, settings);
+    if (rates.length > 0) {
+      const mapped = rates.map((rate: any) => {
+        const price = calculateShippingFee(rate.logisticPrice || 0, subtotal, settings);
         return {
           logisticName: rate.logisticName,
-          price: finalPrice,
-          rawCjPrice: rate.logisticPrice, // simpan harga CJ asli untuk debugging
-          formattedPrice: finalPrice === 0 ? 'FREE' : `$${finalPrice.toFixed(2)}`,
-          estimatedDays: rate.logisticAging + ' days',
+          price,
+          rawCjPrice: rate.logisticPrice,
+          formattedPrice: price === 0 ? 'FREE' : `$${price.toFixed(2)}`,
+          estimatedDays: rate.logisticAging ? `${rate.logisticAging}`.includes('day') ? rate.logisticAging : `${rate.logisticAging} days` : 'N/A',
         };
       });
-      return NextResponse.json({ success: true, data: rates });
+      return NextResponse.json({ success: true, data: mapped });
     }
 
-    return NextResponse.json({ success: false, message: res.message || 'Failed to fetch shipping rates' });
+    // Fallback: estimasi shipping berdasarkan weight
+    const baseShipping = 5 + Math.ceil(weight / 1000) * 1;
+    const finalPrice = calculateShippingFee(baseShipping, subtotal, settings);
+    return NextResponse.json({ success: true, data: [{
+      logisticName: 'Standard Shipping',
+      price: finalPrice,
+      rawCjPrice: baseShipping,
+      formattedPrice: finalPrice === 0 ? 'FREE' : `$${finalPrice.toFixed(2)}`,
+      estimatedDays: 'Estimated at checkout',
+    }]});
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }

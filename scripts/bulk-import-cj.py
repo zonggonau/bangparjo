@@ -34,22 +34,32 @@ def log(msg):
         f.write(line + '\n')
 
 
-def api_get(url, retries=3):
+def api_get(url, retries=5):
     """GET request with retry."""
     for attempt in range(retries):
         try:
             req = urllib.request.Request(url)
             req.add_header('User-Agent', 'BangParjo-Importer/2.0')
             with urllib.request.urlopen(req, timeout=60) as resp:
-                return json.loads(resp.read())
+                result = json.loads(resp.read())
+                
+                # Check for success field in JSON even on 200 OK
+                if not result.get('success', True):
+                    msg = result.get('message', '').lower()
+                    if 'qps' in msg or 'too many' in msg or 'rate limit' in msg or 'retry' in msg:
+                        wait = min(20 * (attempt + 1), 120)
+                        log(f'  Proxy reports QPS limit, waiting {wait}s (attempt {attempt+1}/{retries})')
+                        time.sleep(wait)
+                        continue
+                return result
         except urllib.error.HTTPError as e:
             body = e.read().decode()
             try:
                 err = json.loads(body)
-                msg = err.get('message', err.get('error', ''))
-                if 'daily' in msg.lower() or 'too many' in msg.lower() or 'qps' in msg.lower():
+                msg = err.get('message', err.get('error', '')).lower()
+                if 'daily' in msg or 'too many' in msg or 'qps' in msg or 'rate limit' in msg:
                     wait = min(60 * (attempt + 1), 180)
-                    log(f'  Rate limited, waiting {wait}s (attempt {attempt+1})')
+                    log(f'  Rate limited (HTTP {e.code}), waiting {wait}s (attempt {attempt+1}/{retries})')
                     time.sleep(wait)
                     continue
                 return err
@@ -57,10 +67,12 @@ def api_get(url, retries=3):
                 return {'error': f'HTTP {e.code}: {body[:100]}'}
         except Exception as e:
             if attempt < retries - 1:
-                time.sleep(5 * (attempt + 1))
+                wait = 5 * (attempt + 1)
+                log(f'  Network error ({str(e)[:50]}), retrying in {wait}s...')
+                time.sleep(wait)
                 continue
             return {'error': str(e)}
-    return {'error': 'Max retries'}
+    return {'error': 'Max retries exceeded'}
 
 
 def api_post(url, data, retries=3):
@@ -120,7 +132,7 @@ def search_page(page=1, size=100, order_by=1, sort='desc'):
 
     msg = result.get('message', result.get('error', 'Unknown'))
     log(f'  Search failed: {msg[:100]}')
-    return {'products': [], 'page': page, 'total_pages': 0}
+    return {'products': [], 'page': page, 'total_pages': 0, 'error': msg}
 
 
 def bulk_import(products, page_num):
@@ -196,10 +208,16 @@ def main():
             sort=args.sort,
         )
 
-        if result.get('error') == 'daily_limit':
-            log('⚠️  Daily API limit reached.')
-            save_state({'current_page': current_page, 'total_imported': total_imported})
-            break
+        if result.get('error'):
+            if result.get('error') == 'daily_limit':
+                log('⚠️  Daily API limit reached.')
+                save_state({'current_page': current_page, 'total_imported': total_imported})
+                break
+            
+            # For other errors, we might want to retry a few times at the search level
+            log(f'   Page {current_page} failed, retrying in 30s...')
+            time.sleep(30)
+            continue
 
         products = result.get('products', [])
         if not products:

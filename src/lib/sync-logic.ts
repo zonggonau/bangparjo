@@ -131,6 +131,10 @@ export async function startCategoryImport(cjId: string) {
           console.log(`Import stopped or category changed for ${cjId}`);
           break;
         }
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> fe928faf3c7a520b3e9879a7f24b8c173ff098c6
 
         // Fetch products by category from CJ API
         const res = await getProducts({ pageNum: page, pageSize: 20, categoryId: cjId });
@@ -177,6 +181,11 @@ export async function startCategoryImport(cjId: string) {
           }
         }
 
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> server
+>>>>>>> fe928faf3c7a520b3e9879a7f24b8c173ff098c6
         page++;
         // Update state to next page
         await prisma.autoImportState.update({
@@ -185,7 +194,15 @@ export async function startCategoryImport(cjId: string) {
         });
       }
 
+<<<<<<< HEAD
       console.log(`✅ Import finished for category ${cjId} — ${imported} products imported`);
+=======
+<<<<<<< HEAD
+      console.log(`✅ Import finished for category ${cjId} — ${imported} products imported`);
+=======
+      console.log(`Import finished for category ${cjId}`);
+>>>>>>> server
+>>>>>>> fe928faf3c7a520b3e9879a7f24b8c173ff098c6
       await prisma.autoImportState.update({
         where: { id: "default" },
         data: { status: "IDLE", currentCategory: null }
