@@ -5,7 +5,15 @@ import { auth } from '@/auth';
 async function checkAuth(req: Request) {
   const session = await auth();
   const apiKey = req.headers.get('x-scripts-api-key');
-  const validApiKey = process.env.SCRIPTS_API_KEY && apiKey === process.env.SCRIPTS_API_KEY;
+  const expectedKey = process.env.SCRIPTS_API_KEY;
+  const validApiKey = expectedKey && apiKey === expectedKey;
+  
+  if (!validApiKey && apiKey) {
+    console.log('[Auth Debug] API Key mismatch.');
+    // console.log('Received:', apiKey);
+    // console.log('Expected:', expectedKey);
+  }
+  
   return !!(session?.user?.role === 'ADMIN' || validApiKey);
 }
 
