@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getAdminBlogPostsAction, saveAdminBlogPostAction, deleteAdminBlogPostAction } from '@/lib/actions-admin-content';
+import { getAdminBlogPostsAction, saveAdminBlogPostAction, deleteAdminBlogPostAction, sendBlogBroadcastAction } from '@/lib/actions-admin-content';
 
 interface BlogPost {
   id: string;
@@ -20,6 +20,12 @@ export default function AdminBlogPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<BlogPost | null>(null);
   
+  // Broadcast Modal State
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
+  const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [broadcasting, setBroadcasting] = useState(false);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -146,7 +152,7 @@ export default function AdminBlogPage() {
   };
 
   return (
-    <div className="p-6 max-w-[1200px] mx-auto">
+    <div className="p-6 max-w-[1200px] mx-auto relative">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Blog Posts</h1>
@@ -154,7 +160,7 @@ export default function AdminBlogPage() {
         </div>
         <button
           onClick={() => { resetForm(); setShowForm(!showForm); }}
-          className="bg-[#FF6B00] text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-[#e55e00] transition-colors"
+          className="bg-[#FF6B00] text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-[#e55e00] transition-colors cursor-pointer border-none"
         >
           {showForm ? '✕ Cancel' : '+ New Post'}
         </button>
@@ -258,14 +264,14 @@ export default function AdminBlogPage() {
             <button
               type="submit"
               disabled={saving}
-              className="bg-[#FF6B00] text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-[#e55e00] transition-colors disabled:opacity-50"
+              className="bg-[#FF6B00] text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-[#e55e00] transition-colors disabled:opacity-50 border-none cursor-pointer"
             >
               {saving ? 'Saving...' : editing ? '✏️ Update Post' : '📝 Create Post'}
             </button>
             <button
               type="button"
               onClick={resetForm}
-              className="px-6 py-2.5 rounded-lg font-semibold border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
+              className="px-6 py-2.5 rounded-lg font-semibold border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer bg-white"
             >
               Cancel
             </button>
@@ -290,7 +296,7 @@ export default function AdminBlogPage() {
           <p className="text-sm text-gray-500 mb-4">Create your first blog post!</p>
           <button
             onClick={() => setShowForm(true)}
-            className="bg-[#FF6B00] text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-[#e55e00] transition-colors"
+            className="bg-[#FF6B00] text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-[#e55e00] transition-colors cursor-pointer border-none"
           >
             + New Post
           </button>
@@ -315,7 +321,7 @@ export default function AdminBlogPage() {
               <div className="flex items-center gap-2 shrink-0 ml-4">
                 <button
                   onClick={() => togglePublish(post)}
-                  className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                  className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer border-none ${
                     post.published
                       ? 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100'
                       : 'bg-green-50 text-green-600 hover:bg-green-100'
@@ -323,9 +329,23 @@ export default function AdminBlogPage() {
                 >
                   {post.published ? 'Unpublish' : 'Publish'}
                 </button>
+                
+                {/* Broadcast Email Button */}
+                <button
+                  onClick={() => {
+                    setSelectedPost(post);
+                    setBroadcastMessage('');
+                    setShowBroadcastModal(true);
+                  }}
+                  title="Broadcast this article to all customers/subscribers"
+                  className="text-xs px-3 py-1.5 rounded-lg font-medium bg-cyan-50 text-cyan-600 hover:bg-cyan-100 transition-colors border-none cursor-pointer flex items-center gap-1"
+                >
+                  <i className="fas fa-envelope"></i> Broadcast
+                </button>
+
                 <button
                   onClick={() => editPost(post)}
-                  className="text-xs px-3 py-1.5 rounded-lg font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                  className="text-xs px-3 py-1.5 rounded-lg font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors border-none cursor-pointer"
                 >
                   Edit
                 </button>
@@ -338,7 +358,7 @@ export default function AdminBlogPage() {
                 </a>
                 <button
                   onClick={() => deletePost(post.id)}
-                  className="text-xs px-3 py-1.5 rounded-lg font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                  className="text-xs px-3 py-1.5 rounded-lg font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors border-none cursor-pointer"
                 >
                   Delete
                 </button>
@@ -355,7 +375,7 @@ export default function AdminBlogPage() {
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
-                  className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-white"
                 >
                   Previous
                 </button>
@@ -364,10 +384,10 @@ export default function AdminBlogPage() {
                     <button
                       key={idx}
                       onClick={() => setCurrentPage(idx + 1)}
-                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition-colors ${
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition-colors cursor-pointer border-none ${
                         currentPage === idx + 1
                           ? 'bg-[#FF6B00] text-white'
-                          : 'text-gray-600 hover:bg-gray-100'
+                          : 'text-gray-600 hover:bg-gray-100 bg-white'
                       }`}
                     >
                       {idx + 1}
@@ -377,13 +397,102 @@ export default function AdminBlogPage() {
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-white"
                 >
                   Next
                 </button>
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Broadcast Blog Post Modal */}
+      {showBroadcastModal && selectedPost && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[24px] max-w-[500px] w-full p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] transform transition-all duration-300 scale-100">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-black text-gray-800 flex items-center gap-3">
+                <i className="fas fa-paper-plane text-[#FF6B00]"></i>
+                Broadcast Blog Post
+              </h3>
+              <button 
+                onClick={() => { setShowBroadcastModal(false); setSelectedPost(null); }}
+                className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center transition-all duration-200 border-none cursor-pointer"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <p className="text-xs font-semibold text-gray-500 mb-6 leading-relaxed">
+              This action will broadcast the link of <strong>"{selectedPost.title}"</strong> to all customers and newsletter subscribers. You can add an optional custom message below.
+            </p>
+
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-xs text-gray-600 mb-5">
+              <strong className="text-gray-700">Email Subject:</strong> New Article: {selectedPost.title} - BangParjo Shop<br/>
+              <strong className="text-gray-700">Tautan Artikel:</strong> {typeof window !== 'undefined' ? `${window.location.origin}/${selectedPost.slug}` : `/${selectedPost.slug}`}
+            </div>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              setBroadcasting(true);
+              try {
+                const absoluteUrl = `${window.location.origin}/${selectedPost.slug}`;
+                const res = await sendBlogBroadcastAction(selectedPost.title, absoluteUrl, broadcastMessage);
+                if (res.success) {
+                  alert(res.message || 'Broadcast sent successfully!');
+                  setShowBroadcastModal(false);
+                  setSelectedPost(null);
+                } else {
+                  alert(res.error || 'Failed to send broadcast.');
+                }
+              } catch (err: any) {
+                alert(err.message || 'An error occurred.');
+              } finally {
+                setBroadcasting(false);
+              }
+            }} className="flex flex-col gap-5">
+              <div>
+                <label className="block font-black text-xs uppercase text-gray-500 tracking-[0.05em] mb-2">Optional Opening Message</label>
+                <textarea 
+                  rows={4}
+                  placeholder="Hey dropshippers, check out our latest guide to boost your stores..."
+                  value={broadcastMessage}
+                  onChange={(e) => setBroadcastMessage(e.target.value)}
+                  className="w-full px-4 py-3 rounded-[12px] border border-gray-200 text-sm outline-none focus:border-[#FF6B00] transition-all duration-200 resize-none font-sans"
+                  disabled={broadcasting}
+                ></textarea>
+              </div>
+
+              <div className="flex gap-3 justify-end mt-2">
+                <button 
+                  type="button"
+                  onClick={() => { setShowBroadcastModal(false); setSelectedPost(null); }}
+                  className="px-5 py-3 rounded-[12px] text-sm font-bold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer bg-white"
+                  disabled={broadcasting}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="px-6 py-3 rounded-[12px] text-sm font-black bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200 flex items-center gap-2 disabled:opacity-50 border-none cursor-pointer"
+                  disabled={broadcasting}
+                >
+                  {broadcasting ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i>
+                      Broadcasting...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-paper-plane"></i>
+                      Send Broadcast
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

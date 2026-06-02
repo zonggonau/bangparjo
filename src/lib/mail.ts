@@ -46,3 +46,52 @@ export async function sendCheckoutEmail(email: string, orderNum: string, checkou
     return { success: false, error: error.message };
   }
 }
+
+export async function sendBroadcastEmail(recipients: string[], subject: string, htmlContent: string) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.warn('[MAIL] SMTP credentials missing. Broadcast not sent.');
+    return { success: false, error: 'SMTP configuration missing' };
+  }
+
+  const results = {
+    successCount: 0,
+    failCount: 0,
+    errors: [] as string[],
+  };
+
+  // Send to each recipient in a safe batch manner (sequentially)
+  for (const email of recipients) {
+    try {
+      await transporter.sendMail({
+        from: `"BangParjo Shop" <${process.env.SMTP_USER}>`,
+        to: email,
+        subject: subject,
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <div style="text-align: center; border-bottom: 2px solid #ff6b00; padding-bottom: 15px; margin-bottom: 20px;">
+              <h2 style="color: #ff6b00; margin: 0; font-size: 26px; font-weight: bold; letter-spacing: 0.05em;">BangParjo Shop</h2>
+            </div>
+            <div style="font-size: 15px; line-height: 1.6; color: #333; min-height: 150px;">
+              ${htmlContent.replace(/\n/g, '<br/>')}
+            </div>
+            <div style="font-size: 11px; color: #999; border-top: 1px solid #eee; padding-top: 15px; margin-top: 30px; text-align: center;">
+              You received this email because you are a registered customer or subscriber of BangParjo Shop.<br/>
+              © 2024 BangParjo Shop. All rights reserved.
+            </div>
+          </div>
+        `,
+      });
+      results.successCount++;
+    } catch (err: any) {
+      results.failCount++;
+      results.errors.push(`${email}: ${err.message}`);
+    }
+  }
+
+  return { 
+    success: results.failCount === 0, 
+    successCount: results.successCount, 
+    failCount: results.failCount,
+    errors: results.errors 
+  };
+}

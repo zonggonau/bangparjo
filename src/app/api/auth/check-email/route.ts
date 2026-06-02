@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { isEmailAuthorized } from '@/lib/auth-gate';
 
 /**
  * GET /api/auth/check-email?email=xxx
@@ -17,14 +17,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: { password: true },
-    });
+    // Periksa otorisasi email (apakah admin, active subscriber, atau buyer)
+    const check = await isEmailAuthorized(email);
+    if (!check.authorized) {
+      return NextResponse.json({ error: check.reason }, { status: 403 });
+    }
 
     return NextResponse.json({
-      exists: !!user,
-      isAdmin: !!(user?.password), // Admin = user yang punya password
+      exists: check.userExists,
+      isAdmin: check.isAdmin,
     });
   } catch (error) {
     console.error('[CHECK-EMAIL] Error:', error);

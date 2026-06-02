@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
+import { isEmailAuthorized } from "@/lib/auth-gate";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -19,6 +20,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
 
         if (!user) return null;
+
+        // Periksa otorisasi email (apakah admin, active subscriber, atau buyer)
+        const check = await isEmailAuthorized(user.email || '');
+        if (!check.authorized) return null;
 
         // ── Path 1: Admin / password-based login ───────────────────────
         if (user.password) {

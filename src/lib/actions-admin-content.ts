@@ -227,4 +227,121 @@ export async function deleteAdminSubscriberAction(id: string) {
   }
 }
 
+export async function sendBroadcastEmailAction(subject: string, content: string) {
+  try {
+    if (!subject || !content) {
+      return { success: false, error: 'Subject and content are required' };
+    }
+
+    // 1. Get all customer emails (role === 'USER')
+    const customers = await prisma.user.findMany({
+      where: { role: 'USER' },
+      select: { email: true }
+    });
+
+    // 2. Get all active subscriber emails
+    const subscribers = await prisma.subscriber.findMany({
+      where: { isActive: true },
+      select: { email: true }
+    });
+
+    // Combine and deduplicate emails
+    const emailSet = new Set<string>();
+    
+    customers.forEach(c => {
+      if (c.email) emailSet.add(c.email.trim().toLowerCase());
+    });
+    subscribers.forEach(s => {
+      if (s.email) emailSet.add(s.email.trim().toLowerCase());
+    });
+
+    const allRecipients = Array.from(emailSet);
+
+    if (allRecipients.length === 0) {
+      return { success: false, error: 'No customers or active subscribers found to email.' };
+    }
+
+    // 3. Send email broadcast
+    const { sendBroadcastEmail } = await import('@/lib/mail');
+    const res = await sendBroadcastEmail(allRecipients, subject, content);
+    
+    return { 
+      success: res.success, 
+      successCount: res.successCount, 
+      failCount: res.failCount,
+      message: `Broadcast complete. Sent: ${res.successCount}, Failed: ${res.failCount}`
+    };
+  } catch (error: any) {
+    console.error('[BROADCAST_ACTION] Error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function sendBlogBroadcastAction(postTitle: string, postUrl: string, customMessage: string) {
+  try {
+    if (!postTitle || !postUrl) {
+      return { success: false, error: 'Post title and URL are required' };
+    }
+
+    // 1. Get all customer emails (role === 'USER')
+    const customers = await prisma.user.findMany({
+      where: { role: 'USER' },
+      select: { email: true }
+    });
+
+    // 2. Get all active subscriber emails
+    const subscribers = await prisma.subscriber.findMany({
+      where: { isActive: true },
+      select: { email: true }
+    });
+
+    // Combine and deduplicate
+    const emailSet = new Set<string>();
+    customers.forEach(c => { if (c.email) emailSet.add(c.email.trim().toLowerCase()); });
+    subscribers.forEach(s => { if (s.email) emailSet.add(s.email.trim().toLowerCase()); });
+
+    const allRecipients = Array.from(emailSet);
+
+    if (allRecipients.length === 0) {
+      return { success: false, error: 'No customers or active subscribers found.' };
+    }
+
+    // Build HTML email body
+    const subject = `New Article: ${postTitle} - BangParjo Shop`;
+    const htmlContent = `
+      <p>Hello there!</p>
+      <p>We have just published a brand new article on our blog:</p>
+      
+      <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #ff6b00; margin: 20px 0; border-radius: 4px;">
+        <h4 style="margin: 0 0 10px 0; color: #222; font-size: 16px;">${postTitle}</h4>
+        ${customMessage ? `<p style="margin: 0; color: #555; font-size: 14px; line-height: 1.5;">${customMessage.replace(/\n/g, '<br/>')}</p>` : ''}
+      </div>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${postUrl}" style="background-color: #ff6b00; color: white; padding: 12px 25px; text-decoration: none; font-weight: bold; border-radius: 8px; display: inline-block; box-shadow: 0 2px 5px rgba(255,107,0,0.2);">
+          Read the Article
+        </a>
+      </div>
+
+      <p style="font-size: 12px; color: #777; text-align: center;">
+        If the button doesn't work, copy and paste this link into your browser:<br/>
+        <a href="${postUrl}" style="color: #ff6b00;">${postUrl}</a>
+      </p>
+    `;
+
+    const { sendBroadcastEmail } = await import('@/lib/mail');
+    const res = await sendBroadcastEmail(allRecipients, subject, htmlContent);
+
+    return {
+      success: res.success,
+      successCount: res.successCount,
+      failCount: res.failCount,
+      message: `Broadcast complete. Sent: ${res.successCount}, Failed: ${res.failCount}`
+    };
+  } catch (error: any) {
+    console.error('[BLOG_BROADCAST] Error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 

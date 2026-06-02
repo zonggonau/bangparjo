@@ -1,16 +1,33 @@
 'use client';
 
 import { useState } from 'react';
+import { subscribeNewsletterAction } from '@/lib/actions-content';
 
 export default function Newsletter() {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      setSubscribed(true);
-      setEmail('');
+    if (!email) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await subscribeNewsletterAction(email);
+      if (res.success) {
+        setSubscribed(true);
+        setEmail('');
+      } else {
+        setError(res.error || 'Failed to subscribe.');
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -33,10 +50,20 @@ export default function Newsletter() {
                 required 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 px-6 py-4 bg-white text-[15px] text-[#1A1A1A] placeholder:text-[#888888] outline-none border-none"
+                disabled={loading}
+                className="flex-1 px-6 py-4 bg-white text-[15px] text-[#1A1A1A] placeholder:text-[#888888] outline-none border-none disabled:opacity-50"
               />
-              <button type="submit" className="px-8 py-4 bg-[#FF6B00] text-white font-semibold text-[15px] cursor-pointer transition-all duration-300 border-none hover:bg-[#E06000]">Subscribe</button>
+              <button 
+                type="submit" 
+                disabled={loading} 
+                className="px-8 py-4 bg-[#FF6B00] text-white font-semibold text-[15px] cursor-pointer transition-all duration-300 border-none hover:bg-[#E06000] disabled:opacity-50"
+              >
+                {loading ? 'Subscribing...' : 'Subscribe'}
+              </button>
             </form>
+            {error && (
+              <p className="text-red-500 text-sm mt-3 font-semibold">{error}</p>
+            )}
           </>
         )}
       </div>

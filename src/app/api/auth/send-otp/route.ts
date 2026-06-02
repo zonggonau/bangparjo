@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { isEmailAuthorized } from '@/lib/auth-gate';
 
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -16,6 +17,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: 'Email is required.' },
         { status: 400 }
+      );
+    }
+
+    // Periksa otorisasi email (apakah admin, active subscriber, atau buyer)
+    const check = await isEmailAuthorized(email);
+    if (!check.authorized) {
+      return NextResponse.json({ error: check.reason }, { status: 403 });
+    }
+
+    // Admin harus menggunakan login password, bukan OTP
+    if (check.isAdmin) {
+      return NextResponse.json(
+        { error: 'Admin must use password login.' },
+        { status: 403 }
       );
     }
 

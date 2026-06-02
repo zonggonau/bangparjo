@@ -87,3 +87,44 @@ export async function getAboutContentAction() {
     return { success: false, error: error.message };
   }
 }
+
+export async function subscribeNewsletterAction(email: string) {
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return { success: false, error: 'Invalid email address.' };
+    }
+
+    // Check if already exists in the database
+    const existing = await prisma.subscriber.findUnique({
+      where: { email: cleanEmail }
+    });
+
+    if (existing) {
+      if (existing.isActive) {
+        return { success: true, message: 'You are already subscribed.' };
+      } else {
+        // Reactivate subscriber
+        await prisma.subscriber.update({
+          where: { email: cleanEmail },
+          data: { isActive: true }
+        });
+        return { success: true, message: 'Successfully subscribed.' };
+      }
+    }
+
+    // Save as new subscriber
+    await prisma.subscriber.create({
+      data: {
+        email: cleanEmail,
+        isActive: true
+      }
+    });
+
+    return { success: true, message: 'Successfully subscribed.' };
+  } catch (error: any) {
+    console.error('[SUBSCRIBE] Error:', error);
+    return { success: false, error: 'Failed to subscribe. Please try again.' };
+  }
+}
