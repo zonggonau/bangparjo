@@ -1,7 +1,19 @@
 import { NextResponse } from 'next/server';
 import { cjProxyAction } from '@/lib/actions-catalog';
+import { auth } from '@/auth';
+
+async function checkAuth(req: Request) {
+  const session = await auth();
+  const apiKey = req.headers.get('x-scripts-api-key');
+  const validApiKey = process.env.SCRIPTS_API_KEY && apiKey === process.env.SCRIPTS_API_KEY;
+  return !!(session?.user?.role === 'ADMIN' || validApiKey);
+}
 
 export async function GET(request: Request) {
+  if (!(await checkAuth(request))) {
+    return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  }
+
   const urlStr = request.url;
   const idx = urlStr.indexOf('?endpoint=');
   if (idx === -1) {
@@ -20,6 +32,10 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!(await checkAuth(request))) {
+    return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { endpoint, method = 'POST', data } = body;

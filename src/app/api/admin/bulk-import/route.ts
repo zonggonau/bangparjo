@@ -5,8 +5,11 @@ import { auth } from '@/auth';
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (session?.user?.role !== 'ADMIN') {
-      return NextResponse.json({ success: false, error: 'Unauthorized: Admin access required' }, { status: 401 });
+    const apiKey = req.headers.get('x-scripts-api-key');
+    const validApiKey = process.env.SCRIPTS_API_KEY && apiKey === process.env.SCRIPTS_API_KEY;
+
+    if (session?.user?.role !== 'ADMIN' && !validApiKey) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const { products } = await req.json();
