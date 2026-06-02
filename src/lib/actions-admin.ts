@@ -2,9 +2,19 @@
 
 import { prisma } from '@/lib/db';
 import { cjFetch } from '@/lib/cj';
+import { auth } from '@/auth';
+
+async function checkAdmin() {
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    throw new Error('Unauthorized: Admin access required');
+  }
+  return session;
+}
 
 export async function getDashboardAnalyticsAction() {
   try {
+    await checkAdmin();
     const orders = await prisma.order.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
@@ -84,6 +94,7 @@ export async function getDashboardAnalyticsAction() {
 
     const pointsRemaining = await prisma.storeSetting.findUnique({ where: { key: 'CJ_POINTS_REMAINING' } });
     const pointsUsed = await prisma.storeSetting.findUnique({ where: { key: 'CJ_POINTS_USED' } });
+    const pointsTotal = await prisma.storeSetting.findUnique({ where: { key: 'CJ_POINTS_TOTAL' } });
 
     return {
       success: true,
@@ -91,6 +102,7 @@ export async function getDashboardAnalyticsAction() {
         cjPoints: {
           remaining: parseInt(pointsRemaining?.value || '0'),
           used: parseInt(pointsUsed?.value || '0'),
+          total: parseInt(pointsTotal?.value || '50000'),
         },
         totalOrders,
         totalRevenue,
@@ -114,6 +126,7 @@ export async function getDashboardAnalyticsAction() {
 
 export async function getCjBalanceAction() {
   try {
+    await checkAdmin();
     const res = await cjFetch('/v1/shopping/pay/getBalance', { method: 'GET' });
     return { success: true, data: res };
   } catch (error: any) {
@@ -126,6 +139,7 @@ export async function registerCJWebhookAction(
   enabledEvents: { product: boolean; stock: boolean; order: boolean; logistics: boolean }
 ) {
   try {
+    await checkAdmin();
     const { setWebhook } = await import('@/lib/cj-api');
     const callbackUrl = `${baseUrl.replace(/\/+$/, '')}/api/cj-webhook`;
     

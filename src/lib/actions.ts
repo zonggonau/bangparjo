@@ -746,8 +746,9 @@ export async function getStoreSettingsAction() {
 export async function updateStoreSettingsAction(data: StoreSettings) {
   try {
     const session = await auth();
-    // Assuming you have an admin check here, simplified for now:
-    if (!session?.user) return { success: false, error: 'Unauthorized' };
+    if (session?.user?.role !== 'ADMIN') {
+      return { success: false, error: 'Unauthorized: Admin access required' };
+    }
 
     const keys = Object.keys(data).filter(k => k !== 'marginTiers');
     for (const key of keys) {

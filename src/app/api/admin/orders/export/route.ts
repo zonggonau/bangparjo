@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getOrderList } from '@/lib/cj-api';
+import { auth } from '@/auth';
 
 /**
  * Admin Orders Export API
@@ -44,6 +45,11 @@ function formatItems(items: any[]): string {
 
 export async function GET(req: Request) {
   try {
+    const session = await auth();
+    if (session?.user?.role !== 'ADMIN') {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const source = (searchParams.get('source') || 'LOCAL').toUpperCase();
     const statusFilter = (searchParams.get('status') || 'ALL').toUpperCase();

@@ -2,9 +2,19 @@
 
 import { prisma } from '@/lib/db';
 import { revalidateTag } from 'next/cache';
+import { auth } from '@/auth';
+
+async function checkAdmin() {
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    throw new Error('Unauthorized: Admin access required');
+  }
+  return session;
+}
 
 export async function getAdminWebhooksAction(type?: string) {
   try {
+    await checkAdmin();
     if (type === 'settings') {
       const urlSetting = await prisma.storeSetting.findUnique({ where: { key: 'webhook_url' } });
       const secretSetting = await prisma.storeSetting.findUnique({ where: { key: 'webhook_secret' } });
@@ -33,6 +43,7 @@ export async function getAdminWebhooksAction(type?: string) {
 
 export async function saveAdminWebhookSettingsAction(url: string, secret: string, events: string[]) {
   try {
+    await checkAdmin();
     const settings = [
       { key: 'webhook_url', value: url || '' },
       { key: 'webhook_secret', value: secret || '' },
@@ -95,6 +106,7 @@ export async function testAdminWebhookAction(type: string = 'ORDER', orderNum?: 
   }
 
   try {
+    await checkAdmin();
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     const webhookUrl = `${baseUrl}/api/cj-webhook`;
 

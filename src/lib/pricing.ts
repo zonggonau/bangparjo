@@ -1,4 +1,5 @@
 import { prisma } from './db';
+import { r2 } from './utils';
 
 export interface MarginTier {
   min: number;
@@ -120,17 +121,19 @@ export function calculateFinalPrice(basePrice: number | string, customSettings?:
 
   const settings = customSettings || getStoreSettings();
   
+  let finalPrice = price;
   if (settings.marginTiers && settings.marginTiers.length > 0) {
     // Find applicable tier
     for (const tier of settings.marginTiers) {
       if (price >= tier.min && (tier.max === null || price < tier.max)) {
-        return price * (1 + tier.pct / 100);
+        finalPrice = price * (1 + tier.pct / 100);
+        return r2(finalPrice);
       }
     }
   }
 
   // Fallback to flat markup
-  return price * (1 + settings.markupPct / 100);
+  return r2(price * (1 + settings.markupPct / 100));
 }
 
 export function calculateShippingFee(baseShipping: number, subtotal: number, customSettings?: StoreSettings): number {
@@ -149,7 +152,7 @@ export function calculateShippingFee(baseShipping: number, subtotal: number, cus
   const withPctBuffer = baseShipping * (1 + bufferPct / 100);
   
   // Ambil nilai TERBESAR dari kedua metode untuk memastikan tidak rugi
-  return Math.max(withPercentageMarkup, withPctBuffer);
+  return r2(Math.max(withPercentageMarkup, withPctBuffer));
 }
 
 

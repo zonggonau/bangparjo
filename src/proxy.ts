@@ -9,5 +9,8 @@ export const config = {
     "/dashboard/:path*",
     "/account/:path*",
     "/api/admin/:path*",
+    "/api/cj-orders/:path*",
+    "/api/cj-setting/:path*",
+    "/api/sync-product-variants/:path*",
   ],
 };

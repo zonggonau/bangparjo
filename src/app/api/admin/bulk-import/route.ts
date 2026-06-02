@@ -1,38 +1,14 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-
-/**
- * Admin Bulk Import API
- * 
- * Handles bulk product imports from discovery scripts.
- * Pricing: sellingPrice = baseCost (harga CJ asli, tanpa markup).
- * Margin 35% akan diterapkan di checkout oleh calculateFinalPrice().
- * Keuntungan dari shipping (+$1).
- * 
- * POST /api/admin/bulk-import
- * Body: { products: Array<CJProductV2>, pageInfo: object }
- */
-
-/** Extract minimum sell price from CJ price string ("5.31" or "1.76 -- 2.63") */
-function parseMinPrice(sellPrice: string | undefined | null): number {
-  if (!sellPrice) return 0;
-  const cleaned = sellPrice.replace(/[^0-9.,\-–—\s]/g, '').trim();
-  // Split on range separators
-  const parts = cleaned.split(/\s*[-–—]\s*/);
-  const first = parseFloat(parts[0].replace(/,/g, ''));
-  return isNaN(first) ? 0 : first;
-}
-
-/** Parse weight range like "350.00-450.00" or "160.00" */
-function parseMinWeight(weight: string | undefined | null): number {
-  if (!weight) return 0;
-  const parts = weight.split(/[-–—]/);
-  const first = parseFloat(parts[0].trim());
-  return isNaN(first) ? 0 : first;
-}
+import { auth } from '@/auth';
 
 export async function POST(req: Request) {
   try {
+    const session = await auth();
+    if (session?.user?.role !== 'ADMIN') {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Admin access required' }, { status: 401 });
+    }
+
     const { products } = await req.json();
 
     if (!Array.isArray(products)) {
@@ -117,3 +93,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
+function parseMinPrice(priceStr: string | null | undefined): number {
+  if (!priceStr) return 0;
+  const clean = String(priceStr).replace(/[$\s]/g, '');
+  const parts = clean.split('-');
+  const minVal = parseFloat(parts[0]);
+  return isNaN(minVal) ? 0 : minVal;
+}
+
+function parseMinWeight(weightStr: string | number | null | undefined): number {
+  if (weightStr == null) return 0;
+  if (typeof weightStr === 'number') return weightStr;
+  const clean = String(weightStr).replace(/[^\d.-]/g, '');
+  const parts = clean.split('-');
+  const minVal = parseFloat(parts[0]);
+  return isNaN(minVal) ? 0 : minVal;
+}
+

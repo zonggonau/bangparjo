@@ -6,6 +6,15 @@ import { revalidateTag } from 'next/cache';
 import { slugify, parseProductName } from '@/lib/utils';
 import { generateLandingPageContent } from '@/lib/ai-content';
 import { invalidateAppCache } from '@/lib/cache';
+import { auth } from '@/auth';
+
+async function checkAdmin() {
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    throw new Error('Unauthorized: Admin access required');
+  }
+  return session;
+}
 
 async function invalidateProductCaches(categoryName?: string) {
   try {
@@ -206,6 +215,7 @@ async function fetchCjShippingMethods(variantCjId: string, quantity: number = 1,
 
 export async function exportToBlogAction(productId: string, lang: string = 'en') {
   try {
+    await checkAdmin();
     if (!productId) return { success: false, error: 'productId is required' };
 
     const product = await prisma.product.findUnique({
@@ -410,6 +420,4 @@ export async function importProductAction(
     return { success: false, error: error.message };
   }
 }
-
-
 

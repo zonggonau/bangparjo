@@ -2,10 +2,20 @@
 
 import { prisma } from '@/lib/db';
 import { revalidateTag } from 'next/cache';
+import { auth } from '@/auth';
+
+async function checkAdmin() {
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    throw new Error('Unauthorized: Admin access required');
+  }
+  return session;
+}
 
 // --- ABOUT PAGE ---
 export async function getAdminAboutAction() {
   try {
+    await checkAdmin();
     const about = await prisma.aboutPage.findFirst({
       orderBy: { createdAt: 'desc' },
     });
@@ -17,6 +27,7 @@ export async function getAdminAboutAction() {
 
 export async function saveAdminAboutAction(data: any) {
   try {
+    await checkAdmin();
     const { id, title, content, image, mission, vision, published } = data;
     if (!content) return { success: false, error: 'content is required' };
 
@@ -58,6 +69,7 @@ export async function saveAdminAboutAction(data: any) {
 
 export async function deleteAdminAboutAction(id: string) {
   try {
+    await checkAdmin();
     if (!id) return { success: false, error: 'id is required' };
     await prisma.aboutPage.delete({ where: { id } });
     try { revalidateTag('', { expire: 0 }); } catch (e) {}
@@ -70,6 +82,7 @@ export async function deleteAdminAboutAction(id: string) {
 // --- BLOG ---
 export async function getAdminBlogPostsAction(id?: string) {
   try {
+    await checkAdmin();
     if (id) {
       const post = await prisma.blogPost.findUnique({ where: { id } });
       if (!post) return { success: false, error: 'Post not found' };
@@ -84,6 +97,7 @@ export async function getAdminBlogPostsAction(id?: string) {
 
 export async function saveAdminBlogPostAction(data: any) {
   try {
+    await checkAdmin();
     const { id, title, slug, excerpt, content, image, author, published } = data;
 
     if (!id) {
@@ -133,6 +147,7 @@ export async function saveAdminBlogPostAction(data: any) {
 
 export async function deleteAdminBlogPostAction(id: string) {
   try {
+    await checkAdmin();
     if (!id) return { success: false, error: 'id is required' };
     await prisma.blogPost.delete({ where: { id } });
     try { revalidateTag('', { expire: 0 }); } catch (e) {}
@@ -145,6 +160,7 @@ export async function deleteAdminBlogPostAction(id: string) {
 // --- COUPON ---
 export async function saveAdminCouponAction(data: any) {
   try {
+    await checkAdmin();
     const { id, code, type, value, minPurchase, maxUses, isActive, expiresAt, description, productCjIds } = data;
 
     if (!id) {
@@ -197,6 +213,7 @@ export async function saveAdminCouponAction(data: any) {
 
 export async function deleteAdminCouponAction(id: string) {
   try {
+    await checkAdmin();
     if (!id) return { success: false, error: 'Coupon ID is required' };
     await prisma.coupon.delete({ where: { id } });
     return { success: true };
@@ -208,6 +225,7 @@ export async function deleteAdminCouponAction(id: string) {
 // --- SUBSCRIBERS ---
 export async function getAdminSubscribersAction() {
   try {
+    await checkAdmin();
     const subscribers = await prisma.subscriber.findMany({
       orderBy: { createdAt: 'desc' },
     });
@@ -219,6 +237,7 @@ export async function getAdminSubscribersAction() {
 
 export async function deleteAdminSubscriberAction(id: string) {
   try {
+    await checkAdmin();
     if (!id) return { success: false, error: 'ID is required' };
     await prisma.subscriber.delete({ where: { id } });
     return { success: true };
@@ -229,6 +248,7 @@ export async function deleteAdminSubscriberAction(id: string) {
 
 export async function sendBroadcastEmailAction(subject: string, content: string) {
   try {
+    await checkAdmin();
     if (!subject || !content) {
       return { success: false, error: 'Subject and content are required' };
     }
@@ -279,6 +299,7 @@ export async function sendBroadcastEmailAction(subject: string, content: string)
 
 export async function sendBlogBroadcastAction(postTitle: string, postUrl: string, customMessage: string) {
   try {
+    await checkAdmin();
     if (!postTitle || !postUrl) {
       return { success: false, error: 'Post title and URL are required' };
     }

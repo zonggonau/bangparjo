@@ -3,9 +3,19 @@
 import { prisma } from '@/lib/db';
 import { getTrackingInfo, deleteOrder, confirmOrder } from '@/lib/cj';
 import { processFulfillment } from '@/lib/fulfillment';
+import { auth } from '@/auth';
+
+async function checkAdmin() {
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    throw new Error('Unauthorized: Admin access required');
+  }
+  return session;
+}
 
 export async function getAdminOrdersAction() {
   try {
+    await checkAdmin();
     const orders = await prisma.order.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
@@ -28,6 +38,7 @@ export async function getAdminOrdersAction() {
 
 export async function syncAdminOrderAction(orderId: string) {
   try {
+    await checkAdmin();
     if (!orderId) return { success: false, error: 'Order ID is required' };
 
     const order = await prisma.order.findUnique({
@@ -73,6 +84,7 @@ export async function syncAdminOrderAction(orderId: string) {
 
 export async function fulfillAdminOrderAction(orderNum: string) {
   try {
+    await checkAdmin();
     if (!orderNum) return { success: false, error: 'orderNum is required' };
     const result = await processFulfillment(orderNum);
     return result;
@@ -83,6 +95,7 @@ export async function fulfillAdminOrderAction(orderNum: string) {
 
 export async function deleteCjOrderAction(cjOrderId: string) {
   try {
+    await checkAdmin();
     if (!cjOrderId) return { success: false, error: 'CJ Order ID is required' };
     const res = await deleteOrder(cjOrderId);
     return res;
@@ -93,6 +106,7 @@ export async function deleteCjOrderAction(cjOrderId: string) {
 
 export async function confirmCjOrderAction(cjOrderId: string) {
   try {
+    await checkAdmin();
     if (!cjOrderId) return { success: false, error: 'CJ Order ID is required' };
     const res = await confirmOrder({ orderId: cjOrderId });
     return res;
@@ -103,6 +117,7 @@ export async function confirmCjOrderAction(cjOrderId: string) {
 
 export async function markOrderAsPaidAction(orderId: string) {
   try {
+    await checkAdmin();
     await prisma.order.update({ where: { id: orderId }, data: { status: 'PAID' } });
     return { success: true };
   } catch(e: any) {

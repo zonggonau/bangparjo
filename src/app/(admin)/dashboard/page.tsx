@@ -22,7 +22,7 @@ export default function DashboardPage() {
     topProducts: any[];
     recentOrders: any[];
     dailyRevenue: { date: string; revenue: number; orders: number }[];
-    cjPoints?: { remaining: number; used: number };
+    cjPoints?: { remaining: number; used: number; total: number };
   }>({
     totalOrders: 0,
     totalRevenue: 0,
@@ -88,9 +88,9 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-3 flex-wrap justify-end">
           {analytics.cjPoints && (
-            <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-[12px] bg-white border border-[#E2E8F0] text-xs font-bold ${analytics.cjPoints.remaining < 500 ? 'text-[#EF4444] border-[#EF4444]' : 'text-[#64748B]'}`} title={`CJ API Points Daily Quota (Used: ${analytics.cjPoints.used.toLocaleString()})`}>
+            <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-[12px] bg-white border border-[#E2E8F0] text-xs font-bold ${analytics.cjPoints.remaining < 500 ? 'text-[#EF4444] border-[#EF4444]' : 'text-[#64748B]'}`} title={`CJ API Points Daily Quota (Used: ${analytics.cjPoints.used.toLocaleString()} / Total: ${analytics.cjPoints.total.toLocaleString()})`}>
               <i className="fas fa-bolt text-[#FF6B00]"></i>
-              CJ API Points: {analytics.cjPoints.remaining.toLocaleString()} left
+              CJ API Points: {analytics.cjPoints.remaining.toLocaleString()} / {analytics.cjPoints.total.toLocaleString()} left
             </span>
           )}
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-[12px] bg-white border border-[#E2E8F0] text-xs font-bold text-[#64748B]">

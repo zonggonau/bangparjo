@@ -6,7 +6,7 @@ export async function GET() {
   try {
     // Hanya user login yang boleh lihat CJ settings
     const session = await auth();
-    if (!session?.user) {
+    if (session?.user?.role !== 'ADMIN') {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 

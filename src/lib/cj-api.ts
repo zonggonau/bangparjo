@@ -358,7 +358,41 @@ export async function cjFetch<T>(
       
       if (response.status === 429) {
         clearTimeout(timeoutId);
-        throw new Error(`POINTS_EXHAUSTED: CJ API daily points limit reached. Endpoint: ${endpoint}.`);
+        let errorMsg = 'Insufficient CJ API points. Daily points limit reached.';
+        try {
+          const errData = await response.json();
+          if (errData && errData.message) {
+            errorMsg = errData.message;
+          }
+          if (errData && errData.pointsInfo) {
+            const used = errData.pointsInfo.usedToday !== undefined ? errData.pointsInfo.usedToday : 0;
+            const remaining = errData.pointsInfo.remaining !== undefined ? errData.pointsInfo.remaining : 0;
+            const total = errData.pointsInfo.total !== undefined ? errData.pointsInfo.total : 50000;
+            
+            import('@/lib/db').then(({ prisma }) => {
+              Promise.all([
+                prisma.storeSetting.upsert({
+                  where: { key: 'CJ_POINTS_USED' },
+                  update: { value: String(used) },
+                  create: { key: 'CJ_POINTS_USED', value: String(used) }
+                }),
+                prisma.storeSetting.upsert({
+                  where: { key: 'CJ_POINTS_REMAINING' },
+                  update: { value: String(remaining) },
+                  create: { key: 'CJ_POINTS_REMAINING', value: String(remaining) }
+                }),
+                prisma.storeSetting.upsert({
+                  where: { key: 'CJ_POINTS_TOTAL' },
+                  update: { value: String(total) },
+                  create: { key: 'CJ_POINTS_TOTAL', value: String(total) }
+                })
+              ]).catch(() => {});
+            }).catch(() => {});
+          }
+        } catch (e) {
+          // ignore parsing error
+        }
+        throw new Error(`POINTS_EXHAUSTED: ${errorMsg} Endpoint: ${endpoint}`);
       }
 
       // Check response is actually JSON before parsing
@@ -374,17 +408,26 @@ export async function cjFetch<T>(
 
       // Track CJ points consumption if provided
       if (data && data.pointsInfo) {
+        const used = data.pointsInfo.usedToday !== undefined ? data.pointsInfo.usedToday : (data.pointsInfo.usedPoints || 0);
+        const remaining = data.pointsInfo.remaining !== undefined ? data.pointsInfo.remaining : (data.pointsInfo.remainingPoints || 0);
+        const total = data.pointsInfo.total !== undefined ? data.pointsInfo.total : 50000;
+
         import('@/lib/db').then(({ prisma }) => {
           Promise.all([
             prisma.storeSetting.upsert({
               where: { key: 'CJ_POINTS_REMAINING' },
-              update: { value: String(data.pointsInfo.remainingPoints || 0) },
-              create: { key: 'CJ_POINTS_REMAINING', value: String(data.pointsInfo.remainingPoints || 0) }
+              update: { value: String(remaining) },
+              create: { key: 'CJ_POINTS_REMAINING', value: String(remaining) }
             }),
             prisma.storeSetting.upsert({
               where: { key: 'CJ_POINTS_USED' },
-              update: { value: String(data.pointsInfo.usedPoints || 0) },
-              create: { key: 'CJ_POINTS_USED', value: String(data.pointsInfo.usedPoints || 0) }
+              update: { value: String(used) },
+              create: { key: 'CJ_POINTS_USED', value: String(used) }
+            }),
+            prisma.storeSetting.upsert({
+              where: { key: 'CJ_POINTS_TOTAL' },
+              update: { value: String(total) },
+              create: { key: 'CJ_POINTS_TOTAL', value: String(total) }
             })
           ]).catch(() => {}); // silent fail for tracking
         }).catch(() => {});

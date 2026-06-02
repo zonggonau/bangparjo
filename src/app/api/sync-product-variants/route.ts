@@ -2,9 +2,15 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getProductDetails } from '@/lib/cj';
 import { revalidateTag } from 'next/cache';
+import { auth } from '@/auth';
 
 export async function GET(req: Request) {
   try {
+    const session = await auth();
+    if (session?.user?.role !== 'ADMIN') {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const pid = searchParams.get('pid');
 
