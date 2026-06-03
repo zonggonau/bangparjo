@@ -93,7 +93,7 @@ export async function POST(req: Request) {
                 color: v.color,
                 size: v.size,
                 weight: v.weight,
-                retailPrice: Math.round(v.baseCost * 1.35 * 100) / 100,
+                retailPrice: v.sellingPrice || v.baseCost,
                 inventory: v.inventory,
                 image: v.image,
               })),
@@ -117,7 +117,7 @@ export async function POST(req: Request) {
               name: p.name,
               image: p.images?.[0] || '',
               category: p.category?.name || null,
-              retailPrice: Math.round((p.variants?.[0]?.baseCost || 0) * 1.35 * 100) / 100,
+              retailPrice: p.variants?.[0]?.sellingPrice || p.variants?.[0]?.baseCost || 0,
               inventory: p.variants?.[0]?.inventory || 0,
             })),
           };

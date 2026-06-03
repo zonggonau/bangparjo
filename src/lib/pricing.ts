@@ -136,6 +136,31 @@ export function calculateFinalPrice(basePrice: number | string, customSettings?:
   return r2(price * (1 + settings.markupPct / 100));
 }
 
+/**
+ * Server-side: Apply margin tiers to a base cost and return the final selling price.
+ * Gunakan ini saat import produk/varian ke DB agar sellingPrice sudah include margin.
+ * Menerima StoreSettings yang sudah di-resolve dari DB (gunakan getDBStoreSettings()).
+ *
+ * @param baseCost  - Harga asli dari CJ (variantSellPrice)
+ * @param settings  - Store settings dari DB (hasil getDBStoreSettings())
+ * @returns         - Harga jual final sudah termasuk margin
+ */
+export function applyMarginToPrice(baseCost: number, settings: StoreSettings): number {
+  const price = isNaN(baseCost) ? 0 : baseCost;
+  if (price <= 0) return 0;
+
+  if (settings.marginTiers && settings.marginTiers.length > 0) {
+    for (const tier of settings.marginTiers) {
+      if (price >= tier.min && (tier.max === null || price < tier.max)) {
+        return r2(price * (1 + tier.pct / 100));
+      }
+    }
+  }
+
+  // Fallback ke flat markupPct
+  return r2(price * (1 + (settings.markupPct || 0) / 100));
+}
+
 export function calculateShippingFee(baseShipping: number, subtotal: number, customSettings?: StoreSettings): number {
   const settings = customSettings || getStoreSettings();
   if (settings.freeShippingThreshold > 0 && subtotal >= settings.freeShippingThreshold) {

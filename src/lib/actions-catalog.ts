@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db';
 import { getProductDetails, cjFetch } from '@/lib/cj';
 import { getAllCategories, getCategoryTree } from '@/lib/categories';
 import type { CategoryNode } from '@/lib/categories';
-import { getDBStoreSettings, calculateFinalPrice } from './pricing';
+import { getDBStoreSettings, applyMarginToPrice } from './pricing';
 
 /**
  * Helper: Resolve categoryId (UUID FK ke tabel Category lokal)
@@ -36,6 +36,9 @@ export async function importProductVariantsAction(cjId: string) {
     if (!detail.success || !detail.data) {
       return { success: false, message: detail.message || 'Failed to fetch details from CJ' };
     }
+
+    // Fetch margin settings from DB once for this import
+    const settings = await getDBStoreSettings();
 
     const d = detail.data;
 
@@ -81,8 +84,8 @@ export async function importProductVariantsAction(cjId: string) {
     if (d.variants?.length) {
       for (const v of d.variants) {
         const baseCost = Number(v.variantSellPrice || 0);
-        // sellingPrice = baseCost — margin diterapkan di frontend/checkout
-        const sellingPrice = baseCost;
+        // sellingPrice sudah include margin — dihitung saat import, bukan di frontend
+        const sellingPrice = applyMarginToPrice(baseCost, settings);
         
         await prisma.variant.upsert({
           where: { cjId: v.vid },
@@ -130,6 +133,9 @@ export async function importProductVariantsAction(cjId: string) {
  */
 export async function importProductsBatchAction(products: any[], forceCategoryId?: string) {
   if (!products || products.length === 0) return { success: false };
+
+  // Fetch margin settings from DB once for the entire batch
+  const settings = await getDBStoreSettings();
   
   try {
     for (const p of products) {
@@ -139,8 +145,8 @@ export async function importProductsBatchAction(products: any[], forceCategoryId
       const name = p.nameEn || p.productNameEn || p.productName;
       const image = p.bigImage || p.productImage;
       const baseCost = parseFloat(p.nowPrice || p.sellPrice || '0');
-      // sellingPrice = baseCost — margin diterapkan di frontend/checkout
-      const sellingPrice = baseCost;
+      // sellingPrice sudah include margin — dihitung saat import, bukan di frontend
+      const sellingPrice = applyMarginToPrice(baseCost, settings);
       const sku = p.sku || p.productSku || `SKU-${pid}`;
       const cjCatId = p.categoryId || null;
 

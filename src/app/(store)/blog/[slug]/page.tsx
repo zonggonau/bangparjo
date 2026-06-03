@@ -41,7 +41,8 @@ export default function BlogDetailPage() {
     const productData = parseProductData(post.content);
     if (!productData) return null;
     // Render the full product landing page template
-    return renderProductTemplate(productData, '628219105980', window.location.origin, 35);
+    // sellingPrice dari DB sudah include margin — tidak perlu kirim markupPct
+    return renderProductTemplate(productData, '628219105980', window.location.origin);
   }, [post]);
 
   // Check if content is raw HTML (not JSON)

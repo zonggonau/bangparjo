@@ -38,7 +38,7 @@ async function sendWA({ target, message }: SendWAParams) {
       body: JSON.stringify({
         tool: 'sessions_send',
         args: {
-          sessionKey: 'agent:main:main',
+          sessionKey: target,
           message: message,
         },
       }),

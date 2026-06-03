@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { sendWhatsAppOrderNotification } from '@/lib/social-poster';
 import { revalidateTag } from 'next/cache';
 import { importProductVariantsAction } from '@/lib/actions-catalog';
+import { getDBStoreSettings, applyMarginToPrice } from '@/lib/pricing';
 
 /**
  * CJ Dropshipping Webhook Receiver (Enhanced)
@@ -313,7 +314,12 @@ async function handleProductUpdate(type: string, messageType: string | undefined
       // Update variant yang sudah ada
       const vUpdateData: any = {};
       if (params.variantSku) vUpdateData.sku = params.variantSku;
-      if (baseCost > 0) { vUpdateData.baseCost = baseCost; vUpdateData.sellingPrice = baseCost; }
+      if (baseCost > 0) {
+        // Hitung margin saat webhook update agar sellingPrice di DB tetap up-to-date
+        const settings = await getDBStoreSettings();
+        vUpdateData.baseCost = baseCost;
+        vUpdateData.sellingPrice = applyMarginToPrice(baseCost, settings);
+      }
       if (weight > 0) vUpdateData.weight = weight;
       if (inventory !== undefined) vUpdateData.inventory = inventory;
       if (params.variantImage) vUpdateData.image = params.variantImage;

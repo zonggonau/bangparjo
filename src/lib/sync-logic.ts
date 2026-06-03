@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db';
 import { getCategories, getProducts, getProductDetails, slugify } from '@/lib/cj';
 import { setCache } from './cj'; // Re-use the cache setter
+import { getDBStoreSettings, applyMarginToPrice } from './pricing';
 
 const DELAY_MS = 2000;
 
@@ -28,6 +29,9 @@ export async function syncAllCategories() {
 export async function syncTrendingProducts(maxPages = 1) {
   console.log(`📦 Syncing trending products (${maxPages} pages)...`);
   let imported = 0;
+
+  // Fetch margin settings from DB once for the entire sync batch
+  const settings = await getDBStoreSettings();
   
   for (let page = 1; page <= maxPages; page++) {
     // searchType: 2 is trending
@@ -80,7 +84,7 @@ export async function syncTrendingProducts(maxPages = 1) {
                 size: v.variantNameEn || '',
                 weight: v.variantWeight || 0,
                 baseCost: baseCost,
-                sellingPrice: baseCost, // Frontend applies margin
+                sellingPrice: applyMarginToPrice(baseCost, settings), // margin dihitung saat import
                 inventory: v.inventory || 100,
                 image: v.variantImage || d.productImage
               },
@@ -92,7 +96,7 @@ export async function syncTrendingProducts(maxPages = 1) {
                 size: v.variantNameEn || '',
                 weight: v.variantWeight || 0,
                 baseCost: baseCost,
-                sellingPrice: baseCost,
+                sellingPrice: applyMarginToPrice(baseCost, settings), // margin dihitung saat import
                 inventory: v.inventory || 100,
                 image: v.variantImage || d.productImage
               }

@@ -64,7 +64,7 @@ export async function GET(req: Request) {
             size: v.size,
             weight: v.weight,
             baseCost: v.baseCost,
-            retailPrice: Math.round(v.baseCost * 1.35 * 100) / 100, // +35% margin
+            retailPrice: v.sellingPrice || v.baseCost, // Gunakan sellingPrice dari DB
             inventory: v.inventory,
             image: v.image,
           })),
@@ -99,7 +99,7 @@ export async function GET(req: Request) {
           image: p.images?.[0] || '',
           category: p.category?.name || null,
           price: p.variants?.[0]?.baseCost || 0,
-          retailPrice: Math.round((p.variants?.[0]?.baseCost || 0) * 1.35 * 100) / 100,
+          retailPrice: p.variants?.[0]?.sellingPrice || p.variants?.[0]?.baseCost || 0,
           stock: p.variants?.[0]?.inventory || 0,
           variantCount: p.variantCount,
         })),

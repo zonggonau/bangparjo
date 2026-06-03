@@ -7,6 +7,7 @@ import { slugify, parseProductName } from '@/lib/utils';
 import { generateLandingPageContent } from '@/lib/ai-content';
 import { invalidateAppCache } from '@/lib/cache';
 import { auth } from '@/auth';
+import { getDBStoreSettings, applyMarginToPrice } from '@/lib/pricing';
 
 async function checkAdmin() {
   const session = await auth();
@@ -119,12 +120,16 @@ export async function syncAdminInventoryAction(cjId: string) {
       }
 
       const baseCost = Number(v.variantSellPrice || 0);
+      // Hitung margin saat sync admin agar sellingPrice di DB tetap up-to-date
+      const settings = await getDBStoreSettings();
+      const sellingPrice = applyMarginToPrice(baseCost, settings);
 
       const updated = await prisma.variant.updateMany({
         where: { cjId: v.vid },
         data: {
           inventory: variantStock,
           baseCost: baseCost,
+          sellingPrice: sellingPrice,
         },
       });
       if (updated.count > 0) {
@@ -359,6 +364,10 @@ export async function importProductAction(
       parsedPrice = 0;
     }
 
+    // Hitung sellingPrice dengan margin untuk varian default placeholder
+    const settings = await getDBStoreSettings();
+    const defaultSellingPrice = applyMarginToPrice(parsedPrice, settings);
+
     const existing = await prisma.product.findUnique({
       where: { cjId: pid },
       include: { variants: true }
@@ -398,7 +407,7 @@ export async function importProductAction(
             size: '', 
             weight: 0,
             baseCost: parsedPrice,
-            sellingPrice: parsedPrice, 
+            sellingPrice: defaultSellingPrice, 
             inventory: 0, 
             image: image
           }]
@@ -421,3 +430,58 @@ export async function importProductAction(
   }
 }
 
+/**
+ * Recalculate sellingPrice for ALL variants in DB based on current margin settings.
+ * Digunakan untuk update semua produk lama yang sellingPrice-nya masih = baseCost (tanpa margin).
+ *
+ * Proses: baca semua variant → apply margin tiers → update sellingPrice di DB
+ */
+export async function recalculateAllPricesAction(): Promise<{ success: boolean; updated: number; errors: string[]; message?: string }> {
+  try {
+    await checkAdmin();
+
+    const settings = await getDBStoreSettings();
+    const errors: string[] = [];
+    let updated = 0;
+    let skip = 0;
+    const batchSize = 200;
+
+    // Proses batch per batch agar tidak timeout
+    while (true) {
+      const variants = await prisma.variant.findMany({
+        select: { id: true, baseCost: true },
+        skip,
+        take: batchSize,
+        orderBy: { id: 'asc' },
+      });
+
+      if (variants.length === 0) break;
+
+      for (const v of variants) {
+        try {
+          const newSellingPrice = applyMarginToPrice(Number(v.baseCost), settings);
+          await prisma.variant.update({
+            where: { id: v.id },
+            data: { sellingPrice: newSellingPrice },
+          });
+          updated++;
+        } catch (err: any) {
+          errors.push(`variant ${v.id}: ${err.message}`);
+        }
+      }
+
+      skip += batchSize;
+      if (variants.length < batchSize) break;
+    }
+
+    console.log(`[recalculateAllPrices] Done. Updated ${updated} variants.`);
+    return {
+      success: true,
+      updated,
+      errors: errors.slice(0, 20),
+      message: `Berhasil update ${updated} varian dengan margin terkini.`,
+    };
+  } catch (error: any) {
+    return { success: false, updated: 0, errors: [error.message] };
+  }
+}

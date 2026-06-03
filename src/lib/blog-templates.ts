@@ -1,4 +1,5 @@
-import { calculateFinalPrice, DEFAULT_SETTINGS } from './pricing';
+// Margin sudah dihitung saat import produk — sellingPrice di DB sudah include margin.
+// Tidak perlu import calculateFinalPrice di sini.
 
 /**
  * Escape HTML special characters to prevent XSS
@@ -120,21 +121,15 @@ export function parseProductData(content: any): ProductData | null {
  * @param waNumber - WhatsApp number for the AI agent (with country code, no +)
  * @param baseUrl - Base URL of the store (e.g. https://bangparjo.shop) for product link
  */
-export function renderProductTemplate(product: ProductData, waNumber?: string, baseUrl?: string, markupPct?: number): string {
+export function renderProductTemplate(product: ProductData, waNumber?: string, baseUrl?: string): string {
   const whatsappNumber = waNumber || '628219105980';
   const storeBaseUrl = baseUrl || 'https://bangparjo.shop';
-  // Calculate margin price using dynamic store pricing settings
+  // sellingPrice dari DB sudah include margin — langsung digunakan tanpa kalkulasi ulang
   function getDisplayPrice(v: any): number {
     if (!v) return 0;
-    const base = typeof v === 'object' ? v.baseCost : v;
-    const sell = typeof v === 'object' ? v.sellingPrice : v;
-    
-    if (sell !== base) {
-      return sell;
-    }
-    
-    const customSettings = markupPct !== undefined ? { ...DEFAULT_SETTINGS, markupPct } : undefined;
-    return calculateFinalPrice(base, customSettings);
+    // Prioritas: sellingPrice (sudah include margin) → baseCost fallback
+    if (typeof v === 'object') return v.sellingPrice || v.baseCost || 0;
+    return v;
   }
 
   var minPrice = Math.min.apply(null, product.variants.map(function(v) { return getDisplayPrice(v); }));

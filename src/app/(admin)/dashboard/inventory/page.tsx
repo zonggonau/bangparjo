@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db';
 import { getFullCategoryTreeAction } from '@/lib/actions-catalog';
 import InventoryList from './InventoryList';
+import RecalculatePricesButton from '@/components/admin/RecalculatePricesButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -106,6 +107,7 @@ export default async function InventoryPage({
           <h2 className="text-[28px] font-black mb-2 text-[#1E293B]">Inventory Manager</h2>
           <p className="text-[#64748B] font-semibold">Manage imported products, variants, and real-time stock levels.</p>
         </div>
+        <RecalculatePricesButton />
       </div>
 
       <InventoryList 

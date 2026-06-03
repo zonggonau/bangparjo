@@ -17,8 +17,8 @@ import type { Metadata } from 'next';
 import { isProductData, parseProductData, renderProductTemplate } from '@/lib/blog-templates';
 import { getOrSet } from '@/lib/redis';
 import { getCachedStoreSettings } from '@/lib/server-settings';
-import { calculateFinalPrice } from '@/lib/pricing';
 import { getProductDetails } from '@/lib/cj-api';
+import { getDBStoreSettings, applyMarginToPrice } from '@/lib/pricing';
 
 
 interface Props {
@@ -112,6 +112,8 @@ export default async function BlogSlugPage(props: Props) {
             const cjProd = cjRes.data;
             
             // Map CJ variants to our internal ProductVariantData format
+            // Apply margin saat auto-sync agar sellingPrice sudah include margin
+            const marginSettings = await getDBStoreSettings();
             const enrichedVariants = cjProd.variants.map(v => {
               const baseCost = Number(v.variantSellPrice) || 0;
               return {
@@ -122,7 +124,7 @@ export default async function BlogSlugPage(props: Props) {
                 size: null, // CJ usually combines color/size in variantKey
                 weight: v.variantWeight || 0,
                 baseCost: baseCost,
-                sellingPrice: calculateFinalPrice(baseCost, settings),
+                sellingPrice: applyMarginToPrice(baseCost, marginSettings), // margin dihitung di server
                 inventory: v.inventory || 100,
                 image: v.variantImage || cjProd.productImage || null,
               };
@@ -149,14 +151,8 @@ export default async function BlogSlugPage(props: Props) {
       }
 
 
-      // Calculate prices based on current live margin settings
-      product.variants = product.variants.map(v => {
-        const finalPrice = calculateFinalPrice(v.baseCost, settings);
-        return {
-          ...v,
-          sellingPrice: finalPrice
-        };
-      });
+      // sellingPrice dari DB sudah include margin — tidak perlu hitung ulang di frontend
+      // (margin dihitung saat import/webhook, bukan saat render)
 
 
       // Fetch other blog posts for recommendations (cached separately)
@@ -194,8 +190,9 @@ export default async function BlogSlugPage(props: Props) {
         .map(r => {
           const p = parseProductData(r.content);
           if (!p) return null;
-          const minP = Math.min(...p.variants.map(v => calculateFinalPrice(v.baseCost, settings)));
-          const maxP = Math.max(...p.variants.map(v => calculateFinalPrice(v.baseCost, settings)));
+          // sellingPrice dari DB sudah include margin — langsung gunakan tanpa hitung ulang
+          const minP = Math.min(...p.variants.map(v => v.sellingPrice));
+          const maxP = Math.max(...p.variants.map(v => v.sellingPrice));
           const price = minP === maxP ? `$${minP.toFixed(2)}` : `$${minP.toFixed(2)} – $${maxP.toFixed(2)}`;
           return {
             title: r.title,
@@ -210,7 +207,7 @@ export default async function BlogSlugPage(props: Props) {
       const enrichedProduct = { ...product, recommendations: recs };
       const waNumber = process.env.NEXT_PUBLIC_WHATSAPP || '628219105980';
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
-      const html = renderProductTemplate(enrichedProduct, waNumber, baseUrl, settings.markupPct);
+      const html = renderProductTemplate(enrichedProduct, waNumber, baseUrl);
 
 
       return <div dangerouslySetInnerHTML={{ __html: html }} suppressHydrationWarning />;

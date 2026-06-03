@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getProductDetails } from '@/lib/cj';
 import { revalidateTag } from 'next/cache';
 import { auth } from '@/auth';
+import { getDBStoreSettings, applyMarginToPrice } from '@/lib/pricing';
 
 export async function GET(req: Request) {
   try {
@@ -44,6 +45,9 @@ export async function GET(req: Request) {
 
     // 4. Create real variants
     if (variantCount > 0) {
+      // Fetch margin settings once for this sync batch
+      const settings = await getDBStoreSettings();
+
       await prisma.variant.createMany({
         data: cjProduct.variants.map((v) => ({
           productId: product.id,
@@ -53,7 +57,7 @@ export async function GET(req: Request) {
           size: '', 
           weight: v.variantWeight || 0,
           baseCost: Number(v.variantSellPrice),
-          sellingPrice: Number(v.variantSellPrice), 
+          sellingPrice: applyMarginToPrice(Number(v.variantSellPrice), settings), // margin dihitung saat import
           inventory: 100, 
           image: v.variantImage || cjProduct.productImage
         }))
