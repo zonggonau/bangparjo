@@ -132,7 +132,7 @@ export default async function CategoryPage({
         
         // Background import to local DB
         if (products.length > 0) {
-          importProductsBatchAction(products).catch(err => {
+          importProductsBatchAction(products, category.id).catch(err => {
             console.error('[CategoryPage] Auto-import error:', err);
           });
         }

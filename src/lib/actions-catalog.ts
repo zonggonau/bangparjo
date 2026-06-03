@@ -6,6 +6,24 @@ import { getAllCategories, getCategoryTree } from '@/lib/categories';
 import { getDBStoreSettings, calculateFinalPrice } from './pricing';
 
 /**
+ * Helper: Resolve categoryId (UUID FK ke tabel Category lokal)
+ * dari cjCategoryId (UUID dari CJ API).
+ * Ini yang menyambungkan produk ke mega menu.
+ */
+async function resolveCategoryId(cjCategoryId: string | null | undefined): Promise<string | null> {
+  if (!cjCategoryId) return null;
+  try {
+    const cat = await prisma.category.findFirst({
+      where: { cjId: cjCategoryId },
+      select: { id: true },
+    });
+    return cat?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Otomatis import produk dan varian ke DB lokal.
  * Digunakan saat user klik card produk.
  */
@@ -21,6 +39,9 @@ export async function importProductVariantsAction(cjId: string) {
     const d = detail.data;
     const settings = await getDBStoreSettings();
 
+    // Resolve categoryId FK dari cjCategoryId — agar produk terhubung ke mega menu
+    const resolvedCategoryId = await resolveCategoryId(d.categoryId);
+
     const product = await prisma.product.upsert({
       where: { cjId: d.pid },
       update: {
@@ -30,6 +51,7 @@ export async function importProductVariantsAction(cjId: string) {
         variantCount: d.variants?.length || 0,
         totalStock: d.variants?.reduce((a: number, v: any) => a + (v.inventory || 0), 0) || 0,
         cjCategoryId: d.categoryId || null,
+        categoryId: resolvedCategoryId,   // ← Link ke tabel Category
         updatedAt: new Date()
       },
       create: {
@@ -40,6 +62,7 @@ export async function importProductVariantsAction(cjId: string) {
         variantCount: d.variants?.length || 0,
         totalStock: d.variants?.reduce((a: number, v: any) => a + (v.inventory || 0), 0) || 0,
         cjCategoryId: d.categoryId || null,
+        categoryId: resolvedCategoryId,   // ← Link ke tabel Category
         status: 'ACTIVE'
       }
     });
@@ -95,8 +118,13 @@ export async function importProductVariantsAction(cjId: string) {
 /**
  * Batch import produk dari list (misal: halaman kategori).
  * Mengimpor produk dengan 1 varian default agar cepat.
+ *
+ * @param products   - List produk dari CJ API V2
+ * @param forceCategoryId - (opsional) ID kategori lokal (UUID) yang langsung dipakai.
+ *                         Gunakan ini saat import dari halaman kategori tertentu,
+ *                         supaya produk langsung terhubung ke kategori yang sedang di-browse.
  */
-export async function importProductsBatchAction(products: any[]) {
+export async function importProductsBatchAction(products: any[], forceCategoryId?: string) {
   if (!products || products.length === 0) return { success: false };
   
   try {
@@ -111,6 +139,12 @@ export async function importProductsBatchAction(products: any[]) {
       const baseCost = parseFloat(p.nowPrice || p.sellPrice || '0');
       const sellingPrice = calculateFinalPrice(baseCost, settings);
       const sku = p.sku || p.productSku || `SKU-${pid}`;
+      const cjCatId = p.categoryId || null;
+
+      // Resolve categoryId:
+      //   1. Gunakan forceCategoryId jika ada (dari halaman kategori yang sedang di-browse)
+      //   2. Fallback: lookup berdasarkan cjCategoryId dari data produk CJ API
+      const resolvedCategoryId = forceCategoryId ?? await resolveCategoryId(cjCatId);
       
       // Upsert Product
       const product = await prisma.product.upsert({
@@ -118,7 +152,8 @@ export async function importProductsBatchAction(products: any[]) {
         update: {
           name: name,
           images: { set: [image] },
-          cjCategoryId: p.categoryId || null,
+          cjCategoryId: cjCatId,
+          categoryId: resolvedCategoryId,   // ← Link ke tabel Category
           updatedAt: new Date()
         },
         create: {
@@ -126,7 +161,8 @@ export async function importProductsBatchAction(products: any[]) {
           name: name,
           description: '',
           images: [image],
-          cjCategoryId: p.categoryId || null,
+          cjCategoryId: cjCatId,
+          categoryId: resolvedCategoryId,   // ← Link ke tabel Category
           status: 'ACTIVE'
         }
       });
