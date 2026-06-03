@@ -9,6 +9,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
 import {
   notifyOrderCreated,
   notifyPaymentReceived,
@@ -66,6 +67,82 @@ export async function POST(req: Request) {
           return NextResponse.json({ success: false, error: 'target and message required' }, { status: 400 });
         }
         result = await sendCustomWA(data.target, data.message);
+        break;
+
+      case 'get-product':
+        if (!data?.pid && !data?.keyword) {
+          return NextResponse.json({ success: false, error: 'pid or keyword required' }, { status: 400 });
+        }
+        if (data?.pid) {
+          const product = await prisma.product.findUnique({
+            where: { cjId: data.pid },
+            include: { variants: true, category: true }
+          });
+          if (!product) {
+            return NextResponse.json({ success: false, error: 'Product not found' });
+          }
+          result = {
+            success: true,
+            data: {
+              name: product.name,
+              images: product.images,
+              category: product.category?.name || null,
+              variants: product.variants.map(v => ({
+                vid: v.cjId,
+                sku: v.sku,
+                color: v.color,
+                size: v.size,
+                weight: v.weight,
+                retailPrice: Math.round(v.baseCost * 1.35 * 100) / 100,
+                inventory: v.inventory,
+                image: v.image,
+              })),
+              variantCount: product.variantCount,
+            }
+          };
+        } else {
+          const products = await prisma.product.findMany({
+            where: {
+              status: 'ACTIVE',
+              name: { contains: data.keyword, mode: 'insensitive' },
+            },
+            include: { variants: { take: 1 }, category: true },
+            take: 10,
+            orderBy: { updatedAt: 'desc' },
+          });
+          result = {
+            success: true,
+            data: products.map(p => ({
+              pid: p.cjId,
+              name: p.name,
+              image: p.images?.[0] || '',
+              category: p.category?.name || null,
+              retailPrice: Math.round((p.variants?.[0]?.baseCost || 0) * 1.35 * 100) / 100,
+              inventory: p.variants?.[0]?.inventory || 0,
+            })),
+          };
+        }
+        break;
+
+      case 'get-order':
+        if (!data?.orderNum) {
+          return NextResponse.json({ success: false, error: 'orderNum required' }, { status: 400 });
+        }
+        const order = await prisma.order.findUnique({ where: { orderNum: data.orderNum } });
+        if (!order) {
+          return NextResponse.json({ success: false, error: 'Order not found' });
+        }
+        result = {
+          success: true,
+          data: {
+            orderNum: order.orderNum,
+            status: order.status,
+            customerName: order.customerName,
+            totalAmount: order.totalAmount,
+            trackingNumber: order.trackingNumber,
+            createdAt: order.createdAt,
+          }
+        };
         break;
 
       default:
