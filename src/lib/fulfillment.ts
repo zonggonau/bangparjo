@@ -65,15 +65,6 @@ export async function processFulfillment(orderNum: string) {
     if (!res.success) {
       throw new Error(`CJ API Error: ${res.message || 'Unknown'}`);
     }
-  } catch (error: any) {
-    console.error(`[Fulfillment Error] Order ${orderNum}:`, error);
-    // Revert status to PAID so admin can retry
-    await prisma.order.update({
-      where: { orderNum },
-      data: { status: 'PAID' },
-    });
-    throw error;
-  }
 
   const cjOrderId = (res.data as any)?.cjOrderId || (res.data as any)?.orderId;
   const lineItemIds: Record<string, string> = {};
@@ -152,4 +143,13 @@ export async function processFulfillment(orderNum: string) {
   });
 
   return { success: true, order: updatedOrder, cjData: res.data };
+  } catch (error: any) {
+    console.error(`[Fulfillment Error] Order ${orderNum}:`, error);
+    // Revert status to PAID so admin can retry
+    await prisma.order.update({
+      where: { orderNum },
+      data: { status: 'PAID' },
+    });
+    throw error;
+  }
 }

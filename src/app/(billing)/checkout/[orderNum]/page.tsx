@@ -82,6 +82,11 @@ function SecurePaymentContent() {
   const onPaymentSuccess = () => {
     setIsPaid(true);
     clearCart();
+    
+    // Refresh halaman untuk memastikan status terbaru diambil dari database
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
   };
 
   if (loading) return (

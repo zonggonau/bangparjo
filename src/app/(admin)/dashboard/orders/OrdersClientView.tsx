@@ -304,14 +304,14 @@ export default function OrdersClientView({
                               <i className={`fas fa-check-circle ${isBusy ? 'fa-spin' : ''}`}></i>
                             </button>
                           )}
-                          {currentSource === 'LOCAL' && (o.status || '').toUpperCase() === 'UNPAID' && (
+                          {currentSource === 'LOCAL' && ['UNPAID', 'FULFILLING'].includes((o.status || '').toUpperCase()) && (
                             <button
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-all duration-200"
                               disabled={isBusy}
                               onClick={() => handleMarkAsPaid(o.id, orderId)}
-                              title="Manually mark as Paid (use when webhook failed)"
+                              title={o.status === 'FULFILLING' ? "Reset status to PAID to retry fulfillment" : "Manually mark as Paid"}
                             >
-                              <i className={`fas fa-credit-card ${isBusy ? 'fa-spin' : ''}`}></i>
+                              <i className={`fas fa-undo ${isBusy ? 'fa-spin' : ''}`}></i>
                             </button>
                           )}
                           {(o.cjOrderId || (currentSource === 'LOCAL' && o.status === 'UNPAID')) && (
