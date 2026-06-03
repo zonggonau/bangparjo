@@ -31,7 +31,7 @@ export default function ProductsClientView({ importedCjIds: initialImportedIds, 
   const [selectedCategoryName, setSelectedCategoryName] = useState('All Categories');
   const [pageNum, setPageNum] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [pageSize] = useState(50);
+  const [pageSize, setPageSize] = useState(20);
 
   // Mega Menu state
   const [showMegaMenu, setShowMegaMenu] = useState(false);
@@ -42,7 +42,7 @@ export default function ProductsClientView({ importedCjIds: initialImportedIds, 
     if (categoryTree.length > 0 && !activeL1) {
       setActiveL1(categoryTree[0]);
     }
-  }, [categoryTree]);
+  }, [categoryTree, activeL1]);
 
   const [importingId, setImportingId] = useState<string | null>(null);
   const [heroState, setHeroState] = useState<Record<string, boolean>>({});
@@ -95,7 +95,7 @@ export default function ProductsClientView({ importedCjIds: initialImportedIds, 
 
   useEffect(() => {
     fetchCjProducts();
-  }, [pageNum, selectedCategory]);
+  }, [pageNum, selectedCategory, pageSize]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,9 +151,6 @@ export default function ProductsClientView({ importedCjIds: initialImportedIds, 
 
   const totalPages = Math.ceil(totalRecords / pageSize);
 
-  const inputClass = "px-3 py-2 rounded-[6px] border border-[#E2E8F0] bg-gray-50 text-sm outline-none focus:border-[#FF6B00] focus:bg-white transition-all duration-200";
-  const btnClass = "px-4 py-2 rounded-[6px] font-bold text-sm bg-[#FF6B00] text-white hover:bg-[#E65100] transition-all duration-200 flex items-center justify-center gap-2";
-
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -167,183 +164,293 @@ export default function ProductsClientView({ importedCjIds: initialImportedIds, 
         </Link>
       </div>
 
-      {/* Filter Panel */}
-      <form onSubmit={handleSearchSubmit} className="bg-white rounded-[12px] border border-[#E2E8F0] p-4 grid grid-cols-1 md:grid-cols-[240px_1fr_120px] gap-3 items-end">
-        {/* Category */}
-        <div className="flex flex-col gap-1 relative">
-          <label className="text-[10px] font-bold text-[#64748B] uppercase">Category</label>
-          <button type="button" className={inputClass + " w-full text-left flex items-center justify-between cursor-pointer"} onClick={() => setShowMegaMenu(!showMegaMenu)}>
-            <span className="truncate text-sm">{selectedCategoryName}</span>
-            <i className={`fas fa-chevron-down text-gray-400 text-[10px] transition-transform ${showMegaMenu ? 'rotate-180' : ''}`}></i>
-          </button>
+      {/* Main Content Card */}
+      <div className="bg-white rounded-[16px] border border-gray-200 overflow-hidden shadow-xs">
+        
+        {/* Filter, Search, and Controls */}
+        <div className="px-5 py-5 border-b border-gray-100 bg-white">
+          <div className="flex flex-col lg:flex-row gap-5 items-end justify-between">
+            {/* Category megamenu & Limit selector */}
+            <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+              {/* Category Filter */}
+              <div className="flex-1 sm:flex-initial relative">
+                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Category Filter</label>
+                <button 
+                  type="button" 
+                  className="w-full sm:w-[240px] px-4 py-2 border border-gray-200 rounded-[10px] text-sm font-semibold text-gray-700 outline-none focus:border-[#FF6B00] transition-colors bg-gray-50 hover:bg-white flex items-center justify-between cursor-pointer h-[38px]" 
+                  onClick={() => setShowMegaMenu(!showMegaMenu)}
+                >
+                  <span className="truncate text-sm">{selectedCategoryName}</span>
+                  <i className={`fas fa-chevron-down text-gray-400 text-[10px] transition-transform ${showMegaMenu ? 'rotate-180' : ''}`}></i>
+                </button>
 
-          {showMegaMenu && (
-            <>
-              <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setShowMegaMenu(false)} />
-              <div className="absolute top-full left-0 w-[700px] bg-white border border-[#E2E8F0] rounded-[12px] shadow-xl p-4 z-50 grid grid-cols-3 gap-3 max-h-[450px] overflow-y-auto">
-                <div className="border-r border-[#F1F5F9] pr-2">
-                  <p className="text-[10px] font-black text-[#94A3B8] uppercase mb-2">Main</p>
-                  <button type="button" className={`block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold mb-0.5 ${!selectedCategory ? 'bg-orange-50 text-[#FF6B00]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => selectCategory('', 'All Categories')}>🌟 All</button>
-                  {categoryTree.map(l1 => (
-                    <button key={l1.id} type="button" className={`block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold mb-0.5 ${activeL1?.id === l1.id ? 'bg-orange-50 text-[#FF6B00]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => { setActiveL1(l1); setActiveL2(null); }}>
-                      {l1.name}
-                    </button>
-                  ))}
-                </div>
-                <div className="border-r border-[#F1F5F9] px-2">
-                  <p className="text-[10px] font-black text-[#94A3B8] uppercase mb-2">Sub</p>
-                  {activeL1 && <button type="button" className="block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold text-gray-500 bg-gray-50 mb-1 hover:bg-orange-50 hover:text-[#FF6B00]" onClick={() => selectCategory(activeL1.id, `All ${activeL1.name}`)}>🎯 All {activeL1.name}</button>}
-                  {activeL1?.children?.map(l2 => (
-                    <button key={l2.id} type="button" className={`block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold mb-0.5 ${activeL2?.id === l2.id ? 'bg-orange-50 text-[#FF6B00]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setActiveL2(l2)}>{l2.name}</button>
-                  ))}
-                </div>
-                <div className="pl-2">
-                  <p className="text-[10px] font-black text-[#94A3B8] uppercase mb-2">Detail</p>
-                  {activeL2 && <button type="button" className="block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold text-gray-500 bg-gray-50 mb-1 hover:bg-orange-50 hover:text-[#FF6B00]" onClick={() => selectCategory(activeL2.id, activeL2.name)}>🎯 All {activeL2.name}</button>}
-                  {activeL2?.children?.map(l3 => (
-                    <button key={l3.id} type="button" className="block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold text-gray-700 hover:bg-orange-50 hover:text-[#FF6B00]" onClick={() => selectCategory(l3.id, l3.name)}>{l3.name}</button>
-                  ))}
-                </div>
+                {showMegaMenu && (
+                  <>
+                    <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setShowMegaMenu(false)} />
+                    <div className="absolute top-full left-0 w-full sm:w-[680px] bg-white border border-[#E2E8F0] rounded-[12px] shadow-2xl p-4 z-50 grid grid-cols-1 sm:grid-cols-3 gap-3 max-h-[450px] overflow-y-auto mt-2">
+                      <div className="border-b sm:border-b-0 sm:border-r border-[#F1F5F9] pb-3 sm:pb-0 sm:pr-2">
+                        <p className="text-[10px] font-black text-[#94A3B8] uppercase mb-2">Main</p>
+                        <button type="button" className={`block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold mb-0.5 ${!selectedCategory ? 'bg-orange-50 text-[#FF6B00]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => selectCategory('', 'All Categories')}>🌟 All Categories</button>
+                        {categoryTree.map(l1 => (
+                          <button key={l1.id} type="button" className={`block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold mb-0.5 ${activeL1?.id === l1.id ? 'bg-orange-50 text-[#FF6B00]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => { setActiveL1(l1); setActiveL2(null); }}>
+                            {l1.name}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="border-b sm:border-b-0 sm:border-r border-[#F1F5F9] py-3 sm:py-0 sm:px-2">
+                        <p className="text-[10px] font-black text-[#94A3B8] uppercase mb-2">Sub</p>
+                        {activeL1 && <button type="button" className="block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold text-gray-500 bg-gray-50 mb-1 hover:bg-orange-50 hover:text-[#FF6B00]" onClick={() => selectCategory(activeL1.id, `All ${activeL1.name}`)}>🎯 All {activeL1.name}</button>}
+                        {activeL1?.children?.map(l2 => (
+                          <button key={l2.id} type="button" className={`block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold mb-0.5 ${activeL2?.id === l2.id ? 'bg-orange-50 text-[#FF6B00]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setActiveL2(l2)}>{l2.name}</button>
+                        ))}
+                      </div>
+                      <div className="pt-3 sm:pt-0 sm:pl-2">
+                        <p className="text-[10px] font-black text-[#94A3B8] uppercase mb-2">Detail</p>
+                        {activeL2 && <button type="button" className="block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold text-gray-500 bg-gray-50 mb-1 hover:bg-orange-50 hover:text-[#FF6B00]" onClick={() => selectCategory(activeL2.id, activeL2.name)}>🎯 All {activeL2.name}</button>}
+                        {activeL2?.children?.map(l3 => (
+                          <button key={l3.id} type="button" className="block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold text-gray-700 hover:bg-orange-50 hover:text-[#FF6B00]" onClick={() => selectCategory(l3.id, l3.name)}>{l3.name}</button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-            </>
+
+              {/* Limit selector */}
+              <div className="w-[100px] shrink-0">
+                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Show</label>
+                <select 
+                  className="w-full px-3 py-2 border border-gray-200 rounded-[10px] text-sm font-semibold text-gray-700 outline-none focus:border-[#FF6B00] transition-colors bg-gray-50 hover:bg-white h-[38px] cursor-pointer"
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPageNum(1);
+                  }}
+                >
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Search and Sort */}
+            <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto items-end">
+              {/* Search form */}
+              <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-[280px]">
+                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Search</label>
+                <div className="relative">
+                  <i className="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                  <input 
+                    type="text" 
+                    placeholder="Search catalog..." 
+                    value={keyword}
+                    onChange={e => setKeyword(e.target.value)}
+                    className="w-full py-2 pl-9 pr-8 rounded-[10px] border border-gray-200 bg-gray-50 text-sm outline-none focus:border-[#FF6B00] focus:bg-white transition-all duration-200 h-[38px]"
+                  />
+                  {keyword && (
+                    <button 
+                      type="button" 
+                      onClick={() => { setKeyword(''); setPageNum(1); }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 border-none bg-transparent cursor-pointer p-0"
+                    >
+                      <i className="fas fa-times-circle"></i>
+                    </button>
+                  )}
+                </div>
+                <button type="submit" className="hidden">Search</button>
+              </form>
+
+              <button 
+                type="button"
+                onClick={handleSearchSubmit}
+                className="w-full sm:w-auto px-5 h-[38px] rounded-[10px] font-bold text-sm bg-[#FF6B00] text-white hover:bg-[#E65100] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <i className="fas fa-search"></i> Cari
+              </button>
+
+              <button 
+                type="button" 
+                className="text-xs font-bold text-gray-500 hover:text-[#FF6B00] flex items-center gap-1 h-[38px] px-2 cursor-pointer"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+              >
+                <i className={`fas ${showAdvanced ? 'fa-chevron-up' : 'fa-sliders-h'}`}></i>
+                {showAdvanced ? 'Hide' : 'Advanced'}
+              </button>
+            </div>
+          </div>
+
+          {/* Advanced options */}
+          {showAdvanced && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100">
+              <div className="flex gap-2 items-center">
+                <span className="text-xs font-semibold text-gray-500 shrink-0">Price range:</span>
+                <input type="number" placeholder="Min" className="w-full px-3 py-1.5 border border-gray-200 rounded-[8px] text-xs outline-none focus:border-[#FF6B00] bg-gray-50" value={minPrice} onChange={e => setMinPrice(e.target.value)} />
+                <span className="text-gray-300">—</span>
+                <input type="number" placeholder="Max" className="w-full px-3 py-1.5 border border-gray-200 rounded-[8px] text-xs outline-none focus:border-[#FF6B00] bg-gray-50" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} />
+              </div>
+              <div className="flex gap-2 items-center">
+                <span className="text-xs font-semibold text-gray-500 shrink-0">Sort By:</span>
+                <select className="w-full px-3 py-1.5 border border-gray-200 rounded-[8px] text-xs outline-none focus:border-[#FF6B00] bg-gray-50 cursor-pointer" value={searchType} onChange={e => setSearchType(e.target.value)}>
+                  <option value="0">Best Match</option>
+                  <option value="1">Newest</option>
+                  <option value="2">Trending</option>
+                </select>
+              </div>
+              <div className="flex gap-2 items-center">
+                <span className="text-xs font-semibold text-gray-500 shrink-0">Warehouse:</span>
+                <select className="w-full px-3 py-1.5 border border-gray-200 rounded-[8px] text-xs outline-none focus:border-[#FF6B00] bg-gray-50 cursor-pointer" value={countryCode} onChange={e => setCountryCode(e.target.value)}>
+                  <option value="">Any Warehouse</option>
+                  <option value="US">🇺🇸 US</option>
+                  <option value="CN">🇨🇳 China</option>
+                </select>
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Search */}
-        <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold text-[#64748B] uppercase">Keyword</label>
-          <input type="text" className={inputClass + " w-full"} value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="Search..." />
-        </div>
-
-        <button type="submit" className={btnClass + " h-[38px]"}><i className="fas fa-search"></i> Cari</button>
-
-        <div className="col-span-1 md:col-span-3 flex justify-end">
-          <button type="button" className="text-xs font-bold text-gray-400 hover:text-[#FF6B00] flex items-center gap-1" onClick={() => setShowAdvanced(!showAdvanced)}>
-            <i className={`fas ${showAdvanced ? 'fa-chevron-up' : 'fa-sliders-h'}`}></i>
-            {showAdvanced ? 'Hide' : 'Advanced'}
-          </button>
-        </div>
-
-        {showAdvanced && (
-          <div className="grid grid-cols-3 gap-3 col-span-1 md:col-span-3 pt-3 border-t border-[#F1F5F9]">
-            <div className="flex gap-2 items-center">
-              <span className="text-xs text-gray-500">Price:</span>
-              <input type="number" placeholder="Min" className={inputClass + " w-full h-[34px] text-xs"} value={minPrice} onChange={e => setMinPrice(e.target.value)} />
-              <span className="text-gray-300">—</span>
-              <input type="number" placeholder="Max" className={inputClass + " w-full h-[34px] text-xs"} value={maxPrice} onChange={e => setMaxPrice(e.target.value)} />
-            </div>
-            <select className={inputClass + " h-[34px] text-xs"} value={searchType} onChange={e => setSearchType(e.target.value)}>
-              <option value="0">Best Match</option>
-              <option value="1">Newest</option>
-              <option value="2">Trending</option>
-            </select>
-            <select className={inputClass + " h-[34px] text-xs"} value={countryCode} onChange={e => setCountryCode(e.target.value)}>
-              <option value="">Any Warehouse</option>
-              <option value="US">🇺🇸 US</option>
-              <option value="CN">🇨🇳 China</option>
-            </select>
+        {/* Error */}
+        {error && (
+          <div className="m-5 p-3 bg-amber-50 border border-amber-200 rounded-[8px] text-amber-800 text-sm font-semibold flex items-center gap-2">
+            <i className="fas fa-exclamation-triangle text-amber-500"></i> {error}
           </div>
         )}
-      </form>
 
-      {/* Error */}
-      {error && (
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-[8px] text-amber-800 text-sm font-semibold flex items-center gap-2">
-          <i className="fas fa-exclamation-triangle text-amber-500"></i> {error}
-        </div>
-      )}
-
-      {/* TABLE */}
-      {loading && products.length === 0 ? (
-        <div className="text-center py-10 text-gray-400"><i className="fas fa-spinner fa-spin fa-2x"></i></div>
-      ) : products.length > 0 ? (
-        <div className="bg-white rounded-[12px] border border-[#E2E8F0] overflow-x-auto shadow-xs">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[#E2E8F0] bg-gray-50">
-                <th className="text-left px-4 py-3 text-[10px] font-black text-[#64748B] uppercase tracking-wider w-10">#</th>
-                <th className="text-left px-4 py-3 text-[10px] font-black text-[#64748B] uppercase tracking-wider">Product</th>
-                <th className="text-left px-4 py-3 text-[10px] font-black text-[#64748B] uppercase tracking-wider w-24">Category</th>
-                <th className="text-right px-4 py-3 text-[10px] font-black text-[#64748B] uppercase tracking-wider w-20">Cost</th>
-                <th className="text-right px-4 py-3 text-[10px] font-black text-[#64748B] uppercase tracking-wider w-20">Retail</th>
-                <th className="text-center px-4 py-3 text-[10px] font-black text-[#64748B] uppercase tracking-wider w-16">Hero</th>
-                <th className="text-center px-4 py-3 text-[10px] font-black text-[#64748B] uppercase tracking-wider w-28">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p: any, idx: number) => {
-                const isImported = importedIds.has(p.pid);
-                const isImporting = importingId === p.pid;
-                const isHero = !!heroState[p.pid];
-                const cost = Number(p.sellPrice || 0);
-                
-                return (
-                  <tr key={p.pid} className={`border-b border-[#F1F5F9] hover:bg-orange-50/30 transition-colors ${isImported ? 'bg-green-50/40' : ''}`}>
-                    <td className="px-4 py-3 text-xs text-gray-400 font-mono">{(pageNum - 1) * pageSize + idx + 1}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <img src={p.productImage || p.bigImage || '/placeholder.png'} alt="" className="w-10 h-10 rounded-[6px] object-cover border border-[#E2E8F0] shrink-0" />
-                        <div className="min-w-0">
-                          <p className="font-semibold text-[#1E293B] truncate max-w-[350px]" title={p.productNameEn || p.productName}>
-                            {p.productNameEn || p.productName}
-                          </p>
-                          <p className="text-[10px] text-gray-400 font-mono">PID: {p.pid}</p>
+        {/* TABLE */}
+        {loading && products.length === 0 ? (
+          <div className="text-center py-20 text-gray-400"><i className="fas fa-spinner fa-spin fa-2x"></i></div>
+        ) : products.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-10">#</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Category</th>
+                  <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-20">Cost</th>
+                  <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-20">Retail</th>
+                  <th className="text-center px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">Hero</th>
+                  <th className="text-center px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((p: any, idx: number) => {
+                  const isImported = importedIds.has(p.pid);
+                  const isImporting = importingId === p.pid;
+                  const isHero = !!heroState[p.pid];
+                  const cost = Number(p.sellPrice || 0);
+                  
+                  return (
+                    <tr key={p.pid} className={`border-b border-gray-100 hover:bg-orange-50/30 transition-colors ${isImported ? 'bg-green-50/40' : ''}`}>
+                      <td className="px-5 py-3.5 text-xs text-gray-400 font-mono">{(pageNum - 1) * pageSize + idx + 1}</td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <img src={p.productImage || p.bigImage || '/placeholder.png'} alt="" className="w-10 h-10 rounded-[6px] object-cover border border-[#E2E8F0] shrink-0" />
+                          <div className="min-w-0">
+                            <p className="font-semibold text-[#1E293B] truncate max-w-[350px]" title={p.productNameEn || p.productName}>
+                              {p.productNameEn || p.productName}
+                            </p>
+                            <p className="text-[10px] text-gray-400 font-mono">PID: {p.pid}</p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-[10px] font-bold text-[#FF6B00] bg-orange-50 px-2 py-0.5 rounded-full">{p.categoryName || '-'}</span>
-                    </td>
-                    <td className="px-4 py-3 text-right font-bold text-gray-700">{formatUSD(cost)}</td>
-                    <td className="px-4 py-3 text-right font-black text-[#FF6B00]">{formatUSD(cost * 1.35)}</td>
-                    <td className="px-4 py-3 text-center">
-                      {!isImported && (
-                        <input type="checkbox" className="accent-[#FF6B00] w-4 h-4 cursor-pointer" checked={isHero} onChange={e => setHeroState({...heroState, [p.pid]: e.target.checked})} disabled={isImporting} />
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {isImported ? (
-                        <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-[6px] text-[11px] font-bold bg-green-100 text-green-700 border border-green-200">
-                          <i className="fas fa-check-circle"></i> Imported
-                        </span>
-                      ) : (
-                        <button
-                          className={`px-4 py-1.5 rounded-[6px] text-[11px] font-black flex items-center justify-center gap-1.5 transition-all w-full ${
-                            isHero ? 'bg-[#1E293B] text-white hover:bg-black' : 'bg-[#FF6B00] text-white hover:bg-[#E65100]'
-                          }`}
-                          onClick={() => handleImport(p)}
-                          disabled={isImporting}
-                        >
-                          {isImporting ? <><i className="fas fa-spinner fa-spin"></i>...</> : <><i className="fas fa-cloud-download-alt"></i> Import</>}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      ) : !loading ? (
-        <div className="bg-white rounded-[12px] border border-[#E2E8F0] p-12 text-center">
-          <i className="fas fa-box-open text-4xl text-gray-300 mb-3"></i>
-          <p className="font-bold text-gray-700">No products found</p>
-          <p className="text-gray-400 text-sm">Try different keywords or category</p>
-        </div>
-      ) : null}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className="text-[10px] font-bold text-[#FF6B00] bg-orange-50 px-2 py-0.5 rounded-full">{p.categoryName || '-'}</span>
+                      </td>
+                      <td className="px-5 py-3.5 text-right font-bold text-gray-700">{formatUSD(cost)}</td>
+                      <td className="px-5 py-3.5 text-right font-black text-[#FF6B00]">{formatUSD(cost * 1.35)}</td>
+                      <td className="px-5 py-3.5 text-center">
+                        {!isImported && (
+                          <input type="checkbox" className="accent-[#FF6B00] w-4 h-4 cursor-pointer" checked={isHero} onChange={e => setHeroState({...heroState, [p.pid]: e.target.checked})} disabled={isImporting} />
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5 text-center">
+                        {isImported ? (
+                          <span className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-[6px] text-[11px] font-bold bg-green-100 text-green-700 border border-green-200 w-full">
+                            <i className="fas fa-check-circle"></i> Imported
+                          </span>
+                        ) : (
+                          <button
+                            className={`px-4 py-1.5 rounded-[6px] text-[11px] font-black flex items-center justify-center gap-1.5 transition-all w-full cursor-pointer ${
+                              isHero ? 'bg-[#1E293B] text-white hover:bg-black' : 'bg-[#FF6B00] text-white hover:bg-[#E65100]'
+                            }`}
+                            onClick={() => handleImport(p)}
+                            disabled={isImporting}
+                          >
+                            {isImporting ? <><i className="fas fa-spinner fa-spin"></i>...</> : <><i className="fas fa-cloud-download-alt"></i> Import</>}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : !loading ? (
+          <div className="p-12 text-center">
+            <i className="fas fa-box-open text-4xl text-gray-300 mb-3"></i>
+            <p className="font-bold text-gray-700">No products found</p>
+            <p className="text-gray-400 text-sm">Try different keywords or category</p>
+          </div>
+        ) : null}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 pt-4 border-t border-[#E2E8F0]">
-          <button className="px-3 py-1.5 rounded-[6px] text-xs font-bold border border-[#E2E8F0] text-gray-600 hover:bg-gray-50 disabled:opacity-50" disabled={pageNum <= 1 || loading} onClick={() => setPageNum(prev => Math.max(1, prev - 1))}>
-            <i className="fas fa-chevron-left mr-1"></i> Prev
-          </button>
-          <span className="text-sm font-bold text-[#64748B]">Page {pageNum} of {totalPages} <span className="text-xs text-gray-400 font-normal">({totalRecords.toLocaleString()} products)</span></span>
-          <button className="px-3 py-1.5 rounded-[6px] text-xs font-bold border border-[#E2E8F0] text-gray-600 hover:bg-gray-50 disabled:opacity-50" disabled={pageNum >= totalPages || loading} onClick={() => setPageNum(prev => Math.min(totalPages, prev + 1))}>
-            Next <i className="fas fa-chevron-right ml-1"></i>
-          </button>
-        </div>
-      )}
+        {/* Pagination */}
+        {totalPages > 0 && (
+          <div className="px-5 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between bg-white rounded-b-[16px] gap-4">
+            <div className="text-sm font-semibold text-gray-500">
+              Showing {totalRecords === 0 ? 0 : ((pageNum - 1) * pageSize) + 1} to {Math.min(pageNum * pageSize, totalRecords)} of {totalRecords} entries
+            </div>
+            <div className="flex gap-1.5 items-center flex-wrap">
+              <button 
+                className="px-3.5 py-1.5 rounded-[8px] text-xs font-bold border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200 disabled:opacity-30 flex items-center gap-1 cursor-pointer"
+                disabled={pageNum <= 1 || loading}
+                onClick={() => setPageNum(prev => Math.max(1, prev - 1))}
+              >
+                <i className="fas fa-chevron-left"></i> Prev
+              </button>
+              
+              {(() => {
+                const pages = [];
+                const maxVisiblePages = 8;
+                let startPage = Math.max(1, pageNum - 3);
+                let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                
+                if (endPage - startPage + 1 < maxVisiblePages) {
+                  startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                }
+                
+                for (let i = startPage; i <= endPage; i++) {
+                  pages.push(
+                    <button
+                      key={i}
+                      disabled={loading}
+                      className={`px-3.5 py-1.5 rounded-[8px] text-xs font-bold transition-all duration-200 border cursor-pointer ${
+                        pageNum === i
+                          ? 'bg-[#FF6B00] text-white border-[#FF6B00]'
+                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                      onClick={() => setPageNum(i)}
+                    >
+                      {i}
+                    </button>
+                  );
+                }
+                return pages;
+              })()}
+              
+              <button 
+                className="px-3.5 py-1.5 rounded-[8px] text-xs font-bold border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200 disabled:opacity-30 flex items-center gap-1 cursor-pointer"
+                disabled={pageNum >= totalPages || loading}
+                onClick={() => setPageNum(prev => Math.min(totalPages, prev + 1))}
+              >
+                Next <i className="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

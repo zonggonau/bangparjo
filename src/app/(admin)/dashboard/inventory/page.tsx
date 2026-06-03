@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { getFullCategoryTreeAction } from '@/lib/actions-catalog';
 import InventoryList from './InventoryList';
 
 export const dynamic = 'force-dynamic';
@@ -10,7 +11,8 @@ export default async function InventoryPage({
 }) {
   const resolvedSearchParams = await searchParams;
   const page = parseInt((resolvedSearchParams.page as string) || '1', 10);
-  const pageSize = 20;
+  const pageSize = parseInt((resolvedSearchParams.limit as string) || '20', 10);
+  const searchQuery = ((resolvedSearchParams.search as string) || '').trim();
 
   const categoryId = resolvedSearchParams.categoryId as string | undefined;
   const sort = (resolvedSearchParams.sort as string) || 'newest';
@@ -23,8 +25,28 @@ export default async function InventoryPage({
   if (sort === 'name_desc') orderBy = { name: 'desc' };
 
   const whereCondition: any = {};
+  
+  // Recursive category lookup to include subcategories
   if (categoryId) {
-    whereCondition.categoryId = categoryId;
+    const getDescendants = async (id: string): Promise<string[]> => {
+      const children = await prisma.category.findMany({
+        where: { parentId: id },
+        select: { id: true }
+      });
+      const childIds = children.map(c => c.id);
+      const descendantIds = await Promise.all(childIds.map(getDescendants));
+      return [id, ...childIds, ...descendantIds.flat()];
+    };
+    const categoryIdsFilter = await getDescendants(categoryId);
+    whereCondition.categoryId = { in: categoryIdsFilter };
+  }
+
+  if (searchQuery) {
+    whereCondition.OR = [
+      { name: { contains: searchQuery, mode: 'insensitive' } },
+      { cjId: { contains: searchQuery, mode: 'insensitive' } },
+      { variants: { some: { sku: { contains: searchQuery, mode: 'insensitive' } } } }
+    ];
   }
 
   const total = await prisma.product.count({ where: whereCondition });
@@ -40,9 +62,9 @@ export default async function InventoryPage({
     orderBy: orderBy
   });
 
-  const categories = await prisma.category.findMany({
-    orderBy: { name: 'asc' }
-  });
+  // Load CJ Category tree
+  const catTreeRes = await getFullCategoryTreeAction();
+  const categoryTree = catTreeRes.success ? catTreeRes.data || [] : [];
 
   const now = new Date();
   const activeCoupons = await prisma.coupon.findMany({
@@ -75,7 +97,7 @@ export default async function InventoryPage({
   }));
 
   const serializedProducts = JSON.parse(JSON.stringify(products));
-  const serializedCategories = JSON.parse(JSON.stringify(categories));
+  const serializedCategoryTree = JSON.parse(JSON.stringify(categoryTree));
 
   return (
     <div>
@@ -90,7 +112,9 @@ export default async function InventoryPage({
         initialProducts={serializedProducts} 
         total={total} 
         currentPage={page} 
-        categories={serializedCategories}
+        limit={pageSize}
+        search={searchQuery}
+        categoryTree={serializedCategoryTree}
         currentCategory={categoryId || ''}
         currentSort={sort || 'newest'}
         activeCoupons={serializedCoupons}

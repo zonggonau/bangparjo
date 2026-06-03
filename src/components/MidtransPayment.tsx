@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { getMidtransTokenAction } from '@/lib/actions';
+import { getMidtransTokenAction, verifyMidtransPaymentAction } from '@/lib/actions';
 
 interface MidtransPaymentProps {
   orderId: string;
@@ -77,11 +77,26 @@ export default function MidtransPayment({ orderId, amount, customerDetails, onSu
 
         // @ts-ignore
         window.snap.pay(data.token, {
-          onSuccess: function(result: any) {
+          onSuccess: async function(result: any) {
             console.log('Midtrans Success:', result);
-            isProcessing.current = false;
-            setLoading(false);
-            onSuccess();
+            setLoading(true);
+            try {
+              const res = await verifyMidtransPaymentAction({
+                orderId,
+                midtransOrderId: result.order_id
+              });
+              if (res.success) {
+                console.log('[Midtrans Client] Verified & fulfilled successfully:', res);
+              } else {
+                console.warn('[Midtrans Client] Verification warning:', res.error);
+              }
+            } catch (err) {
+              console.error('[Midtrans Client] Error during verification:', err);
+            } finally {
+              isProcessing.current = false;
+              setLoading(false);
+              onSuccess();
+            }
           },
           onPending: function(result: any) {
             console.log('Midtrans Pending:', result);

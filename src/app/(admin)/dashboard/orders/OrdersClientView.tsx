@@ -29,14 +29,16 @@ export default function OrdersClientView({
   currentStatus, 
   currentSearch,
   total = 0,
-  currentPage = 1
+  currentPage = 1,
+  cjPayType = 3
 }: { 
   orders: any[], 
   currentSource: string,
   currentStatus: string,
   currentSearch: string,
   total?: number,
-  currentPage?: number
+  currentPage?: number,
+  cjPayType?: number
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -122,6 +124,29 @@ export default function OrdersClientView({
       }
     } catch (e: any) {
       toast.error('Critical error: ' + e.message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handlePayCjBalance = async (cjOrderId: string) => {
+    if (!confirm(`Pay for CJ Order ${cjOrderId} using your CJ balance?`)) return;
+    setBusy(cjOrderId);
+    try {
+      const res = await fetch('/api/cj-balance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderNumber: cjOrderId })
+      });
+      const data = await res.json();
+      if (data.success || data.result) {
+        toast.success('Payment successful!');
+        router.refresh();
+      } else {
+        toast.error('Payment failed: ' + (data.message || 'Unknown error'));
+      }
+    } catch (err: any) {
+      toast.error('Error: ' + err.message);
     } finally {
       setBusy(null);
     }
@@ -304,6 +329,16 @@ export default function OrdersClientView({
                               <i className={`fas fa-check-circle ${isBusy ? 'fa-spin' : ''}`}></i>
                             </button>
                           )}
+                          {currentSource === 'LOCAL' && (o.status || '').toUpperCase() === 'PAID' && o.cjOrderId && cjPayType === 2 && (
+                            <button 
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-all duration-200" 
+                              disabled={isBusy} 
+                              onClick={() => handlePayCjBalance(o.cjOrderId)} 
+                              title="Pay via CJ Balance"
+                            >
+                              <i className={`fas fa-wallet ${isBusy ? 'fa-spin' : ''}`}></i>
+                            </button>
+                          )}
                           {currentSource === 'LOCAL' && ['UNPAID', 'FULFILLING'].includes((o.status || '').toUpperCase()) && (
                             <button
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-all duration-200"
@@ -353,7 +388,7 @@ export default function OrdersClientView({
       
       {/* Real React Modal for Confirmation */}
       {confirmModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fade-in">
           <div className="max-w-sm w-full bg-white shadow-2xl rounded-[16px] pointer-events-auto flex flex-col overflow-hidden animate-slide-up-fade">
             <div className="p-5 flex gap-4">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${confirmModal.type === 'fulfill' ? 'bg-orange-100 text-orange-500' : 'bg-emerald-100 text-emerald-600'}`}>

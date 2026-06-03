@@ -125,3 +125,23 @@ export async function markOrderAsPaidAction(orderId: string) {
   }
 }
 
+export async function getCjPayTypeAction() {
+  try {
+    await checkAdmin();
+    const payTypeSetting = await prisma.storeSetting.findUnique({
+      where: { key: 'cjPayType' }
+    });
+    let payType = 3;
+    if (payTypeSetting?.value) {
+      try {
+        payType = JSON.parse(payTypeSetting.value);
+      } catch {
+        payType = parseInt(payTypeSetting.value) || 3;
+      }
+    }
+    return { success: true, payType };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+

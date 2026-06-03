@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
-import { getAdminOrdersAction, fulfillAdminOrderAction, syncAdminOrderAction, deleteCjOrderAction, confirmCjOrderAction } from '@/lib/actions-admin-orders';
+import { getAdminOrdersAction, fulfillAdminOrderAction, syncAdminOrderAction, deleteCjOrderAction, confirmCjOrderAction, getCjPayTypeAction } from '@/lib/actions-admin-orders';
 
 function formatUSD(price: number | string | null | undefined) {
   const p = typeof price === 'string' ? parseFloat(price) : (price || 0);
@@ -35,6 +35,15 @@ export default function AdminOrderDetail() {
     type: 'fulfill' | 'sync';
     orderId: string;
   } | null>(null);
+  const [cjPayType, setCjPayType] = useState<number>(3);
+
+  useEffect(() => {
+    getCjPayTypeAction().then(res => {
+      if (res.success && res.payType !== undefined) {
+        setCjPayType(res.payType);
+      }
+    }).catch(console.error);
+  }, []);
 
   useEffect(() => {
     if (!orderNum) return;
@@ -197,6 +206,11 @@ export default function AdminOrderDetail() {
             {order.status === 'PAID' && !order.cjOrderId && (
               <button disabled={busy} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-bold bg-[#FF6B00] text-white hover:bg-[#E65100] transition-all duration-200" onClick={() => setConfirmModal({ type: 'fulfill', orderId: order.id })}>
                 <i className={`fas fa-check-circle ${busy ? 'fa-spin' : ''}`}></i> Fulfill to CJ
+              </button>
+            )}
+            {order.status === 'PAID' && order.cjOrderId && cjPayType === 2 && (
+              <button disabled={cjLoading} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-all duration-200" onClick={handlePayBalance}>
+                <i className={`fas fa-wallet ${cjLoading ? 'fa-spin' : ''}`}></i> Pay via CJ Balance
               </button>
             )}
             {(order.cjOrderId || order.status === 'UNPAID') && (
@@ -495,7 +509,7 @@ export default function AdminOrderDetail() {
 
       {/* Real React Modal for Confirmation */}
       {confirmModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fade-in">
           <div className="max-w-sm w-full bg-white shadow-2xl rounded-[16px] pointer-events-auto flex flex-col overflow-hidden animate-slide-up-fade">
             <div className="p-5 flex gap-4">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${confirmModal.type === 'fulfill' ? 'bg-orange-100 text-orange-500' : 'bg-emerald-100 text-emerald-600'}`}>

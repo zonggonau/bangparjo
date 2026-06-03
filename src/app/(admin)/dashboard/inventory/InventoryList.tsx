@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { calculateFinalPrice } from '@/lib/pricing';
 import { useSettings } from '@/context/SettingsContext';
 import { slugify, parseProductName } from '@/lib/utils';
 import { 
@@ -12,7 +11,6 @@ import {
   deleteAdminProductAction, 
   exportToBlogAction
 } from '@/lib/actions-admin-inventory';
-
 
 interface Variant {
   id: string;
@@ -35,11 +33,20 @@ interface Product {
   isHero: boolean;
 }
 
+interface CategoryNode {
+  id: string;
+  name: string;
+  slug: string;
+  children?: CategoryNode[];
+}
+
 export default function InventoryList({ 
   initialProducts, 
   total = 0, 
   currentPage = 1,
-  categories = [],
+  limit = 20,
+  search = '',
+  categoryTree = [],
   currentCategory = '',
   currentSort = 'newest',
   activeCoupons = []
@@ -47,7 +54,9 @@ export default function InventoryList({
   initialProducts: any[], 
   total?: number, 
   currentPage?: number,
-  categories?: any[],
+  limit?: number,
+  search?: string,
+  categoryTree?: CategoryNode[],
   currentCategory?: string,
   currentSort?: string,
   activeCoupons?: any[]
@@ -55,11 +64,18 @@ export default function InventoryList({
 
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [localSearch, setLocalSearch] = useState(search);
   
   // Update products when initialProducts changes
   useEffect(() => {
     setProducts(initialProducts);
   }, [initialProducts]);
+
+  // Sync localSearch when search prop changes
+  useEffect(() => {
+    setLocalSearch(search);
+  }, [search]);
+
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<{ show: boolean, message: string, type: 'success' | 'error' }>({ show: false, message: '', type: 'success' });
@@ -69,16 +85,47 @@ export default function InventoryList({
   const [bulkLang, setBulkLang] = useState<'id' | 'en'>('en');
   const { settings } = useSettings();
 
-  const handleFilterChange = (key: string, value: string) => {
+  // Mega Menu state
+  const [showMegaMenu, setShowMegaMenu] = useState(false);
+  const [activeL1, setActiveL1] = useState<CategoryNode | null>(categoryTree[0] || null);
+  const [activeL2, setActiveL2] = useState<CategoryNode | null>(null);
 
+  useEffect(() => {
+    if (categoryTree.length > 0 && !activeL1) {
+      setActiveL1(categoryTree[0]);
+    }
+  }, [categoryTree, activeL1]);
+
+  const findCategoryName = (nodes: CategoryNode[], targetId: string): string | null => {
+    for (const n of nodes) {
+      if (n.id === targetId) return n.name;
+      if (n.children && n.children.length > 0) {
+        const found = findCategoryName(n.children, targetId);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const selectedCategoryName = currentCategory ? findCategoryName(categoryTree, currentCategory) || 'All Categories' : 'All Categories';
+
+  const handleFilterChange = (key: string, value: string) => {
     const searchParams = new URLSearchParams(window.location.search);
     if (value) {
       searchParams.set(key, value);
     } else {
       searchParams.delete(key);
     }
-    searchParams.set('page', '1'); // Reset to page 1 on filter change
+    // Reset to page 1 on filter changes except for page changes
+    if (key !== 'page') {
+      searchParams.set('page', '1');
+    }
     router.push(`/dashboard/inventory?${searchParams.toString()}`);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleFilterChange('search', localSearch);
   };
 
   const handlePriceEdit = async (variantId: string, newPrice: string) => {
@@ -238,8 +285,6 @@ export default function InventoryList({
     }
   };
 
-  // ── Export to Blog ──────────────────────────────────────────────────────
-
   const handleExportToBlog = async (productId: string, lang: 'id' | 'en') => {
     setExportingBlog(`${productId}-${lang}`);
     try {
@@ -275,6 +320,36 @@ export default function InventoryList({
     showToast(`✅ ${success} exported (${lang.toUpperCase()}), ${skipped} skipped, ${errors} errors`);
   };
 
+  const totalPages = Math.ceil(total / limit);
+
+  const renderPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 8;
+    let startPage = Math.max(1, currentPage - 3);
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          className={`px-3.5 py-1.5 rounded-[8px] text-xs font-bold transition-all duration-200 border ${
+            currentPage === i
+              ? 'bg-[#FF6B00] text-white border-[#FF6B00]'
+              : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+          }`}
+          onClick={() => handleFilterChange('page', String(i))}
+        >
+          {i}
+        </button>
+      );
+    }
+    return pages;
+  };
+
   return (
     <div className="bg-white rounded-[16px] border border-gray-200 overflow-hidden">
       {/* Toast Notification */}
@@ -285,35 +360,114 @@ export default function InventoryList({
         </div>
       )}
 
-      {/* Filter and Sort Controls */}
-      <div className="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row gap-4 bg-white">
-        <div className="flex-1">
-          <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Category Filter</label>
-          <select 
-            className="w-full sm:max-w-xs px-4 py-2 border border-gray-200 rounded-[10px] text-sm font-semibold text-gray-700 outline-none focus:border-[#FF6B00] transition-colors bg-gray-50 hover:bg-white"
-            value={currentCategory}
-            onChange={(e) => handleFilterChange('categoryId', e.target.value)}
-          >
-            <option value="">All Categories</option>
-            {categories.map((c: any) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+      {/* Filter, Search, and Sort Controls */}
+      <div className="px-5 py-5 border-b border-gray-100 flex flex-col lg:flex-row gap-5 bg-white items-end justify-between">
+        
+        {/* Category megamenu & Limit selector */}
+        <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+          {/* Category megamenu filter */}
+          <div className="flex-1 sm:flex-initial relative">
+            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Category Filter</label>
+            <button 
+              type="button" 
+              className="w-full sm:w-[240px] px-4 py-2 border border-gray-200 rounded-[10px] text-sm font-semibold text-gray-700 outline-none focus:border-[#FF6B00] transition-colors bg-gray-50 hover:bg-white flex items-center justify-between cursor-pointer h-[38px]" 
+              onClick={() => setShowMegaMenu(!showMegaMenu)}
+            >
+              <span className="truncate text-sm">{selectedCategoryName}</span>
+              <i className={`fas fa-chevron-down text-gray-400 text-[10px] transition-transform ${showMegaMenu ? 'rotate-180' : ''}`}></i>
+            </button>
+
+            {showMegaMenu && (
+              <>
+                <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setShowMegaMenu(false)} />
+                <div className="absolute top-full left-0 w-full sm:w-[680px] bg-white border border-[#E2E8F0] rounded-[12px] shadow-2xl p-4 z-50 grid grid-cols-1 sm:grid-cols-3 gap-3 max-h-[450px] overflow-y-auto mt-2">
+                  <div className="border-b sm:border-b-0 sm:border-r border-[#F1F5F9] pb-3 sm:pb-0 sm:pr-2">
+                    <p className="text-[10px] font-black text-[#94A3B8] uppercase mb-2">Main</p>
+                    <button type="button" className={`block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold mb-0.5 ${!currentCategory ? 'bg-orange-50 text-[#FF6B00]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => { handleFilterChange('categoryId', ''); setShowMegaMenu(false); }}>🌟 All Categories</button>
+                    {categoryTree.map(l1 => (
+                      <button key={l1.id} type="button" className={`block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold mb-0.5 ${activeL1?.id === l1.id ? 'bg-orange-50 text-[#FF6B00]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => { setActiveL1(l1); setActiveL2(null); }}>
+                        {l1.name}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="border-b sm:border-b-0 sm:border-r border-[#F1F5F9] py-3 sm:py-0 sm:px-2">
+                    <p className="text-[10px] font-black text-[#94A3B8] uppercase mb-2">Sub</p>
+                    {activeL1 && <button type="button" className="block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold text-gray-500 bg-gray-50 mb-1 hover:bg-orange-50 hover:text-[#FF6B00]" onClick={() => { handleFilterChange('categoryId', activeL1.id); setShowMegaMenu(false); }}>🎯 All {activeL1.name}</button>}
+                    {activeL1?.children?.map(l2 => (
+                      <button key={l2.id} type="button" className={`block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold mb-0.5 ${activeL2?.id === l2.id ? 'bg-orange-50 text-[#FF6B00]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setActiveL2(l2)}>{l2.name}</button>
+                    ))}
+                  </div>
+                  <div className="pt-3 sm:pt-0 sm:pl-2">
+                    <p className="text-[10px] font-black text-[#94A3B8] uppercase mb-2">Detail</p>
+                    {activeL2 && <button type="button" className="block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold text-gray-500 bg-gray-50 mb-1 hover:bg-orange-50 hover:text-[#FF6B00]" onClick={() => { handleFilterChange('categoryId', activeL2.id); setShowMegaMenu(false); }}>🎯 All {activeL2.name}</button>}
+                    {activeL2?.children?.map(l3 => (
+                      <button key={l3.id} type="button" className="block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold text-gray-700 hover:bg-orange-50 hover:text-[#FF6B00]" onClick={() => { handleFilterChange('categoryId', l3.id); setShowMegaMenu(false); }}>{l3.name}</button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Limit / Page Size selector */}
+          <div className="w-[100px] shrink-0">
+            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Show</label>
+            <select 
+              className="w-full px-3 py-2 border border-gray-200 rounded-[10px] text-sm font-semibold text-gray-700 outline-none focus:border-[#FF6B00] transition-colors bg-gray-50 hover:bg-white h-[38px] cursor-pointer"
+              value={limit}
+              onChange={(e) => handleFilterChange('limit', e.target.value)}
+            >
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
         </div>
-        <div>
-          <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Sort By</label>
-          <select 
-            className="w-full sm:w-auto px-4 py-2 border border-gray-200 rounded-[10px] text-sm font-semibold text-gray-700 outline-none focus:border-[#FF6B00] transition-colors bg-gray-50 hover:bg-white"
-            value={currentSort}
-            onChange={(e) => handleFilterChange('sort', e.target.value)}
-          >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="stock_desc">Highest Stock</option>
-            <option value="stock_asc">Lowest Stock</option>
-            <option value="name_asc">Name (A-Z)</option>
-            <option value="name_desc">Name (Z-A)</option>
-          </select>
+
+        {/* Search & Sort */}
+        <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto items-end">
+          {/* Search form */}
+          <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-[280px]">
+            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Search</label>
+            <div className="relative">
+              <i className="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+              <input 
+                type="text" 
+                placeholder="Product, CJ ID, SKU..." 
+                value={localSearch}
+                onChange={e => setLocalSearch(e.target.value)}
+                className="w-full py-2 pl-9 pr-8 rounded-[10px] border border-gray-200 bg-gray-50 text-sm outline-none focus:border-[#FF6B00] focus:bg-white transition-all duration-200 h-[38px]"
+              />
+              {localSearch && (
+                <button 
+                  type="button" 
+                  onClick={() => { setLocalSearch(''); handleFilterChange('search', ''); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 border-none bg-transparent cursor-pointer p-0"
+                >
+                  <i className="fas fa-times-circle"></i>
+                </button>
+              )}
+            </div>
+            <button type="submit" className="hidden">Search</button>
+          </form>
+
+          {/* Sort By selector */}
+          <div className="w-full sm:w-[160px] shrink-0">
+            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Sort By</label>
+            <select 
+              className="w-full px-4 py-2 border border-gray-200 rounded-[10px] text-sm font-semibold text-gray-700 outline-none focus:border-[#FF6B00] transition-colors bg-gray-50 hover:bg-white h-[38px] cursor-pointer"
+              value={currentSort}
+              onChange={(e) => handleFilterChange('sort', e.target.value)}
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="stock_desc">Highest Stock</option>
+              <option value="stock_asc">Lowest Stock</option>
+              <option value="name_asc">Name (A-Z)</option>
+              <option value="name_desc">Name (Z-A)</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -321,7 +475,7 @@ export default function InventoryList({
       {products.length > 0 && (
         <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
           <span className="text-sm text-gray-500 font-medium">
-            {products.length} products
+            {products.length} products on this page
           </span>
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Bulk Language:</span>
@@ -353,13 +507,12 @@ export default function InventoryList({
               <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Product Information</th>
               <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Variants</th>
               <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Stock Status</th>
-
               <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
           <tbody>
             {products.length === 0 ? (
-              <tr><td colSpan={6} className="text-center py-[100px] text-gray-400">No products imported yet.</td></tr>
+              <tr><td colSpan={5} className="text-center py-[100px] text-gray-400">No products imported yet.</td></tr>
             ) : (
               products.map((p) => (
                 <React.Fragment key={p.id}>
@@ -373,7 +526,7 @@ export default function InventoryList({
                            <Image src={p.images[0] || '/placeholder.png'} alt={p.name} fill className="object-cover" unoptimized />
                         </div>
                         <div className="min-w-0">
-                          <div className="font-extrabold truncate max-w-[360px] text-gray-800">
+                          <div className="font-extrabold truncate max-w-[360px] text-gray-800 text-sm">
                             {p.name}
                           </div>
                           <div className="flex gap-2 items-center mt-1">
@@ -387,7 +540,6 @@ export default function InventoryList({
                       <span className="inline-block px-2.5 py-1 rounded-[6px] text-xs font-bold bg-blue-100 text-blue-700">{p.variants.length} Specs</span>
                     </td>
                     <td className="px-5 py-3.5">
-
                       <div className="flex flex-col gap-1">
                          <span className="font-black text-base">{p.variants.reduce((acc, v) => acc + v.inventory, 0)}</span>
                          <span className="text-[10px] font-bold uppercase text-gray-400">Total Units</span>
@@ -472,7 +624,7 @@ export default function InventoryList({
                   </tr>
                   {expandedId === p.id && (
                     <tr className="bg-gray-50">
-                      <td colSpan={6} className="p-0">
+                      <td colSpan={5} className="p-0">
                         <div className="p-8 border-l-4 border-[#FF6B00]">
                           <div className="bg-white rounded-[12px] border border-gray-200 shadow-sm">
                             <table className="w-full border-collapse">
@@ -534,7 +686,6 @@ export default function InventoryList({
                                               ${v.sellingPrice.toFixed(2)}
                                             </span>
                                           </div>
-
                                         )}
                                       </td>
                                       <td className="px-6 py-3">
@@ -589,14 +740,14 @@ export default function InventoryList({
       </div>
 
       {/* Pagination */}
-      {total > 0 && (
-        <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between bg-white rounded-b-[16px]">
+      {totalPages > 0 && (
+        <div className="px-5 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between bg-white rounded-b-[16px] gap-4">
           <div className="text-sm font-semibold text-gray-500">
-            Showing {((currentPage - 1) * 20) + 1} to {Math.min(currentPage * 20, total)} of {total} entries
+            Showing {total === 0 ? 0 : ((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, total)} of {total} entries
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 items-center flex-wrap">
             <button 
-              className="px-4 py-2 rounded-[10px] text-sm font-bold border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200 disabled:opacity-30"
+              className="px-3.5 py-1.5 rounded-[8px] text-xs font-bold border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200 disabled:opacity-30 flex items-center gap-1"
               disabled={currentPage <= 1}
               onClick={() => { 
                 const params = new URLSearchParams(window.location.search);
@@ -606,9 +757,12 @@ export default function InventoryList({
             >
               <i className="fas fa-chevron-left"></i> Prev
             </button>
+            
+            {renderPageNumbers()}
+            
             <button 
-              className="px-4 py-2 rounded-[10px] text-sm font-bold border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200 disabled:opacity-30"
-              disabled={currentPage >= Math.ceil(total / 20)}
+              className="px-3.5 py-1.5 rounded-[8px] text-xs font-bold border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200 disabled:opacity-30 flex items-center gap-1"
+              disabled={currentPage >= totalPages}
               onClick={() => { 
                 const params = new URLSearchParams(window.location.search);
                 params.set('page', String(currentPage + 1));

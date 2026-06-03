@@ -33,6 +33,8 @@ export async function processFulfillment(orderNum: string) {
 
   let res: any;
   let payType = 3;
+  let finalStatus = 'FULFILLED';
+  let payErrorMsg: string | null = null;
 
   try {
     // 2. Gunakan stored CJ payload (sudah berupa objek karena tipe Json di Prisma)
@@ -66,83 +68,95 @@ export async function processFulfillment(orderNum: string) {
       throw new Error(`CJ API Error: ${res.message || 'Unknown'}`);
     }
 
-  const cjOrderId = (res.data as any)?.cjOrderId || (res.data as any)?.orderId;
-  const lineItemIds: Record<string, string> = {};
+    const cjOrderId = (res.data as any)?.cjOrderId || (res.data as any)?.orderId;
+    const lineItemIds: Record<string, string> = {};
 
-  // Extract lineItemId per product from CJ response (if available)
-  const cjProducts: any[] = (res.data as any)?.products || [];
-  for (const p of cjProducts) {
-    if (p.storeLineItemId && p.lineItemId) {
-      lineItemIds[p.storeLineItemId] = p.lineItemId;
-    }
-  }
-
-  // 5. Auto-pay with CJ balance if payType = 2 (auto balance)
-  if (payType === 2 && cjOrderId) {
-    try {
-      console.log(`[Fulfillment] Auto-paying order ${orderNum} (CJ: ${cjOrderId}) via balance...`);
-      const payRes = await payBalance({ orderNumber: cjOrderId });
-      if (payRes.success) {
-        console.log(`[Fulfillment] Auto-pay SUCCESS for ${orderNum}`);
-      } else {
-        console.warn(`[Fulfillment] Auto-pay FAILED for ${orderNum}: ${payRes.message}`);
-        // Notify admin of pay failure via OpenClaw (non-blocking)
-        import('@/lib/openclaw-client').then(({ sendCustomWA }) => {
-          const adminWa = process.env.NEXT_PUBLIC_WHATSAPP || '628219105980';
-          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
-          sendCustomWA(adminWa, [
-            `⚠️ *CJ Auto-Pay Failed*`,
-            ``,
-            `Order: #${orderNum}`,
-            `CJ Order: ${cjOrderId}`,
-            `Error: ${payRes.message}`,
-            ``,
-            `Please pay manually in CJ dashboard.`,
-            `🔗 ${baseUrl}/admin/orders`,
-          ].join('\n')).catch(() => {});
-        });
+    // Extract lineItemId per product from CJ response (if available)
+    const cjProducts: any[] = (res.data as any)?.products || [];
+    for (const p of cjProducts) {
+      if (p.storeLineItemId && p.lineItemId) {
+        lineItemIds[p.storeLineItemId] = p.lineItemId;
       }
-    } catch (payErr: any) {
-      console.error(`[Fulfillment] Auto-pay error for ${orderNum}:`, payErr.message);
     }
-  }
 
-  // 6. Update local order with CJ order ID and FULFILLED status
-  const updatedOrder = await prisma.order.update({
-    where: { orderNum },
-    data: {
-      cjOrderId,
-      status: 'FULFILLED',
-      cjResponse: res.data as any,
-    },
-  });
-
-  // 7. Update lineItemIds in OrderItem records (if available from CJ)
-  if (Object.keys(lineItemIds).length > 0) {
-    for (const [storeItemId, lineItemId] of Object.entries(lineItemIds)) {
-      await prisma.orderItem.updateMany({
-        where: { id: storeItemId },
-        data: { cjLineItemId: lineItemId } as any,
-      }).catch(() => {}); // Ignore if field doesn't exist yet
+    // 5. Auto-pay with CJ balance if payType = 2 (auto balance)
+    if (payType === 2 && cjOrderId) {
+      try {
+        console.log(`[Fulfillment] Auto-paying order ${orderNum} (CJ: ${cjOrderId}) via balance...`);
+        const payRes = await payBalance({ orderNumber: cjOrderId });
+        if (payRes.success) {
+          console.log(`[Fulfillment] Auto-pay SUCCESS for ${orderNum}`);
+        } else {
+          console.warn(`[Fulfillment] Auto-pay FAILED for ${orderNum}: ${payRes.message}`);
+          finalStatus = 'PAID';
+          payErrorMsg = payRes.message || 'Insufficient balance';
+          // Notify admin of pay failure via OpenClaw (non-blocking)
+          import('@/lib/openclaw-client').then(({ sendCustomWA }) => {
+            const adminWa = process.env.NEXT_PUBLIC_WHATSAPP || '628219105980';
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
+            sendCustomWA(adminWa, [
+              `⚠️ *CJ Auto-Pay Failed*`,
+              ``,
+              `Order: #${orderNum}`,
+              `CJ Order: ${cjOrderId}`,
+              `Error: ${payRes.message}`,
+              ``,
+              `Please pay manually in CJ dashboard.`,
+              `🔗 ${baseUrl}/admin/orders`,
+            ].join('\n')).catch(() => {});
+          });
+        }
+      } catch (payErr: any) {
+        console.error(`[Fulfillment] Auto-pay error for ${orderNum}:`, payErr.message);
+        finalStatus = 'PAID';
+        payErrorMsg = payErr.message;
+      }
     }
-  }
 
-  // 8. Notify admin via OpenClaw (non-blocking)
-  import('@/lib/openclaw-client').then(({ sendCustomWA }) => {
-    const adminWa = process.env.NEXT_PUBLIC_WHATSAPP || '628219105980';
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
-    sendCustomWA(adminWa, [
-      `✅ *Order Fulfilled to CJ*`,
-      ``,
-      `Store Order: #${orderNum}`,
-      `CJ Order ID: ${cjOrderId || '-'}`,
-      `Pay Type: ${payType === 2 ? 'Auto Balance' : 'Manual'}`,
-      ``,
-      `🔗 ${baseUrl}/admin/orders`,
-    ].join('\n')).catch(() => {});
-  });
+    // 6. Update local order with CJ order ID and final status
+    const updatedOrder = await prisma.order.update({
+      where: { orderNum },
+      data: {
+        cjOrderId,
+        status: finalStatus as any,
+        cjResponse: res.data as any,
+      },
+    });
 
-  return { success: true, order: updatedOrder, cjData: res.data };
+    // 7. Update lineItemIds in OrderItem records (if available from CJ)
+    if (Object.keys(lineItemIds).length > 0) {
+      for (const [storeItemId, lineItemId] of Object.entries(lineItemIds)) {
+        await prisma.orderItem.updateMany({
+          where: { id: storeItemId },
+          data: { cjLineItemId: lineItemId } as any,
+        }).catch(() => {}); // Ignore if field doesn't exist yet
+      }
+    }
+
+    // 8. Notify admin via OpenClaw (non-blocking)
+    import('@/lib/openclaw-client').then(({ sendCustomWA }) => {
+      const adminWa = process.env.NEXT_PUBLIC_WHATSAPP || '628219105980';
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
+      sendCustomWA(adminWa, [
+        `✅ *Order Fulfilled to CJ*`,
+        ``,
+        `Store Order: #${orderNum}`,
+        `CJ Order ID: ${cjOrderId || '-'}`,
+        `Pay Type: ${payType === 2 ? 'Auto Balance' : 'Manual'}`,
+        ``,
+        `🔗 ${baseUrl}/admin/orders`,
+      ].join('\n')).catch(() => {});
+    });
+
+    if (finalStatus === 'PAID') {
+      return {
+        success: false,
+        error: `Order created on CJ (#${cjOrderId}) but auto-payment failed: ${payErrorMsg || 'Insufficient balance'}. Status reverted to PAID.`,
+        cjOrderId
+      };
+    }
+
+    return { success: true, order: updatedOrder, cjData: res.data };
   } catch (error: any) {
     console.error(`[Fulfillment Error] Order ${orderNum}:`, error);
     // Revert status to PAID so admin can retry

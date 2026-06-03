@@ -1,4 +1,4 @@
-import { getAdminOrdersAction } from '@/lib/actions-admin-orders';
+import { getAdminOrdersAction, getCjPayTypeAction } from '@/lib/actions-admin-orders';
 import { getOrderList } from '@/lib/cj-api';
 import OrdersClientView from './OrdersClientView';
 
@@ -67,6 +67,9 @@ export default async function OrdersPage({
 
   const serializedOrders = JSON.parse(JSON.stringify(paginatedOrders));
 
+  const payTypeRes = await getCjPayTypeAction();
+  const cjPayType = payTypeRes.success ? payTypeRes.payType ?? 3 : 3;
+
   return (
     <OrdersClientView 
       orders={serializedOrders} 
@@ -75,6 +78,7 @@ export default async function OrdersPage({
       currentSearch={searchQuery}
       total={total}
       currentPage={currentPage}
+      cjPayType={cjPayType}
     />
   );
 }

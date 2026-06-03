@@ -549,6 +549,68 @@ export async function getMidtransTokenAction(data: { orderId: string; customerDe
   }
 }
 
+export async function verifyMidtransPaymentAction(data: { orderId: string; midtransOrderId: string }) {
+  try {
+    const { orderId, midtransOrderId } = data;
+
+    if (!orderId || !midtransOrderId) {
+      return { success: false, error: 'orderId and midtransOrderId are required' };
+    }
+
+    console.log(`[Midtrans Verify] Checking status for transaction ${midtransOrderId} (Order: ${orderId})...`);
+
+    // 1. Fetch transaction status from Midtrans API
+    const statusResponse = await snap.transaction.status(midtransOrderId);
+    const { transaction_status, fraud_status } = statusResponse;
+
+    const isSuccess = 
+      transaction_status === 'settlement' || 
+      (transaction_status === 'capture' && fraud_status === 'accept');
+
+    if (!isSuccess) {
+      console.warn(`[Midtrans Verify] Payment NOT success. Status: ${transaction_status}`);
+      return { success: false, error: `Payment not completed. Status: ${transaction_status}` };
+    }
+
+    // 2. Verify order exists
+    const order = await prisma.order.findUnique({
+      where: { orderNum: orderId }
+    });
+
+    if (!order) {
+      console.error(`[Midtrans Verify] Order '${orderId}' not found in DB`);
+      return { success: false, error: 'Order not found in database' };
+    }
+
+    // If already PAID or FULFILLED or FULFILLING, just try to run processFulfillment or return success
+    if (order.status === 'FULFILLED' || order.status === 'FULFILLING') {
+      console.log(`[Midtrans Verify] Order ${orderId} is already fulfilled or in progress`);
+      return { success: true, message: 'Already fulfilled or in progress' };
+    }
+
+    if (order.status === 'PAID') {
+      console.log(`[Midtrans Verify] Order ${orderId} is already PAID. Triggering fulfillment...`);
+      const result = await processFulfillment(orderId);
+      return result;
+    }
+
+    // 3. Mark as PAID in DB
+    console.log(`[Midtrans Verify] Updating order ${orderId} status to PAID...`);
+    await prisma.order.update({
+      where: { orderNum: orderId },
+      data: { status: 'PAID' }
+    });
+
+    // 4. Trigger auto-fulfillment
+    console.log(`[Midtrans Verify] Triggering fulfillment for order ${orderId}...`);
+    const result = await processFulfillment(orderId);
+    return result;
+  } catch (error: any) {
+    console.error('[Midtrans Verify Error]:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 export async function capturePayPalOrderAction(data: { orderId: string; paypalData: any }) {
   try {
     const { orderId, paypalData } = data;
