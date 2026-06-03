@@ -1,57 +1,58 @@
-import { getProducts } from '@/lib/cj';
-import { prisma } from '@/lib/db';
+import { getProductsV2 } from '@/lib/cj';
 import { getOrSet } from '@/lib/redis';
+import { importProductsBatchAction } from '@/lib/actions-catalog';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
 
-const CACHE_TTL = 315360000; // 10 years (effectively forever)
+const CACHE_TTL = 3600; // 1 jam
+
+// CJ Category ID: Consumer Electronics
+const ELECTRONICS_CATEGORY_ID = 'D9E66BF8-4E81-4CAB-A425-AEDEC5FBFBF2';
 
 async function getElectronicsProducts() {
-  return getOrSet('home:electronics', fetchElectronicsProducts, CACHE_TTL);
+  return getOrSet('home:electronics_v2', fetchElectronicsProducts, CACHE_TTL);
 }
 
 async function fetchElectronicsProducts() {
-  const dbProducts = await prisma.product.findMany({
-    take: 10,
-    where: { 
-      OR: [
-        { name: { contains: 'Phone', mode: 'insensitive' } },
-        { name: { contains: 'Watch', mode: 'insensitive' } },
-        { name: { contains: 'Earphone', mode: 'insensitive' } },
-        { name: { contains: 'Camera', mode: 'insensitive' } },
-      ]
-    },
-    include: { variants: true }
-  });
+  try {
+    const res = await getProductsV2({
+      size: 10,
+      categoryId: ELECTRONICS_CATEGORY_ID,
+      orderBy: 3,   // sort by create time
+      sort: 'desc', // terbaru dulu
+    });
 
-  let mainProducts = dbProducts.map(p => ({
-    pid: p.cjId,
-    productName: p.name,
-    productNameEn: p.name,
-    productImage: p.images[0],
-    bigImage: p.images[0],
-    sellPrice: p.variants[0]?.sellingPrice || 0,
-    categoryName: "Electronics",
-    productSku: "",
-    productWeight: 0,
-    productUnit: "piece",
-    categoryId: "",
-  }));
+    if (res.success && res.data?.content?.[0]?.productList?.length) {
+      const products = res.data.content[0].productList;
 
-  if (mainProducts.length < 1) {
-    try {
-      const res = await getProducts({ categoryId: 'D9E66BF8-4E81-4CAB-A425-AEDEC5FBFBF2', pageSize: 10 });
-      if (res.success && res.data) {
-        const apiProducts = res.data.list;
-        const pids = new Set(mainProducts.map(p => p.pid));
-        apiProducts.forEach((p: any) => { if (!pids.has(p.pid)) mainProducts.push(p); });
-      }
-    } catch (e) {
-      console.warn('[HomeElectronics] CJ API Fallback failed, using DB only.');
+      // Background import ke DB lokal
+      importProductsBatchAction(products).catch(err => {
+        console.error('[HomeElectronics] Auto-import error:', err);
+      });
+
+      return products.map((p: any) => ({
+        pid: p.id,
+        productName: p.nameEn,
+        productNameEn: p.nameEn,
+        productImage: p.bigImage,
+        bigImage: p.bigImage,
+        sellPrice: parseFloat(p.nowPrice || p.sellPrice || '0'),
+        nowPrice: p.nowPrice,
+        discountPrice: p.discountPrice,
+        categoryName: p.threeCategoryName || p.twoCategoryName || 'Electronics',
+        productSku: p.sku,
+        productWeight: 0,
+        productUnit: 'piece',
+        categoryId: p.categoryId,
+        listedNum: p.listedNum,
+        isFreeShipping: p.addMarkStatus === 1,
+      }));
     }
+  } catch (e) {
+    console.warn('[HomeElectronics] CJ API V2 failed:', e);
   }
 
-  return mainProducts;
+  return [];
 }
 
 export default async function HomeElectronics() {
@@ -79,7 +80,7 @@ export default async function HomeElectronics() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {mainProducts.map((product) => (
+          {mainProducts.map((product: any) => (
             <ProductCard key={product.pid} product={product} />
           ))}
         </div>

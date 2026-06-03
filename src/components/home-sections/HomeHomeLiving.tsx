@@ -1,61 +1,58 @@
-import { prisma } from '@/lib/db';
+import { getProductsV2 } from '@/lib/cj';
 import { getOrSet } from '@/lib/redis';
+import { importProductsBatchAction } from '@/lib/actions-catalog';
 import ProductCard from '../ProductCard';
-import { getProducts } from '@/lib/cj';
 import Link from 'next/link';
 
-const CACHE_TTL = 315360000; // 10 years (effectively forever)
+const CACHE_TTL = 3600; // 1 jam
+
+// CJ Category ID: Home, Garden & Furniture
+const HOME_LIVING_CATEGORY_ID = '9840E81D-F81A-4C2E-83B9-8F2C7D4A0B12';
 
 async function getHomeLivingProducts() {
-  return getOrSet('home:homeliving', fetchHomeLivingProducts, CACHE_TTL);
+  return getOrSet('home:homeliving_v2', fetchHomeLivingProducts, CACHE_TTL);
 }
 
 async function fetchHomeLivingProducts() {
-  // Try to get from local DB first
-  const dbProducts = await prisma.product.findMany({
-    take: 10,
-    where: {
-      OR: [
-        { name: { contains: 'Home', mode: 'insensitive' } },
-        { name: { contains: 'Kitchen', mode: 'insensitive' } },
-        { name: { contains: 'Household', mode: 'insensitive' } },
-        { name: { contains: 'Dining', mode: 'insensitive' } },
-      ]
-    },
-    include: { variants: true },
-    orderBy: { createdAt: 'desc' }
-  });
+  try {
+    const res = await getProductsV2({
+      size: 10,
+      categoryId: HOME_LIVING_CATEGORY_ID,
+      orderBy: 3,   // sort by create time
+      sort: 'desc', // terbaru dulu
+    });
 
-  let mainProducts = dbProducts.map(p => ({
-    pid: p.cjId,
-    productName: p.name,
-    productNameEn: p.name,
-    productImage: p.images[0],
-    bigImage: p.images[0],
-    sellPrice: p.variants[0]?.sellingPrice || 0,
-    categoryName: "Home & Living",
-    productSku: "",
-    productWeight: 0,
-    productUnit: "piece",
-    categoryId: "",
-  }));
+    if (res.success && res.data?.content?.[0]?.productList?.length) {
+      const products = res.data.content[0].productList;
 
-  // Fallback to CJ API if DB has few products
-  if (mainProducts.length < 4) {
-    try {
-      // Home, Garden & Furniture category ID from CJ
-      const res = await getProducts({ categoryId: '9840E81D-F81A-4C2E-83B9-8F2C7D4A0B12', pageSize: 10 });
-      if (res.success && res.data) {
-        const apiProducts = res.data.list;
-        const pids = new Set(mainProducts.map(p => p.pid));
-        apiProducts.forEach((p: any) => { if (!pids.has(p.pid)) mainProducts.push(p); });
-      }
-    } catch (e) {
-      console.warn('[HomeHomeLiving] CJ API Fallback failed');
+      // Background import ke DB lokal
+      importProductsBatchAction(products).catch(err => {
+        console.error('[HomeHomeLiving] Auto-import error:', err);
+      });
+
+      return products.map((p: any) => ({
+        pid: p.id,
+        productName: p.nameEn,
+        productNameEn: p.nameEn,
+        productImage: p.bigImage,
+        bigImage: p.bigImage,
+        sellPrice: parseFloat(p.nowPrice || p.sellPrice || '0'),
+        nowPrice: p.nowPrice,
+        discountPrice: p.discountPrice,
+        categoryName: p.threeCategoryName || p.twoCategoryName || 'Home & Living',
+        productSku: p.sku,
+        productWeight: 0,
+        productUnit: 'piece',
+        categoryId: p.categoryId,
+        listedNum: p.listedNum,
+        isFreeShipping: p.addMarkStatus === 1,
+      }));
     }
+  } catch (e) {
+    console.warn('[HomeHomeLiving] CJ API V2 failed:', e);
   }
 
-  return mainProducts;
+  return [];
 }
 
 export default async function HomeHomeLiving() {
@@ -73,15 +70,18 @@ export default async function HomeHomeLiving() {
               <i className="fas fa-home text-[#FF6B00]"></i>
               <span className="text-[12px] font-extrabold text-[#FF6B00] uppercase tracking-[0.1em]">Home Comfort</span>
             </div>
-            <h2 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold text-[#1A1A1A] m-0">Home & <span className="text-[#FF6B00]">Living</span></h2>
+            <h2 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold text-[#1A1A1A] m-0">Home &amp; <span className="text-[#FF6B00]">Living</span></h2>
           </div>
-          <Link href="/category/home-kitchen" className="inline-flex items-center justify-center gap-2 px-[18px] py-2 rounded-[6px] font-semibold text-[13px] cursor-pointer transition-all duration-300 border-2 border-[#FF6B00] bg-transparent text-[#FF6B00] hover:bg-[#FF6B00] hover:text-white hover:-translate-y-0.5">
+          <Link 
+            href="/category/home-garden-and-furniture-9840E81D-F81A-4C2E-83B9-8F2C7D4A0B12" 
+            className="inline-flex items-center justify-center gap-2 px-[18px] py-2 rounded-[6px] font-semibold text-[13px] cursor-pointer transition-all duration-300 border-2 border-[#FF6B00] bg-transparent text-[#FF6B00] hover:bg-[#FF6B00] hover:text-white hover:-translate-y-0.5"
+          >
             View All <i className="fas fa-arrow-right ml-2"></i>
           </Link>
         </div>
         
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {filteredProducts.slice(0, 10).map((product) => (
+          {filteredProducts.slice(0, 10).map((product: any) => (
             <ProductCard key={product.pid} product={product} />
           ))}
         </div>

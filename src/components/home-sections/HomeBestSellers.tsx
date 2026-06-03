@@ -1,51 +1,54 @@
-import { getProducts } from '@/lib/cj';
-import { prisma } from '@/lib/db';
+import { getProductsV2 } from '@/lib/cj';
 import { getOrSet } from '@/lib/redis';
+import { importProductsBatchAction } from '@/lib/actions-catalog';
 import ProductCard from '@/components/ProductCard';
 
-const CACHE_TTL = 315360000; // 10 years (effectively forever)
+const CACHE_TTL = 3600; // 1 jam — supaya data selalu terbaru dari API
 
 async function getBestSellers() {
-  return getOrSet('home:bestsellers', fetchBestSellers, CACHE_TTL);
+  return getOrSet('home:bestsellers_v2', fetchBestSellers, CACHE_TTL);
 }
 
 async function fetchBestSellers() {
-  const dbProducts = await prisma.product.findMany({
-    take: 8,
-    orderBy: { createdAt: 'desc' },
-    include: { variants: true }
-  });
+  try {
+    // Ambil 10 produk terbaru dari CJ API V2 (primary source)
+    const res = await getProductsV2({
+      size: 10,
+      orderBy: 3,    // sort by create time
+      sort: 'desc',  // terbaru dulu
+    });
 
-  let mainProducts = dbProducts.map(p => ({
-    pid: p.cjId,
-    productName: p.name,
-    productNameEn: p.name,
-    productImage: p.images[0],
-    bigImage: p.images[0],
-    sellPrice: p.variants[0]?.sellingPrice || 0,
-    categoryName: "Imported",
-    productSku: "",
-    productWeight: 0,
-    productUnit: "piece",
-    categoryId: "",
-  }));
+    if (res.success && res.data?.content?.[0]?.productList?.length) {
+      const products = res.data.content[0].productList;
 
-  if (mainProducts.length < 1) {
-    try {
-      const mainRes = await getProducts({ pageSize: 8, productFlag: 0 }); 
-      if (mainRes.success && mainRes.data) {
-        const apiProducts = mainRes.data.list;
-        const pids = new Set(mainProducts.map(p => p.pid));
-        apiProducts.forEach((p: any) => {
-          if (!pids.has(p.pid)) mainProducts.push(p);
-        });
-      }
-    } catch (e) {
-      console.warn('[HomeBestSellers] CJ API Fallback failed, showing empty or DB only.');
+      // Background import ke DB lokal (dengan 1 varian sementara)
+      importProductsBatchAction(products).catch(err => {
+        console.error('[HomeBestSellers] Auto-import error:', err);
+      });
+
+      return products.map((p: any) => ({
+        pid: p.id,
+        productName: p.nameEn,
+        productNameEn: p.nameEn,
+        productImage: p.bigImage,
+        bigImage: p.bigImage,
+        sellPrice: parseFloat(p.nowPrice || p.sellPrice || '0'),
+        nowPrice: p.nowPrice,
+        discountPrice: p.discountPrice,
+        categoryName: p.threeCategoryName || p.twoCategoryName || p.oneCategoryName || 'Best Sellers',
+        productSku: p.sku,
+        productWeight: 0,
+        productUnit: 'piece',
+        categoryId: p.categoryId,
+        listedNum: p.listedNum,
+        isFreeShipping: p.addMarkStatus === 1,
+      }));
     }
+  } catch (e) {
+    console.warn('[HomeBestSellers] CJ API V2 failed:', e);
   }
 
-  return mainProducts;
+  return [];
 }
 
 export default async function HomeBestSellers() {
@@ -54,8 +57,8 @@ export default async function HomeBestSellers() {
   if (mainProducts.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {mainProducts.map((product) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+      {mainProducts.map((product: any) => (
         <ProductCard key={product.pid} product={product as any} />
       ))}
     </div>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { sendWhatsAppOrderNotification } from '@/lib/social-poster';
 import { revalidateTag } from 'next/cache';
+import { importProductVariantsAction } from '@/lib/actions-catalog';
 
 /**
  * CJ Dropshipping Webhook Receiver (Enhanced)
@@ -163,23 +164,78 @@ async function handleLogisticUpdate(params: any) {
 }
 
 async function handleStockUpdate(params: any) {
+  // Payload struktur:
+  //   params = { [vid]: [ { pid, vid, areaEn, storageNum, ... }, ... ], ... }
+  //
+  // Setiap key adalah vid, setiap value adalah array warehouse entries.
+  // pid ada di DALAM setiap warehouse entry, bukan di level params.
+
+  // Kumpulkan: total stok per vid, dan pid unik yang perlu diproses
+  const stockByVid: Record<string, number> = {};
+  const pidsFromPayload = new Set<string>();
+
   for (const vid in params) {
-    const warehouseInfo = params[vid];
-    if (Array.isArray(warehouseInfo) && warehouseInfo.length > 0) {
-      const totalStock = warehouseInfo.reduce((sum: number, w: any) => sum + (w.storageNum || 0), 0);
-      await prisma.variant.updateMany({
-        where: { cjId: vid },
-        data: { inventory: totalStock },
-      });
+    const warehouseList = params[vid];
+    if (!Array.isArray(warehouseList) || warehouseList.length === 0) continue;
+
+    // Ambil pid dari dalam entri warehouse
+    const pid = warehouseList[0]?.pid;
+    if (pid) pidsFromPayload.add(pid);
+
+    // Total stok = jumlah storageNum dari semua gudang untuk vid ini
+    const totalStock = warehouseList.reduce((sum: number, w: any) => sum + (Number(w.storageNum) || 0), 0);
+    stockByVid[vid] = totalStock;
+  }
+
+  console.log(`[CJ Webhook STOCK] Processing ${Object.keys(stockByVid).length} variants, PIDs from payload: ${[...pidsFromPayload].join(', ')}`);
+
+  // Update stok di DB untuk variant yang sudah ada
+  for (const [vid, totalStock] of Object.entries(stockByVid)) {
+    await prisma.variant.updateMany({
+      where: { cjId: vid },
+      data: { inventory: totalStock },
+    });
+  }
+
+  // Untuk setiap pid dari payload:
+  //   - Jika produk belum ada di DB → import produk baru + semua variannya
+  //   - Jika sudah ada → reimport semua varian (supaya stok terbaru masuk)
+  for (const pid of pidsFromPayload) {
+    try {
+      const existingProduct = await prisma.product.findUnique({ where: { cjId: pid } });
+
+      if (!existingProduct) {
+        // Produk baru! Import seluruh detail + semua varian dari CJ
+        console.log(`[CJ Webhook STOCK] New product detected: ${pid}. Importing...`);
+        importProductVariantsAction(pid).catch(err => {
+          console.warn(`[CJ Webhook STOCK] Import new product ${pid} failed:`, err);
+        });
+      } else {
+        // Produk sudah ada, reimport semua varian untuk update stok terbaru
+        importProductVariantsAction(pid).catch(err => {
+          console.warn(`[CJ Webhook STOCK] Reimport variants for ${pid} failed:`, err);
+        });
+      }
+    } catch (e) {
+      console.warn(`[CJ Webhook STOCK] DB check failed for pid ${pid}:`, e);
     }
   }
+
+  console.log(`[CJ Webhook STOCK] Done. Updated ${Object.keys(stockByVid).length} variant stocks, queued import for ${pidsFromPayload.size} products.`);
 }
 
 async function handleProductUpdate(type: string, messageType: string | undefined, params: any) {
-  const { pid, vid, status, sellPrice } = params || {};
-  
-  console.log(`[CJ Webhook] PRODUCT/VARIANT update type=${type} messageType=${messageType}:`, params);
+  // Payload VARIANT webhook:
+  //   params = { pid, vid, variantSku, variantName, variantImage, variantStatus, variantSellPrice, variantWeight, ... }
+  //
+  // Payload PRODUCT webhook:
+  //   params = { pid, productNameEn, productImage, productStatus, ... }
 
+  const { pid, vid, status, sellPrice } = params || {};
+
+  console.log(`[CJ Webhook] ${type} update messageType=${messageType} pid=${pid} vid=${vid}`);
+
+  // ── Handle DELETE ──────────────────────────────────────────────────────
   if (messageType === 'DELETE') {
     if (type === 'PRODUCT' && pid) {
       await prisma.product.updateMany({
@@ -197,118 +253,101 @@ async function handleProductUpdate(type: string, messageType: string | undefined
     return;
   }
 
-  // Handle INSERT, UPDATE, or other updates
-  if (pid && (type === 'PRODUCT' || !vid)) {
-    const updateData: any = {};
-    if (params.productNameEn) updateData.name = params.productNameEn;
-    if (params.productDescription) updateData.description = params.productDescription;
-    if (params.productStatus !== undefined) {
-      updateData.status = params.productStatus === 3 ? 'ACTIVE' : 'INACTIVE';
-    } else if (status !== undefined) {
-      updateData.status = status === 0 ? 'INACTIVE' : 'ACTIVE';
-    }
-    if (params.productImage) updateData.images = { set: [params.productImage] };
-
-    if (Object.keys(updateData).length > 0) {
-      await prisma.product.updateMany({
-        where: { cjId: pid },
-        data: updateData,
-      });
-      console.log(`[CJ Webhook] Updated product ${pid} with data:`, updateData);
-    }
+  // ── Handle INSERT/UPDATE ───────────────────────────────────────────────
+  if (!pid) {
+    console.warn('[CJ Webhook] No pid in payload, skipping.');
+    return;
   }
 
-  if (vid && (type === 'VARIANT' || vid)) {
-    const variant = await prisma.variant.findUnique({
-      where: { cjId: vid },
-      include: { product: true }
-    });
+  // Cek apakah produk sudah ada di DB
+  const existingProduct = await prisma.product.findUnique({ where: { cjId: pid } });
 
-    const baseCost = sellPrice !== undefined ? parseFloat(sellPrice) : Number(params.variantSellPrice || 0);
-    const weight = Number(params.variantWeight || 0);
-    
-    // Determine inventory if status/inventory is provided
-    let inventory: number | undefined = undefined;
-    if (params.variantStatus !== undefined) {
-      inventory = params.variantStatus === 3 ? Number(params.inventory || 100) : 0;
-    } else if (params.inventory !== undefined) {
-      inventory = Number(params.inventory);
+  if (!existingProduct) {
+    // ── PRODUK BARU: Import seluruh produk + semua varian dari CJ API ──
+    console.log(`[CJ Webhook ${type}] New product detected: ${pid}. Importing full product + variants...`);
+    importProductVariantsAction(pid).catch(err => {
+      console.warn(`[CJ Webhook ${type}] Import new product ${pid} failed:`, err);
+    });
+    return;
+  }
+
+  // ── Produk sudah ada: Update data dari payload ─────────────────────────
+  if (type === 'PRODUCT') {
+    const productUpdateData: any = {};
+    if (params.productNameEn) productUpdateData.name = params.productNameEn;
+    if (params.productDescription) productUpdateData.description = params.productDescription;
+    if (params.productStatus !== undefined) {
+      productUpdateData.status = params.productStatus === 3 ? 'ACTIVE' : 'INACTIVE';
+    } else if (status !== undefined) {
+      productUpdateData.status = status === 0 ? 'INACTIVE' : 'ACTIVE';
+    }
+    if (params.productImage) productUpdateData.images = { set: [params.productImage] };
+
+    if (Object.keys(productUpdateData).length > 0) {
+      await prisma.product.updateMany({ where: { cjId: pid }, data: productUpdateData });
+      console.log(`[CJ Webhook PRODUCT] Updated product ${pid}:`, productUpdateData);
     }
 
-    if (variant) {
+    // Reimport semua varian setelah update produk
+    importProductVariantsAction(pid).catch(err => {
+      console.warn(`[CJ Webhook PRODUCT] Reimport variants for ${pid} failed:`, err);
+    });
+
+  } else if (type === 'VARIANT' && vid) {
+    // ── Update data variant langsung dari payload webhook ─────────────────
+    // variantStatus: 1=ACTIVE (on sale), 0=INACTIVE (delisted)
+    const baseCost = params.variantSellPrice ? parseFloat(params.variantSellPrice) :
+                     sellPrice !== undefined ? parseFloat(sellPrice) : 0;
+    const weight = Number(params.variantWeight || 0);
+
+    // Inventory: jika variantStatus=1 artinya ACTIVE, inventory dari stok existing
+    // Jika variantStatus=0, set inventory ke 0
+    let inventory: number | undefined = undefined;
+    if (params.variantStatus !== undefined) {
+      inventory = params.variantStatus === 0 ? 0 : undefined; // 0=non-aktif → stok 0
+    }
+
+    const existingVariant = await prisma.variant.findUnique({ where: { cjId: vid } });
+
+    if (existingVariant) {
+      // Update variant yang sudah ada
       const vUpdateData: any = {};
       if (params.variantSku) vUpdateData.sku = params.variantSku;
-      if (baseCost > 0) {
-        vUpdateData.baseCost = baseCost;
-        vUpdateData.sellingPrice = baseCost;
-      }
+      if (baseCost > 0) { vUpdateData.baseCost = baseCost; vUpdateData.sellingPrice = baseCost; }
       if (weight > 0) vUpdateData.weight = weight;
       if (inventory !== undefined) vUpdateData.inventory = inventory;
       if (params.variantImage) vUpdateData.image = params.variantImage;
       if (params.variantKey) vUpdateData.color = params.variantKey;
+      if (params.variantName || params.variantNameEn) vUpdateData.size = params.variantName || params.variantNameEn;
 
       if (Object.keys(vUpdateData).length > 0) {
-        await prisma.variant.update({
-          where: { id: variant.id },
-          data: vUpdateData
-        });
-        console.log(`[CJ Webhook] Updated variant ${vid} with data:`, vUpdateData);
+        await prisma.variant.update({ where: { id: existingVariant.id }, data: vUpdateData });
+        console.log(`[CJ Webhook VARIANT] Updated variant ${vid}:`, vUpdateData);
       }
     } else {
-      // NEW VARIANT or UPGRADE (Product exists but variant doesn't)
-      // Call CJ API to get the parent PID.
-      const { getVariantById } = await import('@/lib/cj-api');
-      const vRes = await getVariantById(vid);
-      
-      if (vRes.success && vRes.data && vRes.data.pid) {
-        const parentCjId = vRes.data.pid;
-        const product = await prisma.product.findUnique({ where: { cjId: parentCjId } });
-        
-        if (product) {
-          const vData = vRes.data;
-          await prisma.variant.create({
-            data: {
-              productId: product.id,
-              cjId: vid,
-              sku: vData.variantSku,
-              color: vData.variantKey || 'Default',
-              size: vData.variantNameEn || '',
-              weight: Number(vData.variantWeight || 0),
-              baseCost: Number(vData.variantSellPrice || 0),
-              sellingPrice: Number(vData.variantSellPrice || 0),
-              inventory: 100, // Default for new variant
-              image: vData.variantImage || product.images[0],
-            }
-          });
-          
-          // Update parent product metadata
-          const updatedProduct = await prisma.product.findUnique({
-            where: { id: product.id },
-            include: { variants: true }
-          });
-          
-          if (updatedProduct) {
-            await prisma.product.update({
-              where: { id: product.id },
-              data: {
-                variantCount: updatedProduct.variants.length,
-                totalStock: updatedProduct.variants.reduce((sum, v) => sum + v.inventory, 0),
-              }
-            });
-          }
-          
-          console.log(`[CJ Webhook] Created new variant ${vid} for product ${parentCjId}`);
-        } else {
-          console.log(`[CJ Webhook] Variant ${vid} belongs to unknown product ${parentCjId}. Skipping.`);
-        }
-      }
+      // Variant baru — reimport semua varian produk ini dari CJ untuk dapat data lengkap
+      console.log(`[CJ Webhook VARIANT] New variant ${vid} detected for product ${pid}. Reimporting all variants...`);
+      importProductVariantsAction(pid).catch(err => {
+        console.warn(`[CJ Webhook VARIANT] Reimport all variants for ${pid} failed:`, err);
+      });
     }
   }
 
-  // Invalidate product caches
+  // Invalidate Redis cache untuk home sections
   try {
-    revalidateTag('home:featured', { expire: 0 });
-    revalidateTag('home:bestsellers', { expire: 0 });
-    revalidateTag('home:categories', { expire: 0 });
-  } catch (e) {}
+    const { redis, redisAvailable } = await import('@/lib/redis');
+    if (redis && redisAvailable) {
+      await Promise.allSettled([
+        redis.del('home:bestsellers_v2'),
+        redis.del('home:beauty_v2'),
+        redis.del('home:fashion_v2'),
+        redis.del('home:electronics_v2'),
+        redis.del('home:toys_v2'),
+        redis.del('home:homeliving_v2'),
+      ]);
+      console.log('[CJ Webhook] Redis home section caches invalidated.');
+    }
+  } catch (e) {
+    console.warn('[CJ Webhook] Failed to invalidate Redis caches:', e);
+  }
 }

@@ -1,62 +1,58 @@
-import { getProducts } from '@/lib/cj';
-import { prisma } from '@/lib/db';
+import { getProductsV2 } from '@/lib/cj';
 import { getOrSet } from '@/lib/redis';
+import { importProductsBatchAction } from '@/lib/actions-catalog';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
 
-const CACHE_TTL = 315360000; // 10 years (effectively forever)
+const CACHE_TTL = 3600; // 1 jam
+
+// CJ Category IDs for Fashion (Women's & Men's Clothing, Bags & Shoes)
+const FASHION_CATEGORY_ID = 'A8B2857F-622E-4464-98F1-4F23F976D1F6';
 
 async function getFashionProducts() {
-  return getOrSet('home:fashion', fetchFashionProducts, CACHE_TTL);
+  return getOrSet('home:fashion_v2', fetchFashionProducts, CACHE_TTL);
 }
 
 async function fetchFashionProducts() {
-  const dbProducts = await prisma.product.findMany({
-    take: 10,
-    where: { 
-      OR: [
-        { name: { contains: 'Bag', mode: 'insensitive' } },
-        { name: { contains: 'Shoes', mode: 'insensitive' } },
-        { name: { contains: 'Clothing', mode: 'insensitive' } },
-        { name: { contains: 'Watch', mode: 'insensitive' } },
-        { name: { contains: 'Fashion', mode: 'insensitive' } },
-        { name: { contains: 'Dress', mode: 'insensitive' } },
-        { name: { contains: 'Shirt', mode: 'insensitive' } },
-        { name: { contains: 'Top', mode: 'insensitive' } },
-        { name: { contains: 'Pant', mode: 'insensitive' } },
-      ]
-    },
-    include: { variants: true }
-  });
+  try {
+    const res = await getProductsV2({
+      size: 10,
+      categoryId: FASHION_CATEGORY_ID,
+      orderBy: 3,   // sort by create time
+      sort: 'desc', // terbaru dulu
+    });
 
-  let mainProducts = dbProducts.map(p => ({
-    pid: p.cjId,
-    productName: p.name,
-    productNameEn: p.name,
-    productImage: p.images[0],
-    bigImage: p.images[0],
-    sellPrice: p.variants[0]?.sellingPrice || 0,
-    categoryName: "Fashion",
-    productSku: "",
-    productWeight: 0,
-    productUnit: "piece",
-    categoryId: "",
-  }));
+    if (res.success && res.data?.content?.[0]?.productList?.length) {
+      const products = res.data.content[0].productList;
 
-  if (mainProducts.length < 1) {
-    try {
-      const res = await getProducts({ categoryId: 'A8B2857F-622E-4464-98F1-4F23F976D1F6', pageSize: 10 });
-      if (res.success && res.data) {
-        const apiProducts = res.data.list;
-        const pids = new Set(mainProducts.map(p => p.pid));
-        apiProducts.forEach((p: any) => { if (!pids.has(p.pid)) mainProducts!.push(p); });
-      }
-    } catch (e) {
-      console.warn('[HomeFashion] CJ API Fallback failed, using DB only.');
+      // Background import ke DB lokal
+      importProductsBatchAction(products).catch(err => {
+        console.error('[HomeFashion] Auto-import error:', err);
+      });
+
+      return products.map((p: any) => ({
+        pid: p.id,
+        productName: p.nameEn,
+        productNameEn: p.nameEn,
+        productImage: p.bigImage,
+        bigImage: p.bigImage,
+        sellPrice: parseFloat(p.nowPrice || p.sellPrice || '0'),
+        nowPrice: p.nowPrice,
+        discountPrice: p.discountPrice,
+        categoryName: p.threeCategoryName || p.twoCategoryName || 'Fashion',
+        productSku: p.sku,
+        productWeight: 0,
+        productUnit: 'piece',
+        categoryId: p.categoryId,
+        listedNum: p.listedNum,
+        isFreeShipping: p.addMarkStatus === 1,
+      }));
     }
+  } catch (e) {
+    console.warn('[HomeFashion] CJ API V2 failed:', e);
   }
 
-  return mainProducts;
+  return [];
 }
 
 export default async function HomeFashion() {
@@ -85,7 +81,7 @@ export default async function HomeFashion() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {filteredProducts.map((product) => (
+          {filteredProducts.map((product: any) => (
             <ProductCard key={product.pid} product={product} />
           ))}
         </div>
