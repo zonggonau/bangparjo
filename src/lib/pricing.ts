@@ -40,8 +40,8 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   markupPct: 0,
   marginTiers: [],
   freeShippingThreshold: 1000,
-  shippingMarkup: 15,        // Markup persentase di atas ongkir CJ (default 15% untuk buffer aman)
-  shippingBufferPct: 20,     // Tambahan buffer 20% di atas ongkir CJ agar tidak rugi saat estimasi meleset
+  shippingMarkup: 25,        // Markup persentase di atas ongkir CJ (default 25%)
+  shippingBufferPct: 25,     // Tambahan buffer 25% di atas ongkir CJ agar tidak rugi saat estimasi meleset
   currencySymbol: 'USD',
   storeName: 'BangParjo Shop',
   adminEmail: 'hello@bangparjo.com',

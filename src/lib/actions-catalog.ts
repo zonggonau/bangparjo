@@ -239,7 +239,7 @@ export async function getProductDetailsAction(cjId: string) {
         productNameEn: product.name,
         productImage: product.images?.[0] || '',
         bigImage: product.images?.[0] || '',
-        sellPrice: product.variants?.[0]?.baseCost || 0,
+        sellPrice: product.variants?.[0]?.sellingPrice || 0,
         description: product.description || '',
         variants: product.variants.map((v: any) => ({
           vid: v.cjId,

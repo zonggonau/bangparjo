@@ -11,7 +11,7 @@ import HomeHomeLiving from '@/components/home-sections/HomeHomeLiving';
 import Newsletter from '@/components/Newsletter';
 import LiveSales from '@/components/LiveSales';
 import AIChat from '@/components/AIChat';
-import { getDBStoreSettings, calculateFinalPrice } from '@/lib/pricing';
+import { getDBStoreSettings } from '@/lib/pricing';
 
 
 async function getFeaturedProducts() {
@@ -61,20 +61,15 @@ async function getFeaturedProducts() {
 async function FeaturedHeroWrapper() {
   const rawFeaturedProducts = await getFeaturedProducts();
 
-  // Fetch real-time settings
-  const settings = await getDBStoreSettings();
-
   const featuredProducts = rawFeaturedProducts
     .map((p: any) => {
-      const rawPrice = Number(p.sellPrice || 0);
-      const targetPrice = calculateFinalPrice(rawPrice, settings);
+      const targetPrice = Number(p.sellPrice || 0);
 
       return {
         ...p,
         sellPrice: targetPrice,
       };
     });
-
 
   return <HeroSection products={featuredProducts} />;
 }

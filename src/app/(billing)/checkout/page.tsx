@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CJShippingMethod } from '@/lib/cj';
 import { parseProductName, parseProductImage } from '@/lib/utils';
-import { calculateFinalPrice, calculateShippingFee } from '@/lib/pricing';
+import { calculateShippingFee } from '@/lib/pricing';
 import { useCart } from '@/context/CartContext';
 import { useSettings } from '@/context/SettingsContext';
 import Image from 'next/image';
@@ -134,13 +134,13 @@ function CheckoutContent() {
       const item = cartItems.find(i => i.pid === pid && (i.selectedVid || undefined) === vid);
       if (item) {
         const rawCj = Number(item.sellPrice);
-        const price = isNaN(rawCj) ? 0 : calculateFinalPrice(rawCj, settings);
+        const price = isNaN(rawCj) ? 0 : rawCj;
         itemSubtotal = price * item.quantity;
         resolvedPid = resolvedPid || item.pid;
       }
     } else if (product) {
       const variantCjPrice = selectedVariant?.variantSellPrice || product.sellPrice || 0;
-      const basePrice = calculateFinalPrice(Number(variantCjPrice), settings);
+      const basePrice = Number(variantCjPrice);
       const qParam = searchParams.get('qty');
       const currentQty = qParam ? (parseInt(qParam, 10) || qty) : qty;
       itemSubtotal = basePrice * currentQty;
@@ -291,7 +291,7 @@ function CheckoutContent() {
           // Hitung subtotal berdasarkan harga markup toko, bukan harga mentah CJ
           const retailSubtotal = cartItems.reduce((acc, item) => {
             const rawPrice = Number(item.sellPrice) || 0;
-            const retailPrice = calculateFinalPrice(rawPrice, settings);
+            const retailPrice = rawPrice;
             return acc + (retailPrice * item.quantity);
           }, 0);
           
@@ -308,7 +308,7 @@ function CheckoutContent() {
         
         // Single product checkout
         const variantCjPrice = selectedVariant?.variantSellPrice || product?.sellPrice || 0;
-        const retailSinglePrice = calculateFinalPrice(Number(variantCjPrice), settings);
+        const retailSinglePrice = Number(variantCjPrice);
         return {
           sku: selectedVariant?.variantSku || selectedVariant?.vid || product?.productSku,
           vid: selectedVariant?.vid || selectedVariant?.variantSku || product?.productSku,
@@ -471,7 +471,7 @@ function CheckoutContent() {
   const couponEntry = getCouponEntry(itemKeyVal);
 
   // Step 1: margin price = CJ price × markup% from DB settings
-  const marginPrice = calculateFinalPrice(variantCjPrice, settings);
+  const marginPrice = variantCjPrice;
 
   // Step 2: inflate for display when coupon active — so coupon deduction nets to marginPrice
   let variantPrice = marginPrice;
@@ -494,7 +494,7 @@ function CheckoutContent() {
   // For cart items: apply margin from settings, inflate if coupon active
   const getCartItemInflatedPrice = (item: any) => {
     const rawCj = Number(item.sellPrice);
-    const baseMargin = isNaN(rawCj) ? 0 : calculateFinalPrice(rawCj, settings);
+    const baseMargin = isNaN(rawCj) ? 0 : rawCj;
     const key = itemKey(item.pid, item.selectedVid);
     const entry = getCouponEntry(key);
     if (entry && entry.applied) {

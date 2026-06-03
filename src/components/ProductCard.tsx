@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { CJProduct } from '@/lib/cj';
 import { parseProductName, parseProductImage, slugify, formatUSD } from '@/lib/utils';
-import { calculateFinalPrice } from '@/lib/pricing';
 import { useSettings } from '@/context/SettingsContext';
 import { useCart } from '@/context/CartContext';
 import { importProductVariantsAction } from '@/lib/actions-catalog';
@@ -101,14 +100,13 @@ export default function ProductCard({ product }: { product: CJProduct & { nowPri
   })();
 
   const originalCjPrice = typeof product.sellPrice === 'number' ? product.sellPrice : parseFloat(String(product.sellPrice));
-  const targetPrice = calculateFinalPrice(originalCjPrice, settings);
-  const finalPrice = targetPrice;
+  const finalPrice = originalCjPrice;
 
   // ── Discount calculation ──────────────────────────────────────────────
   const nowPrice = product.nowPrice ? parseFloat(product.nowPrice) : null;
   const hasDiscount = nowPrice !== null && nowPrice > 0 && nowPrice < originalCjPrice;
   const discountPercent = hasDiscount ? Math.round((1 - nowPrice / originalCjPrice) * 100) : 0;
-  const fakeOriginalPrice = hasDiscount ? calculateFinalPrice(originalCjPrice, { ...settings, markupPct: 0 }) : finalPrice * 1.35; // Generate 35% fake discount if no real discount
+  const fakeOriginalPrice = finalPrice * 1.35; // Generate 35% fake discount if no real discount
 
   // ── Stats & Dummy Data ────────────────────────────────────────────────
   const orderCount = product.listedNum || 0;

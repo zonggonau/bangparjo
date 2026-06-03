@@ -334,7 +334,17 @@ export default function SettingsPage() {
               <div>
                 <label className={labelClass}>Shipping Service Markup (%)</label>
                 <input type="number" className={inputClass} value={draft.shippingMarkup ?? 0} onChange={e => setDraft({...draft, shippingMarkup: Number(e.target.value)})} />
-                <p className="text-[11px] text-gray-400 mt-2">Added as a percentage markup to the real carrier cost (e.g. 15% markup).</p>
+                <p className="text-[11px] text-gray-400 mt-2">Added as a percentage markup to the real carrier cost (e.g. 25% markup).</p>
+              </div>
+              <div>
+                <label className={labelClass}>Shipping Buffer Margin (%)</label>
+                <input type="number" className={inputClass} value={draft.shippingBufferPct ?? 0} onChange={e => setDraft({...draft, shippingBufferPct: Number(e.target.value)})} />
+                <p className="text-[11px] text-gray-400 mt-2">Extra buffer percentage above CJ shipping cost to prevent losses when estimates are inaccurate (e.g. 25% buffer).</p>
+              </div>
+              <div>
+                <label className={labelClass}>Free Shipping Threshold ($)</label>
+                <input type="number" className={inputClass} value={draft.freeShippingThreshold ?? 0} onChange={e => setDraft({...draft, freeShippingThreshold: Number(e.target.value)})} />
+                <p className="text-[11px] text-gray-400 mt-2">Minimum cart subtotal required to get free shipping.</p>
               </div>
               <div>
                 <label className={labelClass}>Default Tax Rate (%)</label>

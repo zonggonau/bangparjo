@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { auth } from '@/auth';
+import { getDBStoreSettings, applyMarginToPrice } from '@/lib/pricing';
 
 export async function POST(req: Request) {
   try {
@@ -55,9 +56,11 @@ export async function POST(req: Request) {
           }
         });
 
-        // Step 2: Create variant — sellingPrice = baseCost (sama persis)
-        // Margin 35% diterapkan di checkout oleh calculateFinalPrice()
-        // Profit dari shipping (+$1) diterapkan oleh calculateShippingFee()
+        // Step 2: Create variant — sellingPrice dihitung dengan margin dari DB
+        // Margin sekarang diterapkan pada saat import, bukan di client
+        const settings = await getDBStoreSettings();
+        const sellingPrice = applyMarginToPrice(basePrice, settings);
+
         await prisma.variant.create({
           data: {
             productId: product.id,
@@ -67,7 +70,7 @@ export async function POST(req: Request) {
             size: null,
             weight: baseWeight,
             baseCost: basePrice,
-            sellingPrice: basePrice,
+            sellingPrice: sellingPrice,
             inventory: 0,
             image: p.bigImage || p.productImage || null,
           }

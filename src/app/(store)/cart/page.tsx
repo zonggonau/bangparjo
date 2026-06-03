@@ -3,7 +3,6 @@
 import { useCart } from '@/context/CartContext';
 import { useSettings } from '@/context/SettingsContext';
 import { parseProductName, parseProductImage } from '@/lib/utils';
-import { calculateFinalPrice } from '@/lib/pricing';
 import Link from 'next/link';
 
 function formatUSD(price: number) {
@@ -19,8 +18,7 @@ export default function CartPage() {
   const filteredTotalItems = filteredItems.reduce((acc, item) => acc + item.quantity, 0);
 
   const subtotal = filteredItems.reduce((acc, item) => {
-    const rawCjPrice = Number(item.sellPrice);
-    const price = isNaN(rawCjPrice) ? 0 : calculateFinalPrice(rawCjPrice, settings);
+    const price = isNaN(Number(item.sellPrice)) ? 0 : Number(item.sellPrice);
     return acc + price * item.quantity;
   }, 0);
 
@@ -67,8 +65,7 @@ export default function CartPage() {
               const name = parseProductName(item.productNameEn || item.productName);
               const rawImg = item.selectedVariantImage || item.bigImage || item.productImage;
               const img = parseProductImage(rawImg);
-              const rawCjPrice = Number(item.sellPrice);
-              const price = isNaN(rawCjPrice) ? 0 : calculateFinalPrice(rawCjPrice, settings);
+              const price = isNaN(Number(item.sellPrice)) ? 0 : Number(item.sellPrice);
 
               return (
                 <div key={`${item.pid}-${item.selectedVid || 'no-vid'}`} className="bg-white rounded-[10px] p-5 flex gap-5 border border-gray-200">

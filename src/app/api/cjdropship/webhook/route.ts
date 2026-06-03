@@ -18,6 +18,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { revalidateTag } from 'next/cache';
+import { getDBStoreSettings, applyMarginToPrice } from '@/lib/pricing';
 import { sendCustomWA } from '@/lib/openclaw-client';
 import {
   notifyCJOrderUpdate,
@@ -158,8 +159,10 @@ async function handleProductUpdate(type: string, messageType: string | undefined
       const vUpdateData: any = {};
       if (params.variantSku) vUpdateData.sku = params.variantSku;
       if (baseCost > 0) {
+        const settings = await getDBStoreSettings();
+        const sellingPrice = applyMarginToPrice(baseCost, settings);
         vUpdateData.baseCost = baseCost;
-        vUpdateData.sellingPrice = baseCost;
+        vUpdateData.sellingPrice = sellingPrice;
       }
       if (weight > 0) vUpdateData.weight = weight;
       if (inventory !== undefined) vUpdateData.inventory = inventory;
@@ -185,6 +188,10 @@ async function handleProductUpdate(type: string, messageType: string | undefined
         
         if (product) {
           const vData = vRes.data;
+          const baseCost = Number(vData.variantSellPrice || 0);
+          const settings = await getDBStoreSettings();
+          const sellingPrice = applyMarginToPrice(baseCost, settings);
+
           await prisma.variant.create({
             data: {
               productId: product.id,
@@ -193,8 +200,8 @@ async function handleProductUpdate(type: string, messageType: string | undefined
               color: vData.variantKey || 'Default',
               size: vData.variantNameEn || '',
               weight: Number(vData.variantWeight || 0),
-              baseCost: Number(vData.variantSellPrice || 0),
-              sellingPrice: Number(vData.variantSellPrice || 0),
+              baseCost: baseCost,
+              sellingPrice: sellingPrice,
               inventory: 100, // Default for new variant
               image: vData.variantImage || product.images[0],
             }

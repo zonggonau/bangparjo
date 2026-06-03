@@ -1,7 +1,6 @@
 'use client';
 
 import { parseProductName, parseProductImage, formatUSD, stripCommonPrefix } from '@/lib/utils';
-import { calculateFinalPrice } from '@/lib/pricing';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
@@ -218,7 +217,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
     ? Number(selectedVariant.variantSellPrice)
     : (typeof product?.sellPrice === 'number' ? product?.sellPrice : Number(product?.sellPrice || 0));
     
-  const finalPrice = calculateFinalPrice(currentCjPrice, settings);
+  const finalPrice = currentCjPrice;
 
   // ── Discount calculation ──────────────────────────────────────────────
   const fakeOriginalPrice = finalPrice * 1.35; // Display 35% fake discount
