@@ -11,28 +11,13 @@ async function waitForSlot(): Promise<void> {
   }
 }
 
-export async function getCache(key: string) {
-  if (typeof window !== 'undefined') return null;
-  try {
-    const { redis: r } = await import('@/lib/redis');
-    if (!r || r.status !== 'ready') return null;
-    const data = await r.get(key);
-    return data ? JSON.parse(data) : null;
-  } catch (e) {
-    console.warn('[Redis Get Cache Error]:', e);
-    return null;
-  }
+export async function getCache(_key: string) {
+  // Redis disabled — langsung panggil API
+  return null;
 }
 
-export async function setCache(key: string, data: any, ttl = 1800) {
-  if (typeof window !== 'undefined') return;
-  try {
-    const { redis: r } = await import('@/lib/redis');
-    if (!r || r.status !== 'ready') return;
-    await r.set(key, JSON.stringify(data), 'EX', ttl);
-  } catch (e) {
-    console.warn('[Redis Set Cache Error]:', e);
-  }
+export async function setCache(_key: string, _data: any, _ttl?: number) {
+  // Redis disabled
 }
 
 // ── Config ────────────────────────────────────────────────────────────────

@@ -83,10 +83,10 @@ function SecurePaymentContent() {
     setIsPaid(true);
     clearCart();
     
-    // Refresh halaman untuk memastikan status terbaru diambil dari database
+    // Redirect ke halaman utama setelah 2 detik
     setTimeout(() => {
-      window.location.reload();
-    }, 1500);
+      window.location.href = '/';
+    }, 2000);
   };
 
   if (loading) return (

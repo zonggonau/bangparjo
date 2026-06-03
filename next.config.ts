@@ -1,8 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Stable build ID prevents server action hash mismatches after restart
-  generateBuildId: async () => 'bangparjo-' + process.env.BUILD_HASH || 'stable',
   // @ts-ignore - Next.js internal property for dev tunnels
   allowedDevOrigins: [
     'walking-cart-montana-essentials.trycloudflare.com',

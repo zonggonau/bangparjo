@@ -1,55 +1,42 @@
-import { getProductsV2 } from '@/lib/cj';
-import { getOrSet } from '@/lib/redis';
-import { importProductsBatchAction } from '@/lib/actions-catalog';
+import { prisma } from '@/lib/db';
 import ProductCard from '../ProductCard';
 import Link from 'next/link';
 
-const CACHE_TTL = 3600; // 1 jam
-
-// CJ Category ID: Home, Garden & Furniture
-const HOME_LIVING_CATEGORY_ID = '9840E81D-F81A-4C2E-83B9-8F2C7D4A0B12';
+const HOME_LIVING_CJ_CATEGORY_ID = '9840E81D-F81A-4C2E-83B9-8F2C7D4A0B12';
 
 async function getHomeLivingProducts() {
-  return getOrSet('home:homeliving_v2', fetchHomeLivingProducts, CACHE_TTL);
-}
-
-async function fetchHomeLivingProducts() {
   try {
-    const res = await getProductsV2({
-      size: 10,
-      categoryId: HOME_LIVING_CATEGORY_ID,
-      orderBy: 3,   // sort by create time
-      sort: 'desc', // terbaru dulu
+    const category = await prisma.category.findFirst({
+      where: { cjId: HOME_LIVING_CJ_CATEGORY_ID },
+    });
+    if (!category) return [];
+
+    const dbProducts = await prisma.product.findMany({
+      where: { categoryId: category.id, status: 'ACTIVE' },
+      include: { variants: { take: 1 } },
+      orderBy: { updatedAt: 'desc' },
+      take: 10,
     });
 
-    if (res.success && res.data?.content?.[0]?.productList?.length) {
-      const products = res.data.content[0].productList;
-
-      // Background import ke DB lokal
-      importProductsBatchAction(products).catch(err => {
-        console.error('[HomeHomeLiving] Auto-import error:', err);
-      });
-
-      return products.map((p: any) => ({
-        pid: p.id,
-        productName: p.nameEn,
-        productNameEn: p.nameEn,
-        productImage: p.bigImage,
-        bigImage: p.bigImage,
-        sellPrice: parseFloat(p.nowPrice || p.sellPrice || '0'),
-        nowPrice: p.nowPrice,
-        discountPrice: p.discountPrice,
-        categoryName: p.threeCategoryName || p.twoCategoryName || 'Home & Living',
-        productSku: p.sku,
-        productWeight: 0,
-        productUnit: 'piece',
-        categoryId: p.categoryId,
-        listedNum: p.listedNum,
-        isFreeShipping: p.addMarkStatus === 1,
-      }));
-    }
+    return dbProducts.map((p: any) => ({
+      pid: p.cjId,
+      productName: p.name,
+      productNameEn: p.name,
+      productImage: p.images?.[0] || '',
+      bigImage: p.images?.[0] || '',
+      sellPrice: p.variants?.[0]?.sellingPrice || p.variants?.[0]?.baseCost || 0,
+      nowPrice: p.variants?.[0]?.sellingPrice || p.variants?.[0]?.baseCost || 0,
+      discountPrice: '',
+      categoryName: 'Home & Living',
+      productSku: p.variants?.[0]?.sku || '',
+      productWeight: p.variants?.[0]?.weight || 0,
+      productUnit: 'piece',
+      categoryId: p.categoryId,
+      listedNum: 0,
+      isFreeShipping: false,
+    }));
   } catch (e) {
-    console.warn('[HomeHomeLiving] CJ API V2 failed:', e);
+    console.warn('[HomeHomeLiving] DB fetch failed:', e);
   }
 
   return [];

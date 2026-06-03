@@ -333,21 +333,5 @@ async function handleProductUpdate(type: string, messageType: string | undefined
     }
   }
 
-  // Invalidate Redis cache untuk home sections
-  try {
-    const { redis, redisAvailable } = await import('@/lib/redis');
-    if (redis && redisAvailable) {
-      await Promise.allSettled([
-        redis.del('home:bestsellers_v2'),
-        redis.del('home:beauty_v2'),
-        redis.del('home:fashion_v2'),
-        redis.del('home:electronics_v2'),
-        redis.del('home:toys_v2'),
-        redis.del('home:homeliving_v2'),
-      ]);
-      console.log('[CJ Webhook] Redis home section caches invalidated.');
-    }
-  } catch (e) {
-    console.warn('[CJ Webhook] Failed to invalidate Redis caches:', e);
-  }
+  // Cache di-skip — data langsung dari database
 }

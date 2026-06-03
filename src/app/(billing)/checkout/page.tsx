@@ -386,6 +386,17 @@ function CheckoutContent() {
       const cartCost = isCartCheckout
         ? cartItems.reduce((acc, item) => acc + Number(item.sellPrice) * item.quantity, 0)
         : Number(variantCjPrice) * qty;
+
+      // Minimal $5 untuk produk di bawah $1
+      const minUnitPrice = isCartCheckout
+        ? Math.min(...cartItems.map(i => Number(i.sellPrice)))
+        : Number(variantCjPrice);
+      if (minUnitPrice < 1 && cartCost < 5) {
+        setSubmitError('⚠️ Minimal pembelian $5 untuk produk dengan harga di bawah $1. Silakan tambah quantity.');
+        setLoading(false);
+        return;
+      }
+
       const rawShippingCost = selectedShipping?.rawCjPrice || selectedShipping?.logisticPrice || 0;
       const totalCost = cartCost + rawShippingCost;
 

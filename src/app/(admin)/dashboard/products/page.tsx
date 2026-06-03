@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db';
-import { getCategoryMenuAction } from '@/lib/actions-catalog';
+import { getFullCategoryTreeAction } from '@/lib/actions-catalog';
 import ProductsClientView from './ProductsClientView';
 
 export const dynamic = 'force-dynamic';
@@ -11,8 +11,8 @@ export default async function ProductsPage() {
   });
   const importedCjIds = importedProducts.map(p => p.cjId);
 
-  // 2. Get category tree for hierarchical Mega Menu filter
-  const catRes = await getCategoryMenuAction();
+  // 2. Get full category tree untuk filter & import
+  const catRes = await getFullCategoryTreeAction();
   const categoryTree = catRes.success ? catRes.data || [] : [];
 
   return (

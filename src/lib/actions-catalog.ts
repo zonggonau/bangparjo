@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db';
 import { getProductDetails, cjFetch } from '@/lib/cj';
 import { getAllCategories, getCategoryTree } from '@/lib/categories';
+import type { CategoryNode } from '@/lib/categories';
 import { getDBStoreSettings, calculateFinalPrice } from './pricing';
 
 /**
@@ -37,7 +38,6 @@ export async function importProductVariantsAction(cjId: string) {
     }
 
     const d = detail.data;
-    const settings = await getDBStoreSettings();
 
     // Resolve categoryId FK dari cjCategoryId — agar produk terhubung ke mega menu
     const resolvedCategoryId = await resolveCategoryId(d.categoryId);
@@ -67,18 +67,22 @@ export async function importProductVariantsAction(cjId: string) {
       }
     });
 
-    // Hapus varian sementara jika ada sebelum mengimpor yang asli
+    // Hapus varian sementara sebelum mengimpor yang asli
     await prisma.variant.deleteMany({
       where: {
         productId: product.id,
-        cjId: { startsWith: 'TEMP-VID-' }
+        OR: [
+          { cjId: { startsWith: 'TEMP-VID-' } },
+          { cjId: { endsWith: '-default' } },
+        ]
       }
     });
 
     if (d.variants?.length) {
       for (const v of d.variants) {
         const baseCost = Number(v.variantSellPrice || 0);
-        const sellingPrice = calculateFinalPrice(baseCost, settings);
+        // sellingPrice = baseCost — margin diterapkan di frontend/checkout
+        const sellingPrice = baseCost;
         
         await prisma.variant.upsert({
           where: { cjId: v.vid },
@@ -128,8 +132,6 @@ export async function importProductsBatchAction(products: any[], forceCategoryId
   if (!products || products.length === 0) return { success: false };
   
   try {
-    const settings = await getDBStoreSettings();
-    
     for (const p of products) {
       const pid = p.id || p.pid;
       if (!pid) continue;
@@ -137,7 +139,8 @@ export async function importProductsBatchAction(products: any[], forceCategoryId
       const name = p.nameEn || p.productNameEn || p.productName;
       const image = p.bigImage || p.productImage;
       const baseCost = parseFloat(p.nowPrice || p.sellPrice || '0');
-      const sellingPrice = calculateFinalPrice(baseCost, settings);
+      // sellingPrice = baseCost — margin diterapkan di frontend/checkout
+      const sellingPrice = baseCost;
       const sku = p.sku || p.productSku || `SKU-${pid}`;
       const cjCatId = p.categoryId || null;
 
@@ -219,34 +222,7 @@ export async function getProductDetailsAction(cjId: string) {
     });
 
     if (!product) {
-      // Fallback to CJ API
-      const cjRes = await getProductDetails(cjId);
-      if (cjRes.success && cjRes.data) {
-        const productData = cjRes.data as any;
-        return {
-          success: true,
-          data: {
-            pid: productData.pid,
-            productName: productData.productNameEn || productData.productName,
-            productNameEn: productData.productNameEn || productData.productName,
-            productImage: productData.productImage || productData.bigImage || '',
-            bigImage: productData.bigImage || productData.productImage || '',
-            sellPrice: productData.sellPrice || 0,
-            description: productData.description || '',
-            variants: (productData.variants || []).map((v: any) => ({
-              vid: v.vid,
-              variantNameEn: v.variantNameEn || v.variantKey || 'Default',
-              variantSellPrice: v.variantSellPrice,
-              variantSku: v.variantSku,
-              variantWeight: v.variantWeight,
-              inventory: v.inventory,
-              variantImage: v.variantImage || '',
-              variantKey: v.variantKey || 'default',
-            })),
-          }
-        };
-      }
-      return { success: false, message: 'Not found' };
+      return { success: false, message: 'Product not found in database. Use dashboard to import first.' };
     }
     
     return {
@@ -277,6 +253,73 @@ export async function getProductDetailsAction(cjId: string) {
   }
 }
 
+/**
+ * Sync variants untuk semua produk yang cuma punya varian default/tempat
+ * (varian dengan cjId berakhiran '-default' atau berawalan 'TEMP-VID-')
+ *
+ * Panggil dari dashboard atau API untuk mengisi varian asli dari CJ.
+ */
+export async function syncMissingVariantsAction() {
+  try {
+    // Cari produk yang cuma punya varian default/tempat
+    const productsToSync = await prisma.product.findMany({
+      where: {
+        OR: [
+          {
+            // Produk dengan cuma 1 varian TEMP-VID
+            variants: {
+              some: { cjId: { startsWith: 'TEMP-VID-' } }
+            }
+          },
+          {
+            // Produk dengan cuma 1 varian -default
+            variants: {
+              some: { cjId: { endsWith: '-default' } }
+            }
+          }
+        ]
+      },
+      select: { cjId: true, name: true, id: true }
+    });
+
+    if (productsToSync.length === 0) {
+      return { success: true, synced: 0, skipped: 0, message: 'Semua produk sudah punya varian lengkap' };
+    }
+
+    let synced = 0;
+    let failed = 0;
+    const errors: string[] = [];
+
+    for (const p of productsToSync) {
+      try {
+        const result = await importProductVariantsAction(p.cjId);
+        if (result.success) {
+          synced++;
+        } else {
+          failed++;
+          errors.push(`${p.name}: ${result.message}`);
+        }
+      } catch (err: any) {
+        failed++;
+        errors.push(`${p.name}: ${err.message}`);
+      }
+      
+      // Rate limit protection — jangan spam CJ API
+      await new Promise(r => setTimeout(r, 500));
+    }
+
+    return {
+      success: true,
+      synced,
+      failed,
+      total: productsToSync.length,
+      errors: errors.slice(0, 10), // max 10 error samples
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 export async function getAllCategoriesAction() {
   try {
     const allCats = await getAllCategories();
@@ -292,7 +335,56 @@ export async function getAllCategoriesAction() {
 
 export async function getCategoryMenuAction() {
   try {
+    // Ambil semua category IDs yang punya produk
+    const catIdsWithProducts = new Set(
+      (await prisma.category.findMany({
+        where: { products: { some: {} } },
+        select: { id: true },
+      })).map(c => c.id)
+    );
+
     const tree = await getCategoryTree();
+
+    // Filter tree: hanya kategori yang punya produk (atau turunannya punya produk)
+    function filterTree(nodes: CategoryNode[]): CategoryNode[] {
+      return nodes.filter(node => {
+        const filteredChildren = filterTree(node.children || []);
+        const hasDirectProduct = catIdsWithProducts.has(node.id);
+        const hasChildWithProduct = filteredChildren.length > 0;
+
+        if (hasChildWithProduct) node.children = filteredChildren;
+        return hasDirectProduct || hasChildWithProduct;
+      });
+    }
+
+    const filteredTree = filterTree(tree);
+
+    const menuData = filteredTree.map(l1 => ({
+      id: l1.id,
+      name: l1.name,
+      slug: l1.slug,
+      children: l1.children.map(l2 => ({
+        id: l2.id,
+        name: l2.name,
+        slug: l2.slug,
+        children: l2.children.map(l3 => ({
+          id: l3.id,
+          name: l3.name,
+          slug: l3.slug,
+        }))
+      }))
+    }));
+
+    return { success: true, data: menuData };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getFullCategoryTreeAction() {
+  try {
+    const tree = await getCategoryTree();
+
     const menuData = tree.map(l1 => ({
       id: l1.id,
       name: l1.name,

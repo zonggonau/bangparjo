@@ -1,55 +1,42 @@
-import { getProductsV2 } from '@/lib/cj';
-import { getOrSet } from '@/lib/redis';
-import { importProductsBatchAction } from '@/lib/actions-catalog';
+import { prisma } from '@/lib/db';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
 
-const CACHE_TTL = 3600; // 1 jam
-
-// CJ Category ID: Health, Beauty & Hair
-const BEAUTY_CATEGORY_ID = '2C7D4A0B-1AB2-41EC-8F9E-13DC31B1C902';
+const BEAUTY_CJ_CATEGORY_ID = '2C7D4A0B-1AB2-41EC-8F9E-13DC31B1C902';
 
 async function getBeautyProducts() {
-  return getOrSet('home:beauty_v2', fetchBeautyProducts, CACHE_TTL);
-}
-
-async function fetchBeautyProducts() {
   try {
-    const res = await getProductsV2({
-      size: 10,
-      categoryId: BEAUTY_CATEGORY_ID,
-      orderBy: 3,   // sort by create time
-      sort: 'desc', // terbaru dulu
+    const category = await prisma.category.findFirst({
+      where: { cjId: BEAUTY_CJ_CATEGORY_ID },
+    });
+    if (!category) return [];
+
+    const dbProducts = await prisma.product.findMany({
+      where: { categoryId: category.id, status: 'ACTIVE' },
+      include: { variants: { take: 1 } },
+      orderBy: { updatedAt: 'desc' },
+      take: 10,
     });
 
-    if (res.success && res.data?.content?.[0]?.productList?.length) {
-      const products = res.data.content[0].productList;
-
-      // Background import ke DB lokal
-      importProductsBatchAction(products).catch(err => {
-        console.error('[HomeBeauty] Auto-import error:', err);
-      });
-
-      return products.map((p: any) => ({
-        pid: p.id,
-        productName: p.nameEn,
-        productNameEn: p.nameEn,
-        productImage: p.bigImage,
-        bigImage: p.bigImage,
-        sellPrice: parseFloat(p.nowPrice || p.sellPrice || '0'),
-        nowPrice: p.nowPrice,
-        discountPrice: p.discountPrice,
-        categoryName: p.threeCategoryName || p.twoCategoryName || 'Beauty',
-        productSku: p.sku,
-        productWeight: 0,
-        productUnit: 'piece',
-        categoryId: p.categoryId,
-        listedNum: p.listedNum,
-        isFreeShipping: p.addMarkStatus === 1,
-      }));
-    }
+    return dbProducts.map((p: any) => ({
+      pid: p.cjId,
+      productName: p.name,
+      productNameEn: p.name,
+      productImage: p.images?.[0] || '',
+      bigImage: p.images?.[0] || '',
+      sellPrice: p.variants?.[0]?.sellingPrice || p.variants?.[0]?.baseCost || 0,
+      nowPrice: p.variants?.[0]?.sellingPrice || p.variants?.[0]?.baseCost || 0,
+      discountPrice: '',
+      categoryName: 'Beauty',
+      productSku: p.variants?.[0]?.sku || '',
+      productWeight: p.variants?.[0]?.weight || 0,
+      productUnit: 'piece',
+      categoryId: p.categoryId,
+      listedNum: 0,
+      isFreeShipping: false,
+    }));
   } catch (e) {
-    console.warn('[HomeBeauty] CJ API V2 failed:', e);
+    console.warn('[HomeBeauty] DB fetch failed:', e);
   }
 
   return [];

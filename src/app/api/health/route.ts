@@ -13,18 +13,8 @@ export async function GET() {
     checks.database = { status: 'unhealthy', error: e.message };
   }
 
-  // 2. Redis check (optional — fallback ok if down)
-  try {
-    const { redis: r } = await import('@/lib/redis');
-    if (r && r.status === 'ready') {
-      await r.ping();
-      checks.redis = { status: 'healthy' };
-    } else {
-      checks.redis = { status: 'disconnected' };
-    }
-  } catch {
-    checks.redis = { status: 'unavailable' };
-  }
+  // 2. Redis — disabled
+  checks.redis = { status: 'disabled' };
 
   // 3. Environment check
   checks.env = {

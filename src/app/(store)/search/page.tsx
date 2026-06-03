@@ -1,9 +1,7 @@
 import { Metadata } from 'next';
 import ProductCard from '@/components/ProductCard';
 import SearchFilters from '@/components/SearchFilters';
-import { getProductsV2 } from '@/lib/cj';
 import { prisma } from '@/lib/db';
-import { importProductsBatchAction } from '@/lib/actions-catalog';
 
 export const metadata: Metadata = {
   title: 'Search Products — BangParjo',
@@ -36,51 +34,32 @@ export default async function SearchPage({
 
   if (query) {
     try {
-      const res = await getProductsV2({
-        keyWord: query,
-        size: pageSize,
-        page,
-        orderBy: 0, // best match
-        features: ['enable_description', 'enable_category'],
-      });
-      if (res.success && res.data) {
-        const d = res.data;
-        // V2 response: data.content[0].productList
-        if (d.content && d.content.length > 0) {
-          const rawProducts = d.content[0].productList || [];
-          products = rawProducts.map((p: any) => ({
-            pid: p.id || p.pid,
-            productName: p.nameEn || p.productName || '',
-            productNameEn: p.nameEn || p.productNameEn || '',
-            productImage: p.bigImage || p.productImage || '',
-            bigImage: p.bigImage || '',
-            sellPrice: typeof p.sellPrice === 'number' ? p.sellPrice : parseFloat(p.sellPrice || p.nowPrice || '0'),
-            nowPrice: p.nowPrice || '',
-            discountPrice: p.discountPrice || '',
-            categoryName: p.oneCategoryName || p.twoCategoryName || p.threeCategoryName || '',
-            categoryId: p.categoryId || '',
-            productSku: p.sku || '',
-            productWeight: p.productWeight || 0,
-            productUnit: p.productUnit || 'piece',
-            listedNum: p.listedNum || 0,
-            isFreeShipping: p.addMarkStatus === 1,
-            deliveryCycle: p.deliveryCycle || '3-5',
-            warehouseInventory: p.warehouseInventoryNum || 0,
-            discountPriceRate: p.discountPriceRate || '',
-          }));
+      const whereClause: any = {
+        status: 'ACTIVE',
+        name: { contains: query, mode: 'insensitive' },
+      };
 
-          // Background import to local DB
-          importProductsBatchAction(rawProducts).catch(err => {
-            console.error('[SearchPage] Auto-import error:', err);
-          });
-        }
+      const [dbProducts, dbTotal] = await Promise.all([
+        prisma.product.findMany({
+          where: whereClause,
+          include: { variants: { take: 1 } },
+          orderBy: { updatedAt: 'desc' },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+        }),
+        prisma.product.count({ where: whereClause }),
+      ]);
 
-        total = d.totalRecords || 0;
-      } else {
-        error = res.message || 'Search failed';
-      }
+      total = dbTotal;
+      products = dbProducts.map(p => ({
+        pid: p.cjId,
+        productNameEn: p.name,
+        productImage: p.images?.[0] || '',
+        bigImage: p.images?.[0] || '',
+        sellPrice: p.variants?.[0]?.sellingPrice || p.variants?.[0]?.baseCost || 0,
+      }));
     } catch (err: any) {
-      error = err.message || 'Network error';
+      error = err.message || 'Database error';
     }
   }
 

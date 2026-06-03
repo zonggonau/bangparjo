@@ -1,27 +1,13 @@
 import { NextResponse } from 'next/server';
 import { cjFetch } from '@/lib/cj-api';
 
-// Cache reviews per product in Redis for 24 hours to avoid QPS hammering
-async function getCachedReviews(cacheKey: string) {
-  try {
-    const { redis: r } = await import('@/lib/redis');
-    if (!r || r.status !== 'ready') return null;
-    const data = await r.get(cacheKey);
-    return data ? JSON.parse(data) : null;
-  } catch {
-    return null;
-  }
+// Cache di-skip — langsung dari API CJ
+async function getCachedReviews(_cacheKey: string) {
+  return null;
 }
 
-async function setCachedReviews(cacheKey: string, data: any) {
-  try {
-    const { redis: r } = await import('@/lib/redis');
-    if (!r || r.status !== 'ready') return;
-    // Cache for 24 hours — reviews rarely change
-    await r.set(cacheKey, JSON.stringify(data), 'EX', 86400);
-  } catch {
-    // Ignore cache errors
-  }
+async function setCachedReviews(_cacheKey: string, _data: any) {
+  // no-op
 }
 
 export async function GET(request: Request) {

@@ -65,7 +65,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
           const matchedVariant = (res.data.variants || []).find((v: any) => v.vid === selectedVid || v.variantKey === selectedVid) || ((res.data.variants?.length > 0) ? res.data.variants[0] : null);
           
           setSelectedVariant(matchedVariant);
-          const vImg = matchedVariant?.image || matchedVariant?.variantImage;
+          const vImg = (matchedVariant as any)?.image || matchedVariant?.variantImage;
           setSelectedImage(parseProductImage(vImg || res.data.bigImage || res.data.productImage));
         } else {
           setError('Product not found.');

@@ -1,36 +1,10 @@
 // ── Throttle (Server-side Only) ──────────────────────────────────────────
 let lastRequestAt = 0;
-const MIN_INTERVAL_MS = 5000; // 5s interval to respect CJ QPS limit (max 20 req/min)
+const MIN_INTERVAL_MS = 5000;
 
 async function waitForSlot(): Promise<void> {
   if (typeof window !== 'undefined') return;
-
   const now = Date.now();
-  
-  // Try to use Redis for global throttling across multiple workers
-  try {
-    const { redis, redisAvailable } = await import('@/lib/redis');
-    if (redis && redisAvailable) {
-      const key = 'cj_api_last_request_at';
-      const last = await redis.get(key);
-      const lastTs = last ? parseInt(last) : 0;
-      
-      const wait = Math.max(0, lastTs + MIN_INTERVAL_MS - now);
-      const nextTs = now + wait;
-      
-      // Atomic increment/set is better but let's keep it simple with a set
-      await redis.set(key, nextTs.toString(), 'EX', 10);
-      
-      if (wait > 0) {
-        await new Promise(resolve => setTimeout(resolve, wait));
-      }
-      return;
-    }
-  } catch (e) {
-    // Fallback to local throttling
-  }
-
-  // Local-only fallback
   const wait = Math.max(0, lastRequestAt + MIN_INTERVAL_MS - now);
   lastRequestAt = now + wait;
   if (wait > 0) {
@@ -38,30 +12,12 @@ async function waitForSlot(): Promise<void> {
   }
 }
 
-
-
-export async function getCache(key: string) {
-  if (typeof window !== 'undefined') return null;
-  try {
-    const { redis: r } = await import('@/lib/redis');
-    if (!r || r.status !== 'ready') return null;
-    const data = await r.get(key);
-    return data ? JSON.parse(data) : null;
-  } catch (e) {
-    console.warn('[Redis Get Cache Error]:', e);
-    return null;
-  }
+export async function getCache(_key: string) {
+  return null;
 }
 
-export async function setCache(key: string, data: any, ttl = 1800) {
-  if (typeof window !== 'undefined') return;
-  try {
-    const { redis: r } = await import('@/lib/redis');
-    if (!r || r.status !== 'ready') return;
-    await r.set(key, JSON.stringify(data), 'EX', ttl);
-  } catch (e) {
-    console.warn('[Redis Set Cache Error]:', e);
-  }
+export async function setCache(_key: string, _data: any, _ttl?: number) {
+  // no-op
 }
 
 // ── String helpers (re-exported from utils.ts for backward compat) ─────────

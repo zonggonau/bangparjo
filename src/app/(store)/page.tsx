@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/db';
-import { getOrSet } from '@/lib/redis';
 import { Suspense } from 'react';
 import HeroSection from '@/components/HeroSection';
 import HomeCategories from '@/components/home-sections/HomeCategories';
@@ -15,13 +14,7 @@ import AIChat from '@/components/AIChat';
 import { getDBStoreSettings, calculateFinalPrice } from '@/lib/pricing';
 
 
-const CACHE_TTL = 315360000; // 10 years (effectively forever)
-
 async function getFeaturedProducts() {
-  return getOrSet('home:featured', fetchFeaturedProducts, CACHE_TTL);
-}
-
-async function fetchFeaturedProducts() {
   let featuredProducts: any[] = [];
   try {
     const dbProducts = await prisma.product.findMany({

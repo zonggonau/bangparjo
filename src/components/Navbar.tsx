@@ -114,6 +114,16 @@ export default function Navbar() {
                     <div className="flex h-auto max-h-[650px]">
                       {/* Sidebar - scroll if more than 14 categories */}
                       <div className="w-[280px] bg-[#fcfcfc] border-r border-[#f0f0f0] py-2.5 overflow-y-auto">
+                        {/* All Products link */}
+                        <div className="px-5 mb-1">
+                          <Link href="/category/all" className="flex items-center justify-between py-3 text-[14px] font-bold no-underline text-[#FF6B00] border-b border-orange-100" onClick={() => setMobileOpen(false)}>
+                            <span>
+                              <i className="fas fa-th-large" style={{ width: '20px', marginRight: '10px', opacity: 0.8 }}></i>
+                              All Products
+                            </span>
+                            <i className="fas fa-chevron-right text-[10px] opacity-30"></i>
+                          </Link>
+                        </div>
                         {categories.map((cat) => (
                           <div 
                             key={cat.id} 
@@ -230,13 +240,42 @@ export default function Navbar() {
               </button>
             </div>
             <div className="p-4">
-              <Link href="/" className="block py-3 text-[15px] font-medium text-[#555555] border-b border-gray-50 no-underline" onClick={toggleNav}>Home</Link>
-              <Link href="/category" className="block py-3 text-[15px] font-medium text-[#555555] border-b border-gray-50 no-underline" onClick={toggleNav}>All Categories</Link>
-              <Link href="/track" className="block py-3 text-[15px] font-medium text-[#555555] border-b border-gray-50 no-underline" onClick={toggleNav}>Track Order</Link>
-              <Link href="/help-center" className="block py-3 text-[15px] font-medium text-[#555555] border-b border-gray-50 no-underline" onClick={toggleNav}>Help Center</Link>
-              <Link href="/contact" className="block py-3 text-[15px] font-medium text-[#555555] border-b border-gray-50 no-underline" onClick={toggleNav}>Contact</Link>
-              <Link href="/favorites" className="block py-3 text-[15px] font-medium text-[#555555] border-b border-gray-50 no-underline" onClick={toggleNav}>Wishlist</Link>
-              <Link href="/login" className="block py-3 text-[15px] font-medium text-[#555555] no-underline" onClick={toggleNav}>Login</Link>
+              {/* Main nav links */}
+              <Link href="/" className="block py-3 text-[15px] font-medium text-[#555555] border-b border-gray-50 no-underline" onClick={toggleNav}>🏠 Home</Link>
+              <Link href="/category/all" className="block py-3 text-[15px] font-bold text-[#FF6B00] border-b border-orange-100 no-underline" onClick={toggleNav}>📦 All Products</Link>
+              
+              {/* Category tree for mobile */}
+              {categories.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-[11px] font-black text-gray-400 uppercase tracking-wider mt-3 mb-1 px-1">Categories</p>
+                  {categories.map(cat => (
+                    <div key={cat.id}>
+                      <Link href={`/category/${cat.slug}`} className="block py-2.5 text-[14px] font-semibold text-[#555555] border-b border-gray-50 no-underline hover:text-[#FF6B00]" onClick={toggleNav}>
+                        {cat.name}
+                      </Link>
+                      {/* L2 children inline */}
+                      {cat.children?.length > 0 && (
+                        <div className="ml-3 pl-3 border-l-2 border-gray-100">
+                          {cat.children.map((l2: any) => (
+                            <Link key={l2.id} href={`/category/${l2.slug}`} className="block py-1.5 text-[13px] text-gray-500 no-underline hover:text-[#FF6B00]" onClick={toggleNav}>
+                              {l2.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* Utility links */}
+              <div className="border-t border-gray-100 pt-3 mt-2">
+                <Link href="/track" className="block py-2.5 text-[14px] font-medium text-[#555555] no-underline hover:text-[#FF6B00]" onClick={toggleNav}>📦 Track Order</Link>
+                <Link href="/help-center" className="block py-2.5 text-[14px] font-medium text-[#555555] no-underline hover:text-[#FF6B00]" onClick={toggleNav}>❓ Help Center</Link>
+                <Link href="/contact" className="block py-2.5 text-[14px] font-medium text-[#555555] no-underline hover:text-[#FF6B00]" onClick={toggleNav}>📧 Contact</Link>
+                <Link href="/favorites" className="block py-2.5 text-[14px] font-medium text-[#555555] no-underline hover:text-[#FF6B00]" onClick={toggleNav}>❤️ Wishlist</Link>
+                <Link href="/login" className="block py-2.5 text-[14px] font-medium text-[#555555] no-underline hover:text-[#FF6B00]" onClick={toggleNav}>👤 Login</Link>
+              </div>
             </div>
           </div>
         </div>

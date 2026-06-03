@@ -141,15 +141,7 @@ export default async function BlogSlugPage(props: Props) {
               data: { content: JSON.stringify(product) }
             });
 
-            // Update cache
-            const { redis } = await import('@/lib/redis');
-            if (redis) {
-              await redis.set(cacheKey, JSON.stringify({
-                ...post,
-                content: JSON.stringify(product),
-                updatedAt: new Date().toISOString()
-              }), 'EX', 300);
-            }
+            // Cache di-skip — data langsung dari database
           }
         } catch (err) {
           console.error('[Product Auto-Sync Error]:', err);
