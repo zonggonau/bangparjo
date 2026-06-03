@@ -3,12 +3,181 @@
 import { prisma } from '@/lib/db';
 import { getProductDetails, cjFetch } from '@/lib/cj';
 import { getAllCategories, getCategoryTree } from '@/lib/categories';
+import { getDBStoreSettings, calculateFinalPrice } from './pricing';
+
+/**
+ * Otomatis import produk dan varian ke DB lokal.
+ * Digunakan saat user klik card produk.
+ */
+export async function importProductVariantsAction(cjId: string) {
+  if (!cjId) return { success: false, message: 'Missing cjId' };
+  
+  try {
+    const detail = await getProductDetails(cjId);
+    if (!detail.success || !detail.data) {
+      return { success: false, message: detail.message || 'Failed to fetch details from CJ' };
+    }
+
+    const d = detail.data;
+    const settings = await getDBStoreSettings();
+
+    const product = await prisma.product.upsert({
+      where: { cjId: d.pid },
+      update: {
+        name: d.productNameEn || d.productName,
+        description: d.description || '',
+        images: d.productImageSet && d.productImageSet.length > 0 ? d.productImageSet : [d.productImage],
+        variantCount: d.variants?.length || 0,
+        totalStock: d.variants?.reduce((a: number, v: any) => a + (v.inventory || 0), 0) || 0,
+        cjCategoryId: d.categoryId || null,
+        updatedAt: new Date()
+      },
+      create: {
+        cjId: d.pid,
+        name: d.productNameEn || d.productName,
+        description: d.description || '',
+        images: d.productImageSet && d.productImageSet.length > 0 ? d.productImageSet : [d.productImage],
+        variantCount: d.variants?.length || 0,
+        totalStock: d.variants?.reduce((a: number, v: any) => a + (v.inventory || 0), 0) || 0,
+        cjCategoryId: d.categoryId || null,
+        status: 'ACTIVE'
+      }
+    });
+
+    // Hapus varian sementara jika ada sebelum mengimpor yang asli
+    await prisma.variant.deleteMany({
+      where: {
+        productId: product.id,
+        cjId: { startsWith: 'TEMP-VID-' }
+      }
+    });
+
+    if (d.variants?.length) {
+      for (const v of d.variants) {
+        const baseCost = Number(v.variantSellPrice || 0);
+        const sellingPrice = calculateFinalPrice(baseCost, settings);
+        
+        await prisma.variant.upsert({
+          where: { cjId: v.vid },
+          update: {
+            sku: v.variantSku,
+            color: v.variantKey || '',
+            size: v.variantNameEn || '',
+            weight: v.variantWeight || 0,
+            baseCost: baseCost,
+            sellingPrice: sellingPrice,
+            inventory: v.inventory || 100,
+            image: v.variantImage || d.productImage
+          },
+          create: {
+            productId: product.id,
+            cjId: v.vid,
+            sku: v.variantSku,
+            color: v.variantKey || '',
+            size: v.variantNameEn || '',
+            weight: v.variantWeight || 0,
+            baseCost: baseCost,
+            sellingPrice: sellingPrice,
+            inventory: v.inventory || 100,
+            image: v.variantImage || d.productImage
+          }
+        });
+      }
+    }
+
+    return { success: true, message: 'Imported successfully' };
+  } catch (error) {
+    console.error('[Import Action] Error:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
+/**
+ * Batch import produk dari list (misal: halaman kategori).
+ * Mengimpor produk dengan 1 varian default agar cepat.
+ */
+export async function importProductsBatchAction(products: any[]) {
+  if (!products || products.length === 0) return { success: false };
+  
+  try {
+    const settings = await getDBStoreSettings();
+    
+    for (const p of products) {
+      const pid = p.id || p.pid;
+      if (!pid) continue;
+
+      const name = p.nameEn || p.productNameEn || p.productName;
+      const image = p.bigImage || p.productImage;
+      const baseCost = parseFloat(p.nowPrice || p.sellPrice || '0');
+      const sellingPrice = calculateFinalPrice(baseCost, settings);
+      const sku = p.sku || p.productSku || `SKU-${pid}`;
+      
+      // Upsert Product
+      const product = await prisma.product.upsert({
+        where: { cjId: pid },
+        update: {
+          name: name,
+          images: { set: [image] },
+          cjCategoryId: p.categoryId || null,
+          updatedAt: new Date()
+        },
+        create: {
+          cjId: pid,
+          name: name,
+          description: '',
+          images: [image],
+          cjCategoryId: p.categoryId || null,
+          status: 'ACTIVE'
+        }
+      });
+
+      // Cek apakah produk sudah punya varian asli
+      const hasRealVariants = await prisma.variant.count({
+        where: {
+          productId: product.id,
+          NOT: { cjId: { startsWith: 'TEMP-VID-' } }
+        }
+      });
+
+      if (hasRealVariants === 0) {
+        const tempVid = `TEMP-VID-${pid}`;
+        await prisma.variant.upsert({
+          where: { cjId: tempVid },
+          update: {
+            sku: sku,
+            baseCost: baseCost,
+            sellingPrice: sellingPrice,
+            image: image,
+            inventory: p.warehouseInventoryNum || 100
+          },
+          create: {
+            productId: product.id,
+            cjId: tempVid,
+            sku: sku,
+            color: 'Default',
+            size: 'Standard',
+            weight: 0,
+            baseCost: baseCost,
+            sellingPrice: sellingPrice,
+            image: image,
+            inventory: p.warehouseInventoryNum || 100
+          }
+        });
+      }
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('[Batch Import Action] Error:', error);
+    return { success: false };
+  }
+}
 
 export async function getProductDetailsAction(cjId: string) {
   if (!cjId) return { success: false, message: 'Missing cjId' };
   
   try {
-    let product: any = await prisma.product.findUnique({
+    const product = await prisma.product.findUnique({
       where: { cjId },
       include: { variants: true }
     });

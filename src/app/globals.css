@@ -48,6 +48,27 @@
     text-shadow: 0 0 15px rgba(255, 107, 53, 0.5);
   }
 
+  .skeleton {
+    @apply bg-slate-100 rounded-md relative overflow-hidden;
+  }
+
+  .skeleton::after {
+    @apply content-[''] absolute inset-0 -translate-x-full;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
   @keyframes progress {
     0% { transform: scaleX(0); transform-origin: left; }
     100% { transform: scaleX(1); transform-origin: left; }

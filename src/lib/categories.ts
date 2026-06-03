@@ -3,6 +3,7 @@ import { slugify } from './cj';
 
 export interface CategoryNode {
   id: string;
+  cjId?: string;
   name: string;
   slug: string;
   level: number;
@@ -35,7 +36,8 @@ export async function getCategoryTree(): Promise<CategoryNode[]> {
     return parents.map((cat) => {
       const children = catMap.get(cat.id) || [];
       return {
-        id: cat.cjId || cat.id,
+        id: cat.id,
+        cjId: cat.cjId || undefined,
         name: cat.name,
         slug: cat.slug,
         level,
@@ -56,7 +58,7 @@ export async function getAllCategories() {
     for (const node of nodes) {
       if (node.level === 3) {
         flat.push({
-          cjId: node.id,
+          cjId: node.cjId || node.id,
           name: node.name,
           categoryL1: l1Name,
           categoryL2: l2Name,
@@ -85,7 +87,7 @@ export async function getCategoryBySlug(slug: string): Promise<CategoryNode | nu
   
   function find(nodes: CategoryNode[]) {
     for (const node of nodes) {
-      if (node.slug === slug || slug.includes(node.id)) {
+      if (node.slug === slug || slug.includes(node.id) || (node.cjId && slug.includes(node.cjId))) {
         found = node;
         return;
       }
@@ -104,7 +106,7 @@ export async function getCategoryById(id: string): Promise<CategoryNode | null> 
   
   function find(nodes: CategoryNode[]) {
     for (const node of nodes) {
-      if (node.id === id) {
+      if (node.id === id || (node.cjId && node.cjId === id)) {
         found = node;
         return;
       }
@@ -124,7 +126,7 @@ export async function getCategoryHierarchy(id: string) {
   function find(nodes: CategoryNode[], path: CategoryNode[]): boolean {
     for (const node of nodes) {
       const currentPath = [...path, node];
-      if (node.id === id) {
+      if (node.id === id || (node.cjId && node.cjId === id)) {
         hierarchy = currentPath;
         return true;
       }

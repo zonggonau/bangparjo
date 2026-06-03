@@ -18,6 +18,7 @@ import { isProductData, parseProductData, renderProductTemplate } from '@/lib/bl
 import { getOrSet } from '@/lib/redis';
 import { getCachedStoreSettings } from '@/lib/server-settings';
 import { calculateFinalPrice } from '@/lib/pricing';
+import { getProductDetails } from '@/lib/cj-api';
 
 
 interface Props {
@@ -98,9 +99,63 @@ export default async function BlogSlugPage(props: Props) {
 
   // Detect if content is JSON product data and render with template
   if (isProductData(post.content)) {
-    const product = parseProductData(post.content);
+    let product = parseProductData(post.content);
     if (product) {
       const settings = await getCachedStoreSettings();
+
+      // AUTO-SYNC: If variants are missing or minimal, fetch full details from CJ
+      // This happens while the skeleton is shown (thanks to loading.tsx)
+      if (!product.variants || product.variants.length === 0 || product.variants.length === 1 && product.variants[0].sku.includes('default')) {
+        try {
+          const cjRes = await getProductDetails(product.cjId);
+          if (cjRes.success && cjRes.data) {
+            const cjProd = cjRes.data;
+            
+            // Map CJ variants to our internal ProductVariantData format
+            const enrichedVariants = cjProd.variants.map(v => {
+              const baseCost = Number(v.variantSellPrice) || 0;
+              return {
+                id: v.vid,
+                cjId: v.vid,
+                sku: v.variantSku,
+                color: v.variantKey || v.variantNameEn || v.variantName || null,
+                size: null, // CJ usually combines color/size in variantKey
+                weight: v.variantWeight || 0,
+                baseCost: baseCost,
+                sellingPrice: calculateFinalPrice(baseCost, settings),
+                inventory: v.inventory || 100,
+                image: v.variantImage || cjProd.productImage || null,
+              };
+            });
+
+            product = {
+              ...product,
+              description: product.description || cjProd.description || '',
+              images: product.images.length > 0 ? product.images : (cjProd.productImageSet || [cjProd.productImage || '']),
+              variants: enrichedVariants,
+            };
+
+            // Save back to DB to avoid future syncs
+            await prisma.blogPost.update({
+              where: { id: post.id },
+              data: { content: JSON.stringify(product) }
+            });
+
+            // Update cache
+            const { redis } = await import('@/lib/redis');
+            if (redis) {
+              await redis.set(cacheKey, JSON.stringify({
+                ...post,
+                content: JSON.stringify(product),
+                updatedAt: new Date().toISOString()
+              }), 'EX', 300);
+            }
+          }
+        } catch (err) {
+          console.error('[Product Auto-Sync Error]:', err);
+        }
+      }
+
 
       // Calculate prices based on current live margin settings
       product.variants = product.variants.map(v => {

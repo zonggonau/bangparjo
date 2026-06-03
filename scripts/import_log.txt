@@ -1,0 +1,224 @@
+[2026-06-02 09:11:14] === Starting Automated Product Import ===
+[2026-06-02 09:11:14] Fetching categories from CJ...
+[2026-06-02 09:11:14] ❌ Unauthorized: Check your SCRIPTS_API_KEY
+[2026-06-02 09:13:30] === Starting Automated Product Import ===
+[2026-06-02 09:13:30] Fetching categories from CJ...
+[2026-06-02 09:13:30] ❌ Unauthorized: Check your SCRIPTS_API_KEY
+[2026-06-02 09:15:55] === Starting Automated Product Import ===
+[2026-06-02 09:15:55] Fetching categories from CJ...
+[2026-06-02 09:15:55] ❌ Unauthorized: Check your SCRIPTS_API_KEY
+[2026-06-02 09:17:33] === Starting Automated Product Import ===
+[2026-06-02 09:17:33] Fetching categories from CJ...
+[2026-06-02 09:17:33] ❌ Unauthorized: Check your SCRIPTS_API_KEY
+[2026-06-02 09:17:44] === Starting Automated Product Import ===
+[2026-06-02 09:17:44] Fetching categories from CJ...
+[2026-06-02 09:17:44] ❌ Unauthorized: Check your SCRIPTS_API_KEY
+[2026-06-02 09:18:39] === Starting Automated Product Import ===
+[2026-06-02 09:18:39] Fetching categories from CJ...
+[2026-06-02 09:18:39] ❌ Unauthorized: Check your SCRIPTS_API_KEY
+[2026-06-02 09:22:23] === Starting Automated Product Import ===
+[2026-06-02 09:22:23] Fetching categories from CJ...
+[2026-06-02 09:22:24] ❌ Unauthorized: Check your SCRIPTS_API_KEY
+[2026-06-02 09:24:36] === Starting Automated Product Import ===
+[2026-06-02 09:24:36] Fetching categories from CJ...
+[2026-06-02 09:24:37] ❌ Unauthorized: Check your SCRIPTS_API_KEY
+[2026-06-02 09:25:23] === Starting Automated Product Import ===
+[2026-06-02 09:25:23] Fetching categories from CJ...
+[2026-06-02 09:25:23] ❌ Unauthorized: Check your SCRIPTS_API_KEY
+[2026-06-02 09:25:54] === Starting Automated Product Import ===
+[2026-06-02 09:25:54] Fetching categories from CJ...
+[2026-06-02 09:25:54] ❌ Unauthorized: Check your SCRIPTS_API_KEY
+[2026-06-02 09:26:57] === Starting Automated Product Import ===
+[2026-06-02 09:26:57] Fetching categories from CJ...
+[2026-06-02 09:26:57] ❌ Unauthorized: Check your SCRIPTS_API_KEY
+[2026-06-02 09:30:44] === Starting Automated Product Import ===
+[2026-06-02 09:30:44] Fetching categories from CJ...
+[2026-06-02 09:31:00] ❌ No categories found. Exiting.
+[2026-06-02 09:31:16] === Starting Automated Product Import ===
+[2026-06-02 09:31:16] Fetching categories from CJ...
+[2026-06-02 09:31:32] ❌ No categories found. Exiting.
+[2026-06-02 09:37:18] === Starting Automated Product Import ===
+[2026-06-02 09:37:18] Fetching categories from CJ...
+[2026-06-02 09:37:34] ❌ No categories found. Exiting.
+[2026-06-02 09:39:49] === Starting Automated Product Import ===
+[2026-06-02 09:39:49] Fetching categories from database (Level 3)...
+[2026-06-02 09:39:49] ❌ No categories found. Exiting.
+[2026-06-02 09:42:06] === Starting Automated Product Import ===
+[2026-06-02 09:42:06] Loading categories from local cache: /tmp/bangparjo-l3-categories.json
+[2026-06-02 09:42:06] Found 539 categories.
+[2026-06-02 09:42:06] 
+📂 Processing Category: 2 in 1 Tablets (25E64DFD-1ED3-4171-86CD-0C2F40052F3B)
+[2026-06-02 09:42:06] Fetching 100 newest products for category 25E64DFD-1ED3-4171-86CD-0C2F40052F3B...
+[2026-06-02 09:42:23]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:42:23]   ⚠️ No products found in this category.
+[2026-06-02 09:42:23] 
+📂 Processing Category: 3D (9E77F21D-54E4-41B5-BB97-2CECBEA9DA96)
+[2026-06-02 09:42:23] Fetching 100 newest products for category 9E77F21D-54E4-41B5-BB97-2CECBEA9DA96...
+[2026-06-02 09:42:40]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:42:40]   ⚠️ No products found in this category.
+[2026-06-02 09:42:40] 
+📂 Processing Category: 3D Pens (D8BBE038-9ECD-4698-8CB1-DE63E27F33C7)
+[2026-06-02 09:42:40] Fetching 100 newest products for category D8BBE038-9ECD-4698-8CB1-DE63E27F33C7...
+[2026-06-02 09:42:56]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:42:56]   ⚠️ No products found in this category.
+[2026-06-02 09:42:56] 
+📂 Processing Category: 3D Printers (C7365895-913A-4078-9946-681EFD45D2B8)
+[2026-06-02 09:42:56] Fetching 100 newest products for category C7365895-913A-4078-9946-681EFD45D2B8...
+[2026-06-02 09:43:13]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:43:13]   ⚠️ No products found in this category.
+[2026-06-02 09:43:13] 
+📂 Processing Category: 3G Modems (A77A4E59-D931-4BBE-9D48-FF995C481B66)
+[2026-06-02 09:43:13] Fetching 100 newest products for category A77A4E59-D931-4BBE-9D48-FF995C481B66...
+[2026-06-02 09:43:30]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:43:30]   ⚠️ No products found in this category.
+[2026-06-02 09:43:30] 
+📂 Processing Category: 3GB RAM (B1C9BC0B-A019-48C5-A06A-F25FB45DD9A9)
+[2026-06-02 09:43:30] Fetching 100 newest products for category B1C9BC0B-A019-48C5-A06A-F25FB45DD9A9...
+[2026-06-02 09:43:47]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:43:47]   ⚠️ No products found in this category.
+[2026-06-02 09:43:47] 
+📂 Processing Category: 5-inch Display (F22F83A5-633C-4269-85A7-3FE844BD555F)
+[2026-06-02 09:43:47] Fetching 100 newest products for category F22F83A5-633C-4269-85A7-3FE844BD555F...
+[2026-06-02 09:44:03]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:44:04]   ⚠️ No products found in this category.
+[2026-06-02 09:44:04] 
+📂 Processing Category: 925 Silver Jewelry (552F095A-904C-40E4-A43B-0CD1CE15D29F)
+[2026-06-02 09:44:04] Fetching 100 newest products for category 552F095A-904C-40E4-A43B-0CD1CE15D29F...
+[2026-06-02 09:44:20]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:44:20]   ⚠️ No products found in this category.
+[2026-06-02 09:44:20] 
+📂 Processing Category: Action & Toy Figures (F18491A9-2F33-4D85-A154-78EE4CD2AD33)
+[2026-06-02 09:44:20] Fetching 100 newest products for category F18491A9-2F33-4D85-A154-78EE4CD2AD33...
+[2026-06-02 09:44:37]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:44:37]   ⚠️ No products found in this category.
+[2026-06-02 09:44:37] 
+📂 Processing Category: Action Cameras (AD21D6F7-42CB-44E7-89B2-542692C7D101)
+[2026-06-02 09:44:37] Fetching 100 newest products for category AD21D6F7-42CB-44E7-89B2-542692C7D101...
+[2026-06-02 09:44:54]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:44:54]   ⚠️ No products found in this category.
+[2026-06-02 09:44:54] 
+📂 Processing Category: Activity & Gear (4065FFF7-4AAA-4CFA-B04B-639C93624469)
+[2026-06-02 09:44:54] Fetching 100 newest products for category 4065FFF7-4AAA-4CFA-B04B-639C93624469...
+[2026-06-02 09:45:11]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:45:11]   ⚠️ No products found in this category.
+[2026-06-02 09:45:11] 
+📂 Processing Category: Adult Wellness (1697200256204677120)
+[2026-06-02 09:45:11] Fetching 100 newest products for category 1697200256204677120...
+[2026-06-02 09:45:28]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:45:28]   ⚠️ No products found in this category.
+[2026-06-02 09:45:28] 
+📂 Processing Category: Air Conditioning Appliances (36686698-230D-46F9-A076-8CC61AE36CE3)
+[2026-06-02 09:45:28] Fetching 100 newest products for category 36686698-230D-46F9-A076-8CC61AE36CE3...
+[2026-06-02 09:45:44]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:45:44]   ⚠️ No products found in this category.
+[2026-06-02 09:45:44] 
+📂 Processing Category: Alarm & Sensor (0598E853-9BF7-4939-A571-2407E819C91E)
+[2026-06-02 09:45:44] Fetching 100 newest products for category 0598E853-9BF7-4939-A571-2407E819C91E...
+[2026-06-02 09:46:01]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:46:01]   ⚠️ No products found in this category.
+[2026-06-02 09:46:01] 
+📂 Processing Category: Alarm Systems & Security (BCC009E7-B5FF-4E4B-8D1D-7DE5B5DBFAE0)
+[2026-06-02 09:46:01] Fetching 100 newest products for category BCC009E7-B5FF-4E4B-8D1D-7DE5B5DBFAE0...
+[2026-06-02 09:46:18]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:46:18]   ⚠️ No products found in this category.
+[2026-06-02 09:46:18] 
+📂 Processing Category: Anklets (2601070548141611900)
+[2026-06-02 09:46:18] Fetching 100 newest products for category 2601070548141611900...
+[2026-06-02 09:52:00] === Starting Automated Product Import ===
+[2026-06-02 09:52:00] Loading categories from local cache: /tmp/bangparjo-l3-categories.json
+[2026-06-02 09:52:00] Found 539 categories.
+[2026-06-02 09:52:00] 
+📂 Processing Category: 2 in 1 Tablets (25E64DFD-1ED3-4171-86CD-0C2F40052F3B)
+[2026-06-02 09:52:00] Fetching 100 newest products for category 25E64DFD-1ED3-4171-86CD-0C2F40052F3B...
+[2026-06-02 09:52:17]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:52:17]   ⚠️ No products found in this category.
+[2026-06-02 09:52:17] 
+📂 Processing Category: 3D (9E77F21D-54E4-41B5-BB97-2CECBEA9DA96)
+[2026-06-02 09:52:17] Fetching 100 newest products for category 9E77F21D-54E4-41B5-BB97-2CECBEA9DA96...
+[2026-06-02 09:52:34]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:52:34]   ⚠️ No products found in this category.
+[2026-06-02 09:52:34] 
+📂 Processing Category: 3D Pens (D8BBE038-9ECD-4698-8CB1-DE63E27F33C7)
+[2026-06-02 09:52:34] Fetching 100 newest products for category D8BBE038-9ECD-4698-8CB1-DE63E27F33C7...
+[2026-06-02 09:52:51]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:52:51]   ⚠️ No products found in this category.
+[2026-06-02 09:52:51] 
+📂 Processing Category: 3D Printers (C7365895-913A-4078-9946-681EFD45D2B8)
+[2026-06-02 09:52:51] Fetching 100 newest products for category C7365895-913A-4078-9946-681EFD45D2B8...
+[2026-06-02 09:53:07]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:53:07]   ⚠️ No products found in this category.
+[2026-06-02 09:53:07] 
+📂 Processing Category: 3G Modems (A77A4E59-D931-4BBE-9D48-FF995C481B66)
+[2026-06-02 09:53:07] Fetching 100 newest products for category A77A4E59-D931-4BBE-9D48-FF995C481B66...
+[2026-06-02 09:53:24]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:53:24]   ⚠️ No products found in this category.
+[2026-06-02 09:53:24] 
+📂 Processing Category: 3GB RAM (B1C9BC0B-A019-48C5-A06A-F25FB45DD9A9)
+[2026-06-02 09:53:24] Fetching 100 newest products for category B1C9BC0B-A019-48C5-A06A-F25FB45DD9A9...
+[2026-06-02 09:53:41]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-02 09:53:41]   ⚠️ No products found in this category.
+[2026-06-02 09:53:41] 
+📂 Processing Category: 5-inch Display (F22F83A5-633C-4269-85A7-3FE844BD555F)
+[2026-06-02 09:53:41] Fetching 100 newest products for category F22F83A5-633C-4269-85A7-3FE844BD555F...
+[2026-06-03 07:47:38] === Starting Automated Product Import (Round-Robin 10 products) ===
+[2026-06-03 07:47:38] Loading categories from local cache: /tmp/bangparjo-l3-categories.json
+[2026-06-03 07:47:38] Found 539 categories.
+[2026-06-03 07:47:38] 
+📂 Processing Round: 2 in 1 Tablets (25E64DFD-1ED3-4171-86CD-0C2F40052F3B)
+[2026-06-03 07:47:38] Fetching 10 newest products for category 25E64DFD-1ED3-4171-86CD-0C2F40052F3B (Page 1)...
+[2026-06-03 07:47:54]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-03 07:47:54]   ✨ No more products found. Marking category as COMPLETED.
+[2026-06-03 07:47:54] 
+📂 Processing Round: 3D (9E77F21D-54E4-41B5-BB97-2CECBEA9DA96)
+[2026-06-03 07:47:54] Fetching 10 newest products for category 9E77F21D-54E4-41B5-BB97-2CECBEA9DA96 (Page 1)...
+[2026-06-03 07:48:11]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-03 07:48:11]   ✨ No more products found. Marking category as COMPLETED.
+[2026-06-03 07:48:11] 
+📂 Processing Round: 3D Pens (D8BBE038-9ECD-4698-8CB1-DE63E27F33C7)
+[2026-06-03 07:48:11] Fetching 10 newest products for category D8BBE038-9ECD-4698-8CB1-DE63E27F33C7 (Page 1)...
+[2026-06-03 07:48:28]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-03 07:48:28]   ✨ No more products found. Marking category as COMPLETED.
+[2026-06-03 07:48:28] 
+📂 Processing Round: 3D Printers (C7365895-913A-4078-9946-681EFD45D2B8)
+[2026-06-03 07:48:28] Fetching 10 newest products for category C7365895-913A-4078-9946-681EFD45D2B8 (Page 1)...
+[2026-06-03 07:48:45]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-03 07:48:45]   ✨ No more products found. Marking category as COMPLETED.
+[2026-06-03 07:48:45] 
+📂 Processing Round: 3G Modems (A77A4E59-D931-4BBE-9D48-FF995C481B66)
+[2026-06-03 07:48:45] Fetching 10 newest products for category A77A4E59-D931-4BBE-9D48-FF995C481B66 (Page 1)...
+[2026-06-03 07:49:01]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-03 07:49:01]   ✨ No more products found. Marking category as COMPLETED.
+[2026-06-03 07:49:01] 
+📂 Processing Round: 3GB RAM (B1C9BC0B-A019-48C5-A06A-F25FB45DD9A9)
+[2026-06-03 07:49:01] Fetching 10 newest products for category B1C9BC0B-A019-48C5-A06A-F25FB45DD9A9 (Page 1)...
+[2026-06-03 07:49:20] === Starting Automated Product Import (Round-Robin 10 products) ===
+[2026-06-03 07:49:20] Loading categories from local cache: /tmp/bangparjo-l3-categories.json
+[2026-06-03 07:49:20] Found 539 categories.
+[2026-06-03 07:49:20] 
+📂 Processing Round: 3GB RAM (B1C9BC0B-A019-48C5-A06A-F25FB45DD9A9)
+[2026-06-03 07:49:20] Fetching 10 newest products for category B1C9BC0B-A019-48C5-A06A-F25FB45DD9A9 (Page 1)...
+[2026-06-03 07:49:36]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-03 07:49:36]   ✨ No more products found. Marking category as COMPLETED.
+[2026-06-03 07:49:36] 
+📂 Processing Round: 5-inch Display (F22F83A5-633C-4269-85A7-3FE844BD555F)
+[2026-06-03 07:49:36] Fetching 10 newest products for category F22F83A5-633C-4269-85A7-3FE844BD555F (Page 1)...
+[2026-06-03 07:49:50] 
+🛑 Script interrupted by user. Saving state...
+[2026-06-03 07:49:50] 
+=== Import session finished ===
+[2026-06-03 07:58:17] === Starting Automated Product Import (Round-Robin 10 products) ===
+[2026-06-03 07:58:17] Loading categories from local cache: /tmp/bangparjo-l3-categories.json
+[2026-06-03 07:58:17] Found 539 categories.
+[2026-06-03 07:58:17] 
+📂 Processing Round: 2 in 1 Tablets (25E64DFD-1ED3-4171-86CD-0C2F40052F3B)
+[2026-06-03 07:58:17] Fetching 10 newest products for category 25E64DFD-1ED3-4171-86CD-0C2F40052F3B (Page 1)... [Attempt 1/3]
+[2026-06-03 07:58:34]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-03 07:58:34] 🛑 API points or QPS limit reached. Stopping for today. Will continue tomorrow.
+[2026-06-03 08:15:07] === Starting Automated Product Import (Round-Robin 10 products) ===
+[2026-06-03 08:15:07] Loading categories from local cache: /tmp/bangparjo-l3-categories.json
+[2026-06-03 08:15:07] Found 539 categories.
+[2026-06-03 08:15:07] 
+📂 Processing Round: 2 in 1 Tablets (25E64DFD-1ED3-4171-86CD-0C2F40052F3B)
+[2026-06-03 08:15:07] Fetching 10 newest products for category 25E64DFD-1ED3-4171-86CD-0C2F40052F3B (Page 1)... [Attempt 1/3]
+[2026-06-03 08:15:28]   ⚠️ Error fetching products: Failed to fetch from CJ after 3 retries due to QPS limits or network errors
+[2026-06-03 08:15:28] 🛑 API points or QPS limit reached. Stopping for today. Will continue tomorrow.

@@ -3,6 +3,7 @@ import ProductCard from '@/components/ProductCard';
 import SearchFilters from '@/components/SearchFilters';
 import { getProductsV2 } from '@/lib/cj';
 import { prisma } from '@/lib/db';
+import { importProductsBatchAction } from '@/lib/actions-catalog';
 
 export const metadata: Metadata = {
   title: 'Search Products — BangParjo',
@@ -20,7 +21,7 @@ export default async function SearchPage({
   const categoryFilter = sParams.category?.trim() || '';
   const minPrice = sParams.minPrice?.trim() || '';
   const maxPrice = sParams.maxPrice?.trim() || '';
-  const pageSize = 40;
+  const pageSize = 100;
 
   // Fetch categories for filter dropdown
   const categories = await prisma.category.findMany({
@@ -67,6 +68,11 @@ export default async function SearchPage({
             warehouseInventory: p.warehouseInventoryNum || 0,
             discountPriceRate: p.discountPriceRate || '',
           }));
+
+          // Background import to local DB
+          importProductsBatchAction(rawProducts).catch(err => {
+            console.error('[SearchPage] Auto-import error:', err);
+          });
         }
 
         total = d.totalRecords || 0;

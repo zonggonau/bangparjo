@@ -5,6 +5,7 @@ import FilterSortBar from './FilterSortBar';
 import { getAppCache, setAppCache } from '@/lib/cache';
 import { getCategoryBySlug as getCategoryBySlugLib, getCategoryHierarchy } from '@/lib/categories';
 import { getProductsV2 } from '@/lib/cj';
+import { importProductsBatchAction } from '@/lib/actions-catalog';
 
 async function getCategoryBySlug(slug: string) {
   const category = await getCategoryBySlugLib(slug);
@@ -100,7 +101,7 @@ export default async function CategoryPage({
     );
   }
 
-  const PAGE_SIZE = 60;
+  const PAGE_SIZE = 100;
   const CACHE_TTL = 315360000; // 10 years (effectively forever)
   let products: any[] = [];
   let total = 0;
@@ -113,8 +114,30 @@ export default async function CategoryPage({
       products = cachedData.products;
       total = cachedData.total;
     } else {
-      // ... rest of logic
-      // ...
+      const res = await getProductsV2({
+        page: pageNum,
+        size: PAGE_SIZE,
+        categoryId: category.cjId || undefined,
+        startSellPrice: minPrice,
+        endSellPrice: maxPrice,
+        orderBy,
+        sort: sortDir,
+        addMarkStatus: freeShipping,
+        keyWord: keyword || undefined
+      });
+
+      if (res.success && res.data?.content?.[0]) {
+        products = res.data.content[0].productList || [];
+        total = res.data.totalRecords || 0;
+        
+        // Background import to local DB
+        if (products.length > 0) {
+          importProductsBatchAction(products).catch(err => {
+            console.error('[CategoryPage] Auto-import error:', err);
+          });
+        }
+      }
+      
       await setAppCache(cacheKey, { products, total }, CACHE_TTL);
     }
   } catch (error) {
@@ -212,7 +235,7 @@ export default async function CategoryPage({
                 <div className="flex gap-1.5 sm:gap-2">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     let startPage = Math.max(1, pageNum - 2);
-                    let endPage = Math.min(totalPages, startPage + 4);
+                    const endPage = Math.min(totalPages, startPage + 4);
                     if (endPage === totalPages) {
                       startPage = Math.max(1, endPage - 4);
                     }

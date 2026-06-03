@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { getProductDetails } from '@/lib/cj';
 import { Suspense } from 'react';
 import { ProductDetailSkeleton } from '@/components/ProductSkeleton';
+import Link from 'next/link';
 
 export async function generateMetadata({ 
   params, 
@@ -153,6 +154,42 @@ export default async function Page({
   });
 
   if (localProduct) {
+    // AUTO-SYNC: If local product has no variants, fetch and save them
+    if (localProduct.variants.length === 0) {
+      try {
+        const cjRes = await getProductDetails(id);
+        if (cjRes.success && cjRes.data) {
+          const cjProd = cjRes.data;
+          if (cjProd.variants && cjProd.variants.length > 0) {
+            await prisma.variant.createMany({
+              data: cjProd.variants.map((v) => ({
+                productId: localProduct.id,
+                cjId: v.vid,
+                sku: v.variantSku,
+                color: v.variantKey || v.variantNameEn || v.variantName || 'Default',
+                size: '',
+                weight: v.variantWeight || 0,
+                baseCost: Number(v.variantSellPrice),
+                sellingPrice: Number(v.variantSellPrice), 
+                inventory: v.inventory || 100,
+                image: v.variantImage || cjProd.productImage
+              }))
+            });
+            // Re-fetch to get the new variants
+            const updated = await prisma.product.findUnique({
+              where: { id: localProduct.id },
+              include: { variants: true, category: true }
+            });
+            if (updated) {
+              Object.assign(localProduct, updated);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[Product Auto-Sync Error]:', err);
+      }
+    }
+
     const mappedData = {
       pid: localProduct.cjId,
       productName: localProduct.name,
@@ -217,28 +254,27 @@ export default async function Page({
 
       const mappedData = {
         pid: product.pid,
-        productName: product.productNameEn || product.productName,
-        productNameEn: product.productNameEn || product.productName,
+        productName: product.productName,
+        productNameEn: product.productNameEn,
         description: product.description || '',
-        productImage: product.productImage || product.bigImage,
+        productImage: product.productImage,
         bigImage: product.bigImage || product.productImage,
         productImageSet: safeImageSet,
         categoryName: product.categoryName || 'Imported',
-        categoryId: product.categoryId,
-        variants: (product.variants || []).map((v: any) => ({
-          ...v,
+        categoryId: product.categoryId || null,
+        variants: product.variants.map((v: any) => ({
           vid: v.vid,
           variantNameEn: v.variantNameEn || v.variantKey || 'Default',
           variantKey: v.variantKey || 'Default',
           variantSellPrice: v.variantSellPrice,
           variantSku: v.variantSku,
           variantWeight: v.variantWeight,
-          inventory: v.inventory || v.variantNum || v.variantInventory || 9999,
-          variantImage: v.variantImage
+          inventory: v.inventory || 0,
+          variantImage: v.variantImage || product.productImage
         }))
       };
 
-      const selectedVariant = mappedData.variants.find(v => v.vid === targetVid || v.variantKey === targetVid);
+      const selectedVariant = mappedData.variants.find((v: any) => v.vid === targetVid || v.variantKey === targetVid);
 
       return (
         <>
@@ -254,28 +290,15 @@ export default async function Page({
         </>
       );
     }
-  } catch (err: any) {
-    console.error('[Page] Failed to fetch product from CJ due to QPS limits:', err);
-    return (
-      <Suspense fallback={<ProductDetailSkeleton />}>
-        <ProductView 
-          id={id} 
-          initialData={null}
-          initialError={err?.message || "Failed to load product from CJ Dropshipping due to rate limits. Please try again in a few seconds."}
-          selectedVid={targetVid}
-        />
-      </Suspense>
-    );
+  } catch (err) {
+    console.error('[Page Fallback] CJ API error:', err);
   }
 
   return (
-    <Suspense fallback={<ProductDetailSkeleton />}>
-      <ProductView 
-        id={id} 
-        initialData={null}
-        initialError="Product not found on CJ Dropshipping."
-        selectedVid={targetVid}
-      />
-    </Suspense>
+    <div className="py-24 text-center">
+      <h1 className="text-2xl font-bold">Product Not Found</h1>
+      <p className="text-gray-500 mt-2">The product you are looking for does not exist or has been removed.</p>
+      <Link href="/" className="mt-6 inline-block btn-primary">Back to Home</Link>
+    </div>
   );
 }
