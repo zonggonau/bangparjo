@@ -131,31 +131,31 @@ export async function sendPaymentSuccessEmail(orderNum: string) {
     `).join('');
 
     const mailOptions = {
-      from: \`"BangParjo Shop" <\${process.env.SMTP_USER}>\`,
+      from: `"BangParjo Shop" <${process.env.SMTP_USER}>`,
       to: order.customerEmail,
-      subject: \`Payment Successful - Order #\${orderNum}\`,
-      html: \`
+      subject: `Payment Successful - Order #${orderNum}`,
+      html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
           <div style="text-align: center; border-bottom: 2px solid #ff6b00; padding-bottom: 15px; margin-bottom: 20px;">
             <h2 style="color: #ff6b00; margin: 0;">Payment Successful!</h2>
           </div>
-          <p>Hi \${order.customerName || 'Customer'},</p>
-          <p>Great news! We have successfully received your payment for order <strong>#\${orderNum}</strong>.</p>
+          <p>Hi ${order.customerName || 'Customer'},</p>
+          <p>Great news! We have successfully received your payment for order <strong>#${orderNum}</strong>.</p>
           <p>We are now processing your order and will notify you once it has been shipped.</p>
           
           <h3 style="color: #333; margin-top: 30px;">Order Details:</h3>
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
             <tbody>
-              \${itemsHtml}
+              ${itemsHtml}
             </tbody>
             <tfoot>
               <tr>
                 <td style="padding: 10px; font-weight: bold; text-align: right;">Shipping:</td>
-                <td style="padding: 10px; font-weight: bold; text-align: right;">$\${(order.shippingFee || 0).toFixed(2)}</td>
+                <td style="padding: 10px; font-weight: bold; text-align: right;">$${(order.shippingFee || 0).toFixed(2)}</td>
               </tr>
               <tr>
                 <td style="padding: 10px; font-weight: bold; text-align: right; border-top: 2px solid #eee;">Total:</td>
-                <td style="padding: 10px; font-weight: bold; text-align: right; border-top: 2px solid #eee;">$\${(order.totalAmount || 0).toFixed(2)}</td>
+                <td style="padding: 10px; font-weight: bold; text-align: right; border-top: 2px solid #eee;">$${(order.totalAmount || 0).toFixed(2)}</td>
               </tr>
             </tfoot>
           </table>
@@ -164,10 +164,10 @@ export async function sendPaymentSuccessEmail(orderNum: string) {
           
           <p style="font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 15px; margin-top: 30px; text-align: center;">
             Thank you for shopping at BangParjo Shop!<br>
-            © \${new Date().getFullYear()} BangParjo Shop. All rights reserved.
+            © ${new Date().getFullYear()} BangParjo Shop. All rights reserved.
           </p>
         </div>
-      \`,
+      `,
     };
 
     const info = await transporter.sendMail(mailOptions);
