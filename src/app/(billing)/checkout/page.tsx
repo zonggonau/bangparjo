@@ -414,7 +414,6 @@ function CheckoutContent() {
         email: formData.email,
         logisticName: selectedShipping!.logisticName,
         fromCountryCode: 'CN',
-        payType: 2,
         shippingFee: effectiveShippingCost,
         rawShippingCost: selectedShipping?.rawCjPrice || selectedShipping?.logisticPrice || 0,
         discountAmount: totalDiscount,
