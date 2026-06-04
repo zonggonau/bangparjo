@@ -33,7 +33,7 @@ export async function processFulfillment(orderNum: string) {
 
   let res: any;
   let payType = 3;
-  let finalStatus = 'FULFILLED';
+  let finalStatus = 'PAID';
   let payErrorMsg: string | null = null;
 
   try {
