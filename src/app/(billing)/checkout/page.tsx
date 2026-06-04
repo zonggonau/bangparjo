@@ -299,7 +299,8 @@ function CheckoutContent() {
             products: cartItems.map(item => ({
               sku: item.selectedSku || item.selectedVid || item.pid,
               vid: item.selectedVid || item.selectedSku || item.pid,
-              quantity: item.quantity
+              quantity: item.quantity,
+              weight: (item as any).variantWeight || (item as any).productWeight || 500
             })),
             country: formData.country,
             subtotal: retailSubtotal
