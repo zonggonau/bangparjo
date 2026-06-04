@@ -709,14 +709,46 @@ export async function getShippingRatesAction(data: { products?: any[], country?:
     const { products: productsParam, country = 'ID', subtotal = 0, sku, vid, quantity = 1, weight = 0 } = data;
     const settings = await getCachedStoreSettings();
 
-    const skuList = productsParam 
+    let skuList = productsParam 
       ? productsParam.map(p => ({ 
           sku: p.sku || p.vid || '', 
+          vid: p.vid || '',
           quantity: p.quantity || 1, 
           weight: p.weight, 
           price: subtotal > 0 ? subtotal / productsParam.length : 10 
         })).filter(p => p.sku)
-      : (sku ? [{ sku, quantity, weight: weight || undefined, price: subtotal / quantity || 10 }] : []);
+      : (sku ? [{ sku, vid: vid || '', quantity, weight: weight || undefined, price: subtotal / quantity || 10 }] : []);
+
+    // Try to fill missing or default weights from DB and enforce 1kg minimum
+    if (skuList.length > 0) {
+      const vids = skuList.map(s => s.vid).filter(Boolean);
+      const skus = skuList.map(s => s.sku).filter(Boolean);
+      let dbVariants: any[] = [];
+      
+      if (vids.length > 0 || skus.length > 0) {
+        dbVariants = await prisma.variant.findMany({
+          where: { OR: [{ cjId: { in: vids } }, { sku: { in: skus } }] }
+        });
+      }
+      
+      skuList = skuList.map(s => {
+        const match = dbVariants.find(v => v.cjId === s.vid || v.sku === s.sku);
+        let finalWeight = match?.weight || s.weight || 500;
+        
+        // Aturan: Semua berat dibulatkan ke atas ke kelipatan 1kg (1000 gram)
+        // Misal: 500g -> 1000g, 1500g -> 2000g
+        if (finalWeight > 0) {
+          finalWeight = Math.ceil(finalWeight / 1000) * 1000;
+        } else {
+          finalWeight = 1000;
+        }
+        
+        return {
+          ...s,
+          weight: finalWeight
+        };
+      });
+    }
 
     if (skuList.length > 0) {
       const skuRes = await getShippingFeeBySku({
@@ -756,8 +788,19 @@ export async function getShippingRatesAction(data: { products?: any[], country?:
     if (!res.success || !res.data || res.data.length === 0) {
       // ── Fallback: estimasi shipping berdasarkan weight ──────────
       const totalWeight = productsParam
-         ? productsParam.reduce((sum: number, p: any) => sum + (Number(p.weight) || 500), 0)
-         : (weight || 500);
+         ? productsParam.reduce((sum: number, p: any) => {
+             let w = Number(p.weight) || 500;
+             if (w > 0) {
+               w = Math.ceil(w / 1000) * 1000;
+             } else {
+               w = 1000;
+             }
+             return sum + w;
+           }, 0)
+         : (() => {
+             let w = weight || 500;
+             return w > 0 ? Math.ceil(w / 1000) * 1000 : 1000;
+           })();
 
       // Harga estimasi: $5 + $1/kg
       const baseShipping = 5 + Math.ceil(totalWeight / 1000) * 1;
