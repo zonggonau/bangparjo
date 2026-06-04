@@ -200,7 +200,7 @@ function TrackContent() {
                   </div>
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  <a href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP || '628219105980'}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center px-4 py-2 rounded-md font-semibold bg-[#25D366] text-white hover:bg-[#1DAF56] transition-all duration-200">
+                  <a href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP || '628219105980'}?text=${encodeURIComponent(`Hello BangParjo Support, I would like to inquire about my order status with order number: ${orderId || ''}. Could you please provide the tracking information or delivery status? Thank you!`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center px-4 py-2 rounded-md font-semibold bg-[#25D366] text-white hover:bg-[#1DAF56] transition-all duration-200">
                     <i className="fab fa-whatsapp"></i> WhatsApp
                   </a>
                   <a href="mailto:support@bangparjo.shop" className="inline-flex items-center justify-center px-4 py-2 rounded-md font-semibold bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200">Contact Support</a>

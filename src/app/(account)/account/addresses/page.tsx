@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { getUserAddressesAction, saveUserAddressAction, deleteUserAddressAction, setDefaultUserAddressAction } from '@/lib/actions-user';
+import { countries as COUNTRIES } from '@/lib/countries';
 
 interface Address {
   id: string;
@@ -179,14 +180,9 @@ export default function AddressesPage() {
                   <input type="text" className="w-full px-4 py-2.5 rounded-[10px] border border-gray-200 text-sm focus:outline-none focus:border-[#FF6B00]" value={form.zip} onChange={e => setForm(f => ({ ...f, zip: e.target.value }))} /></div>
                 <div><label className="text-xs font-semibold text-gray-600 mb-1 block">Country</label>
                   <select className="w-full px-4 py-2.5 rounded-[10px] border border-gray-200 text-sm focus:outline-none focus:border-[#FF6B00]" value={form.country} onChange={e => setForm(f => ({ ...f, country: e.target.value }))}>
-                    <option value="US">United States</option>
-                    <option value="GB">United Kingdom</option>
-                    <option value="CA">Canada</option>
-                    <option value="AU">Australia</option>
-                    <option value="DE">Germany</option>
-                    <option value="FR">France</option>
-                    <option value="JP">Japan</option>
-                    <option value="ID">Indonesia</option>
+                    {COUNTRIES.map(c => (
+                      <option key={c.code} value={c.code}>{c.name}</option>
+                    ))}
                   </select></div>
               </div>
               <label className="flex items-center gap-2 cursor-pointer">

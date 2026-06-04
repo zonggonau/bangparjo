@@ -11,6 +11,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import ProductImage from '@/components/ProductImage';
 import { createOrderAction, validateCouponAction, getShippingRatesAction } from '@/lib/actions';
+import { useSession } from 'next-auth/react';
+import { getUserAddressesAction } from '@/lib/actions-user';
 
 function formatUSD(price: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
@@ -104,6 +106,39 @@ function CheckoutContent() {
   const [submitError, setSubmitError] = useState('');
   const [countryTouched, setCountryTouched] = useState(false);
   const [productError, setProductError] = useState<string | null>(null);
+  
+  const { data: session } = useSession();
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (session?.user?.email) {
+      setFormData(prev => ({
+        ...prev,
+        email: prev.email || (session.user?.email as string)
+      }));
+
+      getUserAddressesAction(session.user.email).then(res => {
+        if (res.success && res.data) {
+          setSavedAddresses(res.data);
+          // auto-select default address if exists
+          const defaultAddr = res.data.find((a: any) => a.isDefault);
+          if (defaultAddr && !formData.name && !formData.address) {
+            setFormData(prev => ({
+              ...prev,
+              name: defaultAddr.name,
+              phone: defaultAddr.phone || '',
+              address: defaultAddr.line1 + (defaultAddr.line2 ? `, ${defaultAddr.line2}` : ''),
+              city: defaultAddr.city,
+              zip: defaultAddr.zip,
+              country: defaultAddr.country,
+              province: defaultAddr.state,
+            }));
+            setCountryTouched(true);
+          }
+        }
+      });
+    }
+  }, [session]);
   
   // ── Per-Product Coupon State ──────────────────────────────────────────────
   const [couponMap, setCouponMap] = useState<Record<string, CouponEntry>>({});
@@ -381,6 +416,7 @@ function CheckoutContent() {
         fromCountryCode: 'CN',
         payType: 2,
         shippingFee: effectiveShippingCost,
+        rawShippingCost: selectedShipping?.rawCjPrice || selectedShipping?.logisticPrice || 0,
         discountAmount: totalDiscount,
         products,
       };
@@ -409,7 +445,7 @@ function CheckoutContent() {
         customerName: formData.name,
         customerPhone: formData.phone,
         totalAmount: grandTotal,
-        costAmount: totalCost,
+        rawShippingCost: rawShippingCost,
         shippingFee: effectiveShippingCost,
         status: 'UNPAID',
         orderData: JSON.stringify(orderData),
@@ -570,32 +606,75 @@ function CheckoutContent() {
               <i className="fas fa-shipping-fast text-[#FF6B00]"></i>
               Shipping Information
             </h2>
+            
+            {savedAddresses.length > 0 && (
+              <div className="mb-6">
+                <label className="text-[13px] font-bold text-gray-500 uppercase tracking-[0.5px] mb-3 block">Saved Addresses</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {savedAddresses.map(addr => {
+                    const isSelected = formData.name === addr.name && formData.address === (addr.line1 + (addr.line2 ? `, ${addr.line2}` : ''));
+                    return (
+                      <div 
+                        key={addr.id} 
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            name: addr.name,
+                            phone: addr.phone || '',
+                            address: addr.line1 + (addr.line2 ? `, ${addr.line2}` : ''),
+                            city: addr.city,
+                            zip: addr.zip,
+                            country: addr.country,
+                            province: addr.state,
+                          }));
+                          setCountryTouched(true);
+                        }}
+                        className={`p-4 rounded-[12px] border-2 cursor-pointer transition-all duration-200 ${isSelected ? 'border-[#FF6B00] bg-[#FFF8F0]' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-extrabold uppercase bg-gray-100 px-2 py-1 rounded-[4px]">{addr.label}</span>
+                          {isSelected && <i className="fas fa-check-circle text-[#FF6B00]"></i>}
+                        </div>
+                        <p className="font-bold text-sm text-[#1A1A1A]">{addr.name}</p>
+                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{addr.line1}{addr.line2 ? `, ${addr.line2}` : ''}, {addr.city}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-4 flex items-center justify-center">
+                  <div className="w-full border-b border-gray-200"></div>
+                  <span className="bg-white px-4 text-xs font-bold text-gray-400 uppercase tracking-[1px]">OR ENTER NEW ADDRESS</span>
+                  <div className="w-full border-b border-gray-200"></div>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-bold text-gray-500 uppercase tracking-[0.5px]">Full Name *</label>
-                <input type="text" placeholder="John Doe" required onChange={e => setFormData({ ...formData, name: e.target.value })} className="px-4 py-3 border border-gray-200 rounded-[8px] text-sm outline-none focus:border-[#FF6B00] transition-colors" />
+                <input type="text" placeholder="John Doe" required value={formData.name || ''} onChange={e => setFormData({ ...formData, name: e.target.value })} className="px-4 py-3 border border-gray-200 rounded-[8px] text-sm outline-none focus:border-[#FF6B00] transition-colors" />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-bold text-gray-500 uppercase tracking-[0.5px]">Email Address *</label>
-                <input type="email" placeholder="john@example.com" required onChange={e => setFormData({ ...formData, email: e.target.value })} className="px-4 py-3 border border-gray-200 rounded-[8px] text-sm outline-none focus:border-[#FF6B00] transition-colors" />
+                <input type="email" placeholder="john@example.com" required value={formData.email || ''} onChange={e => setFormData({ ...formData, email: e.target.value })} className="px-4 py-3 border border-gray-200 rounded-[8px] text-sm outline-none focus:border-[#FF6B00] transition-colors" />
               </div>
             </div>
             <div className="flex flex-col gap-1.5 mt-4">
               <label className="text-[13px] font-bold text-gray-500 uppercase tracking-[0.5px]">Phone Number</label>
-              <input type="tel" placeholder="+1 234 567 890" onChange={e => setFormData({ ...formData, phone: e.target.value })} className="px-4 py-3 border border-gray-200 rounded-[8px] text-sm outline-none focus:border-[#FF6B00] transition-colors" />
+              <input type="tel" placeholder="+1 234 567 890" value={formData.phone || ''} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="px-4 py-3 border border-gray-200 rounded-[8px] text-sm outline-none focus:border-[#FF6B00] transition-colors" />
             </div>
             <div className="flex flex-col gap-1.5 mt-4">
               <label className="text-[13px] font-bold text-gray-500 uppercase tracking-[0.5px]">Street Address *</label>
-              <input type="text" placeholder="123 Main Street, Apt 4B" required onChange={e => setFormData({ ...formData, address: e.target.value })} className="px-4 py-3 border border-gray-200 rounded-[8px] text-sm outline-none focus:border-[#FF6B00] transition-colors" />
+              <input type="text" placeholder="123 Main Street, Apt 4B" required value={formData.address || ''} onChange={e => setFormData({ ...formData, address: e.target.value })} className="px-4 py-3 border border-gray-200 rounded-[8px] text-sm outline-none focus:border-[#FF6B00] transition-colors" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-bold text-gray-500 uppercase tracking-[0.5px]">City *</label>
-                <input type="text" placeholder="New York" required onChange={e => setFormData({ ...formData, city: e.target.value })} className="px-4 py-3 border border-gray-200 rounded-[8px] text-sm outline-none focus:border-[#FF6B00] transition-colors" />
+                <input type="text" placeholder="New York" required value={formData.city || ''} onChange={e => setFormData({ ...formData, city: e.target.value })} className="px-4 py-3 border border-gray-200 rounded-[8px] text-sm outline-none focus:border-[#FF6B00] transition-colors" />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-bold text-gray-500 uppercase tracking-[0.5px]">ZIP / Postal Code</label>
-                <input type="text" placeholder="10001" onChange={e => setFormData({ ...formData, zip: e.target.value })} className="px-4 py-3 border border-gray-200 rounded-[8px] text-sm outline-none focus:border-[#FF6B00] transition-colors" />
+                <input type="text" placeholder="10001" value={formData.zip || ''} onChange={e => setFormData({ ...formData, zip: e.target.value })} className="px-4 py-3 border border-gray-200 rounded-[8px] text-sm outline-none focus:border-[#FF6B00] transition-colors" />
               </div>
             </div>
             <div className="flex flex-col gap-1.5 mt-4">

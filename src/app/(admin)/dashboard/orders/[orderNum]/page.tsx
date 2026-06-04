@@ -188,9 +188,13 @@ export default function AdminOrderDetail() {
   const items = order.items || [];
   
   const revenue = order.totalAmount || 0;
-  const productWholesaleCost = items.reduce((sum: number, i: any) => sum + (i.price || 0) * i.quantity, 0);
-  const baseShippingCost = Math.max(0, (order.costAmount || 0) - productWholesaleCost);
-  const profit = revenue - productWholesaleCost - baseShippingCost;
+  
+  // Use rawShippingCost from orderData if available, otherwise fallback
+  const rawShippingCost = (order.orderData as any)?.rawShippingCost || 0;
+  const productWholesaleCost = Math.max(0, (order.costAmount || 0) - rawShippingCost);
+  const baseShippingCost = rawShippingCost;
+  
+  const profit = revenue - (order.costAmount || 0);
 
   return (
     <>
@@ -268,7 +272,7 @@ export default function AdminOrderDetail() {
                       <p className="text-xs text-[#64748B]">{v?.color || v?.size ? `${v.color || ''} ${v.size || ''}`.trim() : 'Standard'} | SKU: {v?.sku}</p>
                       <div className="flex gap-3 mt-1 text-xs font-bold text-[#64748B]">
                         <span>Cost: <span className="text-[#EF4444]">${(v?.baseCost || 0).toFixed(2)}</span></span>
-                        <span>Sell: <span className="text-[#10B981]">${(v?.sellingPrice || 0).toFixed(2)}</span></span>
+                        <span>Sell: <span className="text-[#10B981]">${(item.price || 0).toFixed(2)}</span></span>
                       </div>
                     </div>
                     <div className="text-right">

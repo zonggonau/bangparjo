@@ -73,7 +73,7 @@ export default async function MyOrdersPage() {
                 {orders.map((order: any) => (
                   <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="px-3 sm:px-5 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold">
-                      <Link href={`/checkout/${order.orderNum}?id=${order.checkoutToken}`} className="text-[#1A1A1A] no-underline hover:text-[#FF6B00]">
+                      <Link href={(order.status || '').toUpperCase() === 'UNPAID' ? `/checkout/${order.orderNum}?id=${order.checkoutToken}` : `/track?orderNum=${order.orderNum}`} className="text-[#1A1A1A] no-underline hover:text-[#FF6B00]">
                         #{order.orderNum.length > 10 ? order.orderNum.slice(0, 10) + '...' : order.orderNum}
                       </Link>
                     </td>

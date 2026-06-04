@@ -7,6 +7,11 @@ import bcrypt from 'bcryptjs';
 export async function getUserAddressesAction(email: string) {
   if (!email) return { success: false, error: 'Email is required' };
   try {
+    // Auth check: verify caller owns this email
+    const session = await auth();
+    if (!session?.user?.email || session.user.email !== email) {
+      return { success: false, error: 'Unauthorized' };
+    }
     const setting = await prisma.storeSetting.findUnique({
       where: { key: `USER_ADDRESSES_${email}` }
     });
@@ -24,10 +29,27 @@ export async function saveUserAddressAction(data: any) {
       return { success: false, error: 'Missing required fields' };
     }
 
+    // Auth check: verify caller owns this email
+    const session = await auth();
+    if (!session?.user?.email || session.user.email !== email) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    // Input validation: max lengths
+    const MAX_LEN = 200;
+    if (name.length > MAX_LEN || line1.length > MAX_LEN || city.length > MAX_LEN || state.length > MAX_LEN || zip.length > 20) {
+      return { success: false, error: 'Field value too long' };
+    }
+
     const setting = await prisma.storeSetting.findUnique({
       where: { key: `USER_ADDRESSES_${email}` }
     });
     let addresses = setting ? JSON.parse(setting.value) : [];
+
+    // Address count limit (max 10)
+    if (!id && addresses.length >= 10) {
+      return { success: false, error: 'Maximum 10 addresses allowed' };
+    }
 
     if (id) {
       // Update
@@ -39,15 +61,15 @@ export async function saveUserAddressAction(data: any) {
       // Create
       const newAddress = {
         id: `addr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-        label: label || 'Home',
-        name,
-        phone: phone || '',
-        line1,
-        line2: line2 || '',
-        city,
-        state,
-        zip,
-        country: country || 'US',
+        label: (label || 'Home').slice(0, 20),
+        name: name.trim().slice(0, MAX_LEN),
+        phone: (phone || '').trim().slice(0, 30),
+        line1: line1.trim().slice(0, MAX_LEN),
+        line2: (line2 || '').trim().slice(0, MAX_LEN),
+        city: city.trim().slice(0, MAX_LEN),
+        state: state.trim().slice(0, MAX_LEN),
+        zip: zip.trim().slice(0, 20),
+        country: (country || 'US').slice(0, 5),
         isDefault: isDefault || addresses.length === 0,
       };
       if (newAddress.isDefault) {
@@ -72,6 +94,13 @@ export async function saveUserAddressAction(data: any) {
 export async function setDefaultUserAddressAction(email: string, id: string) {
   try {
     if (!email || !id) return { success: false, error: 'Missing fields' };
+
+    // Auth check: verify caller owns this email
+    const session = await auth();
+    if (!session?.user?.email || session.user.email !== email) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
     const setting = await prisma.storeSetting.findUnique({
       where: { key: `USER_ADDRESSES_${email}` }
     });
@@ -94,6 +123,12 @@ export async function setDefaultUserAddressAction(email: string, id: string) {
 export async function deleteUserAddressAction(email: string, id: string) {
   try {
     if (!email || !id) return { success: false, error: 'Missing required fields' };
+
+    // Auth check: verify caller owns this email
+    const session = await auth();
+    if (!session?.user?.email || session.user.email !== email) {
+      return { success: false, error: 'Unauthorized' };
+    }
 
     const setting = await prisma.storeSetting.findUnique({
       where: { key: `USER_ADDRESSES_${email}` }
@@ -140,15 +175,41 @@ export async function updateProfileAction(name: string) {
 export async function getCustomerOrdersAction(email: string) {
   try {
     if (!email) return { success: false, error: 'Email is required' };
+
+    // Auth check: verify caller owns this email
+    const session = await auth();
+    if (!session?.user?.email || session.user.email !== email) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
     const orders = await prisma.order.findMany({
       where: { customerEmail: email },
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        orderNum: true,
+        status: true,
+        totalAmount: true,
+        createdAt: true,
+        checkoutToken: true,
+        customerName: true,
         items: {
-          include: {
+          select: {
+            id: true,
+            quantity: true,
+            price: true,
             variant: {
-              include: {
-                product: true
+              select: {
+                id: true,
+                color: true,
+                size: true,
+                product: {
+                  select: {
+                    id: true,
+                    name: true,
+                    images: true,
+                  }
+                }
               }
             }
           }
@@ -177,8 +238,7 @@ export async function trackOrderAction(id: string) {
         status: true,
         trackingNumber: true,
         createdAt: true,
-        totalAmount: true,
-        customerName: true,
+        customerEmail: true,
         cjResponse: true,
       },
     });
@@ -193,6 +253,7 @@ export async function trackOrderAction(id: string) {
       }
     } catch {}
 
+    // Only return safe public tracking info — no PII, no financials
     return {
       success: true,
       order: {
@@ -200,8 +261,6 @@ export async function trackOrderAction(id: string) {
         status: order.status,
         trackingNumber: order.trackingNumber,
         createdAt: order.createdAt?.toISOString(),
-        totalAmount: order.totalAmount,
-        customerName: order.customerName,
         logisticName,
       },
     };
@@ -243,15 +302,8 @@ export async function updateAccountAction(data: {
 
     // Update email if provided
     if (data.newEmail && data.newEmail !== user.email) {
-      // Check if email is taken
-      const existing = await prisma.user.findUnique({ where: { email: data.newEmail } });
-      if (existing) {
-        return { success: false, error: 'Email already in use' };
-      }
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { email: data.newEmail }
-      });
+      // Email changes are disabled for security — require re-verification flow
+      return { success: false, error: 'Email changes are not supported. Please contact support.' };
     }
 
     // Update password if provided

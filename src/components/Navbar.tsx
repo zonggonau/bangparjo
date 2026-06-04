@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useSettings } from '@/context/SettingsContext';
 import CartCounter from './CartCounter';
 import FavoriteCounter from './FavoriteCounter';
@@ -10,6 +11,7 @@ import { getCategoryMenuAction } from '@/lib/actions-catalog';
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [isMobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
@@ -190,8 +192,9 @@ export default function Navbar() {
               <button className="sm:hidden bg-none cursor-pointer text-[18px] text-[#555555] p-1.5 border-none" onClick={() => document.getElementById('mobile-search')?.focus()}>
                 <i className="fas fa-search"></i>
               </button>
-              <Link href="/login" className="relative bg-none cursor-pointer text-[18px] sm:text-[20px] lg:text-[22px] text-[#555555] transition-all duration-300 hover:text-[#FF6B00] p-1.5" title="Login">
-                <i className="far fa-user"></i>
+              <Link href={session ? "/dashboard" : "/login"} className="relative bg-none cursor-pointer text-[18px] sm:text-[20px] lg:text-[22px] text-[#555555] transition-all duration-300 hover:text-[#FF6B00] p-1.5 flex items-center gap-1.5" title={session ? "Dashboard" : "Login"}>
+                {!session && <i className="far fa-user"></i>}
+                {session && <span className="text-[14px] font-bold">Dashboard</span>}
               </Link>
               <Link href="/favorites" className="relative bg-none cursor-pointer text-[18px] sm:text-[20px] lg:text-[22px] text-[#555555] transition-all duration-300 hover:text-[#FF6B00] p-1.5" title="Wishlist">
                 <i className="far fa-heart"></i>
@@ -274,7 +277,7 @@ export default function Navbar() {
                 <Link href="/help-center" className="block py-2.5 text-[14px] font-medium text-[#555555] no-underline hover:text-[#FF6B00]" onClick={toggleNav}>❓ Help Center</Link>
                 <Link href="/contact" className="block py-2.5 text-[14px] font-medium text-[#555555] no-underline hover:text-[#FF6B00]" onClick={toggleNav}>📧 Contact</Link>
                 <Link href="/favorites" className="block py-2.5 text-[14px] font-medium text-[#555555] no-underline hover:text-[#FF6B00]" onClick={toggleNav}>❤️ Wishlist</Link>
-                <Link href="/login" className="block py-2.5 text-[14px] font-medium text-[#555555] no-underline hover:text-[#FF6B00]" onClick={toggleNav}>👤 Login</Link>
+                <Link href={session ? "/dashboard" : "/login"} className="block py-2.5 text-[14px] font-medium text-[#555555] no-underline hover:text-[#FF6B00]" onClick={toggleNav}>👤 {session ? 'Dashboard' : 'Login'}</Link>
               </div>
             </div>
           </div>

@@ -167,7 +167,7 @@ export default async function AccountDashboard() {
                   </div>
                   
                   <div>
-                    <Link href={`/checkout/${order.orderNum}?id=${order.checkoutToken}`} className="text-base font-bold text-[#1A1A1A] hover:text-[#FF6B00] no-underline transition-colors flex items-center gap-2">
+                    <Link href={isUnpaid ? `/checkout/${order.orderNum}?id=${order.checkoutToken}` : `/track?orderNum=${order.orderNum}`} className="text-base font-bold text-[#1A1A1A] hover:text-[#FF6B00] no-underline transition-colors flex items-center gap-2">
                       #{order.orderNum.slice(0, 8)}...
                       <i className="fas fa-external-link-alt text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
                     </Link>

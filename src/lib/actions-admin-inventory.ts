@@ -58,6 +58,7 @@ async function invalidateProductCaches(categoryName?: string) {
 
 export async function updateAdminInventoryAction(data: { variantId?: string; sellingPrice?: number; id?: string; isHero?: boolean }) {
   try {
+    await checkAdmin();
     if (data.variantId && data.sellingPrice !== undefined) {
       await prisma.variant.update({
         where: { id: data.variantId },
@@ -80,6 +81,7 @@ export async function updateAdminInventoryAction(data: { variantId?: string; sel
 
 export async function syncAdminInventoryAction(cjId: string) {
   try {
+    await checkAdmin();
     const res = await cjFetch<CJProductDetail>(`/v1/product/query?pid=${cjId}`, { method: 'GET' });
     if (!res.result) return { success: false, error: 'Product not found in CJ' };
 
@@ -159,6 +161,7 @@ export async function syncAdminInventoryAction(cjId: string) {
 
 export async function deleteAdminProductAction(productId?: string, variantId?: string) {
   try {
+    await checkAdmin();
     if (productId) {
       await prisma.product.delete({ where: { id: productId } });
       return { success: true };
@@ -326,6 +329,7 @@ export async function importProductAction(
   isHero: boolean = false
 ) {
   try {
+    await checkAdmin();
     let pid = '';
     let name = '';
     let image = '';

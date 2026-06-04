@@ -224,7 +224,7 @@ async function triggerOpenClawWebhook(order: any) {
 
 export async function createOrderAction(data: any) {
   try {
-    const { orderNum, customerEmail, customerName, customerPhone, totalAmount, costAmount, shippingFee, orderData, couponCode } = data;
+    const { orderNum, customerEmail, customerName, customerPhone, totalAmount, shippingFee, rawShippingCost, orderData, couponCode } = data;
     const status = 'UNPAID';
     if (!orderNum) return { success: false, message: 'orderNum is required' };
 
@@ -247,15 +247,22 @@ export async function createOrderAction(data: any) {
       where: { cjId: { in: vids } }
     });
 
+    let calculatedBaseCost = 0;
     const itemsData = productsParams.map((p: any) => {
       const dbVariant = dbVariants.find((v: any) => v.cjId === p.vid) || dbVariants.find((v: any) => v.sku === p.sku);
       if (!dbVariant) return null;
+      
+      const qty = p.quantity || 1;
+      calculatedBaseCost += (dbVariant.baseCost * qty);
+      
       return {
         variantId: dbVariant.id,
-        quantity: p.quantity || 1,
+        quantity: qty,
         price: dbVariant.sellingPrice
       };
     }).filter((i: any) => i !== null);
+
+    const actualCostAmount = calculatedBaseCost + (rawShippingCost || 0);
 
     const order = await prisma.order.upsert({
       where: { orderNum },
@@ -264,7 +271,7 @@ export async function createOrderAction(data: any) {
         customerName,
         customerPhone,
         totalAmount,
-        costAmount,
+        costAmount: actualCostAmount,
         shippingFee: shippingFee || 0,
         status: status,
         orderData: parsedOrderData,
@@ -281,7 +288,7 @@ export async function createOrderAction(data: any) {
         customerName,
         customerPhone,
         totalAmount,
-        costAmount,
+        costAmount: actualCostAmount,
         shippingFee: shippingFee || 0,
         status: status,
         orderData: parsedOrderData,
