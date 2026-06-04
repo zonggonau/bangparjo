@@ -46,19 +46,19 @@ export async function POST(req: Request) {
         return NextResponse.json({ status: 'ok' });
       }
 
-      // Send payment success email
-      await sendPaymentSuccessEmail(orderNum);
-
-        // 2. Jalankan Fulfillment otomatis ke CJ Dropshipping
+      // Background Processing (Fire-and-forget)
+      (async () => {
         try {
+          // Send payment success email
+          await sendPaymentSuccessEmail(orderNum);
+
+          // Jalankan Fulfillment otomatis ke CJ Dropshipping
           const result = await processFulfillment(orderNum);
           console.log(`[PayPal Webhook] Fulfillment result for ${orderNum}:`, result.success ? 'SUCCESS' : 'FAILED');
-        } catch (fulfillError: any) {
-          console.error(`[PayPal Webhook] Auto-fulfillment error for ${orderNum}:`, fulfillError.message);
+        } catch (error: any) {
+          console.error(`[PayPal Webhook] Background task error for ${orderNum}:`, error.message);
         }
-      } else {
-        console.log(`[PayPal Webhook] Order ${orderNum} already processed (Status: ${order.status})`);
-      }
+      })();
     }
 
     return NextResponse.json({ received: true });

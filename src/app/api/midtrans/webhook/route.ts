@@ -73,17 +73,20 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: 'Order not found' }, { status: 404 });
       }
 
-      // Send payment success email
-      await sendPaymentSuccessEmail(actualOrderId);
+      // Background Processing (Fire-and-forget) to prevent Midtrans timeout
+      (async () => {
+        try {
+          // Send payment success email
+          await sendPaymentSuccessEmail(actualOrderId);
 
-      try {
-        // Auto-fulfill to CJ Dropshipping
-        const result = await processFulfillment(actualOrderId);
-        console.log(`[Midtrans Webhook] Fulfillment result for ${actualOrderId}:`, result.success ? 'SUCCESS' : 'FAILED');
-      } catch (fulfillError: any) {
-        console.error(`[Midtrans Webhook] Auto-fulfillment error for ${actualOrderId}:`, fulfillError.message);
-        // Status remains 'PAID' from the update above, admin can retry manually
-      }
+          // Auto-fulfill to CJ Dropshipping
+          const result = await processFulfillment(actualOrderId);
+          console.log(`[Midtrans Webhook] Fulfillment result for ${actualOrderId}:`, result.success ? 'SUCCESS' : 'FAILED');
+        } catch (error: any) {
+          console.error(`[Midtrans Webhook] Background task error for ${actualOrderId}:`, error.message);
+        }
+      })();
+
     } else if (isFailed) {
       console.log(`[Midtrans Webhook] Order ${actualOrderId} FAILED/CANCELLED: ${transaction_status}`);
       const existingOrder = await prisma.order.findUnique({ where: { orderNum: actualOrderId } });
@@ -97,6 +100,7 @@ export async function POST(req: Request) {
       console.log(`[Midtrans Webhook] Order ${actualOrderId} is PENDING...`);
     }
 
+    // Return 200 OK immediately so Midtrans doesn't timeout
     return NextResponse.json({ status: 'ok' });
   } catch (error: any) {
     console.error('[Midtrans Webhook] Error:', error.message);
