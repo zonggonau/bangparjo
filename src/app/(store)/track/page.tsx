@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { cjProxyAction } from '@/lib/actions-catalog';
 import { trackOrderAction } from '@/lib/actions-user';
 
@@ -19,8 +20,16 @@ const STATUS_MAP: Record<string, number> = {
   COMPLETED: 3, DELIVERED: 3,
 };
 
-export default function TrackPage() {
+function TrackContent() {
+  const searchParams = useSearchParams();
   const [orderId, setOrderId] = useState('');
+
+  useEffect(() => {
+    const param = searchParams.get('orderNum');
+    if (param) {
+      setOrderId(param);
+    }
+  }, [searchParams]);
   const [trackingData, setTrackingData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -226,5 +235,13 @@ export default function TrackPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function TrackPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><i className="fas fa-spinner fa-spin text-3xl text-[#FF6B00]"></i></div>}>
+      <TrackContent />
+    </Suspense>
   );
 }

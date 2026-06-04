@@ -689,13 +689,32 @@ export async function capturePayPalOrderAction(data: { orderId: string; paypalDa
 
     console.log(`[PayPal] Payment verified securely for ${orderId}. Updating status to PAID...`);
 
-    await prisma.order.update({
-      where: { orderNum: orderId },
+    // Use updateMany for atomic check to prevent race conditions with the Webhook
+    const updateResult = await prisma.order.updateMany({
+      where: { 
+        orderNum: orderId,
+        status: { in: ['UNPAID', 'PENDING'] }
+      },
       data: { status: 'PAID', paymentStatus: 'COMPLETED' }
     });
 
-    const result = await processFulfillment(orderId);
-    return result;
+    if (updateResult.count > 0) {
+      // Fire-and-forget fulfillment process in the background.
+      // This allows the server to respond immediately to the frontend, 
+      // ensuring the PayPal popup window closes instantly!
+      (async () => {
+        try {
+          const result = await processFulfillment(orderId);
+          console.log(`[PayPal Client] Background fulfillment result for ${orderId}:`, result.success ? 'SUCCESS' : 'FAILED');
+        } catch (err: any) {
+          console.error(`[PayPal Client] Background fulfillment error for ${orderId}:`, err.message);
+        }
+      })();
+    } else {
+       console.log(`[PayPal Client] Order ${orderId} already marked as PAID by webhook. Skipping duplicate fulfillment.`);
+    }
+
+    return { success: true };
   } catch (error: any) {
     console.error('PayPal capture error:', error);
     return { success: false, error: error.message };
