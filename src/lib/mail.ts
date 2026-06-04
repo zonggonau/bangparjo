@@ -118,6 +118,14 @@ export async function sendPaymentSuccessEmail(orderNum: string) {
       return { success: false, error: 'Order or email not found' };
     }
 
+    let parsedOrderData: any = {};
+    try {
+      parsedOrderData = typeof order.orderData === 'string' ? JSON.parse(order.orderData) : (order.orderData || {});
+    } catch(e) {}
+
+    const displayShippingFee = order.shippingFee || parsedOrderData.shippingFee || 0;
+    const displayTotalAmount = order.totalAmount || 0;
+
     const itemsHtml = order.items.map(item => `
       <tr>
         <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: left;">
@@ -151,11 +159,11 @@ export async function sendPaymentSuccessEmail(orderNum: string) {
             <tfoot>
               <tr>
                 <td style="padding: 10px; font-weight: bold; text-align: right;">Shipping:</td>
-                <td style="padding: 10px; font-weight: bold; text-align: right;">$${(order.shippingFee || 0).toFixed(2)}</td>
+                <td style="padding: 10px; font-weight: bold; text-align: right;">$${(displayShippingFee).toFixed(2)}</td>
               </tr>
               <tr>
                 <td style="padding: 10px; font-weight: bold; text-align: right; border-top: 2px solid #eee;">Total:</td>
-                <td style="padding: 10px; font-weight: bold; text-align: right; border-top: 2px solid #eee;">$${(order.totalAmount || 0).toFixed(2)}</td>
+                <td style="padding: 10px; font-weight: bold; text-align: right; border-top: 2px solid #eee;">$${(displayTotalAmount).toFixed(2)}</td>
               </tr>
             </tfoot>
           </table>

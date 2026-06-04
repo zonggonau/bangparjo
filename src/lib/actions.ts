@@ -733,7 +733,14 @@ export async function getShippingRatesAction(data: { products?: any[], country?:
       
       skuList = skuList.map(s => {
         const match = dbVariants.find(v => v.cjId === s.vid || v.sku === s.sku);
-        const finalWeight = match?.weight || s.weight || 500;
+        let finalWeight = match?.weight || s.weight || 500;
+        
+        // Aturan: Semua berat dibulatkan ke atas ke kelipatan 100 gram
+        if (finalWeight > 0) {
+          finalWeight = Math.ceil(finalWeight / 100) * 100;
+        } else {
+          finalWeight = 100; // Fallback minimum 100g
+        }
         
         return {
           ...s,
@@ -780,8 +787,19 @@ export async function getShippingRatesAction(data: { products?: any[], country?:
     if (!res.success || !res.data || res.data.length === 0) {
       // ── Fallback: estimasi shipping berdasarkan weight ──────────
       const totalWeight = productsParam
-         ? productsParam.reduce((sum: number, p: any) => sum + (Number(p.weight) || 500), 0)
-         : (weight || 500);
+         ? productsParam.reduce((sum: number, p: any) => {
+             let w = Number(p.weight) || 500;
+             if (w > 0) {
+               w = Math.ceil(w / 100) * 100;
+             } else {
+               w = 100;
+             }
+             return sum + w;
+           }, 0)
+         : (() => {
+             let w = weight || 500;
+             return w > 0 ? Math.ceil(w / 100) * 100 : 100;
+           })();
 
       // Harga estimasi: $5 + $1/kg
       const baseShipping = 5 + Math.ceil(totalWeight / 1000) * 1;

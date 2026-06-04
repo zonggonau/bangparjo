@@ -380,6 +380,8 @@ function CheckoutContent() {
         logisticName: selectedShipping!.logisticName,
         fromCountryCode: 'CN',
         payType: 2,
+        shippingFee: effectiveShippingCost,
+        discountAmount: totalDiscount,
         products,
       };
 
