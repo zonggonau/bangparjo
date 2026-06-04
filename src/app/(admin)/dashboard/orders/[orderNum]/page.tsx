@@ -186,8 +186,11 @@ export default function AdminOrderDetail() {
 
   const address = order.shippingAddress as any;
   const items = order.items || [];
-  const costAmount = order.costAmount || items.reduce((sum: number, i: any) => sum + (i.variant?.baseCost || 0) * i.quantity, 0);
-  const profit = (order.totalAmount || 0) - costAmount - (order.shippingFee || 0);
+  
+  const revenue = order.totalAmount || 0;
+  const productWholesaleCost = items.reduce((sum: number, i: any) => sum + (i.price || 0) * i.quantity, 0);
+  const baseShippingCost = Math.max(0, (order.costAmount || 0) - productWholesaleCost);
+  const profit = revenue - productWholesaleCost - baseShippingCost;
 
   return (
     <>
@@ -230,11 +233,11 @@ export default function AdminOrderDetail() {
         </div>
         <div className="bg-white rounded-[16px] border border-[#E2E8F0] p-5 shadow-sm">
           <p className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.05em] mb-1">Cost</p>
-          <h3 className="text-[22px] font-black text-[#EF4444]">{formatUSD(costAmount)}</h3>
+          <h3 className="text-[22px] font-black text-[#EF4444]">{formatUSD(productWholesaleCost)}</h3>
         </div>
         <div className="bg-white rounded-[16px] border border-[#E2E8F0] p-5 shadow-sm">
           <p className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.05em] mb-1">Shipping</p>
-          <h3 className="text-[22px] font-black text-[#38BDF8]">{formatUSD(order.shippingFee)}</h3>
+          <h3 className="text-[22px] font-black text-[#38BDF8]">{formatUSD(baseShippingCost)}</h3>
         </div>
         <div className="bg-white rounded-[16px] border border-[#E2E8F0] p-5 shadow-sm">
           <p className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-[0.05em] mb-1">Profit</p>

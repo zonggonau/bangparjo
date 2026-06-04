@@ -60,6 +60,12 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: 'Order not found' }, { status: 404 });
       }
 
+      // Check if already processed to prevent FULFILLING loop
+      if (['PAID', 'FULFILLING', 'FULFILLED', 'SHIPPED', 'COMPLETED', 'DELIVERED'].includes(existingOrder.status)) {
+        console.log(`[Midtrans Webhook] Order ${actualOrderId} is already ${existingOrder.status}. Skipping duplicate webhook.`);
+        return NextResponse.json({ status: 'ok' });
+      }
+
       // Update status to PAID first (customer has definitely paid)
       await prisma.order.update({
         where: { orderNum: actualOrderId },
