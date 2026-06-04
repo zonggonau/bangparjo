@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { processFulfillment } from '@/lib/fulfillment';
+import { sendPaymentSuccessEmail } from '@/lib/mail';
 
 /**
  * PayPal Webhook Handler
@@ -46,6 +47,9 @@ export async function POST(req: Request) {
           where: { orderNum },
           data: { status: 'PAID' }
         });
+
+        // Send payment success email
+        await sendPaymentSuccessEmail(orderNum);
 
         // 2. Jalankan Fulfillment otomatis ke CJ Dropshipping
         try {

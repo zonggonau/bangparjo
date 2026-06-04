@@ -239,6 +239,24 @@ export async function createOrderAction(data: any) {
       } catch (couponErr) {}
     }
 
+    const parsedOrderData = typeof orderData === 'string' ? JSON.parse(orderData) : orderData;
+    const productsParams = parsedOrderData.products || [];
+
+    const vids = productsParams.map((p: any) => p.vid).filter(Boolean);
+    const dbVariants = await prisma.variant.findMany({
+      where: { cjId: { in: vids } }
+    });
+
+    const itemsData = productsParams.map((p: any) => {
+      const dbVariant = dbVariants.find((v: any) => v.cjId === p.vid) || dbVariants.find((v: any) => v.sku === p.sku);
+      if (!dbVariant) return null;
+      return {
+        variantId: dbVariant.id,
+        quantity: p.quantity || 1,
+        price: dbVariant.sellingPrice
+      };
+    }).filter((i: any) => i !== null);
+
     const order = await prisma.order.upsert({
       where: { orderNum },
       update: {
@@ -248,8 +266,12 @@ export async function createOrderAction(data: any) {
         totalAmount,
         costAmount,
         status: status,
-        orderData: typeof orderData === 'string' ? JSON.parse(orderData) : orderData,
+        orderData: parsedOrderData,
         checkoutToken,
+        items: {
+          deleteMany: {},
+          create: itemsData
+        }
       },
       create: {
         orderNum,
@@ -260,7 +282,10 @@ export async function createOrderAction(data: any) {
         totalAmount,
         costAmount,
         status: status,
-        orderData: typeof orderData === 'string' ? JSON.parse(orderData) : orderData,
+        orderData: parsedOrderData,
+        items: {
+          create: itemsData
+        }
       },
     });
 

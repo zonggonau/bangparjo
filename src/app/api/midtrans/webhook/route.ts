@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { processFulfillment } from '@/lib/fulfillment';
+import { sendPaymentSuccessEmail } from '@/lib/mail';
 import crypto from 'crypto';
 
 /**
@@ -64,6 +65,9 @@ export async function POST(req: Request) {
         where: { orderNum: actualOrderId },
         data: { status: 'PAID' }
       });
+
+      // Send payment success email
+      await sendPaymentSuccessEmail(actualOrderId);
 
       try {
         // Auto-fulfill to CJ Dropshipping

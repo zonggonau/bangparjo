@@ -29,6 +29,7 @@ function SecurePaymentContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPaid, setIsPaid] = useState(false);
+  const [isAlreadyPaid, setIsAlreadyPaid] = useState(false);
   const [exchangeRate, setExchangeRate] = useState<number>(16000);
   const [rateLoading, setRateLoading] = useState(true);
 
@@ -43,7 +44,10 @@ function SecurePaymentContent() {
       .then(res => {
         if (res.success && res.data) {
           setOrder(res.data);
-          if (res.data.status === 'PAID') setIsPaid(true);
+          
+          if (res.data.status !== 'UNPAID') {
+            setIsAlreadyPaid(true);
+          }
           
           clearCart();
 
@@ -103,6 +107,19 @@ function SecurePaymentContent() {
         <h2 className="text-2xl font-bold mb-4 text-[#1A1A1A]">Security Error</h2>
         <p className="text-gray-500 mb-8">{error}</p>
         <Link href="/cart" className="inline-flex items-center justify-center px-6 py-3 rounded-md font-bold bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200 no-underline">Return to Cart</Link>
+      </div>
+    </div>
+  );
+
+  if (isAlreadyPaid) return (
+    <div className="py-[100px] text-center">
+      <div className="max-w-[500px] mx-auto p-10 bg-white rounded-[24px] border border-gray-200">
+        <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
+          <i className="fas fa-check-circle"></i>
+        </div>
+        <h2 className="text-2xl font-bold mb-4 text-[#1A1A1A]">Payment Completed</h2>
+        <p className="text-gray-500 mb-8">This payment link is no longer valid because the order has already been paid and is currently being processed.</p>
+        <Link href="/" className="inline-flex items-center justify-center px-6 py-3 rounded-md font-bold bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all duration-200 no-underline">Return to Homepage</Link>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { prisma } from './db';
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -94,4 +95,92 @@ export async function sendBroadcastEmail(recipients: string[], subject: string, 
     failCount: results.failCount,
     errors: results.errors 
   };
+}
+
+export async function sendPaymentSuccessEmail(orderNum: string) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.warn('[MAIL] SMTP credentials missing. Payment success email not sent.');
+    return { success: false, error: 'SMTP configuration missing' };
+  }
+
+  try {
+    const order = await prisma.order.findUnique({
+      where: { orderNum },
+      include: {
+        items: {
+          include: { variant: { include: { product: true } } }
+        }
+      }
+    });
+
+    if (!order || !order.customerEmail) {
+      console.warn(`[MAIL] Order ${orderNum} or customer email not found. Skipping email.`);
+      return { success: false, error: 'Order or email not found' };
+    }
+
+    const itemsHtml = order.items.map(item => `
+      <tr>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: left;">
+          ${item.variant.product.name} <br>
+          <small style="color: #666;">${item.variant.sku} (x${item.quantity})</small>
+        </td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">
+          $${(item.price * item.quantity).toFixed(2)}
+        </td>
+      </tr>
+    `).join('');
+
+    const mailOptions = {
+      from: \`"BangParjo Shop" <\${process.env.SMTP_USER}>\`,
+      to: order.customerEmail,
+      subject: \`Payment Successful - Order #\${orderNum}\`,
+      html: \`
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+          <div style="text-align: center; border-bottom: 2px solid #ff6b00; padding-bottom: 15px; margin-bottom: 20px;">
+            <h2 style="color: #ff6b00; margin: 0;">Payment Successful!</h2>
+          </div>
+          <p>Hi \${order.customerName || 'Customer'},</p>
+          <p>Great news! We have successfully received your payment for order <strong>#\${orderNum}</strong>.</p>
+          <p>We are now processing your order and will notify you once it has been shipped.</p>
+          
+          <h3 style="color: #333; margin-top: 30px;">Order Details:</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <tbody>
+              \${itemsHtml}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td style="padding: 10px; font-weight: bold; text-align: right;">Shipping:</td>
+                <td style="padding: 10px; font-weight: bold; text-align: right;">$\${(order.shippingFee || 0).toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; font-weight: bold; text-align: right; border-top: 2px solid #eee;">Total:</td>
+                <td style="padding: 10px; font-weight: bold; text-align: right; border-top: 2px solid #eee;">$\${(order.totalAmount || 0).toFixed(2)}</td>
+              </tr>
+            </tfoot>
+          </table>
+          
+          <p style="font-size: 14px; color: #555;">You can check your order status at any time by logging into your account or tracking via our store.</p>
+          
+          <p style="font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 15px; margin-top: 30px; text-align: center;">
+            Thank you for shopping at BangParjo Shop!<br>
+            © \${new Date().getFullYear()} BangParjo Shop. All rights reserved.
+          </p>
+        </div>
+      \`,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('[MAIL] Payment success email sent:', info.messageId);
+    
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { emailSent: true }
+    });
+
+    return { success: true, messageId: info.messageId };
+  } catch (error: any) {
+    console.error('[MAIL] Error sending payment success email:', error);
+    return { success: false, error: error.message };
+  }
 }
