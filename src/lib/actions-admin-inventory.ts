@@ -338,15 +338,6 @@ export async function importProductAction(
 
     if (typeof productData === 'string') {
       pid = productData;
-      const res = await cjFetch<any>(`/v1/product/query?pid=${pid}`, { method: 'GET' });
-      if (!res.result || !res.data) {
-        return { success: false, error: `Failed to fetch product details from CJ: ${res.message || 'Product not found'}` };
-      }
-      const cjProduct = res.data;
-      name = cjProduct.productNameEn || cjProduct.productName || 'Imported Product';
-      image = cjProduct.productImage || cjProduct.bigImage || '';
-      rawSellPrice = cjProduct.sellPrice || 0;
-      categoryName = cjProduct.categoryName || 'Imported';
     } else {
       pid = productData.pid;
       name = productData.name;
@@ -357,73 +348,112 @@ export async function importProductAction(
 
     if (!pid) return { success: false, error: 'Product ID (pid) is required' };
 
-    // Robust parsing for sellPrice to prevent NaN prisma error
-    let parsedPrice = 0;
-    if (typeof rawSellPrice === 'number') {
-      parsedPrice = rawSellPrice;
-    } else if (rawSellPrice) {
-      parsedPrice = parseFloat(String(rawSellPrice)) || 0;
-    }
-    if (isNaN(parsedPrice) || parsedPrice <= 0) {
-      parsedPrice = 0;
+    // Fetch full details and variants from CJ directly
+    const res = await getProductDetails(pid);
+    if (!res.success || !res.data) {
+      return { success: false, error: `Failed to fetch product details from CJ: ${res.message || 'Product not found'}` };
     }
 
-    // Hitung sellingPrice dengan margin untuk varian default placeholder
+    const cjProduct = res.data;
+    name = cjProduct.productNameEn || cjProduct.productName || name || 'Imported Product';
+    image = cjProduct.productImage || cjProduct.bigImage || image || '';
+    rawSellPrice = cjProduct.sellPrice || rawSellPrice || 0;
+    categoryName = cjProduct.categoryName || categoryName || 'Imported';
+
+    // Fetch margin settings once
     const settings = await getDBStoreSettings();
-    const defaultSellingPrice = applyMarginToPrice(parsedPrice, settings);
 
     const existing = await prisma.product.findUnique({
       where: { cjId: pid },
       include: { variants: true }
     });
 
+    // Determine variant data
+    const variantCount = cjProduct.variants?.length || 0;
+    const variantsData = [];
+
+    if (variantCount > 0) {
+      for (const v of cjProduct.variants) {
+        const vCost = Number(v.variantSellPrice) || 0;
+        variantsData.push({
+          cjId: v.vid,
+          sku: v.variantSku,
+          color: v.variantKey || v.variantNameEn || v.variantName || 'Default',
+          size: '',
+          weight: v.variantWeight || 0,
+          baseCost: vCost,
+          sellingPrice: applyMarginToPrice(vCost, settings),
+          inventory: 100, // Default inventory
+          image: v.variantImage || cjProduct.productImage || image
+        });
+      }
+    } else {
+      let parsedPrice = 0;
+      if (typeof rawSellPrice === 'number') parsedPrice = rawSellPrice;
+      else if (rawSellPrice) parsedPrice = parseFloat(String(rawSellPrice)) || 0;
+      if (isNaN(parsedPrice) || parsedPrice <= 0) parsedPrice = 0;
+
+      variantsData.push({
+        cjId: `${pid}-default`,
+        sku: `${pid}-default`,
+        color: 'Default',
+        size: '',
+        weight: 0,
+        baseCost: parsedPrice,
+        sellingPrice: applyMarginToPrice(parsedPrice, settings),
+        inventory: 100,
+        image: image
+      });
+    }
+
     if (existing) {
+      // If product exists, update it with full details and variants
       await prisma.product.update({
         where: { id: existing.id },
         data: { 
           isHero: !!isHero,
-          status: 'SYNCING_VARIANTS'
+          description: cjProduct.description || existing.description,
+          images: cjProduct.productImageSet && cjProduct.productImageSet.length > 0 
+                  ? cjProduct.productImageSet 
+                  : (existing.images.length > 0 ? existing.images : [image]),
+          status: 'ACTIVE',
+          variantCount: variantsData.length,
+          totalStock: variantsData.length * 100,
         }
       });
       
-      // Trigger background sync
-      fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/sync-product-variants?pid=${pid}`).catch(() => {});
+      // Delete old variants and create new ones
+      await prisma.variant.deleteMany({ where: { productId: existing.id } });
+      await prisma.variant.createMany({
+        data: variantsData.map(v => ({ ...v, productId: existing.id }))
+      });
       
-      return { success: true, message: 'Product already exists. Triggered variant sync.', product: { ...existing, isHero: !!isHero } };
+      await invalidateProductCaches(categoryName);
+      return { success: true, message: 'Product already exists. Synced variants directly.', product: { ...existing, isHero: !!isHero } };
     }
 
+    // Create new product with all variants
     const product = await prisma.product.create({
       data: {
         cjId: pid,
         name: name,
-        description: 'Product details are being synced in the background...',
-        images: [image],
+        description: cjProduct.description || '',
+        images: cjProduct.productImageSet && cjProduct.productImageSet.length > 0 
+                ? cjProduct.productImageSet 
+                : [image],
         cjCategoryId: categoryName || null,
-        variantCount: 1, // Placeholder
-        totalStock: 0,
+        variantCount: variantsData.length,
+        totalStock: variantsData.length * 100,
         isHero: !!isHero,
-        status: 'SYNCING_VARIANTS',
+        status: 'ACTIVE',
         variants: {
-          create: [{
-            cjId: `${pid}-default`,
-            sku: `${pid}-default`,
-            color: 'Default',
-            size: '', 
-            weight: 0,
-            baseCost: parsedPrice,
-            sellingPrice: defaultSellingPrice, 
-            inventory: 0, 
-            image: image
-          }]
+          create: variantsData
         }
       },
       include: {
         variants: true
       }
     });
-
-    // Trigger background sync asynchronously (fire and forget)
-    fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/sync-product-variants?pid=${pid}`).catch(() => {});
 
     // Invalidate caches to show the new product
     await invalidateProductCaches(categoryName);

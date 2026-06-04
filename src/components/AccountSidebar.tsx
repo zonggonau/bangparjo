@@ -74,7 +74,7 @@ export default function AccountSidebar() {
       
       <div className="p-4 border-t border-gray-100 mt-auto">
         <button
-          onClick={() => signOut({ callbackUrl: window.location.origin + '/' })}
+          onClick={() => signOut({ callbackUrl: '/' })}
           className="w-full border-none bg-white text-left flex items-center gap-3 px-4 py-3 rounded-[12px] text-sm font-semibold text-red-500 cursor-pointer transition-all duration-300 hover:bg-red-50 border border-transparent hover:border-red-100 hover:shadow-sm"
         >
           <div className="w-8 h-8 rounded-[10px] bg-red-50 text-red-500 flex items-center justify-center">

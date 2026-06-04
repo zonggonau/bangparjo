@@ -367,14 +367,17 @@ export async function getCategoryMenuAction() {
 
     const menuData = filteredTree.map(l1 => ({
       id: l1.id,
+      cjId: l1.cjId,
       name: l1.name,
       slug: l1.slug,
       children: l1.children.map(l2 => ({
         id: l2.id,
+        cjId: l2.cjId,
         name: l2.name,
         slug: l2.slug,
         children: l2.children.map(l3 => ({
           id: l3.id,
+          cjId: l3.cjId,
           name: l3.name,
           slug: l3.slug,
         }))
@@ -393,14 +396,17 @@ export async function getFullCategoryTreeAction() {
 
     const menuData = tree.map(l1 => ({
       id: l1.id,
+      cjId: l1.cjId,
       name: l1.name,
       slug: l1.slug,
       children: l1.children.map(l2 => ({
         id: l2.id,
+        cjId: l2.cjId,
         name: l2.name,
         slug: l2.slug,
         children: l2.children.map(l3 => ({
           id: l3.id,
+          cjId: l3.cjId,
           name: l3.name,
           slug: l3.slug,
         }))

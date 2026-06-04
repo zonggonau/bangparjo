@@ -9,6 +9,7 @@ import Link from 'next/link';
 
 interface CategoryNode {
   id: string;
+  cjId?: string;
   name: string;
   slug: string;
   children?: CategoryNode[];
@@ -199,16 +200,16 @@ export default function ProductsClientView({ importedCjIds: initialImportedIds, 
                       </div>
                       <div className="border-b sm:border-b-0 sm:border-r border-[#F1F5F9] py-3 sm:py-0 sm:px-2">
                         <p className="text-[10px] font-black text-[#94A3B8] uppercase mb-2">Sub</p>
-                        {activeL1 && <button type="button" className="block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold text-gray-500 bg-gray-50 mb-1 hover:bg-orange-50 hover:text-[#FF6B00]" onClick={() => selectCategory(activeL1.id, `All ${activeL1.name}`)}>🎯 All {activeL1.name}</button>}
+                        {activeL1 && <button type="button" className="block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold text-gray-500 bg-gray-50 mb-1 hover:bg-orange-50 hover:text-[#FF6B00]" onClick={() => selectCategory(activeL1.cjId || activeL1.id, `All ${activeL1.name}`)}>🎯 All {activeL1.name}</button>}
                         {activeL1?.children?.map(l2 => (
                           <button key={l2.id} type="button" className={`block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold mb-0.5 ${activeL2?.id === l2.id ? 'bg-orange-50 text-[#FF6B00]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setActiveL2(l2)}>{l2.name}</button>
                         ))}
                       </div>
                       <div className="pt-3 sm:pt-0 sm:pl-2">
                         <p className="text-[10px] font-black text-[#94A3B8] uppercase mb-2">Detail</p>
-                        {activeL2 && <button type="button" className="block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold text-gray-500 bg-gray-50 mb-1 hover:bg-orange-50 hover:text-[#FF6B00]" onClick={() => selectCategory(activeL2.id, activeL2.name)}>🎯 All {activeL2.name}</button>}
+                        {activeL2 && <button type="button" className="block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold text-gray-500 bg-gray-50 mb-1 hover:bg-orange-50 hover:text-[#FF6B00]" onClick={() => selectCategory(activeL2.cjId || activeL2.id, activeL2.name)}>🎯 All {activeL2.name}</button>}
                         {activeL2?.children?.map(l3 => (
-                          <button key={l3.id} type="button" className="block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold text-gray-700 hover:bg-orange-50 hover:text-[#FF6B00]" onClick={() => selectCategory(l3.id, l3.name)}>{l3.name}</button>
+                          <button key={l3.id} type="button" className="block w-full text-left px-2 py-1.5 rounded-[6px] text-xs font-bold text-gray-700 hover:bg-orange-50 hover:text-[#FF6B00]" onClick={() => selectCategory(l3.cjId || l3.id, l3.name)}>{l3.name}</button>
                         ))}
                       </div>
                     </div>
