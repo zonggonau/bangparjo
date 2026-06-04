@@ -227,13 +227,14 @@ export async function cjFetch<T>(
   }
 
   const cleanEndpoint = endpoint.replace(/^\/api2\.0/, '');
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60000);
 
   let retryCount = 0;
   const maxRetries = 3;
 
   while (retryCount < maxRetries) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
     try {
       const token = await getAccessTokenServer();
       await waitForSlot();

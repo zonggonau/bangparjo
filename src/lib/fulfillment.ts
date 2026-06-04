@@ -79,13 +79,14 @@ export async function processFulfillment(orderNum: string) {
       }
     }
 
-    // 5. Auto-pay with CJ balance if payType = 2 (auto balance)
+    // 5. Determine final status based on payType and auto-pay results
     if (payType === 2 && cjOrderId) {
       try {
         console.log(`[Fulfillment] Auto-paying order ${orderNum} (CJ: ${cjOrderId}) via balance...`);
         const payRes = await payBalance({ orderNumber: cjOrderId });
         if (payRes.success) {
           console.log(`[Fulfillment] Auto-pay SUCCESS for ${orderNum}`);
+          finalStatus = 'FULFILLED';
         } else {
           console.warn(`[Fulfillment] Auto-pay FAILED for ${orderNum}: ${payRes.message}`);
           finalStatus = 'PAID';
@@ -111,6 +112,10 @@ export async function processFulfillment(orderNum: string) {
         finalStatus = 'PAID';
         payErrorMsg = payErr.message;
       }
+    } else if (payType === 3 && cjOrderId) {
+       // If manual pay, we consider our backend job "done" and successfully fulfilled to CJ
+       console.log(`[Fulfillment] Order ${orderNum} pushed to CJ for Manual Payment.`);
+       finalStatus = 'FULFILLED';
     }
 
     // 6. Update local order with CJ order ID and final status
@@ -148,7 +153,7 @@ export async function processFulfillment(orderNum: string) {
       ].join('\n')).catch(() => {});
     });
 
-    if (finalStatus === 'PAID') {
+    if (finalStatus === 'PAID' && payType === 2) {
       return {
         success: false,
         error: `Order created on CJ (#${cjOrderId}) but auto-payment failed: ${payErrorMsg || 'Insufficient balance'}. Status reverted to PAID.`,

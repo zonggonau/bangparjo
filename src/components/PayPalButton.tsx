@@ -57,7 +57,7 @@ export default function PayPalButton({ amount, orderId, onSuccess }: PayPalButto
                 if (resData.success) {
                   onSuccess();
                 } else {
-                  setError("Payment captured but failed to update order status. Please contact support.");
+                  setError(resData.error ? `Error: ${resData.error}` : "Payment captured but failed to update order status.");
                 }
               } catch (err: any) {
                 console.error("PayPal capture error:", err);
