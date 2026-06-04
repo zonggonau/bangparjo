@@ -224,7 +224,7 @@ async function triggerOpenClawWebhook(order: any) {
 
 export async function createOrderAction(data: any) {
   try {
-    const { orderNum, customerEmail, customerName, customerPhone, totalAmount, costAmount, orderData, couponCode } = data;
+    const { orderNum, customerEmail, customerName, customerPhone, totalAmount, costAmount, shippingFee, orderData, couponCode } = data;
     const status = 'UNPAID';
     if (!orderNum) return { success: false, message: 'orderNum is required' };
 
@@ -265,6 +265,7 @@ export async function createOrderAction(data: any) {
         customerPhone,
         totalAmount,
         costAmount,
+        shippingFee: shippingFee || 0,
         status: status,
         orderData: parsedOrderData,
         checkoutToken,
@@ -281,6 +282,7 @@ export async function createOrderAction(data: any) {
         customerPhone,
         totalAmount,
         costAmount,
+        shippingFee: shippingFee || 0,
         status: status,
         orderData: parsedOrderData,
         items: {

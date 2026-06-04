@@ -407,6 +407,7 @@ function CheckoutContent() {
         customerPhone: formData.phone,
         totalAmount: grandTotal,
         costAmount: totalCost,
+        shippingFee: effectiveShippingCost,
         status: 'UNPAID',
         orderData: JSON.stringify(orderData),
         couponCode: null,
