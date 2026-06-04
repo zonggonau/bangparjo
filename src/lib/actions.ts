@@ -654,7 +654,8 @@ export async function capturePayPalOrderAction(data: { orderId: string; paypalDa
       return { success: false, error: 'Payment gateway configuration error' };
     }
 
-    const isLive = process.env.NODE_ENV === 'production' && !clientId.includes('sandbox');
+    // Determine environment explicitly via env var, because Sandbox Client IDs do not contain "sandbox"
+    const isLive = process.env.NEXT_PUBLIC_PAYPAL_IS_PRODUCTION === 'true';
     const baseUrl = isLive ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
 
     const authStr = Buffer.from(`${clientId}:${secret}`).toString('base64');
