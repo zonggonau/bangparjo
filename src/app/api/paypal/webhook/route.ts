@@ -32,24 +32,22 @@ export async function POST(req: Request) {
 
       console.log(`[PayPal Webhook] Processing order: ${orderNum}`);
 
-      // 1. Update status di database kita
-      const order = await prisma.order.findUnique({
-        where: { orderNum }
+      // 1. Atomic update to prevent race conditions
+      const updateResult = await prisma.order.updateMany({
+        where: { 
+          orderNum: orderNum,
+          status: { in: ['UNPAID', 'PENDING'] }
+        },
+        data: { status: 'PAID' }
       });
 
-      if (!order) {
-        console.error(`[PayPal Webhook] Order ${orderNum} not found in database`);
-        return NextResponse.json({ message: 'Order not found' }, { status: 404 });
+      if (updateResult.count === 0) {
+        console.log(`[PayPal Webhook] Order ${orderNum} is already processed or not in UNPAID state (caught by race condition guard). Skipping.`);
+        return NextResponse.json({ status: 'ok' });
       }
 
-      if (order.status === 'UNPAID') {
-        await prisma.order.update({
-          where: { orderNum },
-          data: { status: 'PAID' }
-        });
-
-        // Send payment success email
-        await sendPaymentSuccessEmail(orderNum);
+      // Send payment success email
+      await sendPaymentSuccessEmail(orderNum);
 
         // 2. Jalankan Fulfillment otomatis ke CJ Dropshipping
         try {

@@ -53,24 +53,25 @@ export async function POST(req: Request) {
     if (isSuccess) {
       console.log(`[Midtrans Webhook] Order ${actualOrderId} (from Snap ${order_id}) marked as PAID. Triggering fulfillment...`);
 
-      // Guard: verify order exists before updating
-      const existingOrder = await prisma.order.findUnique({ where: { orderNum: actualOrderId } });
-      if (!existingOrder) {
-        console.error(`[Midtrans Webhook] Order '${actualOrderId}' NOT FOUND in DB (raw order_id: '${order_id}')`);
-        return NextResponse.json({ message: 'Order not found' }, { status: 404 });
-      }
+      // Atomic update to prevent race conditions from concurrent webhooks
+      const updateResult = await prisma.order.updateMany({
+        where: { 
+          orderNum: actualOrderId,
+          status: { in: ['UNPAID', 'PENDING'] }
+        },
+        data: { status: 'PAID' }
+      });
 
-      // Check if already processed to prevent FULFILLING loop
-      if (['PAID', 'FULFILLING', 'FULFILLED', 'SHIPPED', 'COMPLETED', 'DELIVERED'].includes(existingOrder.status)) {
-        console.log(`[Midtrans Webhook] Order ${actualOrderId} is already ${existingOrder.status}. Skipping duplicate webhook.`);
+      if (updateResult.count === 0) {
+        console.log(`[Midtrans Webhook] Order ${actualOrderId} is already processed or not in UNPAID state (caught by race condition guard). Skipping.`);
         return NextResponse.json({ status: 'ok' });
       }
 
-      // Update status to PAID first (customer has definitely paid)
-      await prisma.order.update({
-        where: { orderNum: actualOrderId },
-        data: { status: 'PAID' }
-      });
+      // Re-fetch order to get its full details for emails/fulfillment if needed
+      const existingOrder = await prisma.order.findUnique({ where: { orderNum: actualOrderId } });
+      if (!existingOrder) {
+        return NextResponse.json({ message: 'Order not found' }, { status: 404 });
+      }
 
       // Send payment success email
       await sendPaymentSuccessEmail(actualOrderId);
