@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { deleteAdminSubscriberAction, sendBroadcastEmailAction } from '@/lib/actions-admin-content';
+import { deleteAdminSubscriberAction, deleteAdminCustomerAction, sendBroadcastEmailAction } from '@/lib/actions-admin-content';
 
 interface Subscriber {
   id: string;
@@ -25,7 +25,7 @@ export default function SubscriberList({
   initialCustomers: Customer[];
 }) {
   const [subscribers, setSubscribers] = useState(initialSubscribers);
-  const [customers] = useState(initialCustomers);
+  const [customers, setCustomers] = useState(initialCustomers);
   const [tab, setTab] = useState<'customers' | 'subscribers'>('customers');
   const [deleting, setDeleting] = useState<string | null>(null);
   
@@ -53,6 +53,25 @@ export default function SubscriberList({
         showToast('Subscriber removed');
       } else {
         showToast('Failed to delete', 'error');
+      }
+    } catch (err) {
+      showToast('Connection error', 'error');
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  const handleDeleteCustomer = async (id: string) => {
+    if (!confirm('Permanently remove this customer?')) return;
+    
+    setDeleting(id);
+    try {
+      const json = await deleteAdminCustomerAction(id);
+      if (json.success) {
+        setCustomers(customers.filter(c => c.id !== id));
+        showToast('Customer removed');
+      } else {
+        showToast(json.error || 'Failed to delete', 'error');
       }
     } catch (err) {
       showToast('Connection error', 'error');
@@ -191,6 +210,14 @@ export default function SubscriberList({
                          title="Send Email Broadcast"
                        >
                          <i className="fas fa-envelope"></i>
+                       </button>
+                       <button 
+                         className="w-8 h-8 rounded-[8px] flex items-center justify-center text-sm text-red-500 bg-red-50 hover:bg-red-100 transition-all duration-200 border-none cursor-pointer"
+                         onClick={() => handleDeleteCustomer(customer.id)}
+                         disabled={deleting === customer.id}
+                         title="Remove Customer"
+                       >
+                         <i className={`fas ${deleting === customer.id ? 'fa-spinner fa-spin' : 'fa-trash-alt'}`}></i>
                        </button>
                     </div>
                   </td>

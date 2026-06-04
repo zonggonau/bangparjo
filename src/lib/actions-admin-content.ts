@@ -246,6 +246,17 @@ export async function deleteAdminSubscriberAction(id: string) {
   }
 }
 
+export async function deleteAdminCustomerAction(id: string) {
+  try {
+    await checkAdmin();
+    if (!id) return { success: false, error: 'ID is required' };
+    await prisma.user.delete({ where: { id } });
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 export async function sendBroadcastEmailAction(subject: string, content: string) {
   try {
     await checkAdmin();

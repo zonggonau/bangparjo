@@ -123,7 +123,7 @@ export default function AdminSidebar() {
         </Link>
         <button 
           className="nav-item" 
-          onClick={() => signOut({ callbackUrl: '/login' })}
+          onClick={() => signOut({ callbackUrl: window.location.origin + '/login' })}
           style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', font: 'inherit', color: 'var(--admin-error)' }}
         >
           <i className="fas fa-power-off"></i>
