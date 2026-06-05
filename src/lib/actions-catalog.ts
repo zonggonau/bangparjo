@@ -11,13 +11,28 @@ import { getDBStoreSettings, applyMarginToPrice } from './pricing';
  * dari cjCategoryId (UUID dari CJ API).
  * Ini yang menyambungkan produk ke mega menu.
  */
-async function resolveCategoryId(cjCategoryId: string | null | undefined): Promise<string | null> {
+export async function resolveCategoryId(cjCategoryId: string | null | undefined): Promise<string | null> {
   if (!cjCategoryId) return null;
   try {
-    const cat = await prisma.category.findFirst({
+    // Try exact match first
+    let cat = await prisma.category.findFirst({
       where: { cjId: cjCategoryId },
       select: { id: true },
     });
+    
+    // If not found, try case-insensitive match (CJ IDs are usually uppercase)
+    if (!cat) {
+      cat = await prisma.category.findFirst({
+        where: { 
+          cjId: {
+            equals: cjCategoryId,
+            mode: 'insensitive'
+          }
+        },
+        select: { id: true },
+      });
+    }
+
     return cat?.id ?? null;
   } catch {
     return null;

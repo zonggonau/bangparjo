@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { cjProxyAction } from '@/lib/actions-catalog';
-import { importProductAction } from '@/lib/actions-admin-inventory';
+import { importProductAction, fixAllProductCategoriesAction } from '@/lib/actions-admin-inventory';
 import { toast } from 'react-hot-toast';
 import { formatUSD } from '@/lib/utils';
 import Link from 'next/link';
@@ -26,6 +26,11 @@ export default function ProductsClientView({ importedCjIds: initialImportedIds, 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // Selection & Bulk State
+  const [selectedPids, setSelectedPids] = useState<Set<string>>(new Set());
+  const [isBulkImporting, setIsBulkImporting] = useState(false);
+  const [isFixingLinks, setIsFixingLinks] = useState(false);
+
   // Search & Filter state
   const [keyword, setKeyword] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -62,6 +67,7 @@ export default function ProductsClientView({ importedCjIds: initialImportedIds, 
   const fetchCjProducts = async () => {
     setLoading(true);
     setError(null);
+    setSelectedPids(new Set()); // Reset selection on page change
     try {
       const params = new URLSearchParams({
         pageNum: pageNum.toString(),
@@ -146,6 +152,85 @@ export default function ProductsClientView({ importedCjIds: initialImportedIds, 
     }
   };
 
+  const handleBulkImport = async () => {
+    const pidsToImport = Array.from(selectedPids).filter(pid => !importedIds.has(pid));
+    if (pidsToImport.length === 0) {
+      toast.error('No new products selected for import.');
+      return;
+    }
+
+    if (!confirm(`Import ${pidsToImport.length} selected products?`)) return;
+
+    setIsBulkImporting(true);
+    let successCount = 0;
+    
+    for (const pid of pidsToImport) {
+      const p = products.find(prod => prod.pid === pid);
+      if (!p) continue;
+      
+      try {
+        let parsedPrice = 0;
+        if (typeof p.sellPrice === 'number') parsedPrice = p.sellPrice;
+        else if (p.sellPrice) parsedPrice = parseFloat(String(p.sellPrice)) || 0;
+
+        const res = await importProductAction({
+          pid: p.pid,
+          name: p.productNameEn || p.productName || 'Imported Product',
+          image: p.productImage || p.bigImage || '',
+          sellPrice: parsedPrice,
+          categoryName: p.categoryName || 'Imported'
+        }, !!heroState[p.pid]);
+
+        if (res.success) {
+          successCount++;
+          setImportedIds(prev => {
+            const next = new Set(prev);
+            next.add(pid);
+            return next;
+          });
+        }
+      } catch (err) {}
+      // Small delay to avoid hammering the API
+      await new Promise(r => setTimeout(r, 200));
+    }
+    
+    toast.success(`✅ Successfully imported ${successCount} products.`);
+    setSelectedPids(new Set());
+    setIsBulkImporting(false);
+  };
+
+  const handleFixLinks = async () => {
+    if (!confirm('Start automatic category link repair for all products?')) return;
+    setIsFixingLinks(true);
+    try {
+      const res = await fixAllProductCategoriesAction();
+      if (res.success) {
+        toast.success(res.message || 'Category links fixed.');
+      } else {
+        toast.error(res.error || 'Failed to fix links.');
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setIsFixingLinks(false);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedPids.size === products.length) {
+      setSelectedPids(new Set());
+    } else {
+      setSelectedPids(new Set(products.map(p => p.pid)));
+    }
+  };
+
+  const toggleSelectOne = (pid: string) => {
+    const next = new Set(selectedPids);
+    if (next.has(pid)) next.delete(pid);
+    else next.add(pid);
+    setSelectedPids(next);
+  };
+
   const selectCategory = (id: string, name: string) => {
     setSelectedCategory(id);
     setSelectedCategoryName(name);
@@ -158,19 +243,54 @@ export default function ProductsClientView({ importedCjIds: initialImportedIds, 
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black text-[#1E293B]">CJ Catalog Finder</h2>
-          <p className="text-[#64748B] text-sm">Browse & import products one by one</p>
+          <p className="text-[#64748B] text-sm">Browse & import products from CJ API</p>
         </div>
-        <Link href="/dashboard/inventory" className="inline-flex items-center gap-2 px-4 py-2 rounded-[8px] text-sm font-bold border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] no-underline">
-          <i className="fas fa-boxes text-[#FF6B00]"></i> Inventory
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <button 
+            type="button"
+            onClick={handleFixLinks}
+            disabled={isFixingLinks}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-[8px] text-sm font-bold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 disabled:opacity-50 transition-all"
+          >
+            {isFixingLinks ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-sync-alt"></i>}
+            Fix Category Links
+          </button>
+          <Link href="/dashboard/inventory" className="inline-flex items-center gap-2 px-4 py-2 rounded-[8px] text-sm font-bold border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] no-underline">
+            <i className="fas fa-boxes text-[#FF6B00]"></i> Inventory
+          </Link>
+        </div>
       </div>
 
       {/* Main Content Card */}
-      <div className="bg-white rounded-[16px] border border-gray-200 overflow-hidden shadow-xs">
+      <div className="bg-white rounded-[16px] border border-gray-200 overflow-hidden shadow-xs relative">
         
+        {/* Bulk Action Bar (Overlay) */}
+        {selectedPids.size > 0 && (
+          <div className="absolute top-0 left-0 right-0 z-10 bg-[#1E293B] text-white px-6 py-3 flex items-center justify-between animate-in slide-in-from-top duration-300">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-bold">{selectedPids.size} products selected</span>
+              <button 
+                type="button" 
+                onClick={() => setSelectedPids(new Set())}
+                className="text-xs font-semibold text-gray-400 hover:text-white underline underline-offset-4 bg-transparent border-none p-0 cursor-pointer"
+              >
+                Clear Selection
+              </button>
+            </div>
+            <button 
+              type="button"
+              disabled={isBulkImporting}
+              onClick={handleBulkImport}
+              className="px-6 py-2 rounded-[8px] bg-[#FF6B00] hover:bg-[#E65100] text-white font-black text-sm transition-all flex items-center gap-2 cursor-pointer border-none shadow-lg"
+            >
+              {isBulkImporting ? <><i className="fas fa-spinner fa-spin"></i> Processing...</> : <><i className="fas fa-cloud-download-alt"></i> Import All Selected</>}
+            </button>
+          </div>
+        )}
+
         {/* Filter, Search, and Controls */}
         <div className="px-5 py-5 border-b border-gray-100 bg-white">
           <div className="flex flex-col lg:flex-row gap-5 items-end justify-between">
@@ -329,7 +449,14 @@ export default function ProductsClientView({ importedCjIds: initialImportedIds, 
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-10">#</th>
+                  <th className="px-5 py-3.5 w-10">
+                    <input 
+                      type="checkbox" 
+                      className="accent-[#FF6B00] w-4 h-4 cursor-pointer"
+                      checked={products.length > 0 && selectedPids.size === products.length}
+                      onChange={toggleSelectAll}
+                    />
+                  </th>
                   <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
                   <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Category</th>
                   <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-20">Cost</th>
@@ -344,10 +471,18 @@ export default function ProductsClientView({ importedCjIds: initialImportedIds, 
                   const isImporting = importingId === p.pid;
                   const isHero = !!heroState[p.pid];
                   const cost = Number(p.sellPrice || 0);
+                  const isSelected = selectedPids.has(p.pid);
                   
                   return (
-                    <tr key={p.pid} className={`border-b border-gray-100 hover:bg-orange-50/30 transition-colors ${isImported ? 'bg-green-50/40' : ''}`}>
-                      <td className="px-5 py-3.5 text-xs text-gray-400 font-mono">{(pageNum - 1) * pageSize + idx + 1}</td>
+                    <tr key={p.pid} className={`border-b border-gray-100 hover:bg-orange-50/30 transition-colors ${isSelected ? 'bg-orange-50' : isImported ? 'bg-green-50/40' : ''}`}>
+                      <td className="px-5 py-3.5">
+                        <input 
+                          type="checkbox" 
+                          className="accent-[#FF6B00] w-4 h-4 cursor-pointer"
+                          checked={isSelected}
+                          onChange={() => toggleSelectOne(p.pid)}
+                        />
+                      </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <img 

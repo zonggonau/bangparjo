@@ -8,6 +8,7 @@ import { generateLandingPageContent } from '@/lib/ai-content';
 import { invalidateAppCache } from '@/lib/cache';
 import { auth } from '@/auth';
 import { getDBStoreSettings, applyMarginToPrice } from '@/lib/pricing';
+import { resolveCategoryId } from './actions-catalog';
 
 async function checkAdmin() {
   const session = await auth();
@@ -359,6 +360,10 @@ export async function importProductAction(
     image = cjProduct.productImage || cjProduct.bigImage || image || '';
     rawSellPrice = cjProduct.sellPrice || rawSellPrice || 0;
     categoryName = cjProduct.categoryName || categoryName || 'Imported';
+    
+    // Fix: Resolve correct category links
+    const cjCatId = cjProduct.categoryId || null;
+    const resolvedCategoryId = await resolveCategoryId(cjCatId);
 
     // Fetch margin settings once
     const settings = await getDBStoreSettings();
@@ -419,6 +424,8 @@ export async function importProductAction(
           status: 'ACTIVE',
           variantCount: variantsData.length,
           totalStock: variantsData.length * 100,
+          cjCategoryId: cjCatId,
+          categoryId: resolvedCategoryId,
         }
       });
       
@@ -441,7 +448,8 @@ export async function importProductAction(
         images: cjProduct.productImageSet && cjProduct.productImageSet.length > 0 
                 ? cjProduct.productImageSet 
                 : [image],
-        cjCategoryId: categoryName || null,
+        cjCategoryId: cjCatId,
+        categoryId: resolvedCategoryId,
         variantCount: variantsData.length,
         totalStock: variantsData.length * 100,
         isHero: !!isHero,
@@ -465,57 +473,64 @@ export async function importProductAction(
 }
 
 /**
- * Recalculate sellingPrice for ALL variants in DB based on current margin settings.
- * Digunakan untuk update semua produk lama yang sellingPrice-nya masih = baseCost (tanpa margin).
- *
- * Proses: baca semua variant → apply margin tiers → update sellingPrice di DB
+ * Maintenance: Fix all products that are missing categoryId relations or 
+ * have incorrect cjCategoryId (names instead of UUIDs).
  */
-export async function recalculateAllPricesAction(): Promise<{ success: boolean; updated: number; errors: string[]; message?: string }> {
+export async function fixAllProductCategoriesAction() {
   try {
     await checkAdmin();
+    
+    // Find products with missing link or likely invalid cjCategoryId (names don't have hyphens)
+    const products = await prisma.product.findMany({
+      where: {
+        OR: [
+          { categoryId: null },
+          { NOT: { cjCategoryId: { contains: '-' } } }
+        ]
+      },
+      select: { id: true, cjId: true, name: true, cjCategoryId: true }
+    });
 
-    const settings = await getDBStoreSettings();
-    const errors: string[] = [];
-    let updated = 0;
-    let skip = 0;
-    const batchSize = 200;
+    if (products.length === 0) {
+      return { success: true, fixed: 0, message: 'All products are already synced with categories.' };
+    }
 
-    // Proses batch per batch agar tidak timeout
-    while (true) {
-      const variants = await prisma.variant.findMany({
-        select: { id: true, baseCost: true },
-        skip,
-        take: batchSize,
-        orderBy: { id: 'asc' },
-      });
+    let fixed = 0;
+    for (const p of products) {
+      let cjCatId = p.cjCategoryId;
+      
+      // If cjCategoryId looks like a name (no hyphen), try to find by name first
+      if (cjCatId && !cjCatId.includes('-')) {
+        const catByName = await prisma.category.findFirst({
+          where: { name: cjCatId },
+          select: { cjId: true }
+        });
+        if (catByName) cjCatId = catByName.cjId;
+      }
 
-      if (variants.length === 0) break;
-
-      for (const v of variants) {
-        try {
-          const newSellingPrice = applyMarginToPrice(Number(v.baseCost), settings);
-          await prisma.variant.update({
-            where: { id: v.id },
-            data: { sellingPrice: newSellingPrice },
-          });
-          updated++;
-        } catch (err: any) {
-          errors.push(`variant ${v.id}: ${err.message}`);
+      // If still no valid UUID, fetch full details from CJ
+      if (!cjCatId || !cjCatId.includes('-')) {
+        const detail = await getProductDetails(p.cjId);
+        if (detail.success && detail.data?.categoryId) {
+          cjCatId = detail.data.categoryId;
         }
       }
 
-      skip += batchSize;
-      if (variants.length < batchSize) break;
+      const resolvedId = await resolveCategoryId(cjCatId);
+      if (resolvedId) {
+        await prisma.product.update({
+          where: { id: p.id },
+          data: { 
+            categoryId: resolvedId,
+            cjCategoryId: cjCatId
+          }
+        });
+        fixed++;
+      }
     }
 
-    console.log(`[recalculateAllPrices] Done. Updated ${updated} variants.`);
-    return {
-      success: true,
-      updated,
-      errors: errors.slice(0, 20),
-      message: `Berhasil update ${updated} varian dengan margin terkini.`,
-    };
+    return { success: true, fixed, message: `Successfully fixed category links for ${fixed} products.` };
   } catch (error: any) {
-    return { success: false, updated: 0, errors: [error.message] };
+    return { success: false, error: error.message };
   }
 }
