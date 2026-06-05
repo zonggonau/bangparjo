@@ -39,6 +39,9 @@ export default function ProductsClientView({ importedCjIds: initialImportedIds, 
   const [activeL1, setActiveL1] = useState<CategoryNode | null>(categoryTree[0] || null);
   const [activeL2, setActiveL2] = useState<CategoryNode | null>(null);
 
+  // Image Preview Modal state
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   useEffect(() => {
     if (categoryTree.length > 0 && !activeL1) {
       setActiveL1(categoryTree[0]);
@@ -347,7 +350,12 @@ export default function ProductsClientView({ importedCjIds: initialImportedIds, 
                       <td className="px-5 py-3.5 text-xs text-gray-400 font-mono">{(pageNum - 1) * pageSize + idx + 1}</td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          <img src={p.productImage || p.bigImage || '/placeholder.png'} alt="" className="w-10 h-10 rounded-[6px] object-cover border border-[#E2E8F0] shrink-0" />
+                          <img 
+                            src={p.productImage || p.bigImage || '/placeholder.png'} 
+                            alt="" 
+                            className="w-10 h-10 rounded-[6px] object-cover border border-[#E2E8F0] shrink-0 cursor-pointer hover:opacity-80 transition-opacity" 
+                            onClick={() => setPreviewImage(p.productImage || p.bigImage || '/placeholder.png')}
+                          />
                           <div className="min-w-0">
                             <p className="font-semibold text-[#1E293B] truncate max-w-[350px]" title={p.productNameEn || p.productName}>
                               {p.productNameEn || p.productName}
@@ -452,6 +460,25 @@ export default function ProductsClientView({ importedCjIds: initialImportedIds, 
           </div>
         )}
       </div>
+
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setPreviewImage(null)}>
+          <button 
+            type="button" 
+            className="absolute top-6 right-6 text-white/70 hover:text-white bg-black/50 hover:bg-black w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer border border-white/20"
+            onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}
+          >
+            <i className="fas fa-times text-xl"></i>
+          </button>
+          <img 
+            src={previewImage} 
+            alt="Preview" 
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl border border-white/10"
+            onClick={(e) => e.stopPropagation()} 
+          />
+        </div>
+      )}
     </div>
   );
 }
