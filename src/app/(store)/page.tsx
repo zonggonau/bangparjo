@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db';
 import { Suspense } from 'react';
+import { Metadata } from 'next';
 import HeroSection from '@/components/HeroSection';
 import HomeCategories from '@/components/home-sections/HomeCategories';
 import HomeBestSellers from '@/components/home-sections/HomeBestSellers';
@@ -12,6 +13,38 @@ import Newsletter from '@/components/Newsletter';
 import LiveSales from '@/components/LiveSales';
 import AIChat from '@/components/AIChat';
 import { getDBStoreSettings } from '@/lib/pricing';
+
+export async function generateMetadata(): Promise<Metadata> {
+  let ogImage = '/logo-banner.png';
+  try {
+    const featured = await prisma.product.findFirst({
+      where: { isHero: true, status: 'ACTIVE' },
+      orderBy: { updatedAt: 'desc' },
+    });
+    if (featured && featured.images && featured.images.length > 0) {
+      ogImage = featured.images[0];
+    } else {
+      const active = await prisma.product.findFirst({
+        where: { status: 'ACTIVE' },
+        orderBy: { updatedAt: 'desc' },
+      });
+      if (active && active.images && active.images.length > 0) {
+        ogImage = active.images[0];
+      }
+    }
+  } catch (e) {
+    console.warn('[HomePage] Failed to fetch OG image:', e);
+  }
+
+  return {
+    openGraph: {
+      images: [{ url: ogImage, width: 1200, height: 630 }],
+    },
+    twitter: {
+      images: [ogImage],
+    },
+  };
+}
 
 
 async function getFeaturedProducts() {

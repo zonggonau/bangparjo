@@ -50,13 +50,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         openGraph: {
           title: seoTitle,
           description: seoDescription,
-          images: mainImage ? [{ url: mainImage, width: 1200, height: 630 }] : [],
+          images: mainImage ? [{ url: mainImage, width: 1200, height: 630 }] : [{ url: '/logo-banner.png', width: 1200, height: 630 }],
         },
         twitter: {
           card: 'summary_large_image',
           title: seoTitle,
           description: seoDescription,
-          images: mainImage ? [mainImage] : [],
+          images: mainImage ? [mainImage] : ['/logo-banner.png'],
         },
       };
     }
@@ -65,7 +65,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: post.title,
     description: post.excerpt || undefined,
-    openGraph: post.image ? { images: [post.image] } : undefined,
+    openGraph: post.image ? { images: [post.image] } : { images: [{ url: '/logo-banner.png', width: 1200, height: 630 }] },
+    twitter: post.image ? { images: [post.image] } : { images: ['/logo-banner.png'] },
   };
 }
 
