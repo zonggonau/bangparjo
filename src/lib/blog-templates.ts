@@ -181,9 +181,8 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     params.push('price=' + getDisplayPrice(firstVariant).toFixed(2));
     variantParams = '?' + params.join('&');
   }
-  var productLink = product.slug
-    ? storeBaseUrl + '/product/' + product.cjId + '/' + product.slug + variantParams
-    : storeBaseUrl + '/product/' + product.cjId + variantParams;
+  var productSlugPath = product.slug ? product.slug : encodeURIComponent(product.name);
+  var productLink = storeBaseUrl + '/product/' + product.cjId + '/' + productSlugPath + variantParams;
   var safeLink = hAttr(productLink);
 
 
@@ -415,11 +414,11 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '<p>' + safeTagline + '</p>\n'
     + heroActionsHtml
     + '</div>\n'
-    + '<div class="hero-image-wrap">\n'
+    + '<a href="' + safeLink + '" class="hero-image-wrap" style="display:block; text-decoration:none; cursor:pointer;">\n'
     + '<div class="price-tag">' + priceDisplay + '</div>\n'
     + '<div class="stock-badge" style="background:' + stockColor + ';">' + stockText + '</div>\n'
     + '<img src="' + heroImage + '" alt="' + safeName + '" fetchpriority="high" />\n'
-    + '</div>\n'
+    + '</a>\n'
     + '</div>\n'
     + '</div>\n'
     + '</section>\n';

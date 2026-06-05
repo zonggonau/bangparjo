@@ -41,19 +41,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       const aiContent = (product as any).ai || {};
       const seoTitle = aiContent.seoTitle || `${product.name} — BangParjo`;
       const seoDescription = aiContent.seoDescription || `Buy ${product.name} at the best price. Premium quality, global shipping, and satisfaction guaranteed.`;
+      
+      const mainImage = post.image || (product.images && product.images[0]);
+      
       return {
         title: seoTitle,
         description: seoDescription,
         openGraph: {
           title: seoTitle,
           description: seoDescription,
-          images: product.images[0] ? [{ url: product.images[0], width: 1200, height: 630 }] : [],
+          images: mainImage ? [{ url: mainImage, width: 1200, height: 630 }] : [],
         },
         twitter: {
           card: 'summary_large_image',
           title: seoTitle,
           description: seoDescription,
-          images: product.images[0] ? [product.images[0]] : [],
+          images: mainImage ? [mainImage] : [],
         },
       };
     }
