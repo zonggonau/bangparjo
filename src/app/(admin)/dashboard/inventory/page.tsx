@@ -107,7 +107,10 @@ export default async function InventoryPage({
           <h2 className="text-[28px] font-black mb-2 text-[#1E293B]">Inventory Manager</h2>
           <p className="text-[#64748B] font-semibold">Manage imported products, variants, and real-time stock levels.</p>
         </div>
-        <RecalculatePricesButton />
+        <div className="flex gap-3">
+          <FixCategoryLinksButton />
+          <RecalculatePricesButton />
+        </div>
       </div>
 
       <InventoryList 
