@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db';
 import { getFullCategoryTreeAction } from '@/lib/actions-catalog';
 import InventoryList from './InventoryList';
 import RecalculatePricesButton from '@/components/admin/RecalculatePricesButton';
+import FixCategoryLinksButton from '@/components/admin/FixCategoryLinksButton';
 
 export const dynamic = 'force-dynamic';
 
