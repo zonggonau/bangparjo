@@ -22,7 +22,22 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
 
+  // Helper: fetch first product image from a category (or all products)
+  async function getFirstProductImage(categoryIds?: string[]) {
+    try {
+      const whereClause: any = { status: 'ACTIVE' };
+      if (categoryIds) whereClause.categoryId = { in: categoryIds };
+      const firstProduct = await prisma.product.findFirst({
+        where: whereClause,
+        select: { images: true },
+        orderBy: { updatedAt: 'desc' },
+      });
+      return firstProduct?.images?.[0] || null;
+    } catch { return null; }
+  }
+
   if (slug === 'all') {
+    const ogImage = await getFirstProductImage() || '/logo-banner.png';
     return {
       title: 'All Products — BangParjo Shop',
       description: 'Browse all products with worldwide shipping.',
@@ -32,15 +47,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         description: 'Browse all products with worldwide shipping.',
         url: `${baseUrl}/category/all`,
         siteName: 'BangParjo Shop',
-        images: [{ url: '/logo-banner.png', width: 1200, height: 630 }],
+        images: [{ url: ogImage, width: 1200, height: 630 }],
         type: 'website',
       },
-      twitter: { card: 'summary_large_image', title: 'All Products — BangParjo Shop', description: 'Browse all products with worldwide shipping.', images: ['/logo-banner.png'] },
+      twitter: { card: 'summary_large_image', title: 'All Products — BangParjo Shop', description: 'Browse all products with worldwide shipping.', images: [ogImage] },
     };
   }
 
   const category = await getCategoryBySlug(slug);
   if (!category) return { title: 'Category Not Found' };
+
+  // Collect all child category IDs for image lookup
+  const catIds = [category.id];
+  for (const l2 of category.children) {
+    catIds.push(l2.id);
+    for (const l3 of l2.children) {
+      catIds.push(l3.id);
+    }
+  }
+  const ogImage = await getFirstProductImage(catIds) || '/logo-banner.png';
 
   const title = `${category.name} — Shop Global Best Sellers`;
   const description = `Find the best collection of ${category.name} with worldwide shipping. Competitive prices and guaranteed quality at BangParjo Shop.`;
@@ -53,10 +78,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title, description,
       url: `${baseUrl}/category/${slug}`,
       siteName: 'BangParjo Shop',
-      images: [{ url: '/logo-banner.png', width: 1200, height: 630, alt: category.name }],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: category.name }],
       type: 'website',
     },
-    twitter: { card: 'summary_large_image', title, description, images: ['/logo-banner.png'] },
+    twitter: { card: 'summary_large_image', title, description, images: [ogImage] },
   };
 }
 
