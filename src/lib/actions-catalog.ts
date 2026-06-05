@@ -8,23 +8,37 @@ import { getDBStoreSettings, applyMarginToPrice } from './pricing';
 
 /**
  * Helper: Resolve categoryId (UUID FK ke tabel Category lokal)
- * dari cjCategoryId (UUID dari CJ API).
+ * dari cjCategoryId (UUID atau nama dari CJ API).
  * Ini yang menyambungkan produk ke mega menu.
  */
 export async function resolveCategoryId(cjCategoryId: string | null | undefined): Promise<string | null> {
   if (!cjCategoryId) return null;
   try {
-    // Try exact match first
+    // 1. Try exact match by cjId (UUID format)
     let cat = await prisma.category.findFirst({
       where: { cjId: cjCategoryId },
       select: { id: true },
     });
     
-    // If not found, try case-insensitive match (CJ IDs are usually uppercase)
+    // 2. If not found, try case-insensitive match (CJ IDs are usually uppercase)
     if (!cat) {
       cat = await prisma.category.findFirst({
         where: { 
           cjId: {
+            equals: cjCategoryId,
+            mode: 'insensitive'
+          }
+        },
+        select: { id: true },
+      });
+    }
+
+    // 3. Fallback: If still not found and cjCategoryId doesn't look like a UUID, 
+    // try matching by Category Name (useful for legacy data or different API formats)
+    if (!cat && !cjCategoryId.includes('-')) {
+      cat = await prisma.category.findFirst({
+        where: { 
+          name: {
             equals: cjCategoryId,
             mode: 'insensitive'
           }

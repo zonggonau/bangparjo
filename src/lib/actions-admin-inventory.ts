@@ -473,63 +473,57 @@ export async function importProductAction(
 }
 
 /**
- * Maintenance: Fix all products that are missing categoryId relations or 
- * have incorrect cjCategoryId (names instead of UUIDs).
+ * Maintenance: Fix all products that are missing categoryId relations.
+ * This version syncs strictly using data already in the DB, avoiding CJ API calls.
  */
 export async function fixAllProductCategoriesAction() {
   try {
     await checkAdmin();
-    
-    // Find products with missing link or likely invalid cjCategoryId (names don't have hyphens)
+
+    // Find products with missing link
     const products = await prisma.product.findMany({
-      where: {
-        OR: [
-          { categoryId: null },
-          { NOT: { cjCategoryId: { contains: '-' } } }
-        ]
-      },
+      where: { categoryId: null },
       select: { id: true, cjId: true, name: true, cjCategoryId: true }
     });
 
     if (products.length === 0) {
-      return { success: true, fixed: 0, message: 'All products are already synced with categories.' };
+      return { success: true, fixed: 0, message: 'All products are already linked to categories.' };
     }
 
     let fixed = 0;
     for (const p of products) {
       let cjCatId = p.cjCategoryId;
-      
-      // If cjCategoryId looks like a name (no hyphen), try to find by name first
-      if (cjCatId && !cjCatId.includes('-')) {
+
+      // If cjCategoryId is empty, we can't fix it without API (so skip as requested "bukan dengan api")
+      if (!cjCatId) continue;
+
+      // If cjCategoryId looks like a name (no hyphen/UUID format), try to find by name in DB
+      if (!cjCatId.includes('-')) {
         const catByName = await prisma.category.findFirst({
           where: { name: cjCatId },
           select: { cjId: true }
         });
-        if (catByName) cjCatId = catByName.cjId;
-      }
-
-      // If still no valid UUID, fetch full details from CJ
-      if (!cjCatId || !cjCatId.includes('-')) {
-        const detail = await getProductDetails(p.cjId);
-        if (detail.success && detail.data?.categoryId) {
-          cjCatId = detail.data.categoryId;
+        if (catByName && catByName.cjId) {
+          cjCatId = catByName.cjId; // Update local variable to the actual UUID
         }
       }
 
+      // Try to resolve the local Category UUID from the CJ Category UUID
       const resolvedId = await resolveCategoryId(cjCatId);
       if (resolvedId) {
         await prisma.product.update({
           where: { id: p.id },
           data: { 
             categoryId: resolvedId,
-            cjCategoryId: cjCatId
+            // Only update cjCategoryId if we found a better one (UUID)
+            ...(cjCatId.includes('-') ? { cjCategoryId: cjCatId } : {})
           }
         });
         fixed++;
       }
     }
 
-    return { success: true, fixed, message: `Successfully fixed category links for ${fixed} products.` };
+    return { success: true, fixed, message: `Successfully fixed category links for ${fixed} products using local DB lookup.` };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -538,11 +532,12 @@ export async function fixAllProductCategoriesAction() {
 /**
  * Maintenance: Recalculate sellingPrice for ALL variants in the database
  * based on current margin tiers and store settings.
+ * Optimized with batching to avoid server action timeouts.
  */
 export async function recalculateAllPricesAction() {
   try {
     await checkAdmin();
-    
+
     const settings = await getDBStoreSettings();
     const variants = await prisma.variant.findMany({
       select: { id: true, baseCost: true }
@@ -553,13 +548,18 @@ export async function recalculateAllPricesAction() {
     }
 
     let updatedCount = 0;
-    for (const v of variants) {
-      const newSellingPrice = applyMarginToPrice(Number(v.baseCost), settings);
-      await prisma.variant.update({
-        where: { id: v.id },
-        data: { sellingPrice: newSellingPrice }
-      });
-      updatedCount++;
+    const batchSize = 50;
+
+    for (let i = 0; i < variants.length; i += batchSize) {
+      const batch = variants.slice(i, i + batchSize);
+      await Promise.all(batch.map(v => {
+        const newSellingPrice = applyMarginToPrice(Number(v.baseCost), settings);
+        return prisma.variant.update({
+          where: { id: v.id },
+          data: { sellingPrice: newSellingPrice }
+        });
+      }));
+      updatedCount += batch.length;
     }
 
     // Invalidate caches since prices changed
@@ -568,9 +568,10 @@ export async function recalculateAllPricesAction() {
     return { 
       success: true, 
       updated: updatedCount, 
-      message: `Successfully recalculated sellingPrice for ${updatedCount} variants based on current margins.` 
+      message: `Successfully recalculated sellingPrice for ${updatedCount} variants.` 
     };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
 }
+
