@@ -534,3 +534,43 @@ export async function fixAllProductCategoriesAction() {
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * Maintenance: Recalculate sellingPrice for ALL variants in the database
+ * based on current margin tiers and store settings.
+ */
+export async function recalculateAllPricesAction() {
+  try {
+    await checkAdmin();
+    
+    const settings = await getDBStoreSettings();
+    const variants = await prisma.variant.findMany({
+      select: { id: true, baseCost: true }
+    });
+
+    if (variants.length === 0) {
+      return { success: true, updated: 0, message: 'No variants found to recalculate.' };
+    }
+
+    let updatedCount = 0;
+    for (const v of variants) {
+      const newSellingPrice = applyMarginToPrice(Number(v.baseCost), settings);
+      await prisma.variant.update({
+        where: { id: v.id },
+        data: { sellingPrice: newSellingPrice }
+      });
+      updatedCount++;
+    }
+
+    // Invalidate caches since prices changed
+    await invalidateProductCaches();
+
+    return { 
+      success: true, 
+      updated: updatedCount, 
+      message: `Successfully recalculated sellingPrice for ${updatedCount} variants based on current margins.` 
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
