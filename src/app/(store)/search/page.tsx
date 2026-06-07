@@ -126,8 +126,8 @@ export default async function SearchPage({
     if (query) url.set('q', query);
     Object.entries(params).forEach(([k, v]) => { if (v) url.set(k, v); });
     if (categoryFilter && !params.category) url.set('category', categoryFilter);
-    if (minPrice && !params.minPrice) url.set('minPrice', minPrice);
-    if (maxPrice && !params.maxPrice) url.set('maxPrice', maxPrice);
+    if (minPrice && !params.minPrice) url.set('minPrice', String(minPrice));
+    if (maxPrice && !params.maxPrice) url.set('maxPrice', String(maxPrice));
     if (page > 1 && !params.page) url.set('page', String(page));
     return `/search?${url.toString()}`;
   };
