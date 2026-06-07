@@ -9,6 +9,7 @@ import HomeFashion from '@/components/home-sections/HomeFashion';
 import HomeElectronics from '@/components/home-sections/HomeElectronics';
 import HomeToys from '@/components/home-sections/HomeToys';
 import HomeHomeLiving from '@/components/home-sections/HomeHomeLiving';
+import HomeBagsShoes from '@/components/home-sections/HomeBagsShoes';
 import Newsletter from '@/components/Newsletter';
 import LiveSales from '@/components/LiveSales';
 import AIChat from '@/components/AIChat';
@@ -167,6 +168,9 @@ export default function HomePage() {
 
       {/* ===== HOME & LIVING SECTION ===== */}
       <HomeHomeLiving />
+
+      {/* ===== BAGS & SHOES SECTION ===== */}
+      <HomeBagsShoes />
 
       {/* ===== TESTIMONIALS ===== */}
       <section className="py-16 sm:py-20 bg-[#1A1A1A] text-white">

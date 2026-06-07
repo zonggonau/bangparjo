@@ -1,18 +1,20 @@
 import { prisma } from '@/lib/db';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
+import { getDescendantCategoryIds } from '@/lib/categories';
 
-const FASHION_CJ_CATEGORY_ID = 'A8B2857F-622E-4464-98F1-4F23F976D1F6';
+const FASHION_CJ_CATEGORY_ID = '2FE8A083-5E7B-4179-896D-561EA116F730';
 
 async function getFashionProducts() {
   try {
-    const category = await prisma.category.findFirst({
-      where: { cjId: FASHION_CJ_CATEGORY_ID },
-    });
-    if (!category) return [];
+    const categoryIds = await getDescendantCategoryIds(FASHION_CJ_CATEGORY_ID);
+    if (categoryIds.length === 0) return [];
 
     const dbProducts = await prisma.product.findMany({
-      where: { categoryId: category.id, status: 'ACTIVE' },
+      where: { 
+        categoryId: { in: categoryIds },
+        status: 'ACTIVE' 
+      },
       include: { variants: { take: 1 } },
       orderBy: { updatedAt: 'desc' },
       take: 10,
@@ -60,7 +62,7 @@ export default async function HomeFashion() {
             <h2 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold text-[#1A1A1A] m-0">Trending <span className="text-[#FF6B00]">Fashion</span></h2>
           </div>
           <Link 
-            href="/category/fashion-jewelry-123ACC01-7A11-4FB9-A532-338C0E7C04C5" 
+            href="/category/women's-clothing-2FE8A083-5E7B-4179-896D-561EA116F730" 
             className="inline-flex items-center justify-center gap-2 px-[18px] py-2 rounded-[6px] font-semibold text-[13px] cursor-pointer transition-all duration-300 border-2 border-[#FF6B00] bg-transparent text-[#FF6B00] hover:bg-[#FF6B00] hover:text-white hover:-translate-y-0.5"
           >
             See All <i className="fas fa-arrow-right ml-2"></i>

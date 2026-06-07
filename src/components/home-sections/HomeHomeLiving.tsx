@@ -1,18 +1,20 @@
 import { prisma } from '@/lib/db';
 import ProductCard from '../ProductCard';
 import Link from 'next/link';
+import { getDescendantCategoryIds } from '@/lib/categories';
 
-const HOME_LIVING_CJ_CATEGORY_ID = '9840E81D-F81A-4C2E-83B9-8F2C7D4A0B12';
+const HOME_LIVING_CJ_CATEGORY_ID = '52FC6CA5-669B-4D0B-B1AC-415675931399';
 
 async function getHomeLivingProducts() {
   try {
-    const category = await prisma.category.findFirst({
-      where: { cjId: HOME_LIVING_CJ_CATEGORY_ID },
-    });
-    if (!category) return [];
+    const categoryIds = await getDescendantCategoryIds(HOME_LIVING_CJ_CATEGORY_ID);
+    if (categoryIds.length === 0) return [];
 
     const dbProducts = await prisma.product.findMany({
-      where: { categoryId: category.id, status: 'ACTIVE' },
+      where: { 
+        categoryId: { in: categoryIds },
+        status: 'ACTIVE' 
+      },
       include: { variants: { take: 1 } },
       orderBy: { updatedAt: 'desc' },
       take: 10,
@@ -60,7 +62,7 @@ export default async function HomeHomeLiving() {
             <h2 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold text-[#1A1A1A] m-0">Home &amp; <span className="text-[#FF6B00]">Living</span></h2>
           </div>
           <Link 
-            href="/category/home-garden-and-furniture-9840E81D-F81A-4C2E-83B9-8F2C7D4A0B12" 
+            href="/category/home-garden-and-furniture-52FC6CA5-669B-4D0B-B1AC-415675931399" 
             className="inline-flex items-center justify-center gap-2 px-[18px] py-2 rounded-[6px] font-semibold text-[13px] cursor-pointer transition-all duration-300 border-2 border-[#FF6B00] bg-transparent text-[#FF6B00] hover:bg-[#FF6B00] hover:text-white hover:-translate-y-0.5"
           >
             View All <i className="fas fa-arrow-right ml-2"></i>

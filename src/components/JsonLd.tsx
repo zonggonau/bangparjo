@@ -27,7 +27,7 @@ export default function JsonLd() {
     "url": baseUrl,
     "potentialAction": {
       "@type": "SearchAction",
-      "target": baseUrl + "/?q={search_term_string}",
+      "target": baseUrl + "/search?q={search_term_string}",
       "query-input": "required name=search_term_string"
     }
   };

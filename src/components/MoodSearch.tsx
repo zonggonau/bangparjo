@@ -16,7 +16,7 @@ export default function MoodSearch() {
   const [customMood, setCustomMood] = useState('');
 
   const handleMoodClick = (query: string) => {
-    router.push(`/?q=${encodeURIComponent(query)}`);
+    router.push(`/search?q=${encodeURIComponent(query)}`);
   };
 
   const handleCustomMood = (e: React.FormEvent) => {
@@ -26,7 +26,7 @@ export default function MoodSearch() {
       if (keywords.includes('party')) keywords += ' dress outfit sparkle';
       if (keywords.includes('office')) keywords += ' formal stationery professional';
       
-      router.push(`/?q=${encodeURIComponent(keywords)}`);
+      router.push(`/search?q=${encodeURIComponent(keywords)}`);
     }
   };
 

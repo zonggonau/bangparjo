@@ -140,3 +140,22 @@ export async function getCategoryHierarchy(id: string) {
   find(tree, []);
   return hierarchy;
 }
+
+export async function getDescendantCategoryIds(topCjId: string): Promise<string[]> {
+  const allCats = await prisma.category.findMany();
+  const root = allCats.find(c => c.cjId === topCjId);
+  if (!root) return [];
+
+  const ids: string[] = [root.id];
+  
+  function collect(parentId: string) {
+    const children = allCats.filter(c => c.parentId === parentId);
+    for (const child of children) {
+      ids.push(child.id);
+      collect(child.id);
+    }
+  }
+
+  collect(root.id);
+  return ids;
+}

@@ -3,11 +3,11 @@ import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
 import { getDescendantCategoryIds } from '@/lib/categories';
 
-const TOYS_CJ_CATEGORY_ID = 'A50A92FA-BCB3-4716-9BD9-BEC629BEE735';
+const BAGS_SHOES_CJ_CATEGORY_ID = '2415A90C-5D7B-4CC7-BA8C-C0949F9FF5D8';
 
-async function getToysProducts() {
+async function getBagsShoesProducts() {
   try {
-    const categoryIds = await getDescendantCategoryIds(TOYS_CJ_CATEGORY_ID);
+    const categoryIds = await getDescendantCategoryIds(BAGS_SHOES_CJ_CATEGORY_ID);
     if (categoryIds.length === 0) return [];
 
     const dbProducts = await prisma.product.findMany({
@@ -29,7 +29,7 @@ async function getToysProducts() {
       sellPrice: p.variants?.[0]?.sellingPrice || p.variants?.[0]?.baseCost || 0,
       nowPrice: p.variants?.[0]?.sellingPrice || p.variants?.[0]?.baseCost || 0,
       discountPrice: '',
-      categoryName: 'Toys',
+      categoryName: 'Bags & Shoes',
       productSku: p.variants?.[0]?.sku || '',
       productWeight: p.variants?.[0]?.weight || 0,
       productUnit: 'piece',
@@ -38,31 +38,30 @@ async function getToysProducts() {
       isFreeShipping: false,
     }));
   } catch (e) {
-    console.warn('[HomeToys] DB fetch failed:', e);
+    console.warn('[HomeBagsShoes] DB fetch failed:', e);
   }
 
   return [];
 }
 
-export default async function HomeToys() {
-  const mainProducts = await getToysProducts();
-  const filteredProducts = mainProducts.filter((product: any) => product.pid);
+export default async function HomeBagsShoes() {
+  const mainProducts = await getBagsShoesProducts();
 
-  if (filteredProducts.length === 0) return null;
+  if (mainProducts.length === 0) return null;
 
   return (
-    <section className="py-20 bg-[#F5F5F5]">
+    <section className="py-20 bg-white">
       <div className="max-w-[1400px] mx-auto px-5">
         <div className="flex justify-between items-end mb-10 flex-wrap gap-5">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <i className="fas fa-robot text-[#FF6B00]"></i>
-              <span className="text-[12px] font-extrabold text-[#FF6B00] uppercase tracking-[0.1em]">Fun &amp; Hobbies</span>
+              <i className="fas fa-shoe-prints text-[#FF6B00]"></i>
+              <span className="text-[12px] font-extrabold text-[#FF6B00] uppercase tracking-[0.1em]">Step in Style</span>
             </div>
-            <h2 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold text-[#1A1A1A] m-0">Toys &amp; <span className="text-[#FF6B00]">Hobbies</span></h2>
+            <h2 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold text-[#1A1A1A] m-0">Bags &amp; <span className="text-[#FF6B00]">Shoes</span></h2>
           </div>
           <Link 
-            href="/category/toys-kids-and-babies-A50A92FA-BCB3-4716-9BD9-BEC629BEE735" 
+            href="/category/bags-and-shoes-2415A90C-5D7B-4CC7-BA8C-C0949F9FF5D8" 
             className="inline-flex items-center justify-center gap-2 px-[18px] py-2 rounded-[6px] font-semibold text-[13px] cursor-pointer transition-all duration-300 border-2 border-[#FF6B00] bg-transparent text-[#FF6B00] hover:bg-[#FF6B00] hover:text-white hover:-translate-y-0.5"
           >
             See All <i className="fas fa-arrow-right ml-2"></i>
@@ -70,7 +69,7 @@ export default async function HomeToys() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {filteredProducts.map((product: any) => (
+          {mainProducts.map((product: any) => (
             <ProductCard key={product.pid} product={product} />
           ))}
         </div>

@@ -1,18 +1,20 @@
 import { prisma } from '@/lib/db';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
+import { getDescendantCategoryIds } from '@/lib/categories';
 
 const ELECTRONICS_CJ_CATEGORY_ID = 'D9E66BF8-4E81-4CAB-A425-AEDEC5FBFBF2';
 
 async function getElectronicsProducts() {
   try {
-    const category = await prisma.category.findFirst({
-      where: { cjId: ELECTRONICS_CJ_CATEGORY_ID },
-    });
-    if (!category) return [];
+    const categoryIds = await getDescendantCategoryIds(ELECTRONICS_CJ_CATEGORY_ID);
+    if (categoryIds.length === 0) return [];
 
     const dbProducts = await prisma.product.findMany({
-      where: { categoryId: category.id, status: 'ACTIVE' },
+      where: { 
+        categoryId: { in: categoryIds },
+        status: 'ACTIVE' 
+      },
       include: { variants: { take: 1 } },
       orderBy: { updatedAt: 'desc' },
       take: 10,

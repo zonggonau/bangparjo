@@ -115,7 +115,7 @@ export default function Navbar() {
                   <div className="absolute top-full left-1/2 -translate-x-1/2 w-full max-w-[1400px] bg-white shadow-[0_15px_30px_rgba(0,0,0,0.1)]  opacity-0 invisible translate-y-2.5 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] z-[1000] overflow-hidden group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 hover:opacity-100 hover:visible hover:translate-y-0">
                     <div className="flex h-auto max-h-[650px]">
                       {/* Sidebar - scroll if more than 14 categories */}
-                      <div className="w-[280px] bg-[#fcfcfc] border-r border-[#f0f0f0] py-2.5 overflow-y-auto">
+                      <div className="w-[295px] bg-[#fcfcfc] border-r border-[#f0f0f0] py-2.5 overflow-y-auto">
                         {/* All Products link */}
                         <div className="px-5 mb-1">
                           <Link href="/category/all" className="flex items-center justify-between py-3 text-[14px] font-bold no-underline text-[#FF6B00] border-b border-orange-100" onClick={() => setMobileOpen(false)}>

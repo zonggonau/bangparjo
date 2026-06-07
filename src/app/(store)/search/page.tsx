@@ -17,8 +17,8 @@ export default async function SearchPage({
   const query = sParams.q?.trim() || '';
   const page = parseInt(sParams.page || '1', 10);
   const categoryFilter = sParams.category?.trim() || '';
-  const minPrice = sParams.minPrice?.trim() || '';
-  const maxPrice = sParams.maxPrice?.trim() || '';
+  const minPrice = sParams.minPrice?.trim() ? parseFloat(sParams.minPrice) : null;
+  const maxPrice = sParams.maxPrice?.trim() ? parseFloat(sParams.maxPrice) : null;
   const pageSize = 100;
 
   // Fetch categories for filter dropdown
@@ -32,17 +32,71 @@ export default async function SearchPage({
   let total = 0;
   let error = '';
 
-  if (query) {
+  // Always search if there's a query OR filters
+  if (query || categoryFilter || minPrice !== null || maxPrice !== null) {
     try {
       const whereClause: any = {
         status: 'ACTIVE',
-        name: { contains: query, mode: 'insensitive' },
       };
+
+      // Search Query
+      if (query) {
+        whereClause.OR = [
+          { name: { contains: query, mode: 'insensitive' } },
+          { description: { contains: query, mode: 'insensitive' } },
+          { cjId: { contains: query, mode: 'insensitive' } },
+          { category: { name: { contains: query, mode: 'insensitive' } } },
+          { variants: { some: { sku: { contains: query, mode: 'insensitive' } } } },
+        ];
+      }
+
+      // Category Filter
+      if (categoryFilter) {
+        const selectedCategory = await prisma.category.findUnique({
+          where: { slug: categoryFilter },
+          include: { 
+            children: {
+              include: {
+                children: true
+              }
+            }
+          }
+        });
+
+        if (selectedCategory) {
+          const categoryIds = [selectedCategory.id];
+          selectedCategory.children.forEach(child => {
+            categoryIds.push(child.id);
+            child.children.forEach(grandChild => {
+              categoryIds.push(grandChild.id);
+            });
+          });
+
+          whereClause.categoryId = { in: categoryIds };
+        }
+      }
+
+      // Price Filter
+      if (minPrice !== null || maxPrice !== null) {
+        whereClause.variants = {
+          some: {
+            sellingPrice: {
+              ...(minPrice !== null && { gte: minPrice }),
+              ...(maxPrice !== null && { lte: maxPrice }),
+            },
+          },
+        };
+      }
 
       const [dbProducts, dbTotal] = await Promise.all([
         prisma.product.findMany({
           where: whereClause,
-          include: { variants: { take: 1 } },
+          include: { 
+            variants: { 
+              orderBy: { sellingPrice: 'asc' },
+              take: 1 
+            } 
+          },
           orderBy: { updatedAt: 'desc' },
           skip: (page - 1) * pageSize,
           take: pageSize,

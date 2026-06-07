@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 interface SearchFiltersProps {
   query: string;
   categoryFilter: string;
-  minPrice: string;
-  maxPrice: string;
+  minPrice: number | null;
+  maxPrice: number | null;
   categories: { id: string; name: string; slug: string }[];
 }
 
@@ -42,7 +42,7 @@ export default function SearchFilters({ query, categoryFilter, minPrice, maxPric
       <input
         type="number"
         placeholder="Min $"
-        defaultValue={minPrice}
+        defaultValue={minPrice ?? ''}
         onBlur={(e) => {
           if (e.target.value) {
             navigate({ minPrice: e.target.value, page: '1' });
@@ -55,7 +55,7 @@ export default function SearchFilters({ query, categoryFilter, minPrice, maxPric
       <input
         type="number"
         placeholder="Max $"
-        defaultValue={maxPrice}
+        defaultValue={maxPrice ?? ''}
         onBlur={(e) => {
           if (e.target.value) {
             navigate({ maxPrice: e.target.value, page: '1' });
@@ -65,7 +65,7 @@ export default function SearchFilters({ query, categoryFilter, minPrice, maxPric
       />
 
       {/* Clear Filters */}
-      {(categoryFilter || minPrice || maxPrice) && (
+      {(categoryFilter || minPrice !== null || maxPrice !== null) && (
         <a
           href={`/search?q=${encodeURIComponent(query)}`}
           className="px-4 py-2.5 rounded-md text-sm font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50 transition-all duration-200 no-underline"

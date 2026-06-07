@@ -1,18 +1,20 @@
 import { prisma } from '@/lib/db';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
+import { getDescendantCategoryIds } from '@/lib/categories';
 
 const BEAUTY_CJ_CATEGORY_ID = '2C7D4A0B-1AB2-41EC-8F9E-13DC31B1C902';
 
 async function getBeautyProducts() {
   try {
-    const category = await prisma.category.findFirst({
-      where: { cjId: BEAUTY_CJ_CATEGORY_ID },
-    });
-    if (!category) return [];
+    const categoryIds = await getDescendantCategoryIds(BEAUTY_CJ_CATEGORY_ID);
+    if (categoryIds.length === 0) return [];
 
     const dbProducts = await prisma.product.findMany({
-      where: { categoryId: category.id, status: 'ACTIVE' },
+      where: { 
+        categoryId: { in: categoryIds },
+        status: 'ACTIVE' 
+      },
       include: { variants: { take: 1 } },
       orderBy: { updatedAt: 'desc' },
       take: 10,
