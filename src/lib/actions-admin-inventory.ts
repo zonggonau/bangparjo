@@ -303,6 +303,7 @@ export async function exportToBlogAction(productId: string, lang: string = 'en')
         image: product.images[0] || null,
         author: 'Admin',
         published: true,
+        language: lang,
       },
     });
 

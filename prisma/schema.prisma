@@ -250,6 +250,7 @@ model BlogPost {
   image     String?
   author    String   @default("Admin")
   published Boolean  @default(false)
+  language  String   @default("en") // "id" or "en"
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

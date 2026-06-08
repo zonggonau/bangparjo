@@ -41,8 +41,27 @@ export async function generateMetadata({
 
   if (!p) return { title: 'Product Not Found' };
 
+  // Check if there's a blog post for this product — use its image for OG if available
+  let blogImage: string | null = null;
+  try {
+    const blogPost = await prisma.blogPost.findFirst({
+      where: { 
+        slug: { contains: id.toLowerCase() },
+        image: { not: null }
+      },
+      select: { image: true, title: true, excerpt: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    if (blogPost?.image) {
+      blogImage = blogPost.image;
+    }
+  } catch (e) {
+    // Silently fail — blog lookup is optional
+  }
+
   // Update image and title if variant is selected
-  const displayImage = selectedVariant?.image || selectedVariant?.variantImage || p.image;
+  // Priority: blog image > variant image > product image
+  const displayImage = blogImage || selectedVariant?.image || selectedVariant?.variantImage || p.image;
   const displayTitle = selectedVariant 
     ? `${p.name} (${selectedVariant.color || selectedVariant.variantNameEn || selectedVariant.variantKey}) | BangParjo Shop`
     : `${p.name} | BangParjo Shop`;

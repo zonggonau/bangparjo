@@ -229,15 +229,19 @@ export default function ProductView({ id, initialData, initialError, selectedVid
   const [showShareMenu, setShowShareMenu] = useState(false);
   const displayName = product ? parseProductName(product.productNameEn || product.productName) : '';
 
-  // Social share
+  // Social share — enhanced with AI-style description
   const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
-  const shareText = `Check out ${displayName} on Bangparjo!`;
+  const sharePrice = selectedVariant?.variantSellPrice 
+    ? formatUSD(Number(selectedVariant.variantSellPrice))
+    : (product?.sellPrice ? formatUSD(Number(product.sellPrice)) : '');
+  const shareText = `🔥 ${displayName} — only ${sharePrice}! ✓ Premium Quality ✓ Fast Shipping ✓ Best Price. Shop now at BangParjo!`;
   const shareLinks = [
     { name: 'WhatsApp', url: `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`, icon: 'fab fa-whatsapp', color: '#25D366' },
-    { name: 'Facebook', url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, icon: 'fab fa-facebook', color: '#1877F2' },
+    { name: 'Facebook', url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`, icon: 'fab fa-facebook', color: '#1877F2' },
     { name: 'Twitter', url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, icon: 'fab fa-twitter', color: '#1DA1F2' },
+    { name: 'Telegram', url: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, icon: 'fab fa-telegram', color: '#0088CC' },
     { name: 'Pinterest', url: `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(shareUrl)}&description=${encodeURIComponent(shareText)}`, icon: 'fab fa-pinterest', color: '#E60023' },
-    { name: 'Copy Link', url: '#', icon: 'fas fa-link', color: '#666', action: () => { navigator.clipboard.writeText(shareUrl); setShowShareMenu(false); alert('Link copied!'); } },
+    { name: 'Copy Link', url: '#', icon: 'fas fa-link', color: '#666', action: () => { navigator.clipboard.writeText(shareUrl + '\n\n' + shareText); setShowShareMenu(false); } },
   ];
 
   useEffect(() => {
