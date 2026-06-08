@@ -45,7 +45,7 @@ export async function submitContactFormAction(data: any) {
 export async function getBlogPostsAction(slug?: string) {
   try {
     if (slug) {
-      const post = await prisma.blogPost.findUnique({
+      const post = await prisma.blogPost.findFirst({
         where: { slug, published: true },
       });
       if (!post) return { success: false, error: 'Post not found' };

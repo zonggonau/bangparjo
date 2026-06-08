@@ -27,7 +27,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = await prisma.blogPost.findUnique({
+  const post = await prisma.blogPost.findFirst({
     where: { slug, published: true },
     select: { title: true, excerpt: true, image: true, content: true },
   });
@@ -78,7 +78,7 @@ export default async function BlogSlugPage(props: Props) {
   const post = await getOrSet(
     cacheKey,
     async () => {
-      const p = await prisma.blogPost.findUnique({
+      const p = await prisma.blogPost.findFirst({
         where: { slug, published: true },
       });
       if (!p) return null;
