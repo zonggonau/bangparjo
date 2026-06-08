@@ -1,11 +1,12 @@
 'use client';
 
-import { parseProductName, parseProductImage, formatUSD, stripCommonPrefix } from '@/lib/utils';
+import { parseProductName, parseProductImage, formatUSD } from '@/lib/utils';
+import { parseVariants, getColorSwatch } from '@/lib/variant-utils';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useSettings } from '@/context/SettingsContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ProductDetailSkeleton } from '@/components/ProductSkeleton';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
@@ -17,6 +18,192 @@ function renderStars(score: any) {
   const parsed = parseInt(score);
   const validScore = isNaN(parsed) ? 0 : Math.max(0, Math.min(5, parsed));
   return '★'.repeat(validScore) + '☆'.repeat(5 - validScore);
+}
+
+/**
+ * VariantSelector — Color + Size filter UI
+ * Extracted to its own component to properly use hooks.
+ */
+function VariantSelector({
+  variants,
+  selectedVariant,
+  onVariantSelect,
+}: {
+  variants: any[];
+  selectedVariant: any;
+  onVariantSelect: (v: any) => void;
+}) {
+  const parsed = useMemo(() => parseVariants(variants), [variants]);
+  const hasColors = parsed.colors.length > 0 && parsed.colors[0] !== 'Default';
+  const hasSizes = parsed.sizes.length > 0;
+
+  const [selectedColor, setSelectedColor] = useState<string>('');
+  const [selectedSize, setSelectedSize] = useState<string>('');
+
+  // Initialize from current selectedVariant
+  useEffect(() => {
+    if (selectedVariant) {
+      const v = parsed.variants.find((pv: any) => pv.vid === selectedVariant.vid);
+      if (v) {
+        setSelectedColor(v.parsedColor);
+        if (v.parsedSize) setSelectedSize(v.parsedSize);
+        return;
+      }
+    }
+    // Default: first variant's color
+    if (parsed.variants.length > 0 && !selectedColor) {
+      setSelectedColor(parsed.variants[0].parsedColor);
+    }
+  }, []);
+
+  // Available sizes for selected color
+  const availableSizes = selectedColor ? (parsed.grouped[selectedColor] || []) : parsed.sizes;
+
+  // Available colors for selected size
+  const availableColors = selectedSize
+    ? parsed.colors.filter(c => (parsed.grouped[c] || []).includes(selectedSize))
+    : parsed.colors;
+
+  // Auto-select first size when color changes
+  useEffect(() => {
+    if (selectedColor) {
+      const sizes = parsed.grouped[selectedColor] || [];
+      if (sizes.length > 0) {
+        if (!selectedSize || !sizes.includes(selectedSize)) {
+          setSelectedSize(sizes[0]);
+        }
+      } else {
+        setSelectedSize('');
+      }
+    }
+  }, [selectedColor]);
+
+  // Find and select matching variant
+  useEffect(() => {
+    if (!selectedColor) return;
+    const matched = parsed.variants.find((v: any) =>
+      v.parsedColor === selectedColor &&
+      (selectedSize ? v.parsedSize === selectedSize : true)
+    ) || parsed.variants.find((v: any) => v.parsedColor === selectedColor) || null;
+
+    if (matched && matched.vid !== selectedVariant?.vid) {
+      onVariantSelect(matched);
+    }
+  }, [selectedColor, selectedSize]);
+
+  return (
+    <div className="space-y-4">
+      {/* Color Selector */}
+      {hasColors && (
+        <div className="space-y-2.5">
+          <h3 className="text-sm font-bold text-[#1A1A1A]">
+            Color: <span className="text-[#FF6B00] font-semibold">{selectedColor}</span>
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {parsed.colors.map((color: string) => {
+              const isAvailable = availableColors.includes(color);
+              const isSelected = selectedColor === color;
+              const swatchColor = getColorSwatch(color);
+
+              return (
+                <button
+                  key={color}
+                  disabled={!isAvailable}
+                  onClick={() => {
+                    setSelectedColor(color);
+                    setSelectedSize('');
+                  }}
+                  className={`
+                    relative flex items-center gap-2 px-3 py-2 rounded-[8px] text-[13px] font-semibold border-2 transition-all duration-200 cursor-pointer
+                    ${isSelected
+                      ? 'border-[#FF6B00] bg-orange-50 text-[#FF6B00]'
+                      : isAvailable
+                        ? 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                        : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed opacity-40'
+                    }
+                  `}
+                  title={!isAvailable && selectedSize ? `Not available in ${selectedSize}` : color}
+                >
+                  {/* Color swatch dot */}
+                  {swatchColor ? (
+                    <span
+                      className="w-4 h-4 rounded-full border border-gray-200 shrink-0"
+                      style={{ backgroundColor: swatchColor }}
+                    />
+                  ) : (
+                    <span className="w-4 h-4 rounded-full bg-gradient-to-br from-gray-100 to-gray-300 border border-gray-200 shrink-0 flex items-center justify-center">
+                      <i className="fas fa-palette text-[8px] text-gray-400"></i>
+                    </span>
+                  )}
+                  <span>{color}</span>
+                  {isSelected && (
+                    <i className="fas fa-check text-[10px]"></i>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Size Selector */}
+      {hasSizes && (
+        <div className="space-y-2.5">
+          <h3 className="text-sm font-bold text-[#1A1A1A]">
+            Size: <span className="text-[#FF6B00] font-semibold">{selectedSize || 'Select'}</span>
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {parsed.sizes.map((size: string) => {
+              const isAvailable = availableSizes.includes(size);
+              const isSelected = selectedSize === size;
+
+              return (
+                <button
+                  key={size}
+                  disabled={!isAvailable}
+                  onClick={() => setSelectedSize(size)}
+                  className={`
+                    px-3 py-1.5 rounded-[6px] text-[13px] font-semibold border-2 transition-all duration-200 cursor-pointer min-w-[44px] text-center
+                    ${isSelected
+                      ? 'border-[#FF6B00] bg-orange-50 text-[#FF6B00]'
+                      : isAvailable
+                        ? 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                        : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed opacity-40'
+                    }
+                  `}
+                  title={!isAvailable && selectedColor ? `Not available for ${selectedColor}` : size}
+                >
+                  {size}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Fallback: flat list if no color/size detected */}
+      {!hasColors && !hasSizes && (
+        <div className="space-y-2.5">
+          <h3 className="text-sm font-bold text-[#1A1A1A]">Options</h3>
+          <div className="flex flex-wrap gap-2">
+            {parsed.variants.map((variant: any) => (
+              <button
+                key={variant.vid}
+                className={`px-3 py-1.5 rounded-[6px] text-[13px] font-semibold border-2 transition-all duration-200 cursor-pointer ${
+                  selectedVariant?.vid === variant.vid
+                    ? 'border-[#FF6B00] bg-orange-50 text-[#FF6B00]'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                }`}
+                onClick={() => onVariantSelect(variant)}
+              >
+                {variant.variantNameEn || variant.variantKey || 'Default'}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function ProductView({ id, initialData, initialError, selectedVid }: { id: string, initialData: any, initialError: string | null, selectedVid?: string }) {
@@ -331,30 +518,14 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                 </span>
               </div>
 
-
-              {product.variants && product.variants.length > 0 && (() => {
-                const shortLabels = stripCommonPrefix(product.variants.map((v: any) => v.variantNameEn || v.variantKey || ''));
-                return (
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-bold text-[#1A1A1A]">Options</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {product.variants.map((variant: any, idx: number) => (
-                        <button 
-                          key={variant.vid} 
-                          className={`px-3 py-1.5 rounded-[6px] text-[13px] font-semibold border-2 transition-all duration-200 cursor-pointer ${
-                            selectedVariant?.vid === variant.vid 
-                              ? 'border-[#FF6B00] bg-orange-50 text-[#FF6B00]' 
-                              : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                          }`}
-                          onClick={() => handleVariantSelect(variant)}
-                        >
-                          {shortLabels[idx]}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
+              {/* Variant Selector — Color + Size Filter */}
+              {product.variants && product.variants.length > 0 && (
+                <VariantSelector
+                  variants={product.variants}
+                  selectedVariant={selectedVariant}
+                  onVariantSelect={handleVariantSelect}
+                />
+              )}
 
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-[#1A1A1A]">Quantity</h3>
@@ -492,7 +663,7 @@ export default function ProductView({ id, initialData, initialError, selectedVid
 
                 <div className="pt-3 border-t border-gray-200 flex items-center gap-3">
                   <span className="text-xl">🔒</span>
-                  <span className="text-sm text-gray-600">Secure &amp; encrypted payment</span>
+                  <span className="text-sm text-gray-600">Secure & encrypted payment</span>
                 </div>
               </div>
 
@@ -539,113 +710,119 @@ export default function ProductView({ id, initialData, initialError, selectedVid
                     });
                     window.dispatchEvent(event);
                   }}
-                  className="px-4 py-2 rounded-[6px] font-bold text-[13px] bg-[#FF6B00] text-white border-none whitespace-nowrap hover:bg-[#E06000] transition-all duration-200 cursor-pointer"
+                  className="px-4 py-2 rounded-[8px] text-sm font-bold bg-[#FF6B00] text-white hover:bg-[#E06000] transition-all border-none cursor-pointer"
                 >
-                  <i className="fas fa-comment-dots mr-1.5"></i> Ask AI
+                  <i className="fas fa-comment-dots"></i> Ask AI
                 </button>
               </div>
 
+              {/* ── Product Description ── */}
+              {product.description && (
+                <div className="p-4 bg-gray-50 rounded-[10px] border border-gray-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <i className="fas fa-file-alt text-[#FF6B00]"></i>
+                    <h3 className="text-sm font-bold text-[#1A1A1A] m-0">Description</h3>
+                  </div>
+                  <div className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: product.description }} />
+                </div>
+              )}
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* Product Description (full width below both columns) */}
-          <div className="pt-8 sm:pt-10 mt-8 sm:mt-10 border-t border-gray-200">
-            <h3 className="text-lg md:text-xl font-bold text-[#1A1A1A] mb-4 sm:mb-5">Product Description</h3>
-            <div 
-              className="description-content text-sm sm:text-base leading-relaxed text-gray-600"
-              dangerouslySetInnerHTML={{ __html: product.description }} 
-            />
-          </div>
-
-          {/* Product Reviews */}
-          <div className="pt-8 sm:pt-10 mt-8 sm:mt-10 border-t border-gray-200">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg md:text-xl font-bold text-[#1A1A1A]">Customer Reviews</h3>
+      {/* ── Reviews Section ── */}
+      <section className="py-8 md:py-12 bg-gray-50">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl md:text-2xl font-bold text-[#1A1A1A]">Customer Reviews</h2>
+            {reviewsTotal > 0 && (
               <div className="flex items-center gap-2">
-                <select 
-                  className="px-3 py-1.5 rounded-[8px] text-sm border border-gray-200 bg-white text-gray-600 outline-none cursor-pointer"
-                  value={reviewsScore ?? ''}
-                  onChange={e => { setReviewsScore(e.target.value ? parseInt(e.target.value) : undefined); setReviewsPage(1); }}
-                >
-                  <option value="">All Ratings</option>
-                  <option value="5">★★★★★ (5)</option>
-                  <option value="4">★★★★☆ (4)</option>
-                  <option value="3">★★★☆☆ (3)</option>
-                  <option value="2">★★☆☆☆ (2)</option>
-                  <option value="1">★☆☆☆☆ (1)</option>
-                </select>
-              </div>
-            </div>
-
-            {reviewsLoading ? (
-              <div className="space-y-4">
-                {[1,2,3].map(i => (
-                  <div key={i} className="animate-pulse p-4 bg-gray-50 rounded-[10px]">
-                    <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  </div>
+                {[5,4,3,2,1].map(score => (
+                  <button
+                    key={score}
+                    onClick={() => setReviewsScore(reviewsScore === score ? undefined : score)}
+                    className={`px-2.5 py-1 rounded-[6px] text-xs font-semibold border transition-all cursor-pointer ${
+                      reviewsScore === score
+                        ? 'bg-[#FF6B00] text-white border-[#FF6B00]'
+                        : 'bg-white text-gray-500 border-gray-200 hover:border-[#FF6B00]'
+                    }`}
+                  >
+                    {score}★
+                  </button>
                 ))}
-              </div>
-            ) : reviews.length > 0 ? (
-              <div className="space-y-4">
-                {reviews.map((review: any, idx: number) => (
-                  <div key={`${review.commentId || idx}-${idx}`} className="p-4 bg-gray-50 rounded-[10px] border border-gray-100">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-[#FF6B00] flex items-center justify-center text-white text-xs font-bold">
-                          {review.commentUser?.charAt(0) || '?'}
-                        </div>
-                        <div>
-                          <span className="text-sm font-semibold text-[#1A1A1A]">{review.commentUser}</span>
-                          <span className="text-[#FFB800] text-xs ml-2">
-                            {renderStars(review.score || '0')}
-                          </span>
-                        </div>
-                      </div>
-                      <span className="text-xs text-gray-400">{new Date(review.commentDate).toLocaleDateString()}</span>
-                    </div>
-                    <p className="text-sm text-gray-600 leading-relaxed">{review.comment}</p>
-                    {review.commentUrls?.length > 0 && (
-                      <div className="flex gap-2 mt-2">
-                        {review.commentUrls.slice(0, 3).map((url: string, i: number) => (
-                          <img key={i} src={url} alt="Review" className="w-16 h-16 rounded-[8px] object-cover border border-gray-200" loading="lazy" />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-                
-                {/* Pagination */}
-                {reviewsTotal > 5 && (
-                  <div className="flex items-center justify-center gap-2 pt-4">
-                    <button 
-                      className="px-3 py-1.5 rounded-[6px] text-sm font-medium border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
-                      disabled={reviewsPage <= 1}
-                      onClick={() => setReviewsPage(p => Math.max(1, p - 1))}
-                    >
-                      Previous
-                    </button>
-                    <span className="text-sm text-gray-500">
-                      Page {reviewsPage} of {Math.ceil(reviewsTotal / 5)}
-                    </span>
-                    <button 
-                      className="px-3 py-1.5 rounded-[6px] text-sm font-medium border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
-                      disabled={reviewsPage >= Math.ceil(reviewsTotal / 5)}
-                      onClick={() => setReviewsPage(p => p + 1)}
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-center py-10 text-gray-400">
-                <i className="fas fa-comment-dots text-4xl mb-3"></i>
-                <p className="text-sm">No reviews yet for this product.</p>
               </div>
             )}
           </div>
+
+          {reviewsLoading ? (
+            <div className="space-y-4">
+              {[1,2,3].map(i => (
+                <div key={i} className="animate-pulse p-4 bg-gray-50 rounded-[10px]">
+                  <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          ) : reviews.length > 0 ? (
+            <div className="space-y-4">
+              {reviews.map((review: any, idx: number) => (
+                <div key={`${review.commentId || idx}-${idx}`} className="p-4 bg-gray-50 rounded-[10px] border border-gray-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-[#FF6B00] flex items-center justify-center text-white text-xs font-bold">
+                        {review.commentUser?.charAt(0) || '?'}
+                      </div>
+                      <div>
+                        <span className="text-sm font-semibold text-[#1A1A1A]">{review.commentUser}</span>
+                        <span className="text-[#FFB800] text-xs ml-2">
+                          {renderStars(review.score || '0')}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-xs text-gray-400">{new Date(review.commentDate).toLocaleDateString()}</span>
+                  </div>
+                  <p className="text-sm text-gray-600 leading-relaxed">{review.comment}</p>
+                  {review.commentUrls?.length > 0 && (
+                    <div className="flex gap-2 mt-2">
+                      {review.commentUrls.slice(0, 3).map((url: string, i: number) => (
+                        <img key={i} src={url} alt="Review" className="w-16 h-16 rounded-[8px] object-cover border border-gray-200" loading="lazy" />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* Pagination */}
+              {reviewsTotal > 5 && (
+                <div className="flex items-center justify-center gap-2 pt-4">
+                  <button
+                    className="px-3 py-1.5 rounded-[6px] text-sm font-medium border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
+                    disabled={reviewsPage <= 1}
+                    onClick={() => setReviewsPage(p => Math.max(1, p - 1))}
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-gray-500">
+                    Page {reviewsPage} of {Math.ceil(reviewsTotal / 5)}
+                  </span>
+                  <button
+                    className="px-3 py-1.5 rounded-[6px] text-sm font-medium border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
+                    disabled={reviewsPage >= Math.ceil(reviewsTotal / 5)}
+                    onClick={() => setReviewsPage(p => p + 1)}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-10 text-gray-400">
+              <i className="fas fa-comment-dots text-4xl mb-3"></i>
+              <p className="text-sm">No reviews yet for this product.</p>
+            </div>
+          )}
         </div>
       </section>
 

@@ -1,0 +1,17 @@
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
+
+async function main() {
+  // Find variants with multiple dashes (like "Cow-Cup less sleeve-500ML")
+  const variants = await prisma.variant.findMany({
+    where: { 
+      color: { contains: '-' },
+      NOT: { cjId: { startsWith: 'TEMP-' } }
+    },
+    select: { cjId: true, color: true, size: true },
+    take: 30
+  });
+  console.log('Variants with dash in color:', JSON.stringify(variants, null, 2));
+  await prisma.$disconnect();
+}
+main().catch(console.error);

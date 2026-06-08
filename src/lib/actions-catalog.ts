@@ -5,6 +5,7 @@ import { getProductDetails, cjFetch } from '@/lib/cj';
 import { getAllCategories, getCategoryTree } from '@/lib/categories';
 import type { CategoryNode } from '@/lib/categories';
 import { getDBStoreSettings, applyMarginToPrice } from './pricing';
+import { extractColor, extractSize } from './variant-utils';
 
 /**
  * Helper: Resolve categoryId (UUID FK ke tabel Category lokal)
@@ -116,12 +117,17 @@ export async function importProductVariantsAction(cjId: string) {
         // sellingPrice sudah include margin — dihitung saat import, bukan di frontend
         const sellingPrice = applyMarginToPrice(baseCost, settings);
         
+        // Parse color and size from variantKey (format: "ColorName-Size")
+        const combinedColor = v.variantKey || '';
+        const parsedColor = extractColor(combinedColor);
+        const parsedSize = extractSize(combinedColor);
+        
         await prisma.variant.upsert({
           where: { cjId: v.vid },
           update: {
             sku: v.variantSku,
-            color: v.variantKey || '',
-            size: v.variantNameEn || '',
+            color: parsedColor,
+            size: parsedSize,
             weight: v.variantWeight || 0,
             baseCost: baseCost,
             sellingPrice: sellingPrice,
@@ -132,8 +138,8 @@ export async function importProductVariantsAction(cjId: string) {
             productId: product.id,
             cjId: v.vid,
             sku: v.variantSku,
-            color: v.variantKey || '',
-            size: v.variantNameEn || '',
+            color: parsedColor,
+            size: parsedSize,
             weight: v.variantWeight || 0,
             baseCost: baseCost,
             sellingPrice: sellingPrice,
