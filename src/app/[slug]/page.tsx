@@ -27,46 +27,94 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
+  
   const post = await prisma.blogPost.findFirst({
     where: { slug, published: true },
-    select: { title: true, excerpt: true, image: true, content: true },
+    select: { 
+      title: true, 
+      excerpt: true, 
+      image: true, 
+      content: true,
+      language: true,
+      createdAt: true,
+      updatedAt: true
+    },
   });
 
-  if (!post) return {};
+  if (!post) return { title: 'Post Not Found' };
+
+  const canonicalUrl = `${baseUrl}/${slug}`;
+  const siteName = 'BangParjo Shop';
+  
+  // Default image
+  let mainImage = post.image || `${baseUrl}/logo-banner.png`;
 
   // If it's product JSON data, use AI-generated metadata if available
   if (isProductData(post.content)) {
     const product = parseProductData(post.content);
     if (product) {
       const aiContent = (product as any).ai || {};
-      const seoTitle = aiContent.seoTitle || `${product.name} — BangParjo`;
+      const seoTitle = aiContent.seoTitle || `${product.name} — ${siteName}`;
       const seoDescription = aiContent.seoDescription || `Buy ${product.name} at the best price. Premium quality, global shipping, and satisfaction guaranteed.`;
       
-      const mainImage = post.image || (product.images && product.images[0]);
+      const productImg = post.image || (product.images && product.images[0]);
+      if (productImg) {
+        mainImage = productImg;
+      }
+      
+      // Ensure absolute URL
+      if (mainImage.startsWith('/')) {
+        mainImage = `${baseUrl}${mainImage}`;
+      }
       
       return {
         title: seoTitle,
         description: seoDescription,
+        alternates: { canonical: canonicalUrl },
         openGraph: {
           title: seoTitle,
           description: seoDescription,
-          images: mainImage ? [{ url: mainImage, width: 1200, height: 630 }] : [{ url: '/logo-banner.png', width: 1200, height: 630 }],
+          url: canonicalUrl,
+          siteName: siteName,
+          images: [{ url: mainImage, width: 1200, height: 630 }],
+          type: 'website',
         },
         twitter: {
           card: 'summary_large_image',
           title: seoTitle,
           description: seoDescription,
-          images: mainImage ? [mainImage] : ['/logo-banner.png'],
+          images: [mainImage],
         },
       };
     }
   }
 
+  // Regular blog post
+  if (mainImage.startsWith('/')) {
+    mainImage = `${baseUrl}${mainImage}`;
+  }
+
   return {
     title: post.title,
     description: post.excerpt || undefined,
-    openGraph: post.image ? { images: [post.image] } : { images: [{ url: '/logo-banner.png', width: 1200, height: 630 }] },
-    twitter: post.image ? { images: [post.image] } : { images: ['/logo-banner.png'] },
+    alternates: { canonical: canonicalUrl },
+    openGraph: {
+      title: post.title,
+      description: post.excerpt || '',
+      url: canonicalUrl,
+      siteName: siteName,
+      type: 'article',
+      publishedTime: post.createdAt.toISOString(),
+      modifiedTime: post.updatedAt.toISOString(),
+      images: [{ url: mainImage, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.excerpt || '',
+      images: [mainImage],
+    },
   };
 }
 
