@@ -142,9 +142,14 @@ export default async function BlogSlugPage(props: Props) {
             };
 
             // Save back to DB to avoid future syncs
+            // Also update the blog image if it was empty or different
+            const newImage = product.images[0] || null;
             await prisma.blogPost.update({
               where: { id: post.id },
-              data: { content: JSON.stringify(product) }
+              data: { 
+                content: JSON.stringify(product),
+                ...(newImage && newImage !== post.image ? { image: newImage } : {}),
+              }
             });
 
             // Cache di-skip — data langsung dari database
