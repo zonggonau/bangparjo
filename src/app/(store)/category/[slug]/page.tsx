@@ -174,14 +174,27 @@ export default async function CategoryPage({
                   <ProductCard key={product.pid} product={product} />
                 ))}
               </div>
-              {totalPages > 1 && (
+            {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-3 sm:gap-4 mt-10 sm:mt-14">
                   {pageNum > 1 && (
                     <Link href={{ query: { ...sParams, page: pageNum - 1 } }} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md font-semibold border border-gray-200 text-sm no-underline hover:bg-gray-50 text-[#1A1A1A]">
                       <i className="fas fa-chevron-left text-[10px]"></i> Prev
                     </Link>
                   )}
-                  <span className="text-sm text-gray-500 font-semibold">Page {pageNum} of {totalPages}</span>
+                  <div className="flex gap-1.5 sm:gap-2">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let startPage = Math.max(1, pageNum - 2);
+                      const endPage = Math.min(totalPages, startPage + 4);
+                      if (endPage === totalPages) startPage = Math.max(1, endPage - 4);
+                      const p = startPage + i;
+                      if (p > totalPages) return null;
+                      return (
+                        <Link key={p} href={{ query: { ...sParams, page: p } }}
+                          className={`inline-flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-md font-semibold no-underline text-sm ${pageNum === p ? 'bg-[#FF6B00] text-white' : 'border border-gray-200 text-[#1A1A1A] hover:bg-gray-50'}`}
+                        >{p}</Link>
+                      );
+                    })}
+                  </div>
                   {pageNum < totalPages && (
                     <Link href={{ query: { ...sParams, page: pageNum + 1 } }} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md font-semibold border border-gray-200 text-sm no-underline hover:bg-gray-50 text-[#1A1A1A]">
                       Next <i className="fas fa-chevron-right text-[10px]"></i>
