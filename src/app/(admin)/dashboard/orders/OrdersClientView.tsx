@@ -3,7 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { fulfillAdminOrderAction, syncAdminOrderAction, markOrderAsPaidAction } from '@/lib/actions-admin-orders';
+import { 
+  fulfillAdminOrderAction, 
+  syncAdminOrderAction, 
+  markOrderAsPaidAction,
+  cancelOrderAction,
+  deleteLocalOrderAction,
+  bulkDeleteOrdersAction,
+} from '@/lib/actions-admin-orders';
 import { toast } from 'react-hot-toast';
 
 function StatusBadge({ status }: { status: string }) {
@@ -22,6 +29,8 @@ function StatusBadge({ status }: { status: string }) {
     </span>
   );
 }
+
+const NON_CANCELLABLE = ['CANCELLED', 'DELIVERED', 'COMPLETED', 'SHIPPED'];
 
 export default function OrdersClientView({ 
   orders, 
@@ -45,10 +54,33 @@ export default function OrdersClientView({
   const [busy, setBusy] = useState<string | null>(null);
   const [localSearch, setLocalSearch] = useState(currentSearch);
   const [confirmModal, setConfirmModal] = useState<{
-    type: 'fulfill' | 'markPaid';
+    type: 'fulfill' | 'markPaid' | 'cancel' | 'delete';
     orderNum: string;
     orderId: string;
   } | null>(null);
+
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  const cancelledOrders = orders.filter(o => (o.status || '').toUpperCase() === 'CANCELLED');
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === cancelledOrders.length && cancelledOrders.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(cancelledOrders.map((o: any) => o.id)));
+    }
+  };
 
   const updateFilters = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -129,6 +161,71 @@ export default function OrdersClientView({
     }
   };
 
+  const handleCancel = (orderId: string, orderNum: string) => {
+    setConfirmModal({ type: 'cancel', orderNum, orderId });
+  };
+
+  const executeCancel = async (orderId: string) => {
+    setBusy(orderId);
+    setConfirmModal(null);
+    try {
+      const data = await cancelOrderAction(orderId) as any;
+      if (data.success) {
+        toast.success('Order cancelled successfully.');
+        setSelectedIds(prev => { const n = new Set(prev); n.delete(orderId); return n; });
+        router.refresh();
+      } else {
+        toast.error('Failed: ' + (data.error || 'Unknown error'));
+      }
+    } catch (e: any) {
+      toast.error('Critical error: ' + e.message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleDelete = (orderId: string, orderNum: string) => {
+    setConfirmModal({ type: 'delete', orderNum, orderId });
+  };
+
+  const executeDelete = async (orderId: string) => {
+    setBusy(orderId);
+    setConfirmModal(null);
+    try {
+      const data = await deleteLocalOrderAction(orderId) as any;
+      if (data.success) {
+        toast.success('Order deleted permanently.');
+        setSelectedIds(prev => { const n = new Set(prev); n.delete(orderId); return n; });
+        router.refresh();
+      } else {
+        toast.error('Failed: ' + (data.error || 'Unknown error'));
+      }
+    } catch (e: any) {
+      toast.error('Critical error: ' + e.message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const executeBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkBusy(true);
+    try {
+      const data = await bulkDeleteOrdersAction(Array.from(selectedIds)) as any;
+      if (data.success) {
+        toast.success(`${data.deletedCount} order(s) deleted permanently.`);
+        setSelectedIds(new Set());
+        router.refresh();
+      } else {
+        toast.error('Bulk delete failed: ' + (data.error || 'Unknown error'));
+      }
+    } catch (e: any) {
+      toast.error('Critical error: ' + e.message);
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   const handlePayCjBalance = async (cjOrderId: string) => {
     if (!confirm(`Pay for CJ Order ${cjOrderId} using your CJ balance?`)) return;
     setBusy(cjOrderId);
@@ -185,6 +282,9 @@ export default function OrdersClientView({
       setExporting(false);
     }
   };
+
+  const allCancelledSelected = cancelledOrders.length > 0 && selectedIds.size === cancelledOrders.length;
+  const hasCancelledSelected = selectedIds.size > 0;
 
   return (
     <div className="animate-fade-in">
@@ -246,11 +346,51 @@ export default function OrdersClientView({
         </div>
       </div>
 
+      {/* Bulk Action Bar — visible when CANCELLED orders are selected */}
+      {hasCancelledSelected && (
+        <div className="flex items-center justify-between bg-[#FEF2F2] border border-[#FCA5A5] rounded-[12px] px-5 py-3 mb-4 animate-fade-in">
+          <span className="text-sm font-bold text-[#991B1B]">
+            <i className="fas fa-check-square mr-2"></i>
+            {selectedIds.size} CANCELLED order{selectedIds.size > 1 ? 's' : ''} selected
+          </span>
+          <div className="flex gap-2">
+            <button
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-[8px] text-sm font-bold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-all duration-200"
+              onClick={() => setSelectedIds(new Set())}
+            >
+              <i className="fas fa-times"></i> Deselect All
+            </button>
+            <button
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-[8px] text-sm font-bold bg-[#DC2626] text-white hover:bg-[#B91C1C] transition-all duration-200 disabled:opacity-50"
+              onClick={executeBulkDelete}
+              disabled={bulkBusy}
+            >
+              <i className={`fas ${bulkBusy ? 'fa-spinner fa-spin' : 'fa-trash'}`}></i>
+              {bulkBusy ? 'Deleting...' : `Delete ${selectedIds.size} Order${selectedIds.size > 1 ? 's' : ''}`}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-[16px] border border-[#E2E8F0] overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-[#F8FAFC]">
+                {/* Checkbox column — only show if viewing LOCAL source where cancel/delete apply */}
+                {currentSource === 'LOCAL' && (
+                  <th className="px-5 py-3.5 w-10">
+                    {cancelledOrders.length > 0 && (
+                      <input
+                        type="checkbox"
+                        checked={allCancelledSelected}
+                        onChange={toggleSelectAll}
+                        title="Select all CANCELLED orders"
+                        className="w-4 h-4 rounded accent-[#DC2626] cursor-pointer"
+                      />
+                    )}
+                  </th>
+                )}
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-[#64748B] uppercase">Identity</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-[#64748B] uppercase">Customer</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-[#64748B] uppercase">Amount</th>
@@ -263,7 +403,7 @@ export default function OrdersClientView({
             <tbody>
               {orders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-[100px]">
+                  <td colSpan={currentSource === 'LOCAL' ? 8 : 7} className="text-center py-[100px]">
                     <div className="text-[40px] text-gray-200 mb-4"><i className="fas fa-inbox"></i></div>
                     <p className="font-bold text-gray-400">NO ORDERS FOUND</p>
                   </td>
@@ -271,9 +411,30 @@ export default function OrdersClientView({
               ) : (
                 orders.map(o => {
                   const orderId = o.orderNum || o.orderId || o.id;
-                  const isBusy = busy === orderId;
+                  const isBusy = busy === orderId || busy === o.id;
+                  const statusUpper = (o.status || '').toUpperCase();
+                  const isCancelled = statusUpper === 'CANCELLED';
+                  const canCancel = currentSource === 'LOCAL' && !NON_CANCELLABLE.includes(statusUpper);
+                  const isSelected = selectedIds.has(o.id);
+
                   return (
-                    <tr key={o.id || orderId} className="border-b border-[#F1F5F9] hover:bg-[#FAFBFE] transition-all duration-200">
+                    <tr 
+                      key={o.id || orderId} 
+                      className={`border-b border-[#F1F5F9] hover:bg-[#FAFBFE] transition-all duration-200 ${isCancelled && isSelected ? 'bg-[#FFF5F5]' : ''}`}
+                    >
+                      {/* Checkbox — only for CANCELLED orders in LOCAL source */}
+                      {currentSource === 'LOCAL' && (
+                        <td className="px-5 py-3.5">
+                          {isCancelled && (
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleSelect(o.id)}
+                              className="w-4 h-4 rounded accent-[#DC2626] cursor-pointer"
+                            />
+                          )}
+                        </td>
+                      )}
                       <td className="px-5 py-3.5">
                         <div className="flex flex-col">
                           <Link 
@@ -324,12 +485,12 @@ export default function OrdersClientView({
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex gap-2 justify-end">
-                          {currentSource === 'LOCAL' && (o.status || '').toUpperCase() === 'PAID' && !o.cjOrderId && (
+                          {currentSource === 'LOCAL' && statusUpper === 'PAID' && !o.cjOrderId && (
                             <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-sm font-semibold bg-[#FF6B00] text-white hover:bg-[#E65100] transition-all duration-200" disabled={isBusy} onClick={() => handleFulfill(o.orderNum, orderId)} title="Fulfill to CJ">
                               <i className={`fas fa-check-circle ${isBusy ? 'fa-spin' : ''}`}></i>
                             </button>
                           )}
-                          {currentSource === 'LOCAL' && (o.status || '').toUpperCase() === 'PAID' && o.cjOrderId && cjPayType === 2 && (
+                          {currentSource === 'LOCAL' && statusUpper === 'PAID' && o.cjOrderId && cjPayType === 2 && (
                             <button 
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-all duration-200" 
                               disabled={isBusy} 
@@ -339,7 +500,7 @@ export default function OrdersClientView({
                               <i className={`fas fa-wallet ${isBusy ? 'fa-spin' : ''}`}></i>
                             </button>
                           )}
-                          {currentSource === 'LOCAL' && ['UNPAID', 'FULFILLING'].includes((o.status || '').toUpperCase()) && (
+                          {currentSource === 'LOCAL' && ['UNPAID', 'FULFILLING'].includes(statusUpper) && (
                             <button
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-all duration-200"
                               disabled={isBusy}
@@ -352,6 +513,28 @@ export default function OrdersClientView({
                           {(o.cjOrderId || (currentSource === 'LOCAL' && o.status === 'UNPAID')) && (
                             <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-sm font-semibold border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition-all duration-200" disabled={isBusy} onClick={() => handleSync(o.id)} title="Sync Status">
                               <i className={`fas fa-sync ${isBusy ? 'fa-spin' : ''}`}></i>
+                            </button>
+                          )}
+                          {/* Cancel button — only for non-final statuses in LOCAL source */}
+                          {canCancel && (
+                            <button
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-sm font-semibold bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 transition-all duration-200"
+                              disabled={isBusy}
+                              onClick={() => handleCancel(o.id, orderId)}
+                              title="Cancel Order"
+                            >
+                              <i className={`fas fa-ban ${isBusy ? 'fa-spin' : ''}`}></i>
+                            </button>
+                          )}
+                          {/* Delete button — ONLY for CANCELLED orders */}
+                          {isCancelled && currentSource === 'LOCAL' && (
+                            <button
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-sm font-semibold bg-red-50 text-[#DC2626] border border-red-200 hover:bg-red-100 transition-all duration-200"
+                              disabled={isBusy}
+                              onClick={() => handleDelete(o.id, orderId)}
+                              title="Delete Order Permanently"
+                            >
+                              <i className={`fas fa-trash ${isBusy ? 'fa-spin' : ''}`}></i>
                             </button>
                           )}
                         </div>
@@ -386,31 +569,56 @@ export default function OrdersClientView({
         </div>
       )}
       
-      {/* Real React Modal for Confirmation */}
+      {/* React Modal for Confirmation */}
       {confirmModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fade-in">
           <div className="max-w-sm w-full bg-white shadow-2xl rounded-[16px] pointer-events-auto flex flex-col overflow-hidden animate-slide-up-fade">
             <div className="p-5 flex gap-4">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${confirmModal.type === 'fulfill' ? 'bg-orange-100 text-orange-500' : 'bg-emerald-100 text-emerald-600'}`}>
-                <i className={`fas ${confirmModal.type === 'fulfill' ? 'fa-paper-plane' : 'fa-credit-card'}`}></i>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                confirmModal.type === 'fulfill' ? 'bg-orange-100 text-orange-500' : 
+                confirmModal.type === 'markPaid' ? 'bg-emerald-100 text-emerald-600' :
+                confirmModal.type === 'cancel' ? 'bg-amber-100 text-amber-600' :
+                'bg-red-100 text-red-600'
+              }`}>
+                <i className={`fas ${
+                  confirmModal.type === 'fulfill' ? 'fa-paper-plane' : 
+                  confirmModal.type === 'markPaid' ? 'fa-credit-card' :
+                  confirmModal.type === 'cancel' ? 'fa-ban' :
+                  'fa-trash'
+                }`}></i>
               </div>
               <div>
-                <h3 className="font-bold text-gray-900">{confirmModal.type === 'fulfill' ? 'Fulfill Order?' : 'Mark as Paid?'}</h3>
+                <h3 className="font-bold text-gray-900">
+                  {confirmModal.type === 'fulfill' ? 'Fulfill Order?' : 
+                   confirmModal.type === 'markPaid' ? 'Mark as Paid?' :
+                   confirmModal.type === 'cancel' ? 'Cancel Order?' :
+                   'Delete Order?'}
+                </h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  {confirmModal.type === 'fulfill' 
-                    ? <span>Send order <b>#{confirmModal.orderNum}</b> to CJ terminal for fulfillment.</span>
-                    : <span>Manually mark order <b>#{confirmModal.orderNum}</b> as PAID. Use this only if payment was confirmed outside the system.</span>
-                  }
+                  {confirmModal.type === 'fulfill' && <span>Send order <b>#{confirmModal.orderNum}</b> to CJ terminal for fulfillment.</span>}
+                  {confirmModal.type === 'markPaid' && <span>Manually mark order <b>#{confirmModal.orderNum}</b> as PAID. Use this only if payment was confirmed outside the system.</span>}
+                  {confirmModal.type === 'cancel' && <span>Cancel order <b>#{confirmModal.orderNum}</b>? Status will be changed to CANCELLED. This cannot be undone easily.</span>}
+                  {confirmModal.type === 'delete' && <span>Permanently delete CANCELLED order <b>#{confirmModal.orderNum}</b>? This action <strong>cannot be undone</strong>.</span>}
                 </p>
               </div>
             </div>
             <div className="flex border-t border-gray-100 bg-gray-50">
               <button onClick={() => setConfirmModal(null)} className="flex-1 px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors border-r border-gray-100">Cancel</button>
               <button 
-                onClick={() => confirmModal.type === 'fulfill' ? executeFulfill(confirmModal.orderNum) : executeMarkAsPaid(confirmModal.orderId)} 
-                className={`flex-1 px-4 py-3 text-sm font-bold transition-colors ${confirmModal.type === 'fulfill' ? 'text-orange-600 hover:bg-orange-50' : 'text-emerald-600 hover:bg-emerald-50'}`}
+                onClick={() => {
+                  if (confirmModal.type === 'fulfill') executeFulfill(confirmModal.orderNum);
+                  else if (confirmModal.type === 'markPaid') executeMarkAsPaid(confirmModal.orderId);
+                  else if (confirmModal.type === 'cancel') executeCancel(confirmModal.orderId);
+                  else executeDelete(confirmModal.orderId);
+                }} 
+                className={`flex-1 px-4 py-3 text-sm font-bold transition-colors ${
+                  confirmModal.type === 'fulfill' ? 'text-orange-600 hover:bg-orange-50' : 
+                  confirmModal.type === 'markPaid' ? 'text-emerald-600 hover:bg-emerald-50' :
+                  confirmModal.type === 'cancel' ? 'text-amber-600 hover:bg-amber-50' :
+                  'text-red-600 hover:bg-red-50'
+                }`}
               >
-                Confirm
+                {confirmModal.type === 'delete' ? 'Delete Permanently' : 'Confirm'}
               </button>
             </div>
           </div>

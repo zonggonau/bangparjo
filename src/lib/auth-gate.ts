@@ -43,18 +43,19 @@ export async function isEmailAuthorized(email: string): Promise<{
     return { authorized: true, isAdmin: false, userExists: !!user };
   }
 
-  // 3. Check if the email is associated with a paid/processing purchase order
-  const paidOrder = await prisma.order.findFirst({
+  // 3. Check if the email is associated with any purchase order (even UNPAID)
+  // This allows customers to login immediately after placing an order to pay or cancel it.
+  const anyOrder = await prisma.order.findFirst({
     where: {
       customerEmail: cleanEmail,
       status: {
-        in: ['PAID', 'FULFILLING', 'PROCESSING', 'SHIPPED', 'DELIVERED']
+        in: ['UNPAID', 'PAID', 'FULFILLING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']
       }
     },
     select: { id: true }
   });
 
-  if (paidOrder) {
+  if (anyOrder) {
     return { authorized: true, isAdmin: false, userExists: !!user };
   }
 

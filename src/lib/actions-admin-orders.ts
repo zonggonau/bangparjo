@@ -125,6 +125,80 @@ export async function markOrderAsPaidAction(orderId: string) {
   }
 }
 
+export async function cancelOrderAction(orderId: string) {
+  try {
+    await checkAdmin();
+    if (!orderId) return { success: false, error: 'Order ID is required' };
+
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) return { success: false, error: 'Order not found' };
+
+    // Hanya bisa cancel jika status bukan final
+    const nonCancellableStatuses = ['CANCELLED', 'DELIVERED', 'COMPLETED'];
+    if (nonCancellableStatuses.includes((order.status || '').toUpperCase())) {
+      return { success: false, error: `Order with status ${order.status} cannot be cancelled` };
+    }
+
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { status: 'CANCELLED' }
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteLocalOrderAction(orderId: string) {
+  try {
+    await checkAdmin();
+    if (!orderId) return { success: false, error: 'Order ID is required' };
+
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) return { success: false, error: 'Order not found' };
+
+    if ((order.status || '').toUpperCase() !== 'CANCELLED') {
+      return { success: false, error: 'Only CANCELLED orders can be deleted' };
+    }
+
+    // Hapus order items dulu (cascade), lalu order
+    await prisma.orderItem.deleteMany({ where: { orderId } });
+    await prisma.order.delete({ where: { id: orderId } });
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function bulkDeleteOrdersAction(orderIds: string[]) {
+  try {
+    await checkAdmin();
+    if (!orderIds || orderIds.length === 0) return { success: false, error: 'No order IDs provided' };
+
+    // Verifikasi semua order berstatus CANCELLED
+    const orders = await prisma.order.findMany({
+      where: { id: { in: orderIds } },
+      select: { id: true, status: true }
+    });
+
+    const nonCancelled = orders.filter(o => (o.status || '').toUpperCase() !== 'CANCELLED');
+    if (nonCancelled.length > 0) {
+      return { success: false, error: `${nonCancelled.length} orders are not CANCELLED and cannot be deleted` };
+    }
+
+    const validIds = orders.map(o => o.id);
+
+    await prisma.orderItem.deleteMany({ where: { orderId: { in: validIds } } });
+    await prisma.order.deleteMany({ where: { id: { in: validIds } } });
+
+    return { success: true, deletedCount: validIds.length };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 export async function getCjPayTypeAction() {
   try {
     await checkAdmin();

@@ -307,6 +307,30 @@ export async function createOrderAction(data: any) {
 
     triggerOpenClawWebhook(order);
 
+    // Auto-register customer as User (passwordless — OTP login only)
+    // This allows the customer to login via OTP to pay or cancel their order
+    if (customerEmail) {
+      try {
+        await prisma.user.upsert({
+          where: { email: customerEmail.toLowerCase().trim() },
+          update: {
+            // Update name only if currently null/empty
+            name: customerName || undefined,
+          },
+          create: {
+            email: customerEmail.toLowerCase().trim(),
+            name: customerName || null,
+            role: 'USER',
+            // No password — customer uses OTP (email PIN) to login
+          },
+        });
+        console.log('[Orders] Customer auto-registered:', customerEmail);
+      } catch (userErr: any) {
+        // Non-fatal — log and continue
+        console.warn('[Orders] Failed to auto-register customer:', userErr.message);
+      }
+    }
+
     return { success: true, order };
   } catch (error: any) {
     console.error('Server Action Error (createOrder):', error);
