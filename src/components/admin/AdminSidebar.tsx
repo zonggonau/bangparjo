@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -33,6 +34,7 @@ const NAV_GROUPS = [
     label: 'System',
     items: [
       { id: 'subscribers',  label: 'Customers',     icon: 'fas fa-users',     path: '/dashboard/subscribers' },
+      { id: 'analytics',    label: 'Visitor Logs',  icon: 'fas fa-globe',     path: '/dashboard/analytics' },
       { id: 'webhook-logs', label: 'Webhook Logs',  icon: 'fas fa-file-alt',  path: '/dashboard/webhooks' },
       { id: 'settings',     label: 'Settings',      icon: 'fas fa-cog',       path: '/dashboard/settings' },
     ],

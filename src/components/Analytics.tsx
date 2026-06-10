@@ -22,6 +22,27 @@ function AnalyticsContent() {
     }
   }, [pathname, searchParams, GA_ID, FB_PIXEL_ID]);
 
+  useEffect(() => {
+    // Only track public storefront pages (exclude admin /dashboard and API calls)
+    const isDashboardOrApi = pathname.startsWith('/dashboard') || pathname.startsWith('/api');
+    if (isDashboardOrApi) return;
+
+    const fullPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
+
+    fetch('/api/analytics/log', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        path: fullPath,
+        userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : undefined
+      }),
+    }).catch(err => {
+      console.error('Failed to log page visit:', err);
+    });
+  }, [pathname, searchParams]);
+
   return (
     <>
       {/* Google Analytics */}

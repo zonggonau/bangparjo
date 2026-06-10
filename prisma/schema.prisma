@@ -301,3 +301,14 @@ model CouponProduct {
   @@unique([couponId, productCjId])
 }
 
+model VisitorLog {
+  id          String   @id @default(cuid())
+  ip          String
+  path        String
+  country     String   @default("Unknown")
+  countryCode String   @default("XX")
+  userAgent   String?  @db.Text
+  createdAt   DateTime @default(now())
+}
+
+
