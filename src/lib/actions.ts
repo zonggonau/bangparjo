@@ -114,9 +114,72 @@ export async function getCartAction() {
       include: { cartItems: true }
     });
     if (!user) return { success: false, error: 'User not found' };
-    return { success: true, data: user.cartItems };
+
+    const items = user.cartItems;
+    const vids = items.map(i => i.vid).filter(Boolean);
+    const pids = items.map(i => i.pid).filter(Boolean);
+
+    const variants = await prisma.variant.findMany({
+      where: { cjId: { in: vids as string[] } },
+    });
+    const products = await prisma.product.findMany({
+      where: { cjId: { in: pids as string[] } },
+      include: { variants: { take: 1 } },
+    });
+
+    const updatedItems = items.map(item => {
+      const v = variants.find(v => v.cjId === item.vid);
+      const p = products.find(p => p.cjId === item.pid);
+
+      let livePrice = item.sellPrice;
+      if (v && v.sellingPrice) {
+        livePrice = v.sellingPrice;
+      } else if (p && p.variants?.[0]?.sellingPrice) {
+        livePrice = p.variants[0].sellingPrice;
+      }
+
+      return { ...item, sellPrice: livePrice };
+    });
+
+    return { success: true, data: updatedItems };
   } catch (error: any) {
     console.error('getCartAction error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function refreshCartPricesAction(items: any[]) {
+  try {
+    if (!items || items.length === 0) return { success: true, data: [] };
+
+    const vids = items.map(i => i.selectedVid).filter(Boolean);
+    const pids = items.map(i => i.pid).filter(Boolean);
+
+    const variants = await prisma.variant.findMany({
+      where: { cjId: { in: vids as string[] } },
+    });
+    const products = await prisma.product.findMany({
+      where: { cjId: { in: pids as string[] } },
+      include: { variants: { take: 1 } },
+    });
+
+    const updatedItems = items.map(item => {
+      const v = variants.find(v => v.cjId === item.selectedVid);
+      const p = products.find(p => p.cjId === item.pid);
+
+      let livePrice = item.sellPrice;
+      if (v && v.sellingPrice) {
+        livePrice = v.sellingPrice;
+      } else if (p && p.variants?.[0]?.sellingPrice) {
+        livePrice = p.variants[0].sellingPrice;
+      }
+
+      return { ...item, sellPrice: livePrice };
+    });
+
+    return { success: true, data: updatedItems };
+  } catch (error: any) {
+    console.error('refreshCartPricesAction error:', error);
     return { success: false, error: error.message };
   }
 }

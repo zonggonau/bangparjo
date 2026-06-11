@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getProductDetails } from '@/lib/cj-api';
+import { applyMarginToPrice, getDBStoreSettings } from '@/lib/pricing';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -18,6 +19,7 @@ export async function GET(request: Request) {
       const cjRes = await getProductDetails(cjId);
       if (cjRes.success && cjRes.data) {
         product = cjRes.data;
+        const marginSettings = await getDBStoreSettings();
         return NextResponse.json({
           success: true,
           data: {
@@ -26,12 +28,12 @@ export async function GET(request: Request) {
             productNameEn: product.productNameEn || product.productName,
             productImage: product.productImage || product.bigImage || '',
             bigImage: product.bigImage || product.productImage || '',
-            sellPrice: product.sellPrice || 0,
+            sellPrice: applyMarginToPrice(Number(product.sellPrice) || 0, marginSettings),
             description: product.description || '',
             variants: (product.variants || []).map((v: any) => ({
               vid: v.vid,
               variantNameEn: v.variantNameEn || v.variantKey || 'Default',
-              variantSellPrice: v.variantSellPrice,
+              variantSellPrice: applyMarginToPrice(Number(v.variantSellPrice) || 0, marginSettings),
               variantSku: v.variantSku,
               variantWeight: v.variantWeight,
               inventory: v.inventory,
@@ -52,7 +54,7 @@ export async function GET(request: Request) {
         productNameEn: product.name,
         productImage: product.images?.[0] || '',
         bigImage: product.images?.[0] || '',
-        sellPrice: product.variants?.[0]?.baseCost || 0,
+        sellPrice: product.variants?.[0]?.sellingPrice || product.variants?.[0]?.baseCost || 0,
         variants: product.variants.map((v: any) => ({
           vid: v.cjId,
           variantNameEn: [v.color, v.size].filter(Boolean).join(' / ') || 'Default',

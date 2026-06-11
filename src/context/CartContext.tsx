@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { CJProduct } from '@/lib/cj';
 import { useSession } from 'next-auth/react';
-import { syncCartAction, getCartAction } from '@/lib/actions';
+import { syncCartAction, getCartAction, refreshCartPricesAction } from '@/lib/actions';
 import { toast } from 'react-hot-toast';
 
 export interface CartItem extends CJProduct {
@@ -33,16 +33,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Load cart from localStorage on mount
   useEffect(() => {
-    try {
-      const savedCart = localStorage.getItem('cart');
-      if (savedCart) {
-        setItems(JSON.parse(savedCart));
+    const loadLocal = async () => {
+      try {
+        const savedCart = localStorage.getItem('cart');
+        if (savedCart) {
+          const parsed = JSON.parse(savedCart);
+          setItems(parsed);
+          
+          if (parsed.length > 0) {
+            // Fetch live prices from DB to ensure it includes margin + basecost
+            refreshCartPricesAction(parsed).then(res => {
+              if (res.success && res.data) {
+                setItems(res.data);
+              }
+            }).catch(e => console.error('Failed to refresh cart prices:', e));
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load cart from localStorage:', e);
+      } finally {
+        setIsLoaded(true);
       }
-    } catch (e) {
-      console.error('Failed to load cart from localStorage:', e);
-    } finally {
-      setIsLoaded(true);
-    }
+    };
+    loadLocal();
   }, []);
 
   // Sync to localStorage on change

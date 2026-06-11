@@ -917,7 +917,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '    productNameEn: productData.productNameEn,\n'
     + '    productImage: selectedVariant.image,\n'
     + '    bigImage: selectedVariant.image,\n'
-    + '    sellPrice: selectedVariant.baseCost,\n'
+    + '    sellPrice: selectedVariant.price,\n'
     + '    quantity: quantity,\n'
     + '    categoryName: productData.categoryName\n'
     + '  };\n'
