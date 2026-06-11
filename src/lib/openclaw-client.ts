@@ -20,7 +20,7 @@ interface SendWAParams {
 }
 
 /**
- * Kirim pesan WhatsApp via OpenClaw's sessions_send tool
+ * Kirim pesan WhatsApp via OpenClaw CLI (message send)
  */
 async function sendWA({ target, message }: SendWAParams) {
   if (!TOKEN) {
@@ -54,7 +54,7 @@ async function sendWA({ target, message }: SendWAParams) {
     console.log('[OpenClaw] WA sent to', target);
     return { success: true, data };
   } catch (error: any) {
-    console.error('[OpenClaw] Network Error:', error.message);
+    console.error('[OpenClaw] Error:', error.message);
     return { success: false, error: error.message };
   }
 }
