@@ -118,7 +118,7 @@ export default function Navbar() {
                       <div className="w-[295px] bg-[#fcfcfc] border-r border-[#f0f0f0] py-2.5 overflow-y-auto">
                         {/* All Products link */}
                         <div className="px-5 mb-1">
-                          <Link href="/category/all" className="flex items-center justify-between py-3 text-[14px] font-bold no-underline text-[#FF6B00] border-b border-orange-100" onClick={() => setMobileOpen(false)}>
+                          <Link href="/category/all" className="flex items-center justify-between py-2 text-[14px] font-bold no-underline text-[#FF6B00] border-b border-orange-100" onClick={() => setMobileOpen(false)}>
                             <span>
                               <i className="fas fa-th-large" style={{ width: '20px', marginRight: '10px', opacity: 0.8 }}></i>
                               All Products
@@ -132,7 +132,7 @@ export default function Navbar() {
                             className={`px-5 transition-all duration-200 ${activeL1 === cat.id ? 'bg-white relative before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-[#FF6B00]' : ''}`}
                             onMouseEnter={() => setActiveL1(cat.id)}
                           >
-                            <Link href={`/category/${cat.slug}`} className={`flex items-center justify-between py-3 text-[14px] font-semibold no-underline ${activeL1 === cat.id ? 'text-[#FF6B00]' : 'text-[#333]'}`}>
+                            <Link href={`/category/${cat.slug}`} className={`flex items-center justify-between py-2 text-[14px] font-semibold no-underline ${activeL1 === cat.id ? 'text-[#FF6B00]' : 'text-[#333]'}`}>
                               <span>
                                 <i className={`fas ${getIcon(cat.name)}`} style={{ width: '20px', marginRight: '10px', opacity: 0.6 }}></i>
                                 {cat.name}
