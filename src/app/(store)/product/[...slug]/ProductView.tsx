@@ -1,7 +1,7 @@
 'use client';
 
 import { parseProductName, parseProductImage, formatUSD } from '@/lib/utils';
-import { parseVariants, getColorSwatch } from '@/lib/variant-utils';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
@@ -21,8 +21,7 @@ function renderStars(score: any) {
 }
 
 /**
- * VariantSelector — Color + Size filter UI
- * Extracted to its own component to properly use hooks.
+ * VariantSelector — Default flat list
  */
 function VariantSelector({
   variants,
@@ -33,175 +32,26 @@ function VariantSelector({
   selectedVariant: any;
   onVariantSelect: (v: any) => void;
 }) {
-  const parsed = useMemo(() => parseVariants(variants), [variants]);
-  const hasColors = parsed.colors.length > 0 && parsed.colors[0] !== 'Default';
-  const hasSizes = parsed.sizes.length > 0;
-
-  const [selectedColor, setSelectedColor] = useState<string>('');
-  const [selectedSize, setSelectedSize] = useState<string>('');
-
-  // Initialize from current selectedVariant
-  useEffect(() => {
-    if (selectedVariant) {
-      const v = parsed.variants.find((pv: any) => pv.vid === selectedVariant.vid);
-      if (v) {
-        setSelectedColor(v.parsedColor);
-        if (v.parsedSize) setSelectedSize(v.parsedSize);
-        return;
-      }
-    }
-    // Default: first variant's color
-    if (parsed.variants.length > 0 && !selectedColor) {
-      setSelectedColor(parsed.variants[0].parsedColor);
-    }
-  }, []);
-
-  // Available sizes for selected color
-  const availableSizes = selectedColor ? (parsed.grouped[selectedColor] || []) : parsed.sizes;
-
-  // Available colors for selected size
-  const availableColors = selectedSize
-    ? parsed.colors.filter(c => (parsed.grouped[c] || []).includes(selectedSize))
-    : parsed.colors;
-
-  // Auto-select first size when color changes
-  useEffect(() => {
-    if (selectedColor) {
-      const sizes = parsed.grouped[selectedColor] || [];
-      if (sizes.length > 0) {
-        if (!selectedSize || !sizes.includes(selectedSize)) {
-          setSelectedSize(sizes[0]);
-        }
-      } else {
-        setSelectedSize('');
-      }
-    }
-  }, [selectedColor]);
-
-  // Find and select matching variant
-  useEffect(() => {
-    if (!selectedColor) return;
-    const matched = parsed.variants.find((v: any) =>
-      v.parsedColor === selectedColor &&
-      (selectedSize ? v.parsedSize === selectedSize : true)
-    ) || parsed.variants.find((v: any) => v.parsedColor === selectedColor) || null;
-
-    if (matched && matched.vid !== selectedVariant?.vid) {
-      onVariantSelect(matched);
-    }
-  }, [selectedColor, selectedSize]);
+  if (!variants || variants.length === 0) return null;
 
   return (
-    <div className="space-y-4">
-      {/* Color Selector */}
-      {hasColors && (
-        <div className="space-y-2.5">
-          <h3 className="text-sm font-bold text-[#1A1A1A]">
-            Color: <span className="text-[#FF6B00] font-semibold">{selectedColor}</span>
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {parsed.colors.map((color: string) => {
-              const isAvailable = availableColors.includes(color);
-              const isSelected = selectedColor === color;
-              const swatchColor = getColorSwatch(color);
-
-              return (
-                <button
-                  key={color}
-                  disabled={!isAvailable}
-                  onClick={() => {
-                    setSelectedColor(color);
-                    setSelectedSize('');
-                  }}
-                  className={`
-                    relative flex items-center gap-2 px-3 py-2 rounded-[8px] text-[13px] font-semibold border-2 transition-all duration-200 cursor-pointer
-                    ${isSelected
-                      ? 'border-[#FF6B00] bg-orange-50 text-[#FF6B00]'
-                      : isAvailable
-                        ? 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                        : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed opacity-40'
-                    }
-                  `}
-                  title={!isAvailable && selectedSize ? `Not available in ${selectedSize}` : color}
-                >
-                  {/* Color swatch dot */}
-                  {swatchColor ? (
-                    <span
-                      className="w-4 h-4 rounded-full border border-gray-200 shrink-0"
-                      style={{ backgroundColor: swatchColor }}
-                    />
-                  ) : (
-                    <span className="w-4 h-4 rounded-full bg-gradient-to-br from-gray-100 to-gray-300 border border-gray-200 shrink-0 flex items-center justify-center">
-                      <i className="fas fa-palette text-[8px] text-gray-400"></i>
-                    </span>
-                  )}
-                  <span>{color}</span>
-                  {isSelected && (
-                    <i className="fas fa-check text-[10px]"></i>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Size Selector */}
-      {hasSizes && (
-        <div className="space-y-2.5">
-          <h3 className="text-sm font-bold text-[#1A1A1A]">
-            Size: <span className="text-[#FF6B00] font-semibold">{selectedSize || 'Select'}</span>
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {parsed.sizes.map((size: string) => {
-              const isAvailable = availableSizes.includes(size);
-              const isSelected = selectedSize === size;
-
-              return (
-                <button
-                  key={size}
-                  disabled={!isAvailable}
-                  onClick={() => setSelectedSize(size)}
-                  className={`
-                    px-3 py-1.5 rounded-[6px] text-[13px] font-semibold border-2 transition-all duration-200 cursor-pointer min-w-[44px] text-center
-                    ${isSelected
-                      ? 'border-[#FF6B00] bg-orange-50 text-[#FF6B00]'
-                      : isAvailable
-                        ? 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                        : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed opacity-40'
-                    }
-                  `}
-                  title={!isAvailable && selectedColor ? `Not available for ${selectedColor}` : size}
-                >
-                  {size}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Fallback: flat list if no color/size detected */}
-      {!hasColors && !hasSizes && (
-        <div className="space-y-2.5">
-          <h3 className="text-sm font-bold text-[#1A1A1A]">Options</h3>
-          <div className="flex flex-wrap gap-2">
-            {parsed.variants.map((variant: any) => (
-              <button
-                key={variant.vid}
-                className={`px-3 py-1.5 rounded-[6px] text-[13px] font-semibold border-2 transition-all duration-200 cursor-pointer ${
-                  selectedVariant?.vid === variant.vid
-                    ? 'border-[#FF6B00] bg-orange-50 text-[#FF6B00]'
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                }`}
-                onClick={() => onVariantSelect(variant)}
-              >
-                {variant.variantNameEn || variant.variantKey || 'Default'}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+    <div className="space-y-2.5">
+      <h3 className="text-sm font-bold text-[#1A1A1A]">Options</h3>
+      <div className="flex flex-wrap gap-2">
+        {variants.map((variant: any) => (
+          <button
+            key={variant.vid}
+            className={`px-3 py-1.5 rounded-[6px] text-[13px] font-semibold border-2 transition-all duration-200 cursor-pointer ${
+              selectedVariant?.vid === variant.vid
+                ? 'border-[#FF6B00] bg-orange-50 text-[#FF6B00]'
+                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+            }`}
+            onClick={() => onVariantSelect(variant)}
+          >
+            {variant.variantNameEn || variant.variantKey || 'Default'}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
