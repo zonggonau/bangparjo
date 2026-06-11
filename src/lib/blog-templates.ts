@@ -336,8 +336,18 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '.hero .hero-badges span{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.8);backdrop-filter:blur(10px);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;color:#1A1A2E;border:1px solid rgba(255,107,53,0.15);}\n'
     + '.hero .hero-badges span i{color:#FF6B35;}\n'
     + '.hero .hero-actions{display:flex;gap:12px;flex-wrap:wrap;animation:fadeUp 0.6s ease-out 0.2s both;}\n'
-    + '.hero .hero-image-wrap{position:relative;animation:float 4s ease-in-out infinite;}\n'
-    + '.hero .hero-image-wrap img{border-radius:20px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.1);border:1px solid rgba(255,255,255,0.5);}\n'
+    + '.hero .hero-image-wrap{position:relative;}\n'
+    + '.hero-carousel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;-ms-overflow-style:none;scrollbar-width:none;border-radius:20px;}\n'
+    + '.hero-carousel::-webkit-scrollbar{display:none;}\n'
+    + '.hero-carousel-item{flex:none;width:100%;scroll-snap-align:center;position:relative;}\n'
+    + '.hero-carousel-item img{width:100%;display:block;border-radius:20px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 20px 60px rgba(0,0,0,0.1);height:100%;object-fit:cover;aspect-ratio:1/1;}\n'
+    + '.carousel-dots{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:10;}\n'
+    + '.carousel-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.5);cursor:pointer;transition:all 0.3s;}\n'
+    + '.carousel-dot.active{background:#FF6B35;transform:scale(1.2);}\n'
+    + '.carousel-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.8);border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;z-index:10;display:flex;align-items:center;justify-content:center;color:#1A1A2E;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.1);transition:all 0.3s;}\n'
+    + '.carousel-btn:hover{background:white;color:#FF6B35;}\n'
+    + '.carousel-btn-prev{left:16px;}\n'
+    + '.carousel-btn-next{right:16px;}\n'
     + '.hero .hero-image-wrap .price-tag{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);padding:10px 18px;border-radius:12px;font-family:"Outfit",-apple-system,sans-serif;font-weight:800;font-size:20px;color:#FF6B35;box-shadow:0 4px 15px rgba(0,0,0,0.1);border:1px solid rgba(255,107,53,0.2);}\n'
     + '.hero .hero-image-wrap .stock-badge{position:absolute;bottom:16px;left:16px;background:rgba(16,185,129,0.95);backdrop-filter:blur(10px);padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;color:white;display:flex;align-items:center;gap:6px;}\n'
     + '.detail-label{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;}\n'
@@ -400,6 +410,20 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '<a href="#checkout-section" class="btn btn-primary">&#128722; Order Now — ' + priceDisplay + '</a>\n'
     + '</div>\n';
 
+  var imagesHtml = product.images.slice(0, 5).map(function(img, idx) {
+    return '<a href="' + safeLink + '" class="hero-carousel-item" id="slide-' + idx + '" style="display:block;text-decoration:none;"><img src="' + img + '" alt="' + safeName + ' - Image ' + (idx + 1) + '" ' + (idx === 0 ? 'fetchpriority="high"' : 'loading="lazy"') + ' /></a>';
+  }).join('');
+
+  var dotsHtml = product.images.slice(0, 5).map(function(_, idx) {
+    return '<div class="carousel-dot' + (idx === 0 ? ' active' : '') + '" onclick="goToSlide(' + idx + ', event)"></div>';
+  }).join('');
+
+  var carouselControls = product.images.length > 1 ? (
+    '<button type="button" class="carousel-btn carousel-btn-prev" onclick="prevSlide(event)">&#10094;</button>\n' +
+    '<button type="button" class="carousel-btn carousel-btn-next" onclick="nextSlide(event)">&#10095;</button>\n' +
+    '<div class="carousel-dots" id="carousel-dots">' + dotsHtml + '</div>\n'
+  ) : '';
+
   result += '<section class="hero">\n'
     + '<div class="container">\n'
     + '<div class="grid-2">\n'
@@ -414,11 +438,14 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '<p>' + safeTagline + '</p>\n'
     + heroActionsHtml
     + '</div>\n'
-    + '<a href="' + safeLink + '" class="hero-image-wrap" style="display:block; text-decoration:none; cursor:pointer;">\n'
-    + '<div class="price-tag">' + priceDisplay + '</div>\n'
-    + '<div class="stock-badge" style="background:' + stockColor + ';">' + stockText + '</div>\n'
-    + '<img src="' + heroImage + '" alt="' + safeName + '" fetchpriority="high" />\n'
-    + '</a>\n'
+    + '<div class="hero-image-wrap" style="display:block; position:relative;">\n'
+    + '<div class="price-tag" style="z-index:10;pointer-events:none;">' + priceDisplay + '</div>\n'
+    + '<div class="stock-badge" style="z-index:10;background:' + stockColor + ';pointer-events:none;">' + stockText + '</div>\n'
+    + '<div class="hero-carousel" id="hero-carousel">\n'
+    + imagesHtml
+    + '</div>\n'
+    + carouselControls
+    + '</div>\n'
     + '</div>\n'
     + '</div>\n'
     + '</section>\n';
@@ -902,6 +929,38 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '}\n'
     + '\n'
     + 'updateDisplay();\n'
+    + '\n'
+    + 'var currentSlide = 0;\n'
+    + 'var totalSlides = Math.min(productData.images.length, 5);\n'
+    + 'function updateDots(idx) {\n'
+    + '  var dots = document.querySelectorAll("#carousel-dots .carousel-dot");\n'
+    + '  dots.forEach(function(dot, i) { dot.className = (i === idx) ? "carousel-dot active" : "carousel-dot"; });\n'
+    + '}\n'
+    + 'window.goToSlide = function(idx, e) {\n'
+    + '  if(e) { e.preventDefault(); e.stopPropagation(); }\n'
+    + '  var carousel = document.getElementById("hero-carousel");\n'
+    + '  if(!carousel) return;\n'
+    + '  var slide = document.getElementById("slide-" + idx);\n'
+    + '  if(slide) { carousel.scrollTo({left: slide.offsetLeft, behavior: "smooth"}); currentSlide = idx; updateDots(idx); }\n'
+    + '};\n'
+    + 'window.prevSlide = function(e) {\n'
+    + '  if(e) { e.preventDefault(); e.stopPropagation(); }\n'
+    + '  currentSlide = (currentSlide > 0) ? currentSlide - 1 : totalSlides - 1;\n'
+    + '  window.goToSlide(currentSlide);\n'
+    + '};\n'
+    + 'window.nextSlide = function(e) {\n'
+    + '  if(e) { e.preventDefault(); e.stopPropagation(); }\n'
+    + '  currentSlide = (currentSlide < totalSlides - 1) ? currentSlide + 1 : 0;\n'
+    + '  window.goToSlide(currentSlide);\n'
+    + '};\n'
+    + 'if(totalSlides > 1) { setInterval(function() { window.nextSlide(); }, 5000); }\n'
+    + 'var carouselEl = document.getElementById("hero-carousel");\n'
+    + 'if(carouselEl) {\n'
+    + '  carouselEl.addEventListener("scroll", function() {\n'
+    + '    var idx = Math.round(carouselEl.scrollLeft / carouselEl.offsetWidth);\n'
+    + '    if(idx !== currentSlide && idx >= 0 && idx < totalSlides) { currentSlide = idx; updateDots(idx); }\n'
+    + '  }, {passive: true});\n'
+    + '}\n'
     + '\n'
     + 'window.handleDirectCheckout = function(event) {\n'
     + '  if(!selectedVariant) return;\n'
