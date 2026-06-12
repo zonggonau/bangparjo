@@ -6,6 +6,8 @@ import { getAllCategories, getCategoryTree } from '@/lib/categories';
 import type { CategoryNode } from '@/lib/categories';
 import { getDBStoreSettings, applyMarginToPrice } from './pricing';
 import { extractColor, extractSize } from './variant-utils';
+import { revalidatePath } from 'next/cache';
+import { invalidateAppCache } from '@/lib/cache';
 
 /**
  * Helper: Resolve categoryId (UUID FK ke tabel Category lokal)
@@ -150,6 +152,15 @@ export async function importProductVariantsAction(cjId: string) {
       }
     }
 
+    try {
+      await invalidateAppCache('home:categories');
+      await invalidateAppCache('home:featured');
+      await invalidateAppCache('home:bestsellers');
+      revalidatePath('/', 'layout');
+    } catch (err) {
+      console.warn('[Cache Invalidation] Failed:', err);
+    }
+
     return { success: true, message: 'Imported successfully' };
   } catch (error) {
     console.error('[Import Action] Error:', error);
@@ -246,6 +257,15 @@ export async function importProductsBatchAction(products: any[], forceCategoryId
       }
     }
     
+    try {
+      await invalidateAppCache('home:categories');
+      await invalidateAppCache('home:featured');
+      await invalidateAppCache('home:bestsellers');
+      revalidatePath('/', 'layout');
+    } catch (err) {
+      console.warn('[Cache Invalidation] Failed:', err);
+    }
+
     return { success: true };
   } catch (error) {
     console.error('[Batch Import Action] Error:', error);

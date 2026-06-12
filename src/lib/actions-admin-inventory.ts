@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/db';
 import { cjFetch, getProductDetails, CJProductDetail, getInventoryByPid } from '@/lib/cj';
-import { revalidateTag } from 'next/cache';
+import { revalidateTag, revalidatePath } from 'next/cache';
 import { slugify, parseProductName } from '@/lib/utils';
 import { generateLandingPageContent } from '@/lib/ai-content';
 import { invalidateAppCache } from '@/lib/cache';
@@ -49,9 +49,12 @@ async function invalidateProductCaches(categoryName?: string) {
       }
     }
     
-    // 3. Next.js cache tags
+    // 3. Next.js cache tags and full layout revalidation
     revalidateTag('home:featured', { expire: 0 });
     revalidateTag('home:bestsellers', { expire: 0 });
+    
+    // Force frontend to refresh completely on next request
+    revalidatePath('/', 'layout');
   } catch (err) {
     console.warn('[Cache Invalidation] Failed:', err);
   }
