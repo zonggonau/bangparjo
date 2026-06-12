@@ -75,6 +75,10 @@ export async function updateAdminInventoryAction(data: { variantId?: string; sel
         where: { id: data.id },
         data: { isHero: data.isHero },
       });
+      
+      // Force cache invalidation immediately to update Hero section
+      await invalidateProductCaches();
+      
       return { success: true, product: p };
     }
     return { success: false, error: 'Invalid payload' };
