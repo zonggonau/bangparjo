@@ -12,6 +12,33 @@ function SetupForm({ onComplete }: { onComplete: () => void }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [checking, setChecking] = useState(true);
+
+  // ── Double-check admin existence ────────────────────────────────────
+  useEffect(() => {
+    fetch('/api/admin/setup/check')
+      .then(r => r.json())
+      .then(d => {
+        if (d.isSetup === true) {
+          // Admin udah ada — redirect ke login biasa
+          window.location.reload();
+        } else {
+          setChecking(false);
+        }
+      })
+      .catch(() => {
+        // Gagal fetch — aman aja, tampilkan form
+        setChecking(false);
+      });
+  }, []);
+
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <i className="fas fa-circle-notch fa-spin fa-2x text-[#FF6B00]"></i>
+      </div>
+    );
+  }
 
   const handleSetup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,6 +203,8 @@ function LoginForm() {
         }
       } catch {
         if (!cancelled) {
+          // Safety: default ke false biar setup form gak muncul kalo ada error
+          setNeedsSetup(false);
           setCheckingSession(false);
         }
       }

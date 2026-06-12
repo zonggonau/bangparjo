@@ -30,3 +30,34 @@
   Status         : IDLE
 ═══════════════════════════════════════════════════
 
+═══════════════════════════════════════════════════
+  🤖 BANGPARJO AUTO IMPORTER BOT
+  Started: 2026-06-11T15:07:06.836Z
+═══════════════════════════════════════════════════
+
+[2026-06-11 15:07:07] 📅 New day 2026-06-11 — resetting counters (was "2026-06-10")
+[2026-06-11 15:07:07] 📦 Loaded 639 categories from DB
+[2026-06-11 15:07:07] 📋 0 imported / 0 skipped so far today
+[2026-06-11 15:07:07] 📁 Category [1/639]: Cases For iPhone 6 & 6 Plus (1EE2EA4E-87BC-4108-BBF3-0A98A4A1EF89)
+[2026-06-11 15:07:07]   📄 Page 1...
+[2026-06-11 15:07:09]   📦 20 products (total in cat: 510)
+[CJ API] Fetch error on /v1/product/query?pid=2046254260318302209: POINTS_EXHAUSTED: Too Many Requests, Sorry, you have reached the daily request limit (1000 times/day). Number of requests made: 1000. Please try again tomorrow. Please email to developer@cjdropshipping.com for further assistance. Alternatively, you may submit the same details through the website chat to request account activation support from a sales representative. Please include: 1. an integration demo showing your CJ API application scenario from product query to pushing orders to CJ Store Orders (a Google Drive link is acceptable); 2. a backend screenshot clearly showing your store name; 3. your CJdropshipping user ID (e.g. CJXXXXXXX), with email verified and a WhatsApp number bound; 4. your API application scenario and the applicant identity information (company registration details, or personal identity information if you are an individual developer). Endpoint: /v1/product/query?pid=2046254260318302209. Retrying in 3000ms...
+[CJ API] Fetch error on /v1/product/query?pid=2046254260318302209: POINTS_EXHAUSTED: Too Many Requests, Sorry, you have reached the daily request limit (1000 times/day). Number of requests made: 1000. Please try again tomorrow. Please email to developer@cjdropshipping.com for further assistance. Alternatively, you may submit the same details through the website chat to request account activation support from a sales representative. Please include: 1. an integration demo showing your CJ API application scenario from product query to pushing orders to CJ Store Orders (a Google Drive link is acceptable); 2. a backend screenshot clearly showing your store name; 3. your CJdropshipping user ID (e.g. CJXXXXXXX), with email verified and a WhatsApp number bound; 4. your API application scenario and the applicant identity information (company registration details, or personal identity information if you are an individual developer). Endpoint: /v1/product/query?pid=2046254260318302209. Retrying in 6000ms...
+[CJ API] Fetch error on /v1/product/query?pid=2046254260318302209: POINTS_EXHAUSTED: Too Many Requests, Sorry, you have reached the daily request limit (1000 times/day). Number of requests made: 1000. Please try again tomorrow. Please email to developer@cjdropshipping.com for further assistance. Alternatively, you may submit the same details through the website chat to request account activation support from a sales representative. Please include: 1. an integration demo showing your CJ API application scenario from product query to pushing orders to CJ Store Orders (a Google Drive link is acceptable); 2. a backend screenshot clearly showing your store name; 3. your CJdropshipping user ID (e.g. CJXXXXXXX), with email verified and a WhatsApp number bound; 4. your API application scenario and the applicant identity information (company registration details, or personal identity information if you are an individual developer). Endpoint: /v1/product/query?pid=2046254260318302209. Retrying in 9000ms...
+[CJ API] Fetch error on /v1/product/query?pid=2046254260318302209: POINTS_EXHAUSTED: Too Many Requests, Sorry, you have reached the daily request limit (1000 times/day). Number of requests made: 1000. Please try again tomorrow. Please email to developer@cjdropshipping.com for further assistance. Alternatively, you may submit the same details through the website chat to request account activation support from a sales representative. Please include: 1. an integration demo showing your CJ API application scenario from product query to pushing orders to CJ Store Orders (a Google Drive link is acceptable); 2. a backend screenshot clearly showing your store name; 3. your CJdropshipping user ID (e.g. CJXXXXXXX), with email verified and a WhatsApp number bound; 4. your API application scenario and the applicant identity information (company registration details, or personal identity information if you are an individual developer). Endpoint: /v1/product/query?pid=2046254260318302209. Retrying in 12000ms...
+[2026-06-11 15:07:48]   ⚠️  Points exhausted (exception).
+[2026-06-11 15:07:48]   ⏸️  Category "Cases For iPhone 6 & 6 Plus" paused (imported: 0, skipped: 0)
+[2026-06-11 15:07:48] 
+⏸️  PAUSED — points exhausted. 0 imported today, 0/639 categories done.
+[2026-06-11 15:07:48]    Resume tomorrow at 00:00.
+[2026-06-11 15:07:48] 📊 Points: 11830/50000 used, 38170 remaining
+
+═══════════════════════════════════════════════════
+  📊 SUMMARY — 2026-06-11T15:07:49.005Z
+  Imported today : 0
+  Skipped (dup)  : 0
+  Categories done: 0/639
+  CJ Points used : 11830/50000
+  Status         : IDLE
+═══════════════════════════════════════════════════
+

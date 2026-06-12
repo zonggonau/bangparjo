@@ -1,7 +1,24 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getProductsV2 } from '@/lib/cj-api';
+import { getProductsV2, cjFetch } from '@/lib/cj-api';
+import { getDBStoreSettings, applyMarginToPrice } from '@/lib/pricing';
 import { resolveCategoryId } from '@/lib/actions-catalog';
+
+/**
+ * Fetch variants dari CJ untuk suatu produk.
+ * Returns array variant atau null kalo gagal (QPS limit, dll)
+ */
+async function fetchVariants(pid: string) {
+  try {
+    const res = await cjFetch<any[]>(`/api2.0/v1/product/variant/query?pid=${pid}`);
+    if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+      return res.data;
+    }
+  } catch {
+    // QPS limit atau error lain — skip variant
+  }
+  return null;
+}
 
 // GET /api/cron/auto-import?reset=1&categoryId=...
 // Auto-import produk dari CJ berdasarkan kategori (level-1 parent category).
@@ -64,53 +81,145 @@ export async function GET(req: Request) {
     // 3. Process products one by one
     let successCount = 0;
     let failCount = 0;
+    let variantFailedCount = 0;
+    const settings = await getDBStoreSettings();
 
     for (const p of rawProducts) {
       try {
         const pid = p.id || (p as any).pid;
         if (!pid) { failCount++; continue; }
 
-        // Resolve kategori: coba dari categoryId (level-3), fallback ke twoCategoryId, lalu oneCategoryId
         const resolvedCatId = await resolveCategoryId(p.categoryId || p.twoCategoryId || p.oneCategoryId);
 
-        // Cek apakah produk sudah ada
-        const existing = await prisma.product.findUnique({ where: { cjId: pid } });
-        if (existing) {
-          // Update produk existing dari data listing V2
-          await prisma.product.update({
-            where: { id: existing.id },
-            data: {
-              name: p.nameEn || existing.name,
-              images: p.bigImage ? [p.bigImage] : existing.images,
-              status: 'ACTIVE',
-              categoryId: resolvedCatId || existing.categoryId,
-              cjCategoryId: p.categoryId || p.twoCategoryId || null,
-              updatedAt: new Date(),
+        // ── Attempt to fetch full details + variants ──
+        let variantData: any[] | null = null;
+        try {
+          const detailRes = await cjFetch<any>(`/api2.0/v1/product/query?pid=${pid}`);
+          if (detailRes.success && detailRes.data) {
+            const d = detailRes.data;
+            
+            // Build image list from full details
+            const detailImages: string[] = [];
+            if (d.productImageSet && Array.isArray(d.productImageSet)) {
+              for (const img of d.productImageSet) {
+                if (img && !detailImages.includes(img)) detailImages.push(img);
+              }
             }
-          });
-          successCount++;
-        } else {
-          // Buat produk baru dari data listing V2 (tanpa panggil getProductDetails CJ)
-          const imageList = p.bigImage ? [p.bigImage] : [];
+            if (detailImages.length === 0 && d.bigImage) detailImages.push(d.bigImage);
 
-          await prisma.product.create({
-            data: {
-              cjId: pid,
-              name: p.nameEn || 'Unknown',
-              description: p.description || '',
-              images: imageList,
-              cjCategoryId: p.categoryId || p.twoCategoryId || null,
-              categoryId: resolvedCatId,
-              variantCount: 0,
-              totalStock: 0,
-              isHero: false,
-              status: 'ACTIVE',
+            const imageList = detailImages.length > 0 ? detailImages : (p.bigImage ? [p.bigImage] : []);
+            const nameEn = d.productNameEn || d.productName || p.nameEn || 'Unknown';
+            const desc = d.description || p.description || '';
+
+            // Get variants
+            const rawVariants = (d.variants && Array.isArray(d.variants)) ? d.variants : [];
+
+            // Cek existing
+            const existing = await prisma.product.findUnique({ where: { cjId: pid } });
+
+            if (existing) {
+              await prisma.product.update({
+                where: { id: existing.id },
+                data: {
+                  name: nameEn, description: desc,
+                  images: imageList.length > 0 ? imageList : existing.images,
+                  status: 'ACTIVE',
+                  categoryId: resolvedCatId || existing.categoryId,
+                  cjCategoryId: d.categoryId || p.categoryId || null,
+                  variantCount: rawVariants.length,
+                  totalStock: rawVariants.length * 100,
+                  updatedAt: new Date(),
+                }
+              });
+
+              // Re-create variants
+              if (rawVariants.length > 0) {
+                await prisma.variant.deleteMany({ where: { productId: existing.id } });
+                for (const v of rawVariants) {
+                  const vCost = parseFloat(String(v.variantSellPrice || '0')) || 0;
+                  await prisma.variant.create({
+                    data: {
+                      productId: existing.id, cjId: v.vid,
+                      sku: v.variantSku || '',
+                      color: v.variantValue1 || v.variantNameEn || 'Default',
+                      size: v.variantValue2 || '',
+                      weight: v.variantWeight || 0,
+                      baseCost: vCost,
+                      sellingPrice: applyMarginToPrice(vCost, settings),
+                      inventory: v.inventory || 100,
+                      image: v.variantImage || d.bigImage || imageList[0] || ''
+                    }
+                  });
+                }
+              }
+
+              successCount++;
+            } else {
+              // Create new product with full details + variants
+              await prisma.product.create({
+                data: {
+                  cjId: pid, name: nameEn, description: desc, images: imageList,
+                  cjCategoryId: d.categoryId || p.categoryId || null,
+                  categoryId: resolvedCatId,
+                  variantCount: rawVariants.length,
+                  totalStock: rawVariants.length * 100,
+                  isHero: false, status: 'ACTIVE',
+                  variants: rawVariants.length > 0 ? {
+                    create: rawVariants.map((v: any) => {
+                      const vCost = parseFloat(String(v.variantSellPrice || '0')) || 0;
+                      return {
+                        cjId: v.vid, sku: v.variantSku || '',
+                        color: v.variantValue1 || v.variantNameEn || 'Default',
+                        size: v.variantValue2 || '', weight: v.variantWeight || 0,
+                        baseCost: vCost,
+                        sellingPrice: applyMarginToPrice(vCost, settings),
+                        inventory: v.inventory || 100,
+                        image: v.variantImage || d.bigImage || imageList[0] || ''
+                      };
+                    })
+                  } : undefined
+                }
+              });
+
+              successCount++;
             }
-          });
+          } else {
+            // Fallback: save from V2 listing data without variants
+            throw new Error('detail fetch failed');
+          }
+        } catch (detailErr) {
+          // ── Fallback: save from V2 listing (no variants) ──
+          const imageList = p.bigImage ? [p.bigImage] : [];
+          const existing = await prisma.product.findUnique({ where: { cjId: pid } });
+          
+          if (existing) {
+            await prisma.product.update({
+              where: { id: existing.id },
+              data: {
+                name: p.nameEn || existing.name,
+                images: p.bigImage ? [p.bigImage] : existing.images,
+                status: 'ACTIVE',
+                categoryId: resolvedCatId || existing.categoryId,
+                cjCategoryId: p.categoryId || p.twoCategoryId || null,
+                updatedAt: new Date(),
+              }
+            });
+          } else {
+            await prisma.product.create({
+              data: {
+                cjId: pid, name: p.nameEn || 'Unknown', description: p.description || '',
+                images: imageList,
+                cjCategoryId: p.categoryId || p.twoCategoryId || null,
+                categoryId: resolvedCatId,
+                variantCount: 0, totalStock: 0, isHero: false, status: 'ACTIVE',
+              }
+            });
+          }
+          variantFailedCount++;
           successCount++;
         }
 
-        // Delay 2.5s antar produk untuk hindari QPS limit CJ
+        // Delay 2.5s antar produk
         await new Promise(resolve => setTimeout(resolve, 2500));
       } catch (e: any) {
         console.warn(`[AutoImport] Gagal import produk ${p.id}: ${e.message}`);
@@ -125,9 +234,13 @@ export async function GET(req: Request) {
        data: { currentPage: page + 1, status: 'RUNNING' }
     });
 
+    const variantNote = variantFailedCount > 0 
+      ? ` (${variantFailedCount} tanpa variant — QPS limit)` 
+      : '';
+
     return NextResponse.json({ 
        success: true, 
-       message: `Page ${page}: ${successCount} sukses, ${failCount} gagal. Total ${totalRecords} produk di kategori.`,
+       message: `Page ${page}: ${successCount} sukses${variantNote}, ${failCount} gagal. Total ${totalRecords} produk.`,
        nextPage: page + 1,
        totalCJRecords: totalRecords
     });
