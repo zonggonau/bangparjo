@@ -6,20 +6,12 @@ import { CJProduct } from '@/lib/cj';
 import { parseProductName, parseProductImage, slugify, formatUSD } from '@/lib/utils';
 import { useSettings } from '@/context/SettingsContext';
 import { useCart } from '@/context/CartContext';
-import { importProductVariantsAction } from '@/lib/actions-catalog';
 
 export default function ProductCard({ product }: { product: CJProduct & { nowPrice?: string; discountPrice?: string; listedNum?: number; productWeight?: number; isFreeShipping?: boolean; productImageSet?: any } }) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const { settings, activeCoupons } = useSettings();
   const { addToCart } = useCart();
-
-  const handleCardClick = () => {
-    // Jalankan import di background saat card diklik
-    importProductVariantsAction(product.pid).catch(err => {
-      console.error('Auto-import error:', err);
-    });
-  };
 
   useEffect(() => {
     try {
@@ -118,7 +110,6 @@ export default function ProductCard({ product }: { product: CJProduct & { nowPri
   return (
     <Link 
       href={productUrl} 
-      onClick={handleCardClick}
       className="group block bg-white border border-[#E5E5E5]  overflow-hidden transition-all duration-300 relative no-underline text-inherit cursor-pointer hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:-translate-y-1 hover:border-transparent"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
