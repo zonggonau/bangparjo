@@ -199,54 +199,39 @@ function SecurePaymentContent() {
                 </div>
 
                 <div className="flex flex-col items-center gap-5 w-full max-w-[480px] mx-auto">
-                  {isIndonesia ? (
-                    <>
-                      <div className="w-full">
-                        <div className="text-xs font-extrabold text-gray-500 uppercase text-center mb-3">
-                          🇮🇩 Pembayaran Lokal (QRIS / Virtual Account / Kartu)
-                        </div>
-                        <MidtransPayment 
-                          orderId={order.orderNum} 
-                          amount={Math.round(order.totalAmount * exchangeRate)} 
-                          customerDetails={{
-                            name: order.customerName,
-                            email: order.customerEmail,
-                            phone: order.customerPhone || ''
-                          }}
-                          onSuccess={onPaymentSuccess}
-                          autoTrigger={false}
-                        />
-                      </div>
-
-                      <div className="flex items-center gap-4 w-full text-gray-300">
-                        <div className="flex-1 h-px bg-current"></div>
-                        <span className="text-xs font-bold">ATAU</span>
-                        <div className="flex-1 h-px bg-current"></div>
-                      </div>
-
-                      <div className="w-full">
-                        <div className="text-xs font-extrabold text-gray-500 uppercase text-center mb-3">
-                          🌍 Pembayaran Global (PayPal)
-                        </div>
-                        <PayPalButton 
-                          amount={order.totalAmount} 
-                          orderId={order.orderNum} 
-                          onSuccess={onPaymentSuccess} 
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <div className="w-full">
-                      <div className="text-xs font-extrabold text-gray-500 uppercase text-center mb-3">
-                        🌍 Global Payment (PayPal / Credit Card)
-                      </div>
-                      <PayPalButton 
-                        amount={order.totalAmount} 
-                        orderId={order.orderNum} 
-                        onSuccess={onPaymentSuccess} 
-                      />
+                  <div className="w-full">
+                    <div className="text-xs font-extrabold text-gray-500 uppercase text-center mb-3">
+                      💳 Pembayaran Global & Lokal (QRIS / Virtual Account / Kartu Kredit)
                     </div>
-                  )}
+                    <MidtransPayment 
+                      orderId={order.orderNum} 
+                      amount={Math.round(order.totalAmount * exchangeRate)} 
+                      customerDetails={{
+                        name: order.customerName,
+                        email: order.customerEmail,
+                        phone: order.customerPhone || ''
+                      }}
+                      onSuccess={onPaymentSuccess}
+                      autoTrigger={false}
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-4 w-full text-gray-300">
+                    <div className="flex-1 h-px bg-current"></div>
+                    <span className="text-xs font-bold">ATAU</span>
+                    <div className="flex-1 h-px bg-current"></div>
+                  </div>
+
+                  <div className="w-full">
+                    <div className="text-xs font-extrabold text-gray-500 uppercase text-center mb-3">
+                      🌍 Pembayaran Global (PayPal)
+                    </div>
+                    <PayPalButton 
+                      amount={order.totalAmount} 
+                      orderId={order.orderNum} 
+                      onSuccess={onPaymentSuccess} 
+                    />
+                  </div>
                 </div>
 
               

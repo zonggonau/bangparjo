@@ -21,23 +21,6 @@ export default function MidtransPayment({ orderId, amount, customerDetails, onSu
   const lastProcessedToken = useRef<string | null>(null);
 
   useEffect(() => {
-    // Load Midtrans Snap Script
-    const isProduction = process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === 'true';
-    const midtransScriptUrl = isProduction 
-      ? 'https://app.midtrans.com/snap/snap.js' 
-      : 'https://app.sandbox.midtrans.com/snap/snap.js';
-    const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || '';
-
-    let script = document.querySelector(`script[src="${midtransScriptUrl}"]`) as HTMLScriptElement;
-    if (!script) {
-      script = document.createElement('script');
-      script.src = midtransScriptUrl;
-      script.setAttribute('data-client-key', clientKey);
-      document.body.appendChild(script);
-    }
-  }, []);
-
-  useEffect(() => {
     let timeout: any;
     if (autoTrigger && !loading) {
       // Add a small stability delay for auto-trigger

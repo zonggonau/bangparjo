@@ -60,6 +60,7 @@ import { Providers } from "@/components/Providers";
 import Analytics from "@/components/Analytics";
 import ScrollToTop from "@/components/ScrollToTop";
 import { getCachedStoreSettings } from "@/lib/server-settings";
+import Script from "next/script";
 
 export default async function RootLayout({
   children,
@@ -68,6 +69,13 @@ export default async function RootLayout({
 }>) {
   const initialSettings = await getCachedStoreSettings();
   const storeUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bangparjo.shop';
+
+  const isMidtransProduction = process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === 'true';
+  const midtransScriptUrl = isMidtransProduction 
+    ? 'https://app.midtrans.com/snap/snap.js' 
+    : 'https://app.sandbox.midtrans.com/snap/snap.js';
+  const midtransClientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || '';
+
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -116,6 +124,13 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
         <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+        {/* Global Midtrans Snap Script */}
+        <Script
+          src={midtransScriptUrl}
+          data-client-key={midtransClientKey}
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
