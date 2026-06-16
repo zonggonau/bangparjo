@@ -121,7 +121,7 @@ export function parseProductData(content: any): ProductData | null {
  * @param waNumber - WhatsApp number for the AI agent (with country code, no +)
  * @param baseUrl - Base URL of the store (e.g. https://bangparjo.shop) for product link
  */
-export function renderProductTemplate(product: ProductData, waNumber?: string, baseUrl?: string): string {
+export function renderProductTemplate(product: ProductData, waNumber?: string, baseUrl?: string, lang: string = 'en'): string {
   const whatsappNumber = waNumber || '628219105980';
   const storeBaseUrl = baseUrl || 'https://bangparjo.shop';
   // sellingPrice dari DB sudah include margin — langsung digunakan tanpa kalkulasi ulang
@@ -132,11 +132,22 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     return v;
   }
 
+  var isIndo = lang.toLowerCase() === 'id';
+  var exchangeRate = 16000;
+
+  function formatCurrency(usdValue: number) {
+    if (isIndo) {
+      var idr = Math.round(usdValue * exchangeRate);
+      return 'Rp ' + idr.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+    return '$' + usdValue.toFixed(2);
+  }
+
   var minPrice = Math.min.apply(null, product.variants.map(function(v) { return getDisplayPrice(v); }));
   var maxPrice = Math.max.apply(null, product.variants.map(function(v) { return getDisplayPrice(v); }));
   var priceDisplay = minPrice === maxPrice
-    ? '$' + minPrice.toFixed(2)
-    : '$' + minPrice.toFixed(2) + ' - $' + maxPrice.toFixed(2);
+    ? formatCurrency(minPrice)
+    : formatCurrency(minPrice) + ' - ' + formatCurrency(maxPrice);
 
   // Extract AI-generated content if available
   var ai: Record<string, any> = (product as any).ai || {};
@@ -152,6 +163,13 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
   var seoDescription = ai.seoDescription || ('Shop ' + product.name + ' at the best price. Premium quality, fast worldwide shipping, and money-back guarantee.');
   var adCopy = ai.adCopy || (product.name + ' at unbeatable prices! Premium quality, fast global shipping, 30-day returns. Order now!');
   var faqs = ai.faqs || [];
+  
+  var resellerOpportunity = ai.resellerOpportunity || {
+    title: 'Peluang Bisnis Menguntungkan',
+    description: 'Produk impor berkualitas tinggi ini tidak hanya cocok untuk dipakai sendiri, tapi juga sangat potensial untuk dijual kembali. Dapatkan harga langsung supplier!',
+    profitMargin: 'Potensi Margin 50% - 150%'
+  };
+
   var shippingPolicy = ai.shippingPolicy || 'Worldwide shipping with estimated 7-21 business days. Tracking number provided after order processing. Free shipping on orders over $50.';
   var returnPolicy = ai.returnPolicy || '100% satisfaction guarantee. If the product doesn\'t meet your expectations, contact us within 7 days of delivery for a full refund.';
 
@@ -196,8 +214,8 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
       + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#1A1A2E;">' + variantName + '</td>'
       + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#64748b;">' + safeSku + '</td>'
       + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;">' + stockStatus + '</td>'
-      + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;font-weight:700;color:#FF6B35;">$' + getDisplayPrice(v).toFixed(2) 
-      + ' <span style="font-size:11px;color:#94a3b8;text-decoration:line-through;font-weight:500;margin-left:6px;">$' + (getDisplayPrice(v) * 1.35).toFixed(2) + '</span></td>'
+      + '<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;font-weight:700;color:#FF6B35;">' + formatCurrency(getDisplayPrice(v)) 
+      + ' <span style="font-size:11px;color:#94a3b8;text-decoration:line-through;font-weight:500;margin-left:6px;">' + formatCurrency(getDisplayPrice(v) * 1.35) + '</span></td>'
       + '</tr>';
   }).join('');
 
@@ -552,6 +570,24 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '</div>\n'
     + '</section>\n';
 
+
+  var resellerHtml = '';
+  if (resellerOpportunity) {
+    resellerHtml = '<section class="section" style="background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%); border-top: 1px solid #FFCC80; border-bottom: 1px solid #FFCC80; padding: 40px 0;">\n'
+      + '<div class="container">\n'
+      + '<div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 10px 30px rgba(255,107,53,0.1); border: 2px solid #FF6B35; text-align: center;">\n'
+      + '<div style="width: 64px; height: 64px; background: #FFF3E0; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">'
+      + '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>'
+      + '</div>\n'
+      + '<h2 style="font-family: Outfit, sans-serif; font-size: 24px; font-weight: 800; color: #1A1A2E; margin-bottom: 12px;">' + h(resellerOpportunity.title) + '</h2>\n'
+      + '<p style="font-size: 15px; color: #475569; line-height: 1.6; max-width: 600px; margin: 0 auto 20px;">' + h(resellerOpportunity.description) + '</p>\n'
+      + '<div style="display: inline-block; background: #FF6B35; color: white; padding: 8px 16px; border-radius: 99px; font-weight: 700; font-size: 14px; letter-spacing: 0.5px;">&#128176; ' + h(resellerOpportunity.profitMargin) + '</div>\n'
+      + '</div>\n'
+      + '</div>\n'
+      + '</section>\n';
+    result += resellerHtml;
+  }
+
   // Rating stars — visual from social proof
   var ratingVal = parseFloat(String(socialProof.rating).replace(/[^0-9.]/g, '')) || 4.8;
   var fullStars = Math.floor(ratingVal);
@@ -664,7 +700,7 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
 
   var variantOptions = product.variants.map(function(v) {
     var vName = [v.color, v.size].filter(Boolean).join(' / ') || 'Default';
-    return '<option value="' + v.cjId + '" data-price="' + getDisplayPrice(v).toFixed(2) + '" data-img="' + (v.image || product.images[0]) + '">' + h(vName) + ' - $' + getDisplayPrice(v).toFixed(2) + '</option>';
+    return '<option value="' + v.cjId + '" data-price="' + getDisplayPrice(v).toFixed(2) + '" data-img="' + (v.image || product.images[0]) + '">' + h(vName) + ' - ' + formatCurrency(getDisplayPrice(v)) + '</option>';
   }).join('');
 
   var rightColumnButtonHtml = '<button type="button" onclick="window.handleDirectCheckout(event)" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">\n'
@@ -675,8 +711,8 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '  <div>\n'
     + '    <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; display: block; margin-bottom: 4px;">Selected Variant</span>\n'
     + '    <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px;">\n'
-    + '      <span id="total-price-display" style="font-family:\'Outfit\',sans-serif; font-size: 32px; font-weight: 800; color: #FF6B35; line-height: 1;">$' + initialPrice.toFixed(2) + '</span>\n'
-    + '      <span id="compare-price-display" style="font-size: 16px; color: #94a3b8; text-decoration: line-through; font-weight: 500;">$' + initialComparePrice.toFixed(2) + '</span>\n'
+    + '      <span id="total-price-display" style="font-family:\'Outfit\',sans-serif; font-size: 32px; font-weight: 800; color: #FF6B35; line-height: 1;">' + formatCurrency(initialPrice) + '</span>\n'
+    + '      <span id="compare-price-display" style="font-size: 16px; color: #94a3b8; text-decoration: line-through; font-weight: 500;">' + formatCurrency(initialComparePrice) + '</span>\n'
     + '    </div>\n'
     + '    <label style="display:block; font-size:12px; font-weight:700; color:#64748b; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Select Variant</label>\n'
     + '    <select id="variant-selector" onchange="window.updateVariantSelection(this)" style="width:100%; padding:12px 14px; border:2px solid #e2e8f0; border-radius:10px; font-size:14px; color:#1A1A2E; outline:none; font-family:inherit; transition:all 0.2s; cursor:pointer; font-weight:600; background:#f8fafc;" onfocus="this.style.borderColor=\'#FF6B35\';this.style.background=\'#ffffff\'" onblur="this.style.borderColor=\'#e2e8f0\';this.style.background=\'#f8fafc\'">\n'
@@ -898,6 +934,11 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + 'var productData = ' + JSON.stringify(jsProductData) + ';\n'
     + 'var selectedVariant = productData.variants[0];\n'
     + 'var quantity = 1;\n'
+    + 'var isIndoJs = ' + (isIndo ? 'true' : 'false') + ';\n'
+    + 'function fmtCurr(usd) {\n'
+    + '  if(isIndoJs) { return "Rp " + Math.round(usd * 16000).toString().replace(/\\B(?=(\\d{3})+(?!\\d))/g, "."); }\n'
+    + '  return "$" + parseFloat(usd).toFixed(2);\n'
+    + '}\n'
     + '\n'
     + 'window.updateVariantSelection = function(selectEl) {\n'
     + '  var vid = selectEl.value;\n'
@@ -916,10 +957,10 @@ export function renderProductTemplate(product: ProductData, waNumber?: string, b
     + '  if(!selectedVariant) return;\n'
     + '  var total = selectedVariant.price * quantity;\n'
     + '  var displayEl = document.getElementById("total-price-display");\n'
-    + '  if(displayEl) displayEl.textContent = "$" + total.toFixed(2);\n'
+    + '  if(displayEl) displayEl.textContent = fmtCurr(total);\n'
     + '  \n'
     + '  var compareEl = document.getElementById("compare-price-display");\n'
-    + '  if(compareEl) compareEl.textContent = "$" + (selectedVariant.price * 1.5 * quantity).toFixed(2);\n'
+    + '  if(compareEl) compareEl.textContent = fmtCurr(selectedVariant.price * 1.35 * quantity);\n'
     + '  \n'
     + '  var leftImgEl = document.getElementById("left-variant-image");\n'
     + '  if(leftImgEl) leftImgEl.src = selectedVariant.image;\n'
